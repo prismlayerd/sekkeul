@@ -1567,4 +1567,92 @@ class OccupationInfo {
 
   /// 인적용역(사업서비스업 등 94xxx) — 부가가치세 면세 대상.
   bool get isPersonalService => keywords.contains('인적용역');
+
+  /// 전문직 사업자 여부 — 직전연도 수입금액과 무관하게 무조건 복식부기의무자.
+  /// 근거: 소득세법 시행령 §208⑤(§147의3). 국세청 기장의무 판단기준.
+  /// 목록: 의료업·수의업·(한)약사업·변호사·심판변론인·변리사·법무사·공인노무사·
+  /// 세무사·회계사·경영지도사·통관업·기술지도사·감정평가사·손해사정인·기술사·건축사·도선사·측량사.
+  bool get isProfessional => _BookkeepingRules.isProfessional(code);
+
+  /// 기장의무 판정용 업종그룹(A/B/C). 전문직이면 그룹과 무관하게 무조건 복식부기이므로
+  /// [complexBookkeepingThreshold]로 판정할 때는 [isProfessional]을 먼저 확인한다.
+  BookkeepingGroup get bookkeepingGroup => _BookkeepingRules.groupForCode(code);
+
+  /// 복식부기의무 임계(직전연도 수입금액, 원). 직전연도 수입이 이 값 **이상**이면
+  /// 복식부기의무자, 미만이면 간편장부대상자. 전문직은 수입 무관 복식부기(임계 무의미).
+  int get complexBookkeepingThreshold => bookkeepingGroup.complexBookkeepingThreshold;
+}
+
+/// 기장의무 판정용 업종그룹. 그룹별 복식부기의무 직전연도 수입금액 임계가 다르다.
+/// (경비율(단순/기준) 판정 임계와는 다른 표이므로 혼동 금지.)
+enum BookkeepingGroup {
+  /// 농림어업·광업·도소매업·부동산매매업 등 → 3억.
+  a,
+
+  /// 제조·건설·숙박음식·운수·정보통신·금융보험·전기가스수도·폐기물처리 등 → 1.5억.
+  b,
+
+  /// 부동산임대·전문과학기술·교육·보건·예술스포츠·개인서비스·인적용역(프리랜서 940xxx) 등 → 7,500만.
+  c;
+
+  /// 복식부기의무 임계(직전연도 수입금액, 원). 이상이면 복식부기, 미만이면 간편장부.
+  int get complexBookkeepingThreshold => switch (this) {
+        BookkeepingGroup.a => 300000000,
+        BookkeepingGroup.b => 150000000,
+        BookkeepingGroup.c => 75000000,
+      };
+}
+
+/// 업종코드 → 기장의무 그룹/전문직 판정 규칙. `OccupationInfo` 게터가 위임한다.
+///
+/// 그룹은 name 라벨이 아니라 6자리 코드 접두(KSIC 기반, 법적 그룹의 실제 근거)로 판정한다.
+/// A/C는 명시 화이트리스트, 나머지(제조·건설·숙박음식·운수·통신·금융보험·전기가스수도·폐기물)는 B.
+class _BookkeepingRules {
+  // 그룹A(3억): 농림어업(011~052)·광업(101~143)·도소매(501~525)·부동산매매(703).
+  static const Set<String> _groupA = {
+    '011', '012', '014', '015', '020', '051', '052',
+    '101', '131', '132', '141', '142', '143',
+    '501', '503', '504', '505', '511', '512', '513', '514', '515', '519',
+    '521', '522', '523', '524', '525',
+    '703',
+  };
+
+  // 그룹C(7,500만): 부동산임대·관련서비스(701·702), 임대(712·713), 컴퓨터수리(725),
+  // 연구개발·전문서비스·광고·사업지원(730·741·742·743·749), 교육(804·809),
+  // 보건(851·852), 수리·여가·스포츠·개인서비스·인적용역(922·923·924·930·940·950).
+  static const Set<String> _groupC = {
+    '701', '702', '712', '713', '725', '730', '741', '742', '743', '749',
+    '804', '809', '851', '852', '922', '923', '924', '930', '940', '950',
+  };
+
+  static BookkeepingGroup groupForCode(String code) {
+    final p3 = code.length >= 3 ? code.substring(0, 3) : code;
+    if (_groupA.contains(p3)) return BookkeepingGroup.a;
+    if (_groupC.contains(p3)) return BookkeepingGroup.c;
+    // 921: 영상·방송·영화제작(정보통신)=B, 공연·여가=C.
+    if (p3 == '921') {
+      final p4 = code.substring(0, 4);
+      return (p4 == '9214' || p4 == '9219') ? BookkeepingGroup.c : BookkeepingGroup.b;
+    }
+    // 나머지: 제조·전기가스수도·건설·숙박음식·운수·통신·금융보험·폐기물 → B.
+    return BookkeepingGroup.b;
+  }
+
+  static bool isProfessional(String code) {
+    // 의료업(병원 8511·의원 8512). 의료유사·지원(침술·안마·혈액원 등 8519)은 보건업(그룹C).
+    if (code.startsWith('8511') || code.startsWith('8512')) return true;
+    return _professional.contains(code);
+  }
+
+  static const Set<String> _professional = {
+    '852000', // 수의업
+    '523111', '523114', '522105', // (한)약사업 — 약국·한약·한약업사
+    '741101', '741104', '741107', '741110', // 변호사·변리사·법무사·공인노무사
+    '741201', '741202', '741203', '741204', // 세무사·공인회계사
+    '741401', // 경영지도사
+    '742101', '742105', '742106', '742202', // 측량사·건축사·기술사·기술지도사
+    '749904', '749906', // 손해사정인·통관업(관세사)
+    '702002', // 감정평가사
+    '630403', // 도선사
+  };
 }

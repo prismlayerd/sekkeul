@@ -237,7 +237,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
 
     _db = await openDatabase(
       path,
-      version: 33,
+      version: 34,
       onCreate: (db, version) async {
         // 프로필 테이블 생성
         await db.execute('''
@@ -277,7 +277,10 @@ class SqfliteDatabaseHelper implements DatabaseService {
             pension_enrolled INTEGER DEFAULT 0,
             health_enrolled INTEGER DEFAULT 0,
             employment_enrolled INTEGER DEFAULT 0,
-            industrial_accident_enrolled INTEGER DEFAULT 0
+            industrial_accident_enrolled INTEGER DEFAULT 0,
+            prior_year_income REAL,
+            is_new_business INTEGER DEFAULT 0,
+            has_multiple_businesses INTEGER DEFAULT 0
           )
         ''');
         // 지출 내역 테이블 생성 (민감 정보는 텍스트 암호화 상태로 저장)
@@ -653,6 +656,18 @@ class SqfliteDatabaseHelper implements DatabaseService {
         if (oldVersion < 33) {
           await db.execute(_quickEntryPresetsTableSql);
         }
+        // 기장의무 판정용 프로필 필드 — 직전연도 수입·신규사업자·겸업 (v34)
+        if (oldVersion < 34) {
+          try {
+            await db.execute('ALTER TABLE user_profile ADD COLUMN prior_year_income REAL');
+          } catch (e) {}
+          try {
+            await db.execute('ALTER TABLE user_profile ADD COLUMN is_new_business INTEGER DEFAULT 0');
+          } catch (e) {}
+          try {
+            await db.execute('ALTER TABLE user_profile ADD COLUMN has_multiple_businesses INTEGER DEFAULT 0');
+          } catch (e) {}
+        }
       },
     );
   }
@@ -702,6 +717,9 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'health_enrolled': profile['health_enrolled'] == true ? 1 : 0,
         'employment_enrolled': profile['employment_enrolled'] == true ? 1 : 0,
         'industrial_accident_enrolled': profile['industrial_accident_enrolled'] == true ? 1 : 0,
+        'prior_year_income': profile['prior_year_income'],
+        'is_new_business': profile['is_new_business'] == true ? 1 : 0,
+        'has_multiple_businesses': profile['has_multiple_businesses'] == true ? 1 : 0,
       });
     });
   }
@@ -754,6 +772,9 @@ class SqfliteDatabaseHelper implements DatabaseService {
       'health_enrolled': map['health_enrolled'] == 1,
       'employment_enrolled': map['employment_enrolled'] == 1,
       'industrial_accident_enrolled': map['industrial_accident_enrolled'] == 1,
+      'prior_year_income': map['prior_year_income'],
+      'is_new_business': map['is_new_business'] == 1,
+      'has_multiple_businesses': map['has_multiple_businesses'] == 1,
     };
   }
 

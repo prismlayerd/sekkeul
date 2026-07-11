@@ -10,6 +10,7 @@ import '../../core/parsing/pension_income_parser.dart';
 import '../../core/tax_engine/freelancer_tax.dart';
 import '../../core/tax_engine/combined_tax.dart';
 import '../../core/tax_engine/employee_tax.dart';
+import '../../core/tax_engine/bookkeeping_duty.dart';
 import 'expense_calendar_screen.dart';
 import 'tax_report_form_screen.dart';
 
@@ -82,6 +83,12 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
   // 프리랜서 건강보험 지역가입자 컨트롤러
   final TextEditingController _freelancerHealthInsController = TextEditingController();
 
+  // 기장의무 판정 컨트롤러 — 직전연도 수입·신규사업자·겸업 (프로필에 영속 저장)
+  final TextEditingController _priorYearIncomeController = TextEditingController();
+  bool _isNewBusiness = false;
+  bool _hasMultipleBusinesses = false;
+  Map<String, dynamic>? _profileCache;
+
   // N잡러 소득공제 추가항목 컨트롤러
   final TextEditingController _mortgageSimController = TextEditingController();
   final TextEditingController _hometownDonationSimController = TextEditingController();
@@ -123,6 +130,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     _freelancerHealthInsController.addListener(_calculateTax);
     _mortgageSimController.addListener(_calculateTax);
     _hometownDonationSimController.addListener(_calculateTax);
+    _priorYearIncomeController.addListener(_onBookkeepingInputChanged);
     _loadFromCalendar();
   }
 
@@ -131,7 +139,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
 
     // 소득: 프로필 연소득 우선, 없으면 달력 월별 합산
     final profile = await dbService.getProfile();
+    _profileCache = profile ?? {};
     double annualIncome = 0.0;
+    double priorYearIncome = 0.0;
+    bool isNewBusiness = false;
+    bool hasMultipleBusinesses = false;
     int dependentCount = 0;
     bool hasSelfDisability = false;
     int disabledDependentCount = 0;
@@ -164,6 +176,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       final militaryMonths = profile['military_months'] as int? ?? 0;
       isYouthSme = EmployeeTaxCalculator.isYouthSmeEligible(
           age: age, militaryMonths: militaryMonths);
+      priorYearIncome = profile['prior_year_income'] as double? ?? 0.0;
+      isNewBusiness = profile['is_new_business'] == true;
+      hasMultipleBusinesses = profile['has_multiple_businesses'] == true;
     }
 
     // 신용카드 연간 누적 (지출 달력 기록)
@@ -196,11 +211,16 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     if (monthlyRent > 0 && _isEmployee) {
       _monthlyRentController.text = monthlyRent.toInt().toString();
     }
+    if (priorYearIncome > 0) {
+      _priorYearIncomeController.text = priorYearIncome.toInt().toString();
+    }
 
     setState(() {
       _incomeAutoFilled = annualIncome > 0;
       _creditAutoFilled = creditTotal > 0 && _isEmployee;
       _rentAutoFilled   = monthlyRent > 0 && _isEmployee;
+      _isNewBusiness = isNewBusiness;
+      _hasMultipleBusinesses = hasMultipleBusinesses;
       _dependentCount = dependentCount;
       _hasSelfDisability = hasSelfDisability;
       _disabledDependentCount = disabledDependentCount;
@@ -283,6 +303,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     _freelancerHealthInsController.dispose();
     _mortgageSimController.dispose();
     _hometownDonationSimController.dispose();
+    _priorYearIncomeController.dispose();
     super.dispose();
   }
 
@@ -456,6 +477,144 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       setState(() => _selectedOccupation = result);
       _calculateTax();
     }
+  }
+
+  /// 기장의무 판정 — 업종이 선택돼야 계산 가능. 규칙은 결정적이라 결과는 단정하되,
+  /// 겸업(복수 업종)만 [BookkeepingJudgment.needsInputReview]로 입력 전제 확인을 유도한다.
+  BookkeepingJudgment? get _bookkeepingJudgment {
+    final occ = _selectedOccupation;
+    if (occ == null) return null;
+    final prior = int.tryParse(_priorYearIncomeController.text.replaceAll(',', '')) ?? 0;
+    return judgeBookkeepingDuty(
+      occupation: occ,
+      priorYearIncome: prior,
+      isNewBusiness: _isNewBusiness,
+      hasMultipleBusinesses: _hasMultipleBusinesses,
+    );
+  }
+
+  void _onBookkeepingInputChanged() {
+    setState(() {});
+    _saveBookkeepingProfile();
+  }
+
+  Future<void> _saveBookkeepingProfile() async {
+    final updated = Map<String, dynamic>.from(_profileCache ?? {});
+    updated['prior_year_income'] = double.tryParse(_priorYearIncomeController.text) ?? 0.0;
+    updated['is_new_business'] = _isNewBusiness;
+    updated['has_multiple_businesses'] = _hasMultipleBusinesses;
+    _profileCache = updated;
+    await dbService.saveProfile(updated);
+  }
+
+  /// 업종 선택 직후 노출되는 기장의무 판정 입력(직전연도 수입·신규·겸업) + 판정 배너.
+  /// 업종 미선택 시 빈 리스트(아직 판정 불가).
+  List<Widget> _buildBookkeepingJudgmentSection() {
+    final judgment = _bookkeepingJudgment;
+    if (judgment == null) return const [];
+    final bodyColor = Theme.of(context).textTheme.bodyLarge!.color!;
+    return [
+      Text('직전연도 수입금액', style: TextStyle(color: bodyColor, fontSize: 15, fontWeight: FontWeight.w600)),
+      const SizedBox(height: 4),
+      Text('작년 한 해 이 업종으로 번 총수입이에요. 기장의무(간편장부·복식부기) 판단에 쓰여요.',
+          style: TextStyle(color: bodyColor.withOpacity(0.6), fontSize: 12)),
+      const SizedBox(height: 8),
+      TextField(
+        controller: _priorYearIncomeController,
+        keyboardType: TextInputType.number,
+        style: TextStyle(color: bodyColor, fontSize: 20, fontWeight: FontWeight.bold),
+        decoration: InputDecoration(
+          hintText: '0',
+          hintStyle: TextStyle(color: bodyColor.withOpacity(0.2), fontSize: 20),
+          filled: true,
+          fillColor: Theme.of(context).cardColor,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          suffixText: '원',
+          suffixStyle: TextStyle(color: bodyColor, fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+      ),
+      const SizedBox(height: 16),
+      Row(children: [
+        Expanded(child: Text('올해 처음 시작한 사업이에요', style: TextStyle(color: bodyColor, fontSize: 14, fontWeight: FontWeight.w600))),
+        Switch(
+          value: _isNewBusiness,
+          onChanged: (v) {
+            setState(() => _isNewBusiness = v);
+            _saveBookkeepingProfile();
+          },
+          activeColor: Theme.of(context).scaffoldBackgroundColor,
+          activeTrackColor: bodyColor,
+          inactiveThumbColor: bodyColor.withOpacity(0.5),
+          inactiveTrackColor: Theme.of(context).scaffoldBackgroundColor,
+        ),
+      ]),
+      const SizedBox(height: 8),
+      Row(children: [
+        Expanded(child: Text('다른 업종도 함께 하고 있어요 (겸업)', style: TextStyle(color: bodyColor, fontSize: 14, fontWeight: FontWeight.w600))),
+        Switch(
+          value: _hasMultipleBusinesses,
+          onChanged: (v) {
+            setState(() => _hasMultipleBusinesses = v);
+            _saveBookkeepingProfile();
+          },
+          activeColor: Theme.of(context).scaffoldBackgroundColor,
+          activeTrackColor: bodyColor,
+          inactiveThumbColor: bodyColor.withOpacity(0.5),
+          inactiveTrackColor: Theme.of(context).scaffoldBackgroundColor,
+        ),
+      ]),
+      const SizedBox(height: 24),
+      _buildJudgmentBanner(judgment),
+      const SizedBox(height: 32),
+    ];
+  }
+
+  Widget _buildJudgmentBanner(BookkeepingJudgment j) {
+    final bodyColor = Theme.of(context).textTheme.bodyLarge!.color!;
+    final isDouble = j.isDoubleEntry;
+    final tone = isDouble ? AppTheme.colorDanger : AppTheme.colorSuccess;
+    final title = isDouble ? '복식부기의무자예요' : '간편장부대상자예요';
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: tone.withOpacity(0.4), width: 1.4),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(isDouble ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded, color: tone, size: 20),
+            const SizedBox(width: 8),
+            Text(title, style: TextStyle(color: bodyColor, fontSize: 15, fontWeight: FontWeight.bold)),
+          ]),
+          const SizedBox(height: 8),
+          Text(j.reason, style: TextStyle(color: bodyColor.withOpacity(0.75), fontSize: 13, height: 1.5)),
+          if (isDouble) ...[
+            const SizedBox(height: 12),
+            Text(
+              '복식부기는 재무제표 수준의 장부가 필요해 세무사·기장대행과 함께 준비하는 걸 권장해요. '
+              '이 앱의 간편장부·경비율 계산은 복식부기의무자에게는 적용되지 않아요.',
+              style: TextStyle(color: bodyColor.withOpacity(0.75), fontSize: 13, height: 1.5),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '가계부에 기록해온 지출 내역은 세무사에게 그대로 전달해 기장 대행을 맡길 수 있어요.',
+              style: TextStyle(color: bodyColor.withOpacity(0.6), fontSize: 12, height: 1.5),
+            ),
+          ],
+          if (j.needsInputReview) ...[
+            const SizedBox(height: 12),
+            Text(
+              '여러 업종을 겸업 중이면 주업종 환산 등 규칙이 복잡해요. 위 업종·수입 전제가 실제와 맞는지 확인해주세요.',
+              style: TextStyle(color: bodyColor.withOpacity(0.6), fontSize: 12, height: 1.5),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   void _showRentTooltipDialog() {
@@ -1154,7 +1313,10 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                
+
+                ..._buildBookkeepingJudgmentSection(),
+
+                if (_bookkeepingJudgment == null || _bookkeepingJudgment!.isSimplified) ...[
                 Row(
                   children: [
                     Expanded(
@@ -1409,8 +1571,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                     ],
                   ),
                 ),
+                ],
               ],
-              
+
               _buildResultBanner(),
               
               const SizedBox(height: 16),
