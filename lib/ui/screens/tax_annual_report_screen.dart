@@ -5,6 +5,7 @@ import '../components/amount_field.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/tax_rates.dart';
+import 'tax_simulator_screen.dart';
 
 class TaxAnnualReportScreen extends StatefulWidget {
   final String userType;
@@ -18,6 +19,12 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
   final _fmt = NumberFormat('#,###');
   bool _isLoading = true;
   final int _year = DateTime.now().year;
+
+  // ── 프리랜서·N잡러(사업소득 분) 전용 — ①진단에서 저장한 가상 신고서를
+  // 그대로 재사용해 홈택스 화면 순서대로 숫자를 안내한다. 직장인은 아래
+  // 연말정산 재계산 UI를 그대로 쓴다.
+  bool get _isBusiness => widget.userType != '직장인';
+  Map<String, dynamic>? _businessDraft;
 
   // ── 자동 수집 데이터 ──
   double _grossIncome = 0.0;
@@ -87,6 +94,11 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
   }
 
   Future<void> _loadData() async {
+    if (_isBusiness) {
+      _businessDraft = await dbService.getReportDraft(widget.userType);
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
     try {
       final profile = await dbService.getProfile();
       if (profile != null) {
@@ -241,7 +253,176 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _buildBody(primary, textColor, subColor, cardColor, bgColor),
+          : _isBusiness
+              ? _buildBusinessBody(primary, textColor, subColor, cardColor)
+              : _buildBody(primary, textColor, subColor, cardColor, bgColor),
+    );
+  }
+
+  // ──────────────────────────────────────────────
+  //  프리랜서·N잡러 — 홈택스 입력값 가이드 (①진단 결과 재사용)
+  // ──────────────────────────────────────────────
+  Widget _buildBusinessBody(Color primary, Color textColor, Color subColor, Color cardColor) {
+    final draft = _businessDraft;
+    final items = (draft?['items'] as List<Map<String, dynamic>>?) ?? const [];
+
+    if (draft == null || items.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        children: [
+          Text('${_year}년 귀속\n종합소득세 신고서', style: TextStyle(color: textColor, fontSize: 22, fontWeight: FontWeight.w900, height: 1.3)),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(16)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('아직 진단 결과가 없어요', style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text('①종소세 진단에서 계산한 뒤 "가상 신고서 양식 보기"를 눌러야 홈택스에 입력할 숫자가 여기 채워져요.',
+                    style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => TaxSimulatorScreen(userType: widget.userType))),
+                  child: Container(
+                    height: 48,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(10)),
+                    child: const Text('①진단으로 가기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    final finalAmount = (draft['final_amount'] as num?)?.toDouble() ?? 0.0;
+    final isRefund = draft['is_refund'] == true;
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      children: [
+        Text('${_year}년 귀속\n종합소득세 신고서', style: TextStyle(color: textColor, fontSize: 22, fontWeight: FontWeight.w900, height: 1.3)),
+        const SizedBox(height: 4),
+        Text('①진단 결과를 홈택스 화면에 나오는 순서대로 안내해드려요.\n신고 기한: 매년 5월 1일 ~ 5월 31일',
+            style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
+        const SizedBox(height: 20),
+
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: primary.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: primary.withOpacity(0.2)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Icon(Icons.format_list_numbered_rounded, color: primary, size: 18),
+                const SizedBox(width: 8),
+                Text('홈택스에 이 순서로 입력하세요', style: TextStyle(color: primary, fontSize: 14, fontWeight: FontWeight.bold)),
+              ]),
+              const SizedBox(height: 14),
+              for (int i = 0; i < items.length; i++) _businessItemRow(i + 1, items[i], primary, textColor, subColor),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: primary.withOpacity(0.35), width: 1.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(isRefund ? '5월 예상 환급액' : '5월 추가 납부 예상액', style: TextStyle(color: subColor, fontSize: 13, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 6),
+              Text('${_fmt.format(finalAmount.abs().toInt())}원',
+                  style: TextStyle(color: textColor, fontSize: 30, fontWeight: FontWeight.w900)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        _buildBusinessHomeTaxGuide(primary, textColor, subColor),
+        const SizedBox(height: 40),
+      ],
+    );
+  }
+
+  Widget _businessItemRow(int n, Map<String, dynamic> item, Color primary, Color textColor, Color subColor) {
+    final title = item['title'] as String? ?? '';
+    final amount = (item['amount'] as num?)?.toDouble() ?? 0.0;
+    final isHeader = item['isHeader'] == true;
+    final highlight = item['highlight'] == true;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          width: 22, height: 22,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(color: highlight ? primary : subColor.withOpacity(0.3), shape: BoxShape.circle),
+          child: Text('$n', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(title,
+              style: TextStyle(color: textColor, fontSize: 13, fontWeight: isHeader ? FontWeight.w700 : FontWeight.normal)),
+        ),
+        Text('${_fmt.format(amount.toInt())}원',
+            style: TextStyle(color: highlight ? primary : textColor, fontSize: 13, fontWeight: isHeader ? FontWeight.w800 : FontWeight.w600)),
+      ]),
+    );
+  }
+
+  /// 국세청 「종합소득세 전자신고 매뉴얼」 홈택스 화면 흐름(검증됨: 지식_변환/JSON/금융소득_종합과세_및_종소세신고.json).
+  Widget _buildBusinessHomeTaxGuide(Color primary, Color textColor, Color subColor) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: primary.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: primary.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.open_in_browser_rounded, color: primary, size: 18),
+            const SizedBox(width: 8),
+            Text('홈택스 종합소득세 신고 순서', style: TextStyle(color: primary, fontSize: 14, fontWeight: FontWeight.bold)),
+          ]),
+          const SizedBox(height: 14),
+          _step('1', 'hometax.go.kr 접속 → 로그인\n(공동인증서 또는 카카오·네이버 간편인증)', primary, textColor),
+          _step('2', '세금신고 > 종합소득세 신고 > 일반신고서\n> 정기신고 (5.1~5.31)', primary, textColor),
+          _step('3', '종합소득금액 입력 — 사업소득 명세\n(지급명세서 불러오기 또는 직접입력, 위 ①~③ 숫자 참고)', primary, textColor),
+          _step('4', '소득공제 입력 — 인적공제는 자동, 노란우산 등은 직접입력', primary, textColor),
+          _step('5', '세액공제·감면 입력 후 계산 결과 확인', primary, textColor),
+          _step('6', '신고서 제출 → 환급 시 환급계좌 등록', primary, textColor),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Icon(Icons.schedule_rounded, color: Colors.orange, size: 16),
+              const SizedBox(width: 8),
+              Expanded(child: Text(
+                '신고 기한: 매년 5월 1일 ~ 5월 31일\n기한 초과 시 무신고 가산세 20% + 납부 지연 가산세 발생',
+                style: TextStyle(color: Colors.orange, fontSize: 12, height: 1.5),
+              )),
+            ]),
+          ),
+        ],
+      ),
     );
   }
 
