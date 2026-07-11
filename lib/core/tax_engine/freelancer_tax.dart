@@ -1,6 +1,13 @@
 import '../data/occupation_data.dart';
 import 'tax_rates.dart';
 
+/// 간편장부(실제경비) vs 추계(경비율) 비교 결과.
+typedef BookkeepingComparison = ({
+  FreelancerTaxResult bookkeeping,
+  FreelancerTaxResult estimate,
+  bool bookkeepingIsBetter,
+});
+
 /// 프리랜서 전용 세액 계산 및 시뮬레이션 엔진
 class FreelancerTaxCalculator {
   /// 프리랜서 종합소득세 및 지방소득세 시뮬레이션 결과 클래스
@@ -17,6 +24,7 @@ class FreelancerTaxCalculator {
     int disabledDependentCount = 0,    // 장애인 부양가족 수 (추가공제 200만/명)
     bool hasSelfDisability = false,    // 본인 장애인 여부
     bool useStandardExpenseRate = false, // true면 단순경비율 대신 기준경비율 적용(적립 범위 산출용)
+    double? actualExpense,             // 연환산 실제 필요경비(가계부 기록). 주어지면 경비율 추정 대신 이 값을 사용(간편장부 기장).
   }) {
     // 0. 입력값 방어 코드
     final months = inputMonths < 1 ? 1 : (inputMonths > 12 ? 12 : inputMonths);
@@ -36,10 +44,14 @@ class FreelancerTaxCalculator {
     // 공식: 누적 수입 / 입력 개월 수 * 12개월
     final double annualEstimatedIncome = (income / months) * 12;
 
-    // 3. 연간 필요경비 산출 (단순경비율 기준, useStandardExpenseRate이면 기준경비율)
+    // 3. 연간 필요경비 산출
+    // actualExpense가 주어지면(간편장부 기장) 경비율 추정 대신 실제 경비를 그대로 사용.
+    // 아니면 경비율 추정(단순경비율 기준, useStandardExpenseRate이면 기준경비율).
     // 단순경비율 적용 시, 수입 4,000만 원 이하 분은 기본율, 초과분은 초과율 적용
     double estimatedExpense = 0.0;
-    if (useStandardExpenseRate) {
+    if (actualExpense != null) {
+      estimatedExpense = actualExpense < 0 ? 0.0 : actualExpense;
+    } else if (useStandardExpenseRate) {
       estimatedExpense = annualEstimatedIncome * standardExpenseRate;
     } else if (annualEstimatedIncome <= 40000000) {
       estimatedExpense = annualEstimatedIncome * simpleBaseRate;
@@ -85,18 +97,11 @@ class FreelancerTaxCalculator {
     // 6. 종합소득세 산출세액 (국세)
     final double estimatedCalculatedTax = TaxRates.calculateTax(taxBase);
 
-    // 7. 세액공제 적용 (기장세액공제 또는 표준세액공제)
-    double taxCredit = 0.0;
-    if (isBookkeeping) {
-      // 기장세액공제 = 산출세액의 20%, 한도 100만 원
-      taxCredit = estimatedCalculatedTax * 0.2;
-      if (taxCredit > 1000000.0) {
-        taxCredit = 1000000.0;
-      }
-    } else {
-      // 추계신고 = 표준세액공제 7만 원 적용
-      taxCredit = 70000.0;
-    }
+    // 7. 세액공제 적용 — 표준세액공제 7만 원.
+    // 기장세액공제(산출세액 20%, 한도 100만)는 간편장부대상자가 "복식부기"로
+    // 자발적 기장했을 때만 적용되는 별도 공제(소득세법 §56의2)로, 이 앱이 지원하는
+    // 간편장부 기장과는 무관하다. 간편장부·추계 모두 표준세액공제로 동일 적용.
+    double taxCredit = 70000.0;
     
     // 월세 세액공제 (조특법 §95의2): 프리랜서는 종합소득금액 6천만 이하 + 무주택
     double rentTaxCredit = 0.0;
@@ -234,6 +239,61 @@ class FreelancerTaxCalculator {
     final lower = simple.annualTotalTax <= standard.annualTotalTax ? simple : standard;
     final higher = simple.annualTotalTax <= standard.annualTotalTax ? standard : simple;
     return (min: lower, max: higher);
+  }
+
+  /// 간편장부(실제 경비) vs 추계(경비율) 중 어느 쪽 세액이 더 낮은지 비교한다.
+  /// [accumulatedActualExpense]는 가계부에 기록된 사업용 지출 누적액(같은 [inputMonths] 기간 기준) —
+  /// 소득과 동일한 방식(누적→연환산)으로 처리해 두 방식을 같은 기준에서 비교한다.
+  static BookkeepingComparison compareBookkeepingVsEstimate({
+    required double accumulatedIncome,
+    required double accumulatedActualExpense,
+    required int inputMonths,
+    required int allowanceCount,
+    required String occupationCode,
+    double yellowUmbrellaPayment = 0.0,
+    double monthlyRent = 0.0,
+    bool isHomeless = false,
+    double freelancerHealthInsurance = 0.0,
+    int disabledDependentCount = 0,
+    bool hasSelfDisability = false,
+  }) {
+    final months = inputMonths < 1 ? 1 : (inputMonths > 12 ? 12 : inputMonths);
+    final rawExpense = accumulatedActualExpense < 0 ? 0.0 : accumulatedActualExpense;
+    final annualActualExpense = (rawExpense / months) * 12;
+
+    final bookkeeping = calculateTaxSimulation(
+      accumulatedIncome: accumulatedIncome,
+      inputMonths: inputMonths,
+      allowanceCount: allowanceCount,
+      occupationCode: occupationCode,
+      isBookkeeping: true,
+      actualExpense: annualActualExpense,
+      yellowUmbrellaPayment: yellowUmbrellaPayment,
+      monthlyRent: monthlyRent,
+      isHomeless: isHomeless,
+      freelancerHealthInsurance: freelancerHealthInsurance,
+      disabledDependentCount: disabledDependentCount,
+      hasSelfDisability: hasSelfDisability,
+    );
+
+    final range = calculateTaxRange(
+      accumulatedIncome: accumulatedIncome,
+      inputMonths: inputMonths,
+      allowanceCount: allowanceCount,
+      occupationCode: occupationCode,
+      yellowUmbrellaPayment: yellowUmbrellaPayment,
+      monthlyRent: monthlyRent,
+      isHomeless: isHomeless,
+      freelancerHealthInsurance: freelancerHealthInsurance,
+      disabledDependentCount: disabledDependentCount,
+      hasSelfDisability: hasSelfDisability,
+    );
+
+    return (
+      bookkeeping: bookkeeping,
+      estimate: range.min,
+      bookkeepingIsBetter: bookkeeping.annualTotalTax <= range.min.annualTotalTax,
+    );
   }
 }
 

@@ -89,6 +89,10 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
   bool _hasMultipleBusinesses = false;
   Map<String, dynamic>? _profileCache;
 
+  // 기장 vs 추계 비교 (2단계) — 가계부 사업경비 누적 + 비교 결과.
+  double _businessExpenseAccumulated = 0.0;
+  BookkeepingComparison? _bookkeepingComparison;
+
   // N잡러 소득공제 추가항목 컨트롤러
   final TextEditingController _mortgageSimController = TextEditingController();
   final TextEditingController _hometownDonationSimController = TextEditingController();
@@ -184,10 +188,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     // 신용카드 연간 누적 (지출 달력 기록)
     final expenses = await dbService.getExpenses();
     double creditTotal = 0.0;
+    double businessExpenseTotal = 0.0;
     for (final e in expenses) {
-      if (e.date.year == now.year && e.paymentMethod == '신용카드') {
-        creditTotal += e.amount;
-      }
+      if (e.date.year != now.year) continue;
+      if (e.paymentMethod == '신용카드') creditTotal += e.amount;
+      if (e.isBusiness) businessExpenseTotal += e.amount;
     }
 
     if (!mounted) return;
@@ -221,6 +226,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       _rentAutoFilled   = monthlyRent > 0 && _isEmployee;
       _isNewBusiness = isNewBusiness;
       _hasMultipleBusinesses = hasMultipleBusinesses;
+      _businessExpenseAccumulated = businessExpenseTotal;
       _dependentCount = dependentCount;
       _hasSelfDisability = hasSelfDisability;
       _disabledDependentCount = disabledDependentCount;
@@ -377,26 +383,53 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     }
     else if (_isFreelancer && !_isEmployee) {
       if (_freelancerIncomeController.text.isEmpty || _selectedOccupation == null) {
-        setState(() => _freelancerResult = null);
+        setState(() {
+          _freelancerResult = null;
+          _bookkeepingComparison = null;
+        });
         return;
       }
       final income = double.tryParse(_freelancerIncomeController.text) ?? 0.0;
       final months = int.tryParse(_monthsController.text) ?? 12;
       final yellowUmbrella = _hasYellowUmbrella ? (double.tryParse(_yellowUmbrellaController.text) ?? 0.0) : 0.0;
-
       final healthIns = double.tryParse(_freelancerHealthInsController.text) ?? 0.0;
-      final result = FreelancerTaxCalculator.calculateTaxSimulation(
-        accumulatedIncome: income,
-        inputMonths: months,
-        allowanceCount: _dependentCount,
-        occupationCode: _selectedOccupation!.code,
-        isBookkeeping: false,
-        yellowUmbrellaPayment: yellowUmbrella,
-        freelancerHealthInsurance: healthIns,
-        disabledDependentCount: _disabledDependentCount,
-        hasSelfDisability: _hasSelfDisability,
-      );
-      setState(() => _freelancerResult = result);
+      final judgment = _bookkeepingJudgment;
+
+      if (judgment != null && judgment.isSimplified) {
+        // 간편장부대상자 — 가계부 실제경비(기장) vs 경비율(추계) 중 유리한 쪽을 채택.
+        final comparison = FreelancerTaxCalculator.compareBookkeepingVsEstimate(
+          accumulatedIncome: income,
+          accumulatedActualExpense: _businessExpenseAccumulated,
+          inputMonths: months,
+          allowanceCount: _dependentCount,
+          occupationCode: _selectedOccupation!.code,
+          yellowUmbrellaPayment: yellowUmbrella,
+          freelancerHealthInsurance: healthIns,
+          disabledDependentCount: _disabledDependentCount,
+          hasSelfDisability: _hasSelfDisability,
+        );
+        setState(() {
+          _bookkeepingComparison = comparison;
+          _freelancerResult = comparison.bookkeepingIsBetter ? comparison.bookkeeping : comparison.estimate;
+        });
+      } else {
+        // 복식부기의무자 등 — 비교 없이 경비율 추정만(입력 자체가 UI에서 숨겨짐).
+        final result = FreelancerTaxCalculator.calculateTaxSimulation(
+          accumulatedIncome: income,
+          inputMonths: months,
+          allowanceCount: _dependentCount,
+          occupationCode: _selectedOccupation!.code,
+          isBookkeeping: false,
+          yellowUmbrellaPayment: yellowUmbrella,
+          freelancerHealthInsurance: healthIns,
+          disabledDependentCount: _disabledDependentCount,
+          hasSelfDisability: _hasSelfDisability,
+        );
+        setState(() {
+          _bookkeepingComparison = null;
+          _freelancerResult = result;
+        });
+      }
     }
     else if (_isEmployee && _isFreelancer) {
       if (_freelancerIncomeController.text.isEmpty || _salaryController.text.isEmpty || _selectedOccupation == null) {
@@ -568,6 +601,64 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       _buildJudgmentBanner(judgment),
       const SizedBox(height: 32),
     ];
+  }
+
+  /// 간편장부(가계부 실제경비) vs 추계(경비율) 비교 카드 — 유리한 쪽에 뱃지.
+  Widget _buildBookkeepingComparisonCard() {
+    final c = _bookkeepingComparison;
+    if (c == null) return const SizedBox.shrink();
+    final bodyColor = Theme.of(context).textTheme.bodyLarge!.color!;
+    String fmt(double v) => v.toInt().toString().replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+
+    Widget column(String label, double tax, bool isBetter) => Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: isBetter ? Border.all(color: AppTheme.accentColor(context), width: 1.4) : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Expanded(child: Text(label, style: TextStyle(color: bodyColor, fontSize: 13, fontWeight: FontWeight.w700))),
+                  if (isBetter) AppTheme.blueprintBadge(context, '유리'),
+                ]),
+                const SizedBox(height: 10),
+                Text('${fmt(tax)}원', style: TextStyle(color: bodyColor, fontSize: 18, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 2),
+                Text('결정세액(지방세 포함)', style: TextStyle(color: bodyColor.withOpacity(0.5), fontSize: 11)),
+              ],
+            ),
+          ),
+        );
+
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('간편장부 vs 추계 비교', style: AppTheme.label(context)),
+          const SizedBox(height: 4),
+          Text(
+            '가계부에 기록한 사업경비(${fmt(_businessExpenseAccumulated)}원)를 실제 경비로 인정받는 간편장부와, '
+            '업종 경비율로 추정하는 추계 중 세금이 더 적은 쪽을 골랐어요.',
+            style: TextStyle(color: bodyColor.withOpacity(0.6), fontSize: 12, height: 1.5),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              column('간편장부(실제경비)', c.bookkeeping.annualTotalTax, c.bookkeepingIsBetter),
+              const SizedBox(width: 12),
+              column('추계(경비율)', c.estimate.annualTotalTax, !c.bookkeepingIsBetter),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildJudgmentBanner(BookkeepingJudgment j) {
@@ -1574,6 +1665,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                 ],
               ],
 
+              _buildBookkeepingComparisonCard(),
               _buildResultBanner(),
               
               const SizedBox(height: 16),
