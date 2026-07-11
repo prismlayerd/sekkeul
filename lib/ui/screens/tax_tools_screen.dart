@@ -5,7 +5,6 @@ import 'forms_screen.dart';
 import 'document_checklist_screen.dart';
 import 'tax_record_import_screen.dart';
 import 'correction_request_screen.dart';
-import 'combined_import_screen.dart';
 import 'tax_simulator_screen.dart';
 import 'missed_deduction_diagnosis_screen.dart';
 import 'tax_annual_report_screen.dart';
@@ -317,14 +316,10 @@ List<TaxStage> taxPipelineFor(String userType) {
 }
 
 /// 행1 — 연말정산 기록하기 (신고 준비의 입력 토대).
-/// 프리랜서는 사업소득 PDF 가져오기가 ①진단(TaxSimulatorScreen) 화면에 흡수돼
-/// 별도 기록 단계가 없다(null 반환 — 메뉴에서 통째로 숨겨짐).
+/// 프리랜서·N잡러는 근로·사업 PDF 가져오기가 모두 ①진단(TaxSimulatorScreen)
+/// 화면에 흡수돼 별도 기록 단계가 없다(null 반환 — 메뉴에서 통째로 숨겨짐).
 TaxStage? taxRecordEntryFor(String userType) {
-  if (userType == 'N잡러') {
-    return const TaxStage(title: '근로+사업 자료 기록하기', subtitle: '근로·사업 자료를 모아 합산 신고를 준비', build: _record);
-  } else if (userType == '프리랜서') {
-    return null;
-  }
+  if (userType != '직장인') return null;
   return const TaxStage(title: '연말정산 기록하기', subtitle: 'PDF 또는 직접 입력으로 회사에 안 낸 공제 기록', build: _record);
 }
 
@@ -358,10 +353,8 @@ List<TaxItem> taxQuickCalcsFor(String userType) {
 }
 
 // const 참조용 top-level 빌더.
-// ① 기록(입력): 직장인=간소화+원천, N잡러=근로+사업 합산 PDF. (프리랜서는 ①진단에 흡수됨)
-Widget _record(String u) => u == '직장인'
-    ? TaxRecordImportScreen(userType: u)
-    : CombinedImportScreen(userType: u);
+// ① 기록(입력): 직장인만. 프리랜서·N잡러는 ①진단에 흡수됨.
+Widget _record(String u) => TaxRecordImportScreen(userType: u);
 Widget _simulator(String u) => TaxSimulatorScreen(userType: u);
 Widget _missedDiagnosis(String u) => MissedDeductionDiagnosisScreen(userType: u);
 Widget _amended(String u) => CorrectionRequestScreen(userType: u);

@@ -8,6 +8,7 @@ import '../components/occupation_search_bottom_sheet.dart';
 import '../../core/parsing/pdf_text_extractor.dart';
 import '../../core/parsing/pension_income_parser.dart';
 import '../../core/parsing/freelancer_income_parser.dart';
+import '../../core/parsing/withholding_parser.dart';
 import '../../core/tax_engine/freelancer_tax.dart';
 import '../../core/tax_engine/combined_tax.dart';
 import '../../core/tax_engine/employee_tax.dart';
@@ -440,7 +441,15 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       }
     }
     else if (_isEmployee && _isFreelancer) {
-      if (_freelancerIncomeController.text.isEmpty || _salaryController.text.isEmpty || _selectedOccupation == null) {
+      final judgment = _bookkeepingJudgment;
+      final isDoubleEntry = judgment != null && !judgment.isSimplified;
+      if (_salaryController.text.isEmpty || _selectedOccupation == null) {
+        setState(() => _combinedResult = null);
+        return;
+      }
+      // 복식부기의무자는 사업소득 입력칸 자체를 숨기므로(경비율 계산 미적용),
+      // 근로소득 입력만으로도 계산이 진행되게 이 조건만 예외로 둔다.
+      if (_freelancerIncomeController.text.isEmpty && !isDoubleEntry) {
         setState(() => _combinedResult = null);
         return;
       }
@@ -468,6 +477,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       final childrenEduCnt = int.tryParse(_childrenCountController.text) ?? 0;
       final collegeEdu = double.tryParse(_collegeEduController.text) ?? 0.0;
       final collegeEduCnt = int.tryParse(_collegeCountController.text) ?? 0;
+      final laborPaidTax = double.tryParse(_paidTaxController.text) ?? 0.0;
       final result = CombinedTaxCalculator.calculateCombinedTax(
         grossIncome: salary,
         accumulatedFreelancerIncome: fIncome,
@@ -479,7 +489,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         publicTransport: 0,
         cultureExpense: 0,
         allowanceCount: _dependentCount,
-        decidedTax: 0,
+        decidedTax: laborPaidTax,
         monthlyRent: monthlyRent,
         isHomeless: true, // 월세 입력자는 무주택 가정, 소득 요건은 엔진이 게이트
         yellowUmbrellaPayment: yellowUmbrella,
@@ -869,6 +879,36 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     }
   }
 
+  /// 근로소득 원천징수영수증([별지24(1)]) PDF → 총급여·결정세액 자동 입력.
+  /// N잡러가 근로분 자료를 ①진단에서 바로 채울 수 있게 함(구 "근로+사업 자료 기록하기"
+  /// 화면의 근로 PDF 가져오기를 흡수).
+  Future<void> _pickLaborWithholdingPdf() async {
+    try {
+      final res = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+        withData: true,
+      );
+      if (res == null) return;
+      final bytes = res.files.single.bytes;
+      if (bytes == null) {
+        _toast('파일을 읽지 못했어요. 다시 선택해 주세요.');
+        return;
+      }
+      final w = parseWithholdingText(extractPdfText(bytes));
+      if (w.grossSalary <= 0) {
+        _toast('근로소득 원천징수영수증 PDF가 맞는지 확인해 주세요.');
+        return;
+      }
+      _salaryController.text = w.grossSalary.toString();
+      _paidTaxController.text = w.decidedTax.toString();
+      final f = NumberFormat('#,###');
+      _toast('총급여 ${f.format(w.grossSalary)}원을 불러왔어요');
+    } catch (_) {
+      _toast('PDF를 분석하지 못했어요. 근로소득 원천징수영수증 PDF인지 확인해 주세요.');
+    }
+  }
+
   void _toast(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -995,7 +1035,12 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       final r = _combinedResult!;
       final isRefund = r.expectedRefundOrPayment >= 0;
       final amount = r.expectedRefundOrPayment.abs().toInt();
-      return _renderBanner(isRefund, amount, r.reserveNudgeMessage);
+      final judgment = _bookkeepingJudgment;
+      final isDoubleEntry = judgment != null && !judgment.isSimplified;
+      final message = isDoubleEntry
+          ? '사업소득은 복식부기 대상이라 이 앱이 계산하지 않아요. 근로소득 관련 공제만 반영한 금액이에요 — 사업소득분은 세무사와 확인하세요.'
+          : r.reserveNudgeMessage;
+      return _renderBanner(isRefund, amount, message);
     }
 
     if (_isEmployee && !_isFreelancer) {
@@ -1142,9 +1187,14 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       isRefund = finalAmount >= 0;
     } else if (_isEmployee && _isFreelancer && _combinedResult != null) {
       final r = _combinedResult!;
+      final judgment = _bookkeepingJudgment;
+      final isDoubleEntry = judgment != null && !judgment.isSimplified;
       items = [
         {'title': '근로소득금액', 'amount': r.laborIncomeAmount},
-        {'title': '(+) 사업(프리랜서)소득금액', 'amount': r.estimatedFreelancerBusinessIncome},
+        {
+          'title': isDoubleEntry ? '(+) 사업(프리랜서)소득금액 (복식부기 — 세무사 계산 필요, 미포함)' : '(+) 사업(프리랜서)소득금액',
+          'amount': r.estimatedFreelancerBusinessIncome,
+        },
         if (r.pensionIncomeAmount > 0)
           {'title': '(+) 연금소득금액', 'amount': r.pensionIncomeAmount},
         if (r.otherIncomeAmount > 0)
@@ -1247,6 +1297,24 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                   hint: '예: 50,000,000',
                   note: '원천징수 전 세전 금액으로 입력해주세요.',
                   autoFilled: _incomeAutoFilled,
+                  trailing: _isFreelancer
+                      ? GestureDetector(
+                          onTap: _pickLaborWithholdingPdf,
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppTheme.accentColor(context), width: 1.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              Icon(Icons.upload_file_outlined, size: 13, color: AppTheme.accentColor(context)),
+                              const SizedBox(width: 5),
+                              Text('PDF로 불러오기', style: AppTheme.sans(12, AppTheme.accentColor(context), weight: FontWeight.w700)),
+                            ]),
+                          ),
+                        )
+                      : null,
                 ),
                 const SizedBox(height: 28),
 
@@ -1460,8 +1528,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         children: [
                           Row(children: [
                             Expanded(child: Text('현재까지 누적 수입', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.w600))),
-                            if (!_isEmployee)
-                              GestureDetector(
+                            GestureDetector(
                                 onTap: _pickFreelancerPdf,
                                 behavior: HitTestBehavior.opaque,
                                 child: Container(
@@ -1533,7 +1600,91 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                 Text('* 3.3% 떼기 전 금액을 입력하세요.', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 32),
 
-                // N잡러 전용: 연금소득·기타소득 (선택 입력)
+                // 프리랜서 전용: 건강보험 지역가입자 소득공제
+                if (!_isEmployee) ...[
+                  Text('건강보험 지역가입자 보험료 (전액 소득공제)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text('* 직장가입자가 아닌 경우, 납부한 건강보험료 전액이 소득공제됩니다.', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _freelancerHealthInsController,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      hintText: '0',
+                      hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.2), fontSize: 20),
+                      filled: true,
+                      fillColor: Theme.of(context).cardColor,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                      suffixText: '원',
+                      suffixStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('노란우산공제 가입', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4),
+                              Text('사업소득 4천만 이하 최대 600만원 공제', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.w500)),
+                            ],
+                          ),
+                          Switch(
+                            value: _hasYellowUmbrella,
+                            onChanged: (value) {
+                              setState(() { _hasYellowUmbrella = value; });
+                              _calculateTax();
+                            },
+                            activeColor: Theme.of(context).scaffoldBackgroundColor,
+                            activeTrackColor: Theme.of(context).textTheme.bodyLarge!.color!,
+                            inactiveThumbColor: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5),
+                            inactiveTrackColor: Theme.of(context).scaffoldBackgroundColor,
+                          ),
+                        ],
+                      ),
+                      if (_hasYellowUmbrella) ...[
+                        const SizedBox(height: 20),
+                        Divider(color: Theme.of(context).scaffoldBackgroundColor),
+                        const SizedBox(height: 20),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text('올해 총 납입 예상액', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.w600)),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _yellowUmbrellaController,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 18, fontWeight: FontWeight.bold),
+                          decoration: InputDecoration(
+                            hintText: '0',
+                            hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.2), fontSize: 18),
+                            filled: true,
+                            fillColor: Theme.of(context).scaffoldBackgroundColor,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            suffixText: '원',
+                            suffixStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                ],
+
+                // N잡러 전용: 연금소득·기타소득 등 — 근로소득 관련 항목이라 사업분
+                // 기장의무 판정(복식부기)과 무관하게 항상 노출한다("기장/추계는 사업분에만").
                 if (_isEmployee && _isFreelancer) ...[
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -1641,89 +1792,6 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                ],
-
-                // 프리랜서 전용: 건강보험 지역가입자 소득공제
-                if (!_isEmployee) ...[
-                  Text('건강보험 지역가입자 보험료 (전액 소득공제)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  Text('* 직장가입자가 아닌 경우, 납부한 건강보험료 전액이 소득공제됩니다.', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _freelancerHealthInsController,
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.bold),
-                    decoration: InputDecoration(
-                      hintText: '0',
-                      hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.2), fontSize: 20),
-                      filled: true,
-                      fillColor: Theme.of(context).cardColor,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                      suffixText: '원',
-                      suffixStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                ],
-
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('노란우산공제 가입', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 4),
-                              Text('사업소득 4천만 이하 최대 600만원 공제', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.w500)),
-                            ],
-                          ),
-                          Switch(
-                            value: _hasYellowUmbrella,
-                            onChanged: (value) {
-                              setState(() { _hasYellowUmbrella = value; });
-                              _calculateTax();
-                            },
-                            activeColor: Theme.of(context).scaffoldBackgroundColor,
-                            activeTrackColor: Theme.of(context).textTheme.bodyLarge!.color!,
-                            inactiveThumbColor: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5),
-                            inactiveTrackColor: Theme.of(context).scaffoldBackgroundColor,
-                          ),
-                        ],
-                      ),
-                      if (_hasYellowUmbrella) ...[
-                        const SizedBox(height: 20),
-                        Divider(color: Theme.of(context).scaffoldBackgroundColor),
-                        const SizedBox(height: 20),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text('올해 총 납입 예상액', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.w600)),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _yellowUmbrellaController,
-                          keyboardType: TextInputType.number,
-                          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 18, fontWeight: FontWeight.bold),
-                          decoration: InputDecoration(
-                            hintText: '0',
-                            hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.2), fontSize: 18),
-                            filled: true,
-                            fillColor: Theme.of(context).scaffoldBackgroundColor,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                            suffixText: '원',
-                            suffixStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
                 ],
               ],
 
