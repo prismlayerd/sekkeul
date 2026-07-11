@@ -1266,29 +1266,22 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     ));
   }
 
-  void _onNextPressed() {
-    if (_isFreelancer) {
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => const ExpenseCalendarScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            const begin = Offset(1.0, 0.0);
-            const end = Offset.zero;
-            const curve = Curves.easeOutCubic;
-            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-            return SlideTransition(position: animation.drive(tween), child: child);
-          },
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('직장인 데이터가 저장되었습니다! (직장인은 별도의 장부 작성이 필요하지 않습니다)'),
-          backgroundColor: Theme.of(context).cardColor,
-        ),
-      );
-    }
+  /// 보조 경로 — 프리랜서·N잡러가 실제 사업경비를 가계부에 기록하러 가는 옆길.
+  /// 기록이 쌓이면 기장(간편장부) vs 추계 비교가 정확해진다.
+  void _openLedgerForExpenses() {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const ExpenseCalendarScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeOutCubic;
+          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          return SlideTransition(position: animation.drive(tween), child: child);
+        },
+      ),
+    );
   }
 
   @override
@@ -1795,18 +1788,36 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
               _buildResultBanner(),
               
               const SizedBox(height: 16),
+              // 주 CTA — 파이프라인 ②가상신고서로. 계산 결과가 있어야 의미가 있어 게이트.
               if (_hasCalculatedResults()) ...[
                 SimulatorTossButton(
-                  text: '가상 신고서 양식 보기',
+                  text: '가상 신고서로 넘어가기',
                   onTap: _showReportForm,
                 ),
                 const SizedBox(height: 12),
               ],
-              // 토스 스타일 물리적 애니메이션이 들어간 햅틱 버튼
-              SimulatorTossButton(
-                text: '다음으로 넘어가기',
-                onTap: _onNextPressed,
-              ),
+              // 보조 경로(프리랜서·N잡러) — 실제 경비를 가계부에 기록하면 기장 vs 추계 비교가
+              // 정확해진다. 파이프라인 옆길이라 채움 버튼이 아닌 테두리 버튼으로 위계를 낮춤.
+              if (_isFreelancer) ...[
+                GestureDetector(
+                  onTap: _openLedgerForExpenses,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 17),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppTheme.lineStrong(context), width: 1.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text('가계부에 경비 기록하기',
+                        style: AppTheme.sans(15, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text('실제 사업경비를 기록하면 기장 vs 추계 비교가 더 정확해져요.',
+                    style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.4)),
+              ],
               const SizedBox(height: 40),
             ],
           ),
