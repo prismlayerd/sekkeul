@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/occupation_data.dart';
 import '../../core/data/db_helper.dart';
-import '../components/occupation_search_bottom_sheet.dart';
+import 'occupation_search_screen.dart';
+import '../components/tax_pipeline_rail.dart';
 import '../../core/parsing/pdf_text_extractor.dart';
 import '../../core/parsing/pension_income_parser.dart';
 import '../../core/parsing/freelancer_income_parser.dart';
@@ -523,7 +524,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
   }
 
   void _openOccupationSheet() async {
-    final result = await OccupationSearchBottomSheet.show(context);
+    final result = await OccupationSearchScreen.show(context);
     if (result != null) {
       setState(() => _selectedOccupation = result);
       _calculateTax();
@@ -815,6 +816,35 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           _buildAutoFilledBadge(),
         ],
       ],
+    );
+  }
+
+  /// `_field`의 밑줄 입력부만 떼어낸 것 — 라벨/레이아웃을 직접 짜는 곳(2열 배치 등)에서
+  /// 필드 시각 언어를 통일하기 위해 재사용한다(도면 스타일 헤어라인 밑줄).
+  Widget _underlineInput(TextEditingController controller, {required String hint, String suffix = '원'}) {
+    final ink = AppTheme.ink(context);
+    final sub = AppTheme.inkSecondary(context);
+    return Container(
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.lineStrong(context), width: 1.2))),
+      padding: const EdgeInsets.only(bottom: 7),
+      child: Row(children: [
+        Expanded(
+          child: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            style: AppTheme.sans(22, ink, weight: FontWeight.w700, spacing: -0.5),
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: EdgeInsets.zero,
+              border: InputBorder.none,
+              hintText: hint,
+              hintStyle: AppTheme.sans(22, AppTheme.inkTertiary(context), weight: FontWeight.w300),
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(suffix, style: AppTheme.sans(15, sub, weight: FontWeight.w600)),
+      ]),
     );
   }
 
@@ -1276,8 +1306,15 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       ),
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 4, 24, 32),
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: TaxPipelineRail(current: 1),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -1484,32 +1521,33 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
               ],
 
               if (_isFreelancer) ...[
-                Text('나의 프리랜서 업종코드', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.w600)),
+                Text('나의 프리랜서 업종코드', style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
                 const SizedBox(height: 8),
                 InkWell(
                   onTap: _openOccupationSheet,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(4),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                    decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppTheme.lineStrong(context), width: 1.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                           child: Text(
                             _selectedOccupation != null
-                                ? '${_selectedOccupation!.code} (${_selectedOccupation!.name})'
+                                ? '${_selectedOccupation!.code} · ${_selectedOccupation!.name}'
                                 : '업종코드를 검색해주세요',
-                            style: TextStyle(
-                              color: _selectedOccupation != null ? Theme.of(context).textTheme.bodyLarge!.color! : Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.3),
-                              fontSize: _selectedOccupation != null ? 16 : 18,
-                              fontWeight: _selectedOccupation != null ? FontWeight.w600 : FontWeight.bold,
-                            ),
+                            style: _selectedOccupation != null
+                                ? AppTheme.sans(15, AppTheme.ink(context), weight: FontWeight.w600, spacing: -0.2)
+                                : AppTheme.sans(15, AppTheme.inkTertiary(context)),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        Icon(Icons.search, color: Theme.of(context).textTheme.bodyLarge!.color!),
+                        const SizedBox(width: 10),
+                        Icon(Icons.search, size: 18, color: AppTheme.inkSecondary(context)),
                       ],
                     ),
                   ),
@@ -1527,7 +1565,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(children: [
-                            Expanded(child: Text('현재까지 누적 수입', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.w600))),
+                            Expanded(child: Text('현재까지 누적 수입', style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2))),
                             GestureDetector(
                                 onTap: _pickFreelancerPdf,
                                 behavior: HitTestBehavior.opaque,
@@ -1545,22 +1583,8 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                                 ),
                               ),
                           ]),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _freelancerIncomeController,
-                            keyboardType: TextInputType.number,
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.bold),
-                            decoration: InputDecoration(
-                              hintText: '30,000,000',
-                              hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.2), fontSize: 20),
-                              filled: true,
-                              fillColor: Theme.of(context).cardColor,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                              suffixText: '원',
-                              suffixStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.bold),
-                            ),
-                          ),
+                          const SizedBox(height: 12),
+                          _underlineInput(_freelancerIncomeController, hint: '30,000,000', suffix: '원'),
                           if (_incomeAutoFilled) ...[
                             const SizedBox(height: 6),
                             _buildAutoFilledBadge(),
@@ -1568,65 +1592,37 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 20),
                     Expanded(
                       flex: 1,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('일한 개월 수', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _monthsController,
-                            keyboardType: TextInputType.number,
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.bold),
-                            decoration: InputDecoration(
-                              hintText: '12',
-                              hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.2), fontSize: 20),
-                              filled: true,
-                              fillColor: Theme.of(context).cardColor,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                              suffixText: '개월',
-                              suffixStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.bold),
-                            ),
-                          ),
+                          Text('일한 개월 수', style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
+                          const SizedBox(height: 12),
+                          _underlineInput(_monthsController, hint: '12', suffix: '개월'),
                         ],
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('* 3.3% 떼기 전 금액을 입력하세요.', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500)),
+                Text('3.3% 떼기 전 금액을 입력하세요.', style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.4)),
                 const SizedBox(height: 32),
 
                 // 프리랜서 전용: 건강보험 지역가입자 소득공제
                 if (!_isEmployee) ...[
-                  Text('건강보험 지역가입자 보험료 (전액 소득공제)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.w600)),
+                  Text('건강보험 지역가입자 보험료 (전액 소득공제)', style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
                   const SizedBox(height: 4),
-                  Text('* 직장가입자가 아닌 경우, 납부한 건강보험료 전액이 소득공제됩니다.', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _freelancerHealthInsController,
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.bold),
-                    decoration: InputDecoration(
-                      hintText: '0',
-                      hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.2), fontSize: 20),
-                      filled: true,
-                      fillColor: Theme.of(context).cardColor,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                      suffixText: '원',
-                      suffixStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                  ),
+                  Text('직장가입자가 아닌 경우, 납부한 건강보험료 전액이 소득공제됩니다.', style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.4)),
+                  const SizedBox(height: 12),
+                  _underlineInput(_freelancerHealthInsController, hint: '0', suffix: '원'),
                   const SizedBox(height: 32),
                 ],
 
                 Container(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
+                  decoration: AppTheme.getCardDecoration(context),
                   child: Column(
                     children: [
                       Row(
@@ -1688,7 +1684,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                 if (_isEmployee && _isFreelancer) ...[
                   Container(
                     padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
+                    decoration: AppTheme.getCardDecoration(context),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1733,7 +1729,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
+                    decoration: AppTheme.getCardDecoration(context),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1756,7 +1752,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
+                    decoration: AppTheme.getCardDecoration(context),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1814,6 +1810,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
               const SizedBox(height: 40),
             ],
           ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -7,7 +7,7 @@ import '../../core/data/db_helper.dart';
 import '../../core/data/occupation_data.dart';
 import '../../core/tax_engine/insurance_engine.dart';
 import '../../core/notifications/reminder_scheduler.dart';
-import '../components/occupation_search_bottom_sheet.dart';
+import 'occupation_search_screen.dart';
 import '../components/amount_field.dart';
 import 'profile_input_screen.dart';
 
@@ -121,7 +121,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   }
 
   Future<void> _pickOccupation() async {
-    final result = await OccupationSearchBottomSheet.show(context);
+    final result = await OccupationSearchScreen.show(context);
     if (result == null) return;
     final changes = <String, dynamic>{'occupation_code': result.code};
     // 특고(노무제공자) 매핑 업종이 아니면 고용·산재보험은 대상이 아니라 자동으로 끈다.

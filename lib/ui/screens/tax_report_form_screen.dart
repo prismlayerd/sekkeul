@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
 import 'tax_simulator_screen.dart';
+import '../components/tax_pipeline_rail.dart';
 
 /// 가상 신고서 — 세금 계산의 하향식 흐름을 '장부' 형식으로 보여준다.
 /// 좌측 연산자 거터(− + × =)가 실제 세금 로직을 담고(structure is information),
@@ -53,8 +54,15 @@ class TaxReportFormScreen extends StatelessWidget {
       ),
       body: SafeArea(
         top: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 4, 24, 32),
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: TaxPipelineRail(current: 2),
+            ),
+            Expanded(
+              child: ListView(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
           children: [
             // ── 표제 ──
             Text('가상 신고서 · ${reportType.toUpperCase()}', style: AppTheme.label(context)),
@@ -94,6 +102,9 @@ class TaxReportFormScreen extends StatelessWidget {
                 _amendedReturnPrompt(context),
               ],
             ],
+          ],
+        ),
+            ),
           ],
         ),
       ),
