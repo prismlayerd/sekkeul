@@ -1196,7 +1196,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _tipNavigate(String key) {
     switch (key) {
       case 'record':
-        _go(taxRecordEntryFor(_userType).build(_userType));
+        final record = taxRecordEntryFor(_userType);
+        _go(record != null ? record.build(_userType) : TaxSimulatorScreen(userType: _userType));
         break;
       case 'book':
         _go(const ExpenseCalendarScreen());

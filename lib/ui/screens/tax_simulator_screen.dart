@@ -7,6 +7,7 @@ import '../../core/data/db_helper.dart';
 import '../components/occupation_search_bottom_sheet.dart';
 import '../../core/parsing/pdf_text_extractor.dart';
 import '../../core/parsing/pension_income_parser.dart';
+import '../../core/parsing/freelancer_income_parser.dart';
 import '../../core/tax_engine/freelancer_tax.dart';
 import '../../core/tax_engine/combined_tax.dart';
 import '../../core/tax_engine/employee_tax.dart';
@@ -158,6 +159,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     bool isSmeEmployee = false;
     int smeStartYear = 0;
     bool isYouthSme = false;
+    OccupationInfo? profileOccupation;
     if (profile != null) {
       final gross = profile['gross_income'] as double? ?? 0.0;
       if (gross > 0) {
@@ -183,6 +185,8 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       priorYearIncome = profile['prior_year_income'] as double? ?? 0.0;
       isNewBusiness = profile['is_new_business'] == true;
       hasMultipleBusinesses = profile['has_multiple_businesses'] == true;
+      final profileOccCode = profile['occupation_code'] as String?;
+      if (profileOccCode != null) profileOccupation = OccupationData.occupations[profileOccCode];
     }
 
     // 신용카드 연간 누적 (지출 달력 기록)
@@ -226,6 +230,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       _rentAutoFilled   = monthlyRent > 0 && _isEmployee;
       _isNewBusiness = isNewBusiness;
       _hasMultipleBusinesses = hasMultipleBusinesses;
+      if (profileOccupation != null) _selectedOccupation = profileOccupation;
       _businessExpenseAccumulated = businessExpenseTotal;
       _dependentCount = dependentCount;
       _hasSelfDisability = hasSelfDisability;
@@ -258,11 +263,14 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         // N잡러: 사업 총수입 자동기입 (진단과 동일한 총수입+업종 모델).
         put(_freelancerIncomeController, rec['bizGrossIncome']);
       }
-      // 업종코드 복원 (프리랜서 기록·N잡러 기록 공통). 진단의 경비율 계산에 쓰인다.
-      final occCode = rec['occupationCode'] as String?;
-      if (occCode != null && occCode.isNotEmpty) {
-        final occ = OccupationData.occupations[occCode];
-        if (occ != null) _selectedOccupation = occ;
+      // 업종코드 복원(레거시 N잡러 기록 전용) — 프로필의 occupation_code가 이제 단일 출처라
+      // 이미 채워져 있으면 건드리지 않는다.
+      if (_selectedOccupation == null) {
+        final occCode = rec['occupationCode'] as String?;
+        if (occCode != null && occCode.isNotEmpty) {
+          final occ = OccupationData.occupations[occCode];
+          if (occ != null) _selectedOccupation = occ;
+        }
       }
       put(_otherDependentMedicalController, rec['medical']);
       put(_donationController, rec['donation']);
@@ -509,6 +517,12 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     if (result != null) {
       setState(() => _selectedOccupation = result);
       _calculateTax();
+      // 프로필의 occupation_code에도 저장 — My Info 화면과 동일한 단일 출처라
+      // 다음에 진단을 다시 열어도 업종이 유지된다.
+      final updated = Map<String, dynamic>.from(_profileCache ?? {});
+      updated['occupation_code'] = result.code;
+      _profileCache = updated;
+      await dbService.saveProfile(updated);
     }
   }
 
@@ -823,6 +837,35 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       _toast('총연금액 ${f.format(r.grossPension)}원을 불러왔어요$settle');
     } catch (_) {
       _toast('PDF를 분석하지 못했어요. 연금소득 원천징수영수증 PDF인지 확인해 주세요.');
+    }
+  }
+
+  /// 사업소득 원천징수영수증([별지23]) PDF → 총수입금액 자동 입력.
+  /// 구 "사업소득 기록하기" 화면의 PDF 가져오기를 진단에 흡수한 것 — 값은 그대로
+  /// 진단 입력(누적 수입)에 채워 넣고, 소득금액·세액은 진단 엔진(경비율/기장 비교)이 재계산한다.
+  Future<void> _pickFreelancerPdf() async {
+    try {
+      final res = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+        withData: true,
+      );
+      if (res == null) return;
+      final bytes = res.files.single.bytes;
+      if (bytes == null) {
+        _toast('파일을 읽지 못했어요. 다시 선택해 주세요.');
+        return;
+      }
+      final r = parseFreelancerText(extractPdfText(bytes));
+      if (r.grossIncome <= 0) {
+        _toast('사업소득 원천징수영수증 PDF가 맞는지 확인해 주세요.');
+        return;
+      }
+      _freelancerIncomeController.text = r.grossIncome.toString();
+      final f = NumberFormat('#,###');
+      _toast('총수입 ${f.format(r.grossIncome)}원을 불러왔어요');
+    } catch (_) {
+      _toast('PDF를 분석하지 못했어요. 사업소득 원천징수영수증 PDF인지 확인해 주세요.');
     }
   }
 
@@ -1415,7 +1458,26 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('현재까지 누적 수입', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.w600)),
+                          Row(children: [
+                            Expanded(child: Text('현재까지 누적 수입', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.w600))),
+                            if (!_isEmployee)
+                              GestureDetector(
+                                onTap: _pickFreelancerPdf,
+                                behavior: HitTestBehavior.opaque,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: AppTheme.accentColor(context), width: 1.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                    Icon(Icons.upload_file_outlined, size: 13, color: AppTheme.accentColor(context)),
+                                    const SizedBox(width: 5),
+                                    Text('PDF로 불러오기', style: AppTheme.sans(12, AppTheme.accentColor(context), weight: FontWeight.w700)),
+                                  ]),
+                                ),
+                              ),
+                          ]),
                           const SizedBox(height: 8),
                           TextField(
                             controller: _freelancerIncomeController,
