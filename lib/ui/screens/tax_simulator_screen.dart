@@ -1262,6 +1262,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         items: items,
         finalAmount: finalAmount,
         isRefund: isRefund,
+        userType: widget.userType,
       ),
     ));
   }

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
 import 'tax_simulator_screen.dart';
+import 'tax_annual_report_screen.dart';
 import '../components/tax_pipeline_rail.dart';
 
 /// 가상 신고서 — 세금 계산의 하향식 흐름을 '장부' 형식으로 보여준다.
@@ -96,8 +97,19 @@ class TaxReportFormScreen extends StatelessWidget {
                 '※ 세끌 계산 결과로 만든 가상 양식이에요. 실제 신고 시 금액이 달라질 수 있어요.',
                 style: AppTheme.sans(12, tert, height: 1.5),
               ),
-              // 종합소득세 신고서 작성 후 → 지난 연도 경정청구로 안내 (보조 도구)
               if (reportType == '종합소득세') ...[
+                // 주 CTA — 파이프라인 ③홈택스 가이드로. 위 숫자를 홈택스 화면 순서대로 안내.
+                const SizedBox(height: 24),
+                SimulatorTossButton(
+                  text: '홈택스 신고 가이드로 넘어가기',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TaxAnnualReportScreen(userType: userType ?? '직장인'),
+                    ),
+                  ),
+                ),
+                // 경정청구(보조 도구) — 지난 연도 소급 환급 경로. 5월 정기 신고와 별개.
                 const SizedBox(height: 22),
                 _amendedReturnPrompt(context),
               ],
