@@ -223,15 +223,11 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 소득 달력의 이번 달 기록을 홈 카드에 반영 (기록이 source of truth)
   Future<void> _loadCurrentMonthIncome() async {
     final now = DateTime.now();
-    final incomes = await dbService.getMonthlyIncomesForYear(now.year);
-    final amount = incomes[now.month];
-    if (amount != null && amount > 0 && mounted) {
-      setState(() {
-        _activeIncomeController.text = _numberFormat.format(amount.toInt());
-      });
-    }
-    // 근로소득(급여) / 기타 수익 분리 — N잡러 수입 카드용 (income_entries = SSOT)
-    final entries = await dbService.getIncomeEntriesForMonth(now.year, now.month);
+    // 근로소득(급여) / 기타 수익 분리 — N잡러 수입 카드용 (income_entries = SSOT).
+    // 헤드라인 표시값도 유형별로 필터링된 이 합산에서 직접 계산한다(과거엔 유형 구분 없이
+    // 전체 합산하는 monthly_income_records 캐시를 썼는데, 다른 유형으로 기록한 값까지
+    // 섞여 보이는 문제가 있었다).
+    final entries = await dbService.getIncomeEntriesForMonth(now.year, now.month, userType: _userType);
     double labor = 0, other = 0, otherGross = 0;
     for (final e in entries) {
       if (e.incomeType == '급여') {
@@ -243,8 +239,12 @@ class _HomeScreenState extends State<HomeScreen> {
         otherGross += e.amount / divisor;
       }
     }
+    final total = labor + other;
     if (mounted) {
       setState(() {
+        if (total > 0) {
+          _activeIncomeController.text = _numberFormat.format(total.toInt());
+        }
         _laborIncome = labor;
         _otherIncome = other;
         _otherIncomeGrossEstimate = otherGross;
@@ -252,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     if (!kIsWeb && _notificationsEnabled) {
       final prevMonth = now.month == 1 ? DateTime(now.year - 1, 12) : DateTime(now.year, now.month - 1);
-      final prevEntries = await dbService.getIncomeEntriesForMonth(prevMonth.year, prevMonth.month);
+      final prevEntries = await dbService.getIncomeEntriesForMonth(prevMonth.year, prevMonth.month, userType: _userType);
       DateTime? lastIncomeDate;
       for (final e in [...entries, ...prevEntries]) {
         final eEnd = e.endDate ?? e.date;
@@ -263,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     if (!kIsWeb && _notificationsEnabled && (_userType == '프리랜서' || _userType == 'N잡러')) {
       final estimate = await ReserveEstimator.estimateForCurrentMonth(userType: _userType);
-      final allExpenses = await dbService.getExpenses();
+      final allExpenses = await dbService.getExpenses(userType: _userType);
       final reservedThisMonth = allExpenses
           .where((x) => x.category == '보험/금융' && x.date.year == now.year && x.date.month == now.month)
           .fold<double>(0, (s, x) => s + x.amount);
@@ -319,7 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
             behavior: HitTestBehavior.opaque,
             onTap: () async {
               final changed = await Navigator.push<bool>(
-                  context, MaterialPageRoute(builder: (_) => const AnnualBackfillScreen()));
+                  context, MaterialPageRoute(builder: (_) => AnnualBackfillScreen(userType: _userType)));
               if (changed == true) {
                 await _loadMonthlyExpenses();
                 await _loadCurrentMonthIncome();
@@ -355,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen> {
         : DateTime(now.year, now.month + 1, 1);
     final lastOfMonth = nextMonth.subtract(const Duration(days: 1));
 
-    final all = await dbService.getExpenses();
+    final all = await dbService.getExpenses(userType: _userType);
     final firstOfYear = DateTime(now.year, 1, 1);
     double credit = 0.0;
     double debit = 0.0;
@@ -572,6 +572,44 @@ class _HomeScreenState extends State<HomeScreen> {
     _startBannerRotation();
     _saveProfileToDB();
     _refreshReminders(); // 유형별 시즌 알림 재예약
+    _loadCurrentMonthIncome();
+    _loadMonthlyExpenses();
+  }
+
+  /// 유형 탭 전환 확인 — 가계부는 유형별로 분리되므로(과거 공통 기록은 계속 보임),
+  /// 전환 전에 "지금부터 기록이 어떻게 나뉘는지" 인지시키고 확인받는다.
+  Future<void> _confirmAndSwitchUserType(String newType) async {
+    if (newType == _userType) return;
+    final hasOwnHistory = await dbService.hasOwnLedgerHistory(newType);
+    if (!mounted) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Text('$_userType에서 $newType(으)로 전환할까요?',
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontWeight: FontWeight.bold)),
+          content: Text(
+            hasOwnHistory
+                ? '이전에 $newType(으)로 기록했던 가계부가 있어요. 이어서 보여드릴게요.'
+                : '지금부터 가계부에 적는 내용은 $newType 전용으로 따로 쌓여요. 지금까지 기록한 내용은 공통으로 계속 보여요.',
+            style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('취소', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('전환', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed == true) _setUserType(newType);
   }
 
   void _calculateTax() {
@@ -1706,7 +1744,7 @@ class _HomeScreenState extends State<HomeScreen> {
           return Padding(
             padding: const EdgeInsets.only(right: 20),
             child: GestureDetector(
-              onTap: () => _setUserType(type),
+              onTap: () => _confirmAndSwitchUserType(type),
               behavior: HitTestBehavior.opaque,
               child: Column(
                 mainAxisSize: MainAxisSize.min,

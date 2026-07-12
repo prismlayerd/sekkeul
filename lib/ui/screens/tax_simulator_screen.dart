@@ -167,8 +167,12 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       if (gross > 0) {
         annualIncome = gross;
       } else {
-        final monthly = await dbService.getMonthlyIncomesForYear(now.year);
-        annualIncome = monthly.values.fold(0.0, (a, b) => a + b);
+        // 유형별로 필터링된 달력 기록 합산 — 다른 유형으로 기록한 소득이 섞이지 않도록
+        // monthly_income_records(유형 미분리 캐시) 대신 income_entries를 직접 월별 합산한다.
+        for (int m = 1; m <= 12; m++) {
+          final monthEntries = await dbService.getIncomeEntriesForMonth(now.year, m, userType: widget.userType);
+          annualIncome += monthEntries.fold(0.0, (a, e) => a + e.amount);
+        }
       }
       dependentCount = profile['dependents'] as int? ?? 0;
       hasSelfDisability = profile['has_self_disability'] == true;
@@ -192,7 +196,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     }
 
     // 신용카드 연간 누적 (지출 달력 기록)
-    final expenses = await dbService.getExpenses();
+    final expenses = await dbService.getExpenses(userType: widget.userType);
     double creditTotal = 0.0;
     double businessExpenseTotal = 0.0;
     for (final e in expenses) {

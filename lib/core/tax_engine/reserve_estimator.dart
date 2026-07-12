@@ -58,7 +58,7 @@ class ReserveEstimator {
     double thisMonthOtherIncome = 0;
 
     for (int m = 1; m <= now.month; m++) {
-      final entries = await dbService.getIncomeEntriesForMonth(now.year, m);
+      final entries = await dbService.getIncomeEntriesForMonth(now.year, m, userType: userType);
       for (final e in entries) {
         switch (e.incomeType) {
           case '사업소득':
@@ -83,7 +83,7 @@ class ReserveEstimator {
       }
     }
 
-    final allExpenses = await dbService.getExpenses();
+    final allExpenses = await dbService.getExpenses(userType: userType);
     final thisMonthBusinessExpense = allExpenses
         .where((x) => x.isBusiness && x.date.year == now.year && x.date.month == now.month)
         .fold<double>(0, (s, x) => s + x.amount);

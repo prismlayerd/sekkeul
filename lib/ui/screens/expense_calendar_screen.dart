@@ -153,15 +153,15 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final typeValues = await dbService.getProfileTypeValues(loadedType);
     final target = typeValues['expense_target']!.toInt();
     final grossIncome = typeValues['gross_income']!.toInt();
-    final allExpenses = await dbService.getExpenses();
-    final allIncome   = await dbService.getIncomeEntriesForMonth(_year, _month);
+    final allExpenses = await dbService.getExpenses(userType: loadedType);
+    final allIncome   = await dbService.getIncomeEntriesForMonth(_year, _month, userType: loadedType);
     final pendingCount = await dbService.getPendingRecurringCount(_year, _month);
     final paydayDay = (profile?['pay_day'] as int? ?? 25).clamp(1, 31);
     final cardDates = await dbService.getCardPaymentDates();
 
     // 연간 수입: 12개월 병렬 로드
     final incFutures = List.generate(
-        12, (i) => dbService.getIncomeEntriesForMonth(_year, i + 1));
+        12, (i) => dbService.getIncomeEntriesForMonth(_year, i + 1, userType: loadedType));
     final incResults = await Future.wait(incFutures);
     final annualInc = <int, int>{};
     for (int m = 0; m < 12; m++) {

@@ -347,25 +347,29 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
       await dbService.insertIncomeEntry(IncomeEntry(
         id: '${prefix}_inc', date: first, endDate: endDate, amount: inc, memo: '',
         incomeType: _incomeType,
-        isWithheld: _profile.tracksBusinessExpense && _incomeType != '급여' && _incomeIsWithheld));
+        isWithheld: _profile.tracksBusinessExpense && _incomeType != '급여' && _incomeIsWithheld,
+        userType: widget.userType));
     }
     if (cr > 0) {
       await dbService.insertExpense(ExpenseItem(
         id: '${prefix}_cr', date: first, endDate: endDate, amount: cr,
         content: '', category: _creditCategory, paymentMethod: _catCredit,
-        isBusiness: _profile.tracksBusinessExpense && _creditIsBusiness));
+        isBusiness: _profile.tracksBusinessExpense && _creditIsBusiness,
+        userType: widget.userType));
     }
     if (db > 0) {
       await dbService.insertExpense(ExpenseItem(
         id: '${prefix}_db', date: first, endDate: endDate, amount: db,
         content: '', category: _debitCategory, paymentMethod: _catDebit,
-        isBusiness: _profile.tracksBusinessExpense && _debitIsBusiness));
+        isBusiness: _profile.tracksBusinessExpense && _debitIsBusiness,
+        userType: widget.userType));
     }
     if (ot > 0) {
       await dbService.insertExpense(ExpenseItem(
         id: '${prefix}_ot', date: first, endDate: endDate, amount: ot,
         content: '', category: _otherCategory, paymentMethod: _catOther,
-        isBusiness: _profile.tracksBusinessExpense && _otherIsBusiness));
+        isBusiness: _profile.tracksBusinessExpense && _otherIsBusiness,
+        userType: widget.userType));
     }
 
     if (mounted) Navigator.pop(context);

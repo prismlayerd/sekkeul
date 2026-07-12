@@ -172,7 +172,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       });
     }
 
-    final expenses = await dbService.getExpenses();
+    final expenses = await dbService.getExpenses(userType: widget.userType);
     if (expenses.isNotEmpty && mounted) {
       int creditTotal = 0;
       int debitTotal = 0;

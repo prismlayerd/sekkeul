@@ -18,9 +18,11 @@ abstract class DatabaseService {
   Future<void> setProfileTypeValues(String userType, {double? grossIncome, double? expenseTarget});
   Future<Map<String, double>> getProfileTypeValues(String userType);
   Future<void> insertExpense(ExpenseItem item);
-  Future<List<ExpenseItem>> getExpenses();
+  Future<List<ExpenseItem>> getExpenses({String? userType});
   Future<void> deleteExpense(String id);
   Future<void> updateExpense(ExpenseItem item);
+  // 유형 전환 확인 다이얼로그용 — 해당 유형으로 "전용" 태깅된 기록이 하나라도 있는지.
+  Future<bool> hasOwnLedgerHistory(String userType);
   Future<void> insertTaxRecord(Map<String, dynamic> record);
   Future<List<Map<String, dynamic>>> getTaxRecords();
   Future<void> saveBannerHideTime(String bannerId, int hideUntilEpoch);
@@ -31,7 +33,7 @@ abstract class DatabaseService {
   Future<void> deleteMonthlyIncome(int year, int month);
   // 일별 수입 기록 (v14)
   Future<void> insertIncomeEntry(IncomeEntry entry);
-  Future<List<IncomeEntry>> getIncomeEntriesForMonth(int year, int month);
+  Future<List<IncomeEntry>> getIncomeEntriesForMonth(int year, int month, {String? userType});
   Future<void> updateIncomeEntry(IncomeEntry entry);
   Future<void> deleteIncomeEntry(String id, int year, int month);
   // ②진단 결과(가상 신고서 draft) 영속화 → ③에서 자동기입
@@ -237,7 +239,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
 
     _db = await openDatabase(
       path,
-      version: 34,
+      version: 35,
       onCreate: (db, version) async {
         // 프로필 테이블 생성
         await db.execute('''
@@ -293,7 +295,8 @@ class SqfliteDatabaseHelper implements DatabaseService {
             content TEXT,
             category TEXT,
             payment_method TEXT,
-            is_business INTEGER DEFAULT 0
+            is_business INTEGER DEFAULT 0,
+            user_type TEXT
           )
         ''');
         // 세무 기록부 테이블 생성
@@ -342,7 +345,8 @@ class SqfliteDatabaseHelper implements DatabaseService {
             amount TEXT,
             memo TEXT,
             income_type TEXT,
-            is_withheld INTEGER DEFAULT 0
+            is_withheld INTEGER DEFAULT 0,
+            user_type TEXT
           )
         ''');
         // ②진단 결과(가상 신고서 draft) — user_type별 1건
@@ -668,6 +672,16 @@ class SqfliteDatabaseHelper implements DatabaseService {
             await db.execute('ALTER TABLE user_profile ADD COLUMN has_multiple_businesses INTEGER DEFAULT 0');
           } catch (e) {}
         }
+        // 가계부 유형별 분리 — 기존 기록은 user_type NULL(공통)로 남고, 앞으로 새로 적는
+        // 기록부터 현재 선택된 유형으로 태깅된다 (v35).
+        if (oldVersion < 35) {
+          try {
+            await db.execute('ALTER TABLE expenses ADD COLUMN user_type TEXT');
+          } catch (e) {}
+          try {
+            await db.execute('ALTER TABLE income_entries ADD COLUMN user_type TEXT');
+          } catch (e) {}
+        }
       },
     );
   }
@@ -841,17 +855,21 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'category': encryptedCategory,
         'payment_method': encryptedPayment,
         'is_business': item.isBusiness ? 1 : 0,
+        'user_type': item.userType,
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
   @override
-  Future<List<ExpenseItem>> getExpenses() async {
+  Future<List<ExpenseItem>> getExpenses({String? userType}) async {
     final db = _db;
     if (db == null) return [];
 
-    final List<Map<String, dynamic>> maps = await db.query('expenses');
+    final List<Map<String, dynamic>> maps = userType == null
+        ? await db.query('expenses')
+        : await db.query('expenses',
+            where: 'user_type = ? OR user_type IS NULL', whereArgs: [userType]);
     final List<ExpenseItem> list = [];
 
     for (final map in maps) {
@@ -879,6 +897,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
           category: decryptedCategory,
           paymentMethod: paymentMethod,
           isBusiness: (map['is_business'] as int?) == 1,
+          userType: map['user_type'] as String?,
         ));
       } catch (e) {
         // 복호화 실패 등 예외 시 무시
@@ -912,6 +931,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'category': encryptedCategory,
         'payment_method': encryptedPayment,
         'is_business': item.isBusiness ? 1 : 0,
+        'user_type': item.userType,
       },
       where: 'id = ?',
       whereArgs: [item.id],
@@ -932,6 +952,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'memo': CryptoHelper.encrypt(entry.memo),
         'income_type': CryptoHelper.encrypt(entry.incomeType),
         'is_withheld': entry.isWithheld ? 1 : 0,
+        'user_type': entry.userType,
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -939,10 +960,13 @@ class SqfliteDatabaseHelper implements DatabaseService {
   }
 
   @override
-  Future<List<IncomeEntry>> getIncomeEntriesForMonth(int year, int month) async {
+  Future<List<IncomeEntry>> getIncomeEntriesForMonth(int year, int month, {String? userType}) async {
     final db = _db;
     if (db == null) return [];
-    final rows = await db.query('income_entries');
+    final rows = userType == null
+        ? await db.query('income_entries')
+        : await db.query('income_entries',
+            where: 'user_type = ? OR user_type IS NULL', whereArgs: [userType]);
     final result = <IncomeEntry>[];
     for (final row in rows) {
       try {
@@ -957,6 +981,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
           memo: CryptoHelper.decrypt(row['memo'] as String),
           incomeType: CryptoHelper.decrypt(row['income_type'] as String),
           isWithheld: (row['is_withheld'] as int?) == 1,
+          userType: row['user_type'] as String?,
         ));
       } catch (_) {}
     }
@@ -977,6 +1002,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'memo': CryptoHelper.encrypt(entry.memo),
         'income_type': CryptoHelper.encrypt(entry.incomeType),
         'is_withheld': entry.isWithheld ? 1 : 0,
+        'user_type': entry.userType,
       },
       where: 'id = ?',
       whereArgs: [entry.id],
@@ -990,6 +1016,18 @@ class SqfliteDatabaseHelper implements DatabaseService {
     if (db == null) return;
     await db.delete('income_entries', where: 'id = ?', whereArgs: [id]);
     await _recalcMonthlyIncome(db, year, month);
+  }
+
+  @override
+  Future<bool> hasOwnLedgerHistory(String userType) async {
+    final db = _db;
+    if (db == null) return false;
+    final expenseRows = await db.query('expenses',
+        where: 'user_type = ?', whereArgs: [userType], limit: 1);
+    if (expenseRows.isNotEmpty) return true;
+    final incomeRows = await db.query('income_entries',
+        where: 'user_type = ?', whereArgs: [userType], limit: 1);
+    return incomeRows.isNotEmpty;
   }
 
   Future<void> _recalcMonthlyIncome(Database db, int year, int month) async {
@@ -1660,15 +1698,18 @@ class InMemoryDatabaseHelper implements DatabaseService {
       'category': encryptedCategory,
       'payment_method': encryptedPayment,
       'is_business': item.isBusiness,
+      'user_type': item.userType,
     };
   }
 
   @override
-  Future<List<ExpenseItem>> getExpenses() async {
+  Future<List<ExpenseItem>> getExpenses({String? userType}) async {
     if (_isClosed) return [];
 
     final List<ExpenseItem> list = [];
     for (final raw in _expenses.values) {
+      final rawUserType = raw['user_type'] as String?;
+      if (userType != null && rawUserType != null && rawUserType != userType) continue;
       final String decryptedAmountStr = CryptoHelper.decrypt(raw['amount'] as String);
       final String decryptedContent = CryptoHelper.decrypt(raw['content'] as String);
       final String decryptedCategory = CryptoHelper.decrypt(raw['category'] as String);
@@ -1688,6 +1729,7 @@ class InMemoryDatabaseHelper implements DatabaseService {
         category: decryptedCategory,
         paymentMethod: paymentMethod,
         isBusiness: raw['is_business'] as bool? ?? false,
+        userType: rawUserType,
       ));
     }
     return list;
@@ -1755,10 +1797,11 @@ class InMemoryDatabaseHelper implements DatabaseService {
   }
 
   @override
-  Future<List<IncomeEntry>> getIncomeEntriesForMonth(int year, int month) async {
+  Future<List<IncomeEntry>> getIncomeEntriesForMonth(int year, int month, {String? userType}) async {
     if (_isClosed) return [];
     return _incomeEntries
         .where((e) => e.date.year == year && e.date.month == month)
+        .where((e) => userType == null || e.userType == null || e.userType == userType)
         .toList()
       ..sort((a, b) => b.date.compareTo(a.date));
   }
@@ -1776,6 +1819,13 @@ class InMemoryDatabaseHelper implements DatabaseService {
     if (_isClosed) return;
     _incomeEntries.removeWhere((e) => e.id == id);
     _recalcMonthlyIncomeInMemory(year, month);
+  }
+
+  @override
+  Future<bool> hasOwnLedgerHistory(String userType) async {
+    if (_isClosed) return false;
+    if (_expenses.values.any((raw) => raw['user_type'] == userType)) return true;
+    return _incomeEntries.any((e) => e.userType == userType);
   }
 
   void _recalcMonthlyIncomeInMemory(int year, int month) {

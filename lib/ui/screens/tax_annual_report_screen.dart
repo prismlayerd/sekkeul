@@ -115,7 +115,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       }
 
       // 연간 지출 합산 (지출 달력 + expenses 테이블)
-      final expenses = await dbService.getExpenses();
+      final expenses = await dbService.getExpenses(userType: widget.userType);
       double credit = 0.0;
       double debit = 0.0;
       for (final e in expenses) {

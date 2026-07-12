@@ -130,6 +130,7 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
           category: t.category,
           paymentMethod: t.paymentMethod,
           isBusiness: _localIsBusiness[t.id] ?? t.isBusiness,
+          userType: _userType,
         ));
         await dbService.confirmRecurring(t.id, widget.year, widget.month,
             amount: amount, expenseId: expenseId);

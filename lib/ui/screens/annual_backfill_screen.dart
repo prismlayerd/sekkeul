@@ -8,7 +8,9 @@ import '../theme/app_theme.dart';
 /// 연중 가입 사용자를 위한 1~N월 소급 입력 — 간단히 결제수단·소득유형별 총액만 받는다.
 /// 실제 expenses/income_entries에 매달 1건씩 기록(카테고리는 세분화하지 않음).
 class AnnualBackfillScreen extends StatefulWidget {
-  const AnnualBackfillScreen({super.key});
+  final String userType;
+
+  const AnnualBackfillScreen({super.key, required this.userType});
 
   @override
   State<AnnualBackfillScreen> createState() => _AnnualBackfillScreenState();
@@ -38,11 +40,11 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
 
   Future<void> _load() async {
     final now = DateTime.now();
-    final allExpenses = await dbService.getExpenses();
+    final allExpenses = await dbService.getExpenses(userType: widget.userType);
     final rows = <_MonthRow>[];
     for (int m = 1; m < now.month; m++) {
       final hasExpense = allExpenses.any((e) => e.date.year == now.year && e.date.month == m);
-      final incomeEntries = await dbService.getIncomeEntriesForMonth(now.year, m);
+      final incomeEntries = await dbService.getIncomeEntriesForMonth(now.year, m, userType: widget.userType);
       rows.add(_MonthRow(m, hasExpense || incomeEntries.isNotEmpty));
     }
     if (mounted) setState(() { _rows = rows; _loading = false; });
@@ -64,32 +66,38 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
       if (labor > 0) {
         await dbService.insertIncomeEntry(IncomeEntry(
             id: 'backfill_${now.year}_${row.month}_labor',
-            date: date, amount: labor, memo: '소급 입력', incomeType: '급여'));
+            date: date, amount: labor, memo: '소급 입력', incomeType: '급여',
+            userType: widget.userType));
       }
       if (business > 0) {
         await dbService.insertIncomeEntry(IncomeEntry(
             id: 'backfill_${now.year}_${row.month}_business',
-            date: date, amount: business, memo: '소급 입력', incomeType: '사업소득'));
+            date: date, amount: business, memo: '소급 입력', incomeType: '사업소득',
+            userType: widget.userType));
       }
       if (other > 0) {
         await dbService.insertIncomeEntry(IncomeEntry(
             id: 'backfill_${now.year}_${row.month}_other',
-            date: date, amount: other, memo: '소급 입력', incomeType: '기타소득'));
+            date: date, amount: other, memo: '소급 입력', incomeType: '기타소득',
+            userType: widget.userType));
       }
       if (credit > 0) {
         await dbService.insertExpense(ExpenseItem(
             id: 'backfill_${now.year}_${row.month}_credit',
-            date: date, amount: credit, content: '소급 입력', category: '기타', paymentMethod: '신용카드'));
+            date: date, amount: credit, content: '소급 입력', category: '기타', paymentMethod: '신용카드',
+            userType: widget.userType));
       }
       if (debit > 0) {
         await dbService.insertExpense(ExpenseItem(
             id: 'backfill_${now.year}_${row.month}_debit',
-            date: date, amount: debit, content: '소급 입력', category: '기타', paymentMethod: '체크+현금'));
+            date: date, amount: debit, content: '소급 입력', category: '기타', paymentMethod: '체크+현금',
+            userType: widget.userType));
       }
       if (etc > 0) {
         await dbService.insertExpense(ExpenseItem(
             id: 'backfill_${now.year}_${row.month}_etc',
-            date: date, amount: etc, content: '소급 입력', category: '기타', paymentMethod: '기타'));
+            date: date, amount: etc, content: '소급 입력', category: '기타', paymentMethod: '기타',
+            userType: widget.userType));
       }
     }
     await dbService.setAppState('annual_backfill_done_${now.year}', 'true');
