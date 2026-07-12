@@ -1189,13 +1189,6 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     );
   }
 
-  bool _hasCalculatedResults() {
-    if (_isFreelancer && !_isEmployee) return _freelancerResult != null;
-    if (_isEmployee && _isFreelancer) return _combinedResult != null;
-    if (_isEmployee && !_isFreelancer) return _employeeTotalRefund > 0 || _employeeRentResult != null;
-    return false;
-  }
-
   void _showReportForm() {
     String reportType = '종합소득세';
     List<Map<String, dynamic>> items = [];
@@ -1790,13 +1783,13 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
               
               const SizedBox(height: 16),
               // 주 CTA — 파이프라인 ②가상신고서로. 계산 결과가 있어야 의미가 있어 게이트.
-              if (_hasCalculatedResults()) ...[
-                SimulatorTossButton(
-                  text: '가상 신고서로 넘어가기',
-                  onTap: _showReportForm,
-                ),
-                const SizedBox(height: 12),
-              ],
+              // 주 CTA — 파이프라인 다음 단계(②가상신고서). 계산 결과가 아직 없어도 항상
+              // 노출한다(과거엔 결과 없으면 숨겨져 가계부 버튼만 남아 앞으로 갈 길이 안 보였음).
+              SimulatorTossButton(
+                text: '가상 신고서로 넘어가기',
+                onTap: _showReportForm,
+              ),
+              const SizedBox(height: 12),
               // 보조 경로(프리랜서·N잡러) — 실제 경비를 가계부에 기록하면 기장 vs 추계 비교가
               // 정확해진다. 파이프라인 옆길이라 채움 버튼이 아닌 테두리 버튼으로 위계를 낮춤.
               if (_isFreelancer) ...[

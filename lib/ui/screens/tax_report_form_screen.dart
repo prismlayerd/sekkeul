@@ -97,8 +97,10 @@ class TaxReportFormScreen extends StatelessWidget {
                 '※ 세끌 계산 결과로 만든 가상 양식이에요. 실제 신고 시 금액이 달라질 수 있어요.',
                 style: AppTheme.sans(12, tert, height: 1.5),
               ),
+              // 주 CTA — 파이프라인 ③홈택스 가이드로. 위 숫자를 홈택스 화면 순서대로 안내.
+              // (경정청구는 세무 도구 메뉴의 "경정청구 준비하기"로 분리 — 5월 정기 신고
+              //  흐름과 성격이 달라 여기 인라인하지 않는다.)
               if (reportType == '종합소득세') ...[
-                // 주 CTA — 파이프라인 ③홈택스 가이드로. 위 숫자를 홈택스 화면 순서대로 안내.
                 const SizedBox(height: 24),
                 SimulatorTossButton(
                   text: '홈택스 신고 가이드로 넘어가기',
@@ -109,59 +111,11 @@ class TaxReportFormScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                // 경정청구(보조 도구) — 지난 연도 소급 환급 경로. 5월 정기 신고와 별개.
-                const SizedBox(height: 22),
-                _amendedReturnPrompt(context),
               ],
             ],
           ],
         ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 종합소득세 신고서 작성 후 문맥 프롬프트 — "이전 연도에도 받을 게 있었네?"
-  /// 시점에 경정청구(보조 도구)로 안내. 5월 정기 신고와 별개의 5년 내 소급 경로.
-  Widget _amendedReturnPrompt(BuildContext context) {
-    final ink = AppTheme.ink(context);
-    final sub = AppTheme.inkSecondary(context);
-    final tert = AppTheme.inkTertiary(context);
-    final accent = AppTheme.accentColor(context);
-    return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (_) => TaxSimulatorScreen(userType: userType ?? '직장인')),
-      ),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppTheme.line(context), width: 1),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(width: 3, height: 36, color: accent),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('이전 연도에도 받을 게 있었나요?',
-                      style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
-                  const SizedBox(height: 5),
-                  Text('최근 5년 안에 낸 신고에서 놓친 공제는 경정청구로 더 돌려받을 수 있어요.',
-                      style: AppTheme.sans(12, sub, height: 1.45)),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(Icons.chevron_right_rounded, color: tert, size: 20),
           ],
         ),
       ),
