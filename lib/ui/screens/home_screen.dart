@@ -819,25 +819,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
 
-        // ── N잡러: 근로소득 / 다른소득 — 헤드라인은 근로소득만 반영하므로
-        // 다른소득을 작은 칩이 아니라 대등한 비중으로 나란히 보여준다.
-        if (_userType == 'N잡러' && (_laborIncome + _otherIncome) > 0) ...[
-          const SizedBox(height: 12),
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            _spendChip('근로소득', _laborIncome),
-            const SizedBox(width: 8),
-            _otherIncomeChip(),
-          ]),
+        // ── N잡러: 다른소득 — 근로소득 헤드라인과 대등한 크기의 별도 헤드라인으로
+        // 보여준다(작은 칩이면 근로소득 숫자만 눈에 띄어 총수입으로 오독할 위험).
+        if (_userType == 'N잡러' && _otherIncome > 0) ...[
+          const SizedBox(height: 20),
+          _otherIncomeHeadline(),
         ]
-        // N잡러인데 분리 기록이 없으면 0원 칩을 항상 노출 + 나눠 기록 동선.
+        // N잡러인데 분리 기록이 없으면 나눠 기록 동선만 노출.
         else if (_userType == 'N잡러' && monthlyIncome > 0) ...[
           const SizedBox(height: 12),
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            _spendChip('근로소득', _laborIncome),
-            const SizedBox(width: 8),
-            _otherIncomeChip(),
-          ]),
-          const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
@@ -1130,30 +1120,38 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// N잡러의 "기타 수익" 칩 — 탭하면 세전 환산으로 페이드 전환(사업/기타소득만 원천징수 역산 가능,
-  /// 근로소득은 간이세액표 기반이라 역산 불가라서 이 칩에만 붙인다).
-  Widget _otherIncomeChip() {
-    return GestureDetector(
-      onTap: _otherIncome > 0
-          ? () => setState(() => _showOtherIncomeGross = !_showOtherIncomeGross)
-          : null,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppTheme.line(context), width: 1),
-          borderRadius: BorderRadius.circular(2),
-        ),
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
-          child: Text(
-            _showOtherIncomeGross
-                ? '다른소득(세전) ${_toWon(_otherIncomeGrossEstimate)}'
-                : '다른소득 ${_toWon(_otherIncome)}',
-            key: ValueKey(_showOtherIncomeGross),
-            style: AppTheme.sans(12, AppTheme.inkSecondary(context), weight: FontWeight.w500),
+  /// N잡러의 "다른소득" 헤드라인 — 근로소득 헤드라인과 대등한 크기로 보여준다(작은 칩이면
+  /// 근로소득 숫자만 눈에 띄어 "이게 내 총수입"으로 오독할 위험이 있어 승격, 2026-07-12).
+  /// 탭하면 세전 환산으로 페이드 전환(사업/기타소득만 원천징수 역산 가능,
+  /// 근로소득은 간이세액표 기반이라 역산 불가라서 이 블록에만 붙인다).
+  Widget _otherIncomeHeadline() {
+    final ink = AppTheme.ink(context);
+    final tert = AppTheme.inkTertiary(context);
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          GestureDetector(
+            onTap: () => setState(() => _showOtherIncomeGross = !_showOtherIncomeGross),
+            behavior: HitTestBehavior.opaque,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              child: Text(
+                _toWon(_showOtherIncomeGross ? _otherIncomeGrossEstimate : _otherIncome),
+                key: ValueKey(_showOtherIncomeGross),
+                style: AppTheme.serif(44, ink, spacing: -1.5, height: 1.0),
+              ),
+            ),
           ),
-        ),
+          const SizedBox(height: 4),
+          Text(
+            _showOtherIncomeGross
+                ? '이번 달 다른소득 (세전 환산 · 탭해서 되돌리기)'
+                : '이번 달 다른소득 (세후 · 탭해서 세전 보기)',
+            style: AppTheme.sans(12, tert),
+          ),
+        ],
       ),
     );
   }
