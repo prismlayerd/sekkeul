@@ -32,7 +32,6 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.0
   flutter_launcher_icons: ^0.14.1
-  flutter_native_splash: ^2.4.3
 
 flutter:
   uses-material-design: true
@@ -40,19 +39,11 @@ flutter:
     - assets/forms/
 
 # 앱 아이콘 — 블루프린트 정체성: '세' + 도면 치수선. 콘크리트 바탕 #F8F7F5.
-# 생성: dart run flutter_launcher_icons (design/make_icon_v2.py로 재생성 가능)
+# 생성: dart run flutter_launcher_icons (원본: design/icon_final.png)
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon/icon.png"
-  adaptive_icon_background: "#F8F7F5"
+  adaptive_icon_background: "#0A0A0B"
   adaptive_icon_foreground: "assets/icon/icon_fg.png"
   remove_alpha_ios: true
-
-# 스플래시 — 동일 톤. 생성: dart run flutter_native_splash:create
-flutter_native_splash:
-  color: "#F8F7F5"
-  image: "assets/icon/icon_fg.png"
-  android_12:
-    color: "#F8F7F5"
-    image: "assets/icon/icon_fg.png"
