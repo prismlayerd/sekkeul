@@ -543,42 +543,47 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
         top: false,
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: Row(children: [
-            if (widget.hasExisting) ...[
-              GestureDetector(
-                onTap: _delete,
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppTheme.colorDanger, width: 1),
-                    borderRadius: BorderRadius.circular(4),
+          // Row+Expanded를 bottomNavigationBar에 높이 제약 없이 직접 두면 flutter web에서
+          // body/appBar까지 통째로 렌더링되지 않는 문제가 있어 SizedBox로 높이를 고정한다.
+          child: SizedBox(
+            height: 48,
+            child: Row(children: [
+              if (widget.hasExisting) ...[
+                GestureDetector(
+                  onTap: _delete,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppTheme.colorDanger, width: 1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text('삭제',
+                        style: AppTheme.sans(13, AppTheme.colorDanger, weight: FontWeight.w600)),
                   ),
-                  child: Text('삭제',
-                      style: AppTheme.sans(13, AppTheme.colorDanger, weight: FontWeight.w600)),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: GestureDetector(
+                  onTap: _save,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: ink,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(widget.hasExisting ? '수정' : '저장',
+                        style: AppTheme.sans(14, bg, weight: FontWeight.w700)),
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
-            ],
-            Expanded(
-              child: GestureDetector(
-                onTap: _save,
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: ink,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(widget.hasExisting ? '수정' : '저장',
-                      style: AppTheme.sans(14, bg, weight: FontWeight.w700)),
-                ),
-              ),
-            ),
-          ]),
+            ]),
+          ),
         ),
-        ),
+      ),
     );
   }
 

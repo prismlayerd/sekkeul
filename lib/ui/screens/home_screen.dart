@@ -802,6 +802,8 @@ class _HomeScreenState extends State<HomeScreen> {
           GestureDetector(
             onTap: () async {
               await Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpenseCalendarScreen()));
+              // 가계부 분석탭에서 예상 연봉·지출 목표를 수정했을 수 있으니 유형별 값도 다시 읽는다.
+              await _loadTypeValues(_userType);
               await _loadCurrentMonthIncome();
               await _loadMonthlyExpenses();
               setState(() {});
@@ -871,6 +873,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: GestureDetector(
               onTap: () async {
                 await Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpenseCalendarScreen()));
+                await _loadTypeValues(_userType);
                 await _loadCurrentMonthIncome();
                 if (mounted) setState(() {});
               },
@@ -1234,6 +1237,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void _go(Widget screen) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 
+  /// 가계부로 이동 후 복귀 — 분석탭에서 바뀌었을 수 있는 유형별 지출 목표를 다시 읽어온다.
+  Future<void> _goToLedger() async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpenseCalendarScreen()));
+    await _loadTypeValues(_userType);
+    if (mounted) setState(() {});
+  }
+
   /// 절세 팁 액션 키 → 화면 이동.
   void _tipNavigate(String key) {
     switch (key) {
@@ -1242,7 +1252,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _go(record != null ? record.build(_userType) : TaxSimulatorScreen(userType: _userType));
         break;
       case 'book':
-        _go(const ExpenseCalendarScreen());
+        _goToLedger();
         break;
       case 'simulator':
       default:
@@ -1576,11 +1586,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ]);
     } else if (_userType == 'N잡러') {
       cards.addAll([
-        _BannerCard(label: '건강보험', headline: '부업 2,000만 넘으면\n건보료가 따라와요', action: '가계부에서 확인', glyph: '보', onTap: () => _go(const ExpenseCalendarScreen())),
+        _BannerCard(label: '건강보험', headline: '부업 2,000만 넘으면\n건보료가 따라와요', action: '가계부에서 확인', glyph: '보', onTap: _goToLedger),
       ]);
     } else {
       cards.addAll([
-        _BannerCard(label: '경비율', headline: '장부를 쓰면 경비\n인정 폭이 넓어져요', action: '가계부 열기', glyph: '장', onTap: () => _go(const ExpenseCalendarScreen())),
+        _BannerCard(label: '경비율', headline: '장부를 쓰면 경비\n인정 폭이 넓어져요', action: '가계부 열기', glyph: '장', onTap: _goToLedger),
       ]);
     }
 

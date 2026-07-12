@@ -302,6 +302,7 @@ List<TaxStage> taxPipelineFor(String userType) {
     ];
   } else if (userType == 'N잡러') {
     return const [
+      TaxStage(title: '빠진 공제 항목 찾기', subtitle: '연말정산에 안 넣은 공제를 골라 추가 환급을 진단', build: _missedDiagnosis),
       TaxStage(title: '합산 진단', subtitle: '합치면 세율이 얼마나 오르는지 계산', build: _simulator),
       TaxStage(title: '가상 신고서', subtitle: '합산 결과가 자동으로 채워진 신고서 미리보기', build: _emptyForm),
       TaxStage(title: '홈택스 신고 가이드', subtitle: '합산 신고 항목을 1:1 안내', badge: '5월 신고', build: _annualReport),
@@ -316,10 +317,10 @@ List<TaxStage> taxPipelineFor(String userType) {
 }
 
 /// 행1 — 연말정산 기록하기 (신고 준비의 입력 토대).
-/// 프리랜서·N잡러는 근로·사업 PDF 가져오기가 모두 ①진단(TaxSimulatorScreen)
-/// 화면에 흡수돼 별도 기록 단계가 없다(null 반환 — 메뉴에서 통째로 숨겨짐).
+/// 직장인·N잡러는 둘 다 근로소득이 있어 회사에서 원천징수영수증을 받으므로
+/// 동일하게 필요하다. 프리랜서는 근로소득이 없어 연말정산 대상이 아니라 제외.
 TaxStage? taxRecordEntryFor(String userType) {
-  if (userType != '직장인') return null;
+  if (userType == '프리랜서') return null;
   return const TaxStage(title: '연말정산 기록하기', subtitle: 'PDF 또는 직접 입력으로 회사에 안 낸 공제 기록', build: _record);
 }
 

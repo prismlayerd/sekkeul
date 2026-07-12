@@ -94,7 +94,8 @@ class ReserveEstimator {
 
     if (userType == '프리랜서') {
       final range = FreelancerTaxCalculator.calculateTaxRange(
-        accumulatedIncome: ytdBusinessIncome + ytdOtherIncome,
+        accumulatedIncome: ytdBusinessIncome,
+        accumulatedOtherIncome: ytdOtherIncome,
         inputMonths: now.month,
         allowanceCount: allowanceCount,
         occupationCode: occupationCode,

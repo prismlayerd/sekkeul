@@ -1,4 +1,5 @@
 import '../data/occupation_data.dart';
+import 'employee_tax.dart';
 import 'tax_rates.dart';
 
 /// 간편장부(실제경비) vs 추계(경비율) 비교 결과.
@@ -12,7 +13,7 @@ typedef BookkeepingComparison = ({
 class FreelancerTaxCalculator {
   /// 프리랜서 종합소득세 및 지방소득세 시뮬레이션 결과 클래스
   static FreelancerTaxResult calculateTaxSimulation({
-    required double accumulatedIncome, // 현재까지의 누적 세전 수입 (원 단위)
+    required double accumulatedIncome, // 현재까지의 누적 세전 사업소득 수입 (원 단위)
     required int inputMonths,          // 입력 기간 (1개월 ~ 12개월)
     required int allowanceCount,       // 본인 제외 부양가족 수
     required String occupationCode,    // 업종코드 (예: '940909')
@@ -25,10 +26,14 @@ class FreelancerTaxCalculator {
     bool hasSelfDisability = false,    // 본인 장애인 여부
     bool useStandardExpenseRate = false, // true면 단순경비율 대신 기준경비율 적용(적립 범위 산출용)
     double? actualExpense,             // 연환산 실제 필요경비(가계부 기록). 주어지면 경비율 추정 대신 이 값을 사용(간편장부 기장).
+    // 기타소득(강사료·원고료 등 일시적 용역, 8.8% 원천징수) 누적 수입 — 사업소득과 성격이 달라
+    // 업종코드 경비율이 아니라 정률(수입의 40%만 과세, 필요경비 60% 자동 인정)로 별도 계산한다.
+    double accumulatedOtherIncome = 0.0,
   }) {
     // 0. 입력값 방어 코드
     final months = inputMonths < 1 ? 1 : (inputMonths > 12 ? 12 : inputMonths);
     final income = accumulatedIncome < 0 ? 0.0 : accumulatedIncome;
+    final otherIncome = accumulatedOtherIncome < 0 ? 0.0 : accumulatedOtherIncome;
     final dependents = allowanceCount < 0 ? 0 : allowanceCount;
 
     // 1. 업종 정보 조회 (로컬 데이터 매핑)
@@ -63,6 +68,11 @@ class FreelancerTaxCalculator {
     // 4. 추정 사업소득금액 산출
     final double estimatedBusinessIncome = annualEstimatedIncome - estimatedExpense;
 
+    // 4-1. 기타소득금액 — 업종 경비율과 무관하게 정률 40%만 과세(필요경비 60% 자동 인정).
+    final double annualOtherIncome = (otherIncome / months) * 12;
+    final double otherIncomeAmount = EmployeeTaxCalculator.calculateOtherIncomeAmount(annualOtherIncome);
+    final double estimatedGlobalIncome = estimatedBusinessIncome + otherIncomeAmount;
+
     // 5. 소득공제 차감
     // 인적공제: 본인 공제(150만 원) + 부양가족 수 * 150만 원
     final double basicDeduction = (dependents + 1) * TaxRates.basicDeductionPerPerson;
@@ -88,8 +98,8 @@ class FreelancerTaxCalculator {
     
     final double totalDeduction = basicDeduction + disabilityDeduction + yellowUmbrellaDeduction + freelancerHealthInsurance;
 
-    // 과세표준
-    double taxBase = estimatedBusinessIncome - totalDeduction;
+    // 과세표준 (사업소득금액 + 기타소득금액 - 소득공제)
+    double taxBase = estimatedGlobalIncome - totalDeduction;
     if (taxBase < 0) {
       taxBase = 0;
     }
@@ -200,6 +210,7 @@ class FreelancerTaxCalculator {
     required int inputMonths,
     required int allowanceCount,
     required String occupationCode,
+    double accumulatedOtherIncome = 0.0,
     bool isBookkeeping = false,
     double yellowUmbrellaPayment = 0.0,
     double monthlyRent = 0.0,
@@ -210,6 +221,7 @@ class FreelancerTaxCalculator {
   }) {
     final simple = calculateTaxSimulation(
       accumulatedIncome: accumulatedIncome,
+      accumulatedOtherIncome: accumulatedOtherIncome,
       inputMonths: inputMonths,
       allowanceCount: allowanceCount,
       occupationCode: occupationCode,
@@ -224,6 +236,7 @@ class FreelancerTaxCalculator {
     );
     final standard = calculateTaxSimulation(
       accumulatedIncome: accumulatedIncome,
+      accumulatedOtherIncome: accumulatedOtherIncome,
       inputMonths: inputMonths,
       allowanceCount: allowanceCount,
       occupationCode: occupationCode,
