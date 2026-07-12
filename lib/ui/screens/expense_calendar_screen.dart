@@ -288,9 +288,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   int get _monthIncomeTotal =>
       _incomesByDay.values.expand((l) => l).toSet().fold(0, (s, e) => s + e.amount);
 
-  int get _monthExpenseTotal =>
-      _expensesByDay.values.expand((l) => l).toSet().fold(0, (s, e) => s + e.amount);
-
   // ── 날짜별 합계 ──────────────────────────────────────────────────
 
   int _incomeOf(String key) =>
@@ -521,8 +518,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           children: [
             _buildMonthNav(ink),
             AppTheme.hairline(context),
-            if (_activeView == 0) _buildSummaryBar(sub),
-            if (_activeView == 0 && _reserveEstimate != null) _buildReserveCard(ink, sub),
             Expanded(
               child: IndexedStack(
                 index: _activeView,
@@ -541,6 +536,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 ],
               ),
             ),
+            // 적립 예상 카드 — 달력 그리드 아래(프리랜서·N잡러 이번 달만). 수입/지출/잔액
+            // 요약은 분석탭과 중복이라 제거하고, 달력을 위로 올려 기록 화면을 넓혔다.
+            if (_activeView == 0 && _reserveEstimate != null) _buildReserveCard(ink, sub),
             if (_activeView == 0) _buildQuickSettingsRow(ink, sub),
           ],
         ),
@@ -556,45 +554,46 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final accent = AppTheme.accentColor(context);
     final line = AppTheme.line(context);
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(border: Border(top: BorderSide(color: line, width: 1))),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 6,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          if (_profile.showsPaydayChip)
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            if (_profile.showsPaydayChip)
+              _quickChip(
+                icon: Icons.payments_outlined,
+                label: '월급 $_paydayDay일',
+                ink: ink, sub: sub, line: line,
+                onTap: _showPaydayPicker,
+              ),
+            for (final card in _cardDates)
+              _quickChip(
+                icon: Icons.credit_card_rounded,
+                label: '${card['name']} ${card['day']}일',
+                ink: ink, sub: sub, line: line,
+                onTap: () => _showCardOptions(card),
+              ),
             _quickChip(
-              icon: Icons.payments_outlined,
-              label: '월급 $_paydayDay일',
-              ink: ink, sub: sub, line: line,
-              onTap: _showPaydayPicker,
+              icon: Icons.add_rounded,
+              label: '카드결제일',
+              ink: accent, sub: accent, line: accent,
+              onTap: _showAddCardDialog,
             ),
-          for (final card in _cardDates)
             _quickChip(
-              icon: Icons.credit_card_rounded,
-              label: '${card['name']} ${card['day']}일',
-              ink: ink, sub: sub, line: line,
-              onTap: () => _showCardOptions(card),
+              icon: Icons.add_rounded,
+              label: '고정지출',
+              ink: accent, sub: accent, line: accent,
+              onTap: () async {
+                await Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const RecurringTemplatesScreen(),
+                ));
+                _load();
+              },
             ),
-          _quickChip(
-            icon: Icons.add_rounded,
-            label: '카드결제일',
-            ink: accent, sub: accent, line: accent,
-            onTap: _showAddCardDialog,
-          ),
-          _quickChip(
-            icon: Icons.add_rounded,
-            label: '고정지출',
-            ink: accent, sub: accent, line: accent,
-            onTap: () async {
-              await Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const RecurringTemplatesScreen(),
-              ));
-              _load();
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -607,20 +606,23 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     required Color line,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          border: Border.all(color: line, width: 1.0),
-          borderRadius: BorderRadius.circular(4),
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            border: Border.all(color: line, width: 1.0),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 13, color: sub),
+            const SizedBox(width: 4),
+            Text(label, style: AppTheme.sans(12, ink, weight: FontWeight.w600)),
+          ]),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 13, color: sub),
-          const SizedBox(width: 4),
-          Text(label, style: AppTheme.sans(12, ink, weight: FontWeight.w600)),
-        ]),
       ),
     );
   }
@@ -933,10 +935,13 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   }
 
   Widget _buildBottomBar(Color ink, Color sub) {
-    return SizedBox(
-      height: _activeView == 0 ? 84 : 54,
+    // SafeArea(top:false)로 시스템 내비게이션 바 높이만큼 하단 인셋을 더해
+    // 탭이 기기 하단 제스처/버튼에 깔리지 않게 한다. 고정 높이 대신 콘텐츠에
+    // 맞춰 커지므로 인셋이 흡수되지 않고 그대로 얹힌다.
+    return SafeArea(
+      top: false,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
         children: [
           AppTheme.hairline(context),
           if (_activeView == 0) _buildLegend(),
@@ -1031,57 +1036,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     );
   }
 
-  Widget _buildSummaryBar(Color sub) {
-    final balance = _monthIncomeTotal - _monthExpenseTotal;
-    final balanceColor = balance >= 0 ? _incomeColor : AppTheme.colorDanger;
-    Widget divider = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Container(width: 1, height: 30, color: AppTheme.line(context)),
-    );
-    Widget cell(String label, String value, Color valueColor,
-        {bool emphasize = false, IconData? icon}) {
-      return Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label, style: AppTheme.sans(11, sub, weight: FontWeight.w500, spacing: 0.2)),
-            const SizedBox(height: 3),
-            Row(mainAxisSize: MainAxisSize.min, children: [
-              if (icon != null) ...[
-                Icon(icon, size: 13, color: valueColor),
-                const SizedBox(width: 2),
-              ],
-              Flexible(
-                child: Text(value,
-                    style: AppTheme.sans(emphasize ? 15 : 13, valueColor,
-                        weight: emphasize ? FontWeight.w800 : FontWeight.w700),
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
-              ),
-            ]),
-          ],
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(children: [
-        cell('수입', '${_fmt.format(_monthIncomeTotal)}원', _incomeColor),
-        divider,
-        cell('지출', '${_fmt.format(_monthExpenseTotal)}원', AppTheme.colorDanger),
-        divider,
-        cell(
-          '잔액',
-          '${balance < 0 ? '-' : ''}${_fmt.format(balance.abs())}원',
-          balanceColor,
-          emphasize: true,
-          icon: balance >= 0 ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-        ),
-      ]),
-    );
-  }
-
   /// 프리랜서·N잡러 전용 — 이번 달 세금·4대보험 적립(예상)과 지금 써도 되는 돈.
   /// 저장 없이 그 자리에서 재계산(가계부 기록 + 프로필 최신값 기준) — 과거 달엔 노출하지 않는다.
   /// 기본 접힘(요약 1줄) — 캘린더 위 크롬을 줄이기 위해 탭해야 상세가 펼쳐진다.
@@ -1092,7 +1046,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         min.round() == max.round() ? won(min) : '${_fmt.format(min.round())}~${_fmt.format(max.round())}원';
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         border: Border.all(color: AppTheme.line(context), width: 1),
         borderRadius: BorderRadius.circular(4),
@@ -1104,7 +1058,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             onTap: () => setState(() => _reserveCardExpanded = !_reserveCardExpanded),
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 13, 16, 13),
               child: Row(children: [
                 Icon(Icons.savings_outlined, size: 16, color: sub),
                 const SizedBox(width: 6),
@@ -1124,7 +1078,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           ),
           if (_reserveCardExpanded)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

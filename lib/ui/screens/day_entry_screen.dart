@@ -539,9 +539,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: SizedBox(
-        height: 84,
-        child: SafeArea(
+      bottomNavigationBar: SafeArea(
         top: false,
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -581,7 +579,6 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
           ]),
         ),
         ),
-      ),
     );
   }
 
