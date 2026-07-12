@@ -779,6 +779,8 @@ class _HomeScreenState extends State<HomeScreen> {
         // ── 수입 — 금액 위, 라벨 아래 (우측 정렬) ──
         // 프리랜서는 금액을 탭하면 세전 환산으로 페이드 전환(원천징수 역산 — 근로소득과 달리
         // 사업/기타소득은 고정 비율이라 정확히 역산 가능).
+        // N잡러는 헤드라인이 근로소득만 반영해야 하므로(라벨과 실제 값이 어긋나면 안 됨),
+        // income_entries 합산인 monthlyIncome 대신 _laborIncome을 쓴다.
         Align(
           alignment: Alignment.centerRight,
           child: Column(
@@ -791,9 +793,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 behavior: HitTestBehavior.opaque,
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 220),
-                  child: monthlyIncome > 0
+                  child: (_userType == 'N잡러' ? _laborIncome : monthlyIncome) > 0
                       ? Text(
-                          _toWon(!_isEmployee && _showGrossIncome ? _otherIncomeGrossEstimate : monthlyIncome),
+                          _toWon(!_isEmployee && _showGrossIncome
+                              ? _otherIncomeGrossEstimate
+                              : (_userType == 'N잡러' ? _laborIncome : monthlyIncome)),
                           key: ValueKey(_showGrossIncome),
                           style: AppTheme.serif(44, ink, spacing: -1.5, height: 1.0),
                         )
@@ -985,7 +989,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildExpensePromptOrInput(Color ink, Color sub, Color accent) {
     return _inlinePrompt(
       expanded: _showExpenseInput,
-      promptText: '이번 달 지출 목표액을 설정하면 공제 기준을 잡아드려요',
+      promptText: _isEmployee
+          ? '이번 달 지출 목표액을 설정하면 공제 기준을 잡아드려요'
+          : '이번 달 지출 목표액을 설정하면 지출 현황을 알려드려요',
       hintText: '이번 달 지출 목표',
       controller: _expenseTargetInlineCtrl,
       ink: ink, sub: sub, accent: accent,
