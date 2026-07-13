@@ -2,12 +2,14 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_sqlcipher/sqflite.dart';
 import '../security/crypto_helper.dart';
+import '../security/db_key_manager.dart';
 import 'expense_item.dart';
 import 'income_entry.dart';
 import 'recurring_template.dart';
 import 'quick_entry_preset.dart';
+import 'legacy_migration.dart';
 
 /// 온디바이스 데이터베이스 보안 인터페이스 정의
 abstract class DatabaseService {
@@ -233,14 +235,89 @@ class SqfliteDatabaseHelper implements DatabaseService {
   @override
   Future<void> initDatabase() async {
     if (_db != null) return;
-    
+
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, dbName);
+    final key = await DbKeyManager.getOrCreateKey();
+
+    // 기존 평문 DB가 있고 아직 암호화 전이면: 먼저 평문 상태로 최신 스키마까지 정규화한 뒤
+    // SQLCipher 암호화 DB로 1회 이전한다(S-2). 신규 설치는 곧장 암호화 DB로 생성된다.
+    if (await File(path).exists() && !await _isAlreadyEncrypted(path, key)) {
+      final normalizeDb = await openDatabase(path, version: 35, onCreate: _onCreateV35, onUpgrade: _onUpgradeV35);
+      await normalizeDb.close();
+      await _encryptExistingPlaintextDb(path, key);
+    }
 
     _db = await openDatabase(
       path,
+      password: key,
       version: 35,
-      onCreate: (db, version) async {
+      onCreate: _onCreateV35,
+      onUpgrade: _onUpgradeV35,
+    );
+  }
+
+  Future<bool> _isAlreadyEncrypted(String path, String key) async {
+    try {
+      final testDb = await openDatabase(path, password: key, readOnly: true);
+      await testDb.close();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// 평문 DB(정규화 완료 v35)를 새 SQLCipher 암호화 DB로 1회 이전.
+  /// 임시 파일에 전체 이전 완료·행 수 검증 후에만 원본을 교체한다 — 중간 실패 시
+  /// 원본 평문 파일은 그대로 남아 다음 실행에서 재시도된다.
+  Future<void> _encryptExistingPlaintextDb(String path, String key) async {
+    final tempEncPath = '$path.migrating_enc';
+    final legacyBackupPath = '$path.legacy_plaintext_backup';
+
+    final tempFile = File(tempEncPath);
+    if (await tempFile.exists()) await tempFile.delete();
+
+    final plainDb = await openDatabase(path, readOnly: true);
+    final tableRows = await plainDb.query('sqlite_master',
+        where: "type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'android_metadata'");
+    final dump = <String, List<Map<String, Object?>>>{};
+    var totalRows = 0;
+    for (final t in tableRows) {
+      final name = t['name'] as String;
+      try {
+        final rows = await plainDb.query(name);
+        dump[name] = rows;
+        totalRows += rows.length;
+      } catch (_) {}
+    }
+    await plainDb.close();
+
+    final encDb = await openDatabase(tempEncPath, password: key, version: 35, onCreate: _onCreateV35);
+    var insertedRows = 0;
+    await encDb.transaction((txn) async {
+      for (final entry in dump.entries) {
+        for (final row in entry.value) {
+          final transformed = decryptLegacyRowForTable(entry.key, row);
+          try {
+            await txn.insert(entry.key, transformed, conflictAlgorithm: ConflictAlgorithm.replace);
+            insertedRows++;
+          } catch (_) {}
+        }
+      }
+    });
+    await encDb.close();
+
+    if (insertedRows < totalRows) {
+      try { await tempFile.delete(); } catch (_) {}
+      throw StateError('DB 암호화 마이그레이션 실패: $insertedRows/$totalRows행만 이전됨');
+    }
+
+    if (await File(legacyBackupPath).exists()) await File(legacyBackupPath).delete();
+    await File(path).rename(legacyBackupPath);
+    await tempFile.rename(path);
+  }
+
+  Future<void> _onCreateV35(Database db, int version) async {
         // 프로필 테이블 생성
         await db.execute('''
           CREATE TABLE user_profile (
@@ -387,8 +464,9 @@ class SqfliteDatabaseHelper implements DatabaseService {
         await db.execute(_profileTypeValuesTableSql);
         // 즐겨찾기 빠른 입력 프리셋 (v33)
         await db.execute(_quickEntryPresetsTableSql);
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
+  }
+
+  Future<void> _onUpgradeV35(Database db, int oldVersion, int newVersion) async {
         if (oldVersion < 2) {
           try {
             await db.execute('ALTER TABLE user_profile ADD COLUMN monthly_income REAL');
@@ -682,8 +760,6 @@ class SqfliteDatabaseHelper implements DatabaseService {
             await db.execute('ALTER TABLE income_entries ADD COLUMN user_type TEXT');
           } catch (e) {}
         }
-      },
-    );
   }
 
   @override
@@ -839,21 +915,17 @@ class SqfliteDatabaseHelper implements DatabaseService {
     final db = _db;
     if (db == null) return;
 
-    final String encryptedAmount = CryptoHelper.encrypt(item.amount.toString());
-    final String encryptedContent = CryptoHelper.encrypt(item.content);
-    final String encryptedCategory = CryptoHelper.encrypt(item.category);
-    final String encryptedPayment = CryptoHelper.encrypt(item.paymentMethod);
-
+    // DB 파일 자체가 SQLCipher로 암호화되어 필드 단위 암호화는 불필요(S-2).
     await db.insert(
       'expenses',
       {
         'id': item.id,
         'date': item.date.toIso8601String(),
         'end_date': item.endDate?.toIso8601String(),
-        'amount': encryptedAmount,
-        'content': encryptedContent,
-        'category': encryptedCategory,
-        'payment_method': encryptedPayment,
+        'amount': item.amount.toString(),
+        'content': item.content,
+        'category': item.category,
+        'payment_method': item.paymentMethod,
         'is_business': item.isBusiness ? 1 : 0,
         'user_type': item.userType,
       },
@@ -874,15 +946,12 @@ class SqfliteDatabaseHelper implements DatabaseService {
 
     for (final map in maps) {
       try {
-        final String decryptedAmountStr = CryptoHelper.decrypt(map['amount'] as String);
-        final String decryptedContent = CryptoHelper.decrypt(map['content'] as String);
-        final String decryptedCategory = CryptoHelper.decrypt(map['category'] as String);
+        final String decryptedAmountStr = map['amount'] as String;
+        final String decryptedContent = map['content'] as String;
+        final String decryptedCategory = map['category'] as String;
 
         final pmRaw = map['payment_method'] as String?;
-        String paymentMethod = '기타';
-        if (pmRaw != null) {
-          try { paymentMethod = CryptoHelper.decrypt(pmRaw); } catch (_) {}
-        }
+        final String paymentMethod = pmRaw ?? '기타';
 
         final int amount = int.parse(decryptedAmountStr);
         final DateTime date = DateTime.parse(map['date'] as String);
@@ -917,19 +986,15 @@ class SqfliteDatabaseHelper implements DatabaseService {
   Future<void> updateExpense(ExpenseItem item) async {
     final db = _db;
     if (db == null) return;
-    final String encryptedAmount = CryptoHelper.encrypt(item.amount.toString());
-    final String encryptedContent = CryptoHelper.encrypt(item.content);
-    final String encryptedCategory = CryptoHelper.encrypt(item.category);
-    final String encryptedPayment = CryptoHelper.encrypt(item.paymentMethod);
     await db.update(
       'expenses',
       {
         'date': item.date.toIso8601String(),
         'end_date': item.endDate?.toIso8601String(),
-        'amount': encryptedAmount,
-        'content': encryptedContent,
-        'category': encryptedCategory,
-        'payment_method': encryptedPayment,
+        'amount': item.amount.toString(),
+        'content': item.content,
+        'category': item.category,
+        'payment_method': item.paymentMethod,
         'is_business': item.isBusiness ? 1 : 0,
         'user_type': item.userType,
       },
@@ -948,9 +1013,9 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'id': entry.id,
         'date': entry.date.toIso8601String(),
         'end_date': entry.endDate?.toIso8601String(),
-        'amount': CryptoHelper.encrypt(entry.amount.toString()),
-        'memo': CryptoHelper.encrypt(entry.memo),
-        'income_type': CryptoHelper.encrypt(entry.incomeType),
+        'amount': entry.amount.toString(),
+        'memo': entry.memo,
+        'income_type': entry.incomeType,
         'is_withheld': entry.isWithheld ? 1 : 0,
         'user_type': entry.userType,
       },
@@ -977,9 +1042,9 @@ class SqfliteDatabaseHelper implements DatabaseService {
           id: row['id'] as String,
           date: date,
           endDate: endStr != null ? DateTime.parse(endStr) : null,
-          amount: int.parse(CryptoHelper.decrypt(row['amount'] as String)),
-          memo: CryptoHelper.decrypt(row['memo'] as String),
-          incomeType: CryptoHelper.decrypt(row['income_type'] as String),
+          amount: int.parse(row['amount'] as String),
+          memo: row['memo'] as String,
+          incomeType: row['income_type'] as String,
           isWithheld: (row['is_withheld'] as int?) == 1,
           userType: row['user_type'] as String?,
         ));
@@ -998,9 +1063,9 @@ class SqfliteDatabaseHelper implements DatabaseService {
       {
         'date': entry.date.toIso8601String(),
         'end_date': entry.endDate?.toIso8601String(),
-        'amount': CryptoHelper.encrypt(entry.amount.toString()),
-        'memo': CryptoHelper.encrypt(entry.memo),
-        'income_type': CryptoHelper.encrypt(entry.incomeType),
+        'amount': entry.amount.toString(),
+        'memo': entry.memo,
+        'income_type': entry.incomeType,
         'is_withheld': entry.isWithheld ? 1 : 0,
         'user_type': entry.userType,
       },
@@ -1037,7 +1102,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
       try {
         final date = DateTime.parse(row['date'] as String);
         if (date.year == year && date.month == month) {
-          total += int.parse(CryptoHelper.decrypt(row['amount'] as String));
+          total += int.parse(row['amount'] as String);
         }
       } catch (_) {}
     }
@@ -1154,7 +1219,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     if (db == null) return;
     await db.insert('annual_records', {
       'user_type': userType,
-      'payload': CryptoHelper.encrypt(jsonEncode(values)),
+      'payload': jsonEncode(values),
       'created_at': DateTime.now().toIso8601String(),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
@@ -1166,7 +1231,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     final rows = await db.query('annual_records', where: 'user_type = ?', whereArgs: [userType]);
     if (rows.isEmpty) return null;
     try {
-      final decoded = jsonDecode(CryptoHelper.decrypt(rows.first['payload'] as String)) as Map;
+      final decoded = jsonDecode(rows.first['payload'] as String) as Map;
       return Map<String, dynamic>.from(decoded);
     } catch (_) {
       return null;
@@ -1324,6 +1389,9 @@ class SqfliteDatabaseHelper implements DatabaseService {
     return {
       'app': 'sekkeul',
       'schema': 22,
+      // formatVersion 2 = S-2 이후(필드 평문, DB 파일 자체가 SQLCipher로 암호화).
+      // 1(또는 누락) = S-2 이전(필드가 CryptoHelper XOR로 암호화된 상태로 export됨).
+      'formatVersion': 2,
       'exportedAt': DateTime.now().toIso8601String(),
       'tables': tables,
     };
@@ -1334,6 +1402,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     final db = _db;
     if (db == null) return;
     final tables = (data['tables'] as Map?) ?? {};
+    final isLegacyFormat = ((data['formatVersion'] as num?)?.toInt() ?? 1) < 2;
     await db.transaction((txn) async {
       for (final entry in tables.entries) {
         final t = entry.key.toString();
@@ -1342,8 +1411,9 @@ class SqfliteDatabaseHelper implements DatabaseService {
         try {
           await txn.delete(t);
           for (final r in rows) {
-            await txn.insert(t, Map<String, dynamic>.from(r as Map),
-                conflictAlgorithm: ConflictAlgorithm.replace);
+            final row = Map<String, dynamic>.from(r as Map);
+            final toInsert = isLegacyFormat ? decryptLegacyRowForTable(t, row) : row;
+            await txn.insert(t, toInsert, conflictAlgorithm: ConflictAlgorithm.replace);
           }
         } catch (_) {
           // 테이블 누락/스키마 차이는 건너뜀(부분 복원 허용)
