@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../../core/notifications/reminder.dart';
 import '../../core/notifications/custom_reminder_service.dart';
+import '../../core/navigation/app_route_observer.dart';
 import '../screens/reminder_list_screen.dart';
 
 /// 홈 — 사용자 맞춤 리마인더 아코디언 카드 (지출 카드와 절세 카드 사이).
@@ -16,13 +17,31 @@ class ReminderCard extends StatefulWidget {
   State<ReminderCard> createState() => _ReminderCardState();
 }
 
-class _ReminderCardState extends State<ReminderCard> {
+class _ReminderCardState extends State<ReminderCard> with RouteAware {
   List<Reminder> _reminders = [];
   bool _expanded = true;
 
   @override
   void initState() {
     super.initState();
+    _load();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    appRouteObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  /// 리마인더 관리 화면(추가·수정·삭제)에서 돌아왔을 때 목록 리로드.
+  @override
+  void didPopNext() {
     _load();
   }
 
@@ -138,9 +157,9 @@ class _ReminderCardState extends State<ReminderCard> {
   }
 
   Future<void> _openManager() async {
+    // 복귀 시 리로드는 didPopNext(RouteObserver)가 처리.
     await Navigator.push(context,
         MaterialPageRoute(builder: (_) => ReminderListScreen(userType: widget.userType)));
-    await _load();
   }
 
   Widget _reminderRow(Reminder r, Color ink, Color sub, Color tert, Color accent) {

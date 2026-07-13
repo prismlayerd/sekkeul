@@ -26,6 +26,7 @@ import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/reserve_estimator.dart';
 import '../../core/security/notification_helper.dart';
 import '../../core/notifications/reminder_scheduler.dart';
+import '../../core/navigation/app_route_observer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,7 +35,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
   String _userType = '직장인'; 
   int _currentIndex = 0;
 
@@ -111,6 +112,21 @@ class _HomeScreenState extends State<HomeScreen> {
     _savingGoalController.addListener(_onExpenseTargetChanged);
     _loadDataFromDB();
     _startBannerRotation();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    appRouteObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
+  }
+
+  /// 홈에서 push했던 화면(가계부·프로필 등)이 pop되어 홈으로 돌아왔을 때 —
+  /// 산재해있던 "push 후 수동 리로드" 호출들을 대체하는 단일 진입점.
+  @override
+  void didPopNext() {
+    _loadTypeValues(_userType);
+    _loadCurrentMonthIncome();
+    _loadMonthlyExpenses();
   }
 
   /// 상단 배너 + 이달의 절세 카드 6초 자동 회전(페이드). 각자 2장 이상일 때만 전환.
@@ -488,6 +504,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _grossIncomeInlineCtrl.dispose();
     _expenseTargetInlineCtrl.dispose();
     _bannerTimer?.cancel();
+    appRouteObserver.unsubscribe(this);
     super.dispose();
   }
 
@@ -800,12 +817,9 @@ class _HomeScreenState extends State<HomeScreen> {
           const Spacer(),
           GestureDetector(
             onTap: () async {
+              // 복귀 시 리로드는 didPopNext(RouteObserver)가 처리 — 가계부 분석탭에서
+              // 예상 연봉·지출 목표를 수정했을 수 있으니 유형별 값도 다시 읽는다.
               await Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpenseCalendarScreen()));
-              // 가계부 분석탭에서 예상 연봉·지출 목표를 수정했을 수 있으니 유형별 값도 다시 읽는다.
-              await _loadTypeValues(_userType);
-              await _loadCurrentMonthIncome();
-              await _loadMonthlyExpenses();
-              setState(() {});
             },
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.chevron_right_rounded, size: 16, color: accent),
@@ -871,10 +885,8 @@ class _HomeScreenState extends State<HomeScreen> {
             alignment: Alignment.centerRight,
             child: GestureDetector(
               onTap: () async {
+                // 복귀 시 리로드는 didPopNext(RouteObserver)가 처리.
                 await Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpenseCalendarScreen()));
-                await _loadTypeValues(_userType);
-                await _loadCurrentMonthIncome();
-                if (mounted) setState(() {});
               },
               behavior: HitTestBehavior.opaque,
               child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -1238,9 +1250,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 가계부로 이동 후 복귀 — 분석탭에서 바뀌었을 수 있는 유형별 지출 목표를 다시 읽어온다.
   Future<void> _goToLedger() async {
+    // 복귀 시 리로드는 didPopNext(RouteObserver)가 처리.
     await Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpenseCalendarScreen()));
-    await _loadTypeValues(_userType);
-    if (mounted) setState(() {});
   }
 
   /// 절세 팁 액션 키 → 화면 이동.

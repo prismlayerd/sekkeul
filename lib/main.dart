@@ -8,6 +8,7 @@ import 'ui/screens/app_lock_screen.dart';
 
 import 'core/security/notification_helper.dart';
 import 'core/security/app_lock_service.dart';
+import 'core/navigation/app_route_observer.dart';
 
 import 'ui/theme/app_theme.dart';
 
@@ -49,6 +50,7 @@ class SeculApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
+      navigatorObservers: [appRouteObserver],
       home: const _AppLockGate(child: HomeScreen()),
     );
   }
