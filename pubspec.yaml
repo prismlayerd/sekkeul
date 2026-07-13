@@ -17,7 +17,6 @@ dependencies:
   intl: ^0.20.2
   flutter_local_notifications: ^22.0.1
   timezone: ^0.11.0
-  google_fonts: ^6.2.1
   # ① 연말정산 자료 파서 — PDF 텍스트 추출(순수 Dart) + 파일 선택
   syncfusion_flutter_pdf: ^28.1.33
   file_picker: ^8.1.6
@@ -37,6 +36,16 @@ flutter:
   uses-material-design: true
   assets:
     - assets/forms/
+  fonts:
+    - family: DM Serif Display
+      fonts:
+        - asset: assets/fonts/DMSerifDisplay-Regular.ttf
+    - family: DM Sans
+      fonts:
+        - asset: assets/fonts/DMSans-Variable.ttf
+    - family: Noto Serif KR
+      fonts:
+        - asset: assets/fonts/NotoSerifKR-Variable.ttf
 
 # 앱 아이콘 — 블루프린트 정체성: '세' + 도면 치수선. 콘크리트 바탕 #F8F7F5.
 # 생성: dart run flutter_launcher_icons (원본: design/icon_final.png)

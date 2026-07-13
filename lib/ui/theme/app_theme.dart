@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// 세끌 디자인 시스템 v4.0 — Architectural Blueprint
 /// ─────────────────────────────────────────────────────────
@@ -11,11 +10,11 @@ import 'package:google_fonts/google_fonts.dart';
 /// • 라이트 #F8F7F5 콘크리트 오프화이트 / 다크 #0D0D0D 무광 블랙
 class AppTheme {
   // ──────────────────────────────────────────────
-  // 글꼴 패밀리 (google_fonts 런타임 등록)
+  // 글꼴 패밀리 (assets/fonts/ 번들, pubspec fonts: 등록)
   // ──────────────────────────────────────────────
-  static final String serifFamily   = GoogleFonts.dmSerifDisplay().fontFamily!;
-  static final String serifKrFamily  = GoogleFonts.notoSerifKr().fontFamily!;
-  static final String sansFamily     = GoogleFonts.dmSans().fontFamily!;
+  static const String serifFamily   = 'DM Serif Display';
+  static const String serifKrFamily = 'Noto Serif KR';
+  static const String sansFamily    = 'DM Sans';
 
   /// 세리프 제목 (라틴/숫자=DM Serif, 한글=Noto Serif KR 대체)
   static TextStyle serif(
