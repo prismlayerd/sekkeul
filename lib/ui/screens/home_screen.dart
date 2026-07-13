@@ -1304,7 +1304,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GestureDetector(
+        Semantics(
+          button: true,
+          expanded: _taxToolsExpanded,
+          label: '세무 도구 — 기록·신고 준비·경정청구·양식',
+          child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () => setState(() => _taxToolsExpanded = !_taxToolsExpanded),
           child: Row(
@@ -1328,6 +1332,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 child: Icon(Icons.expand_more_rounded, size: 20, color: tert),
               ),
             ],
+          ),
           ),
         ),
         ClipRect(
@@ -1665,7 +1670,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final subText = (c.sub != null && c.sub!.trim().isNotEmpty)
         ? c.sub!
         : (c.action.isNotEmpty ? c.action : null);
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '${c.label} ${c.headline}',
+      child: GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: c.onTap,
       child: SizedBox(
@@ -1681,20 +1689,25 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   Row(
                     children: [
                       Expanded(child: Text(c.label.toUpperCase(), style: AppTheme.label(context))),
-                      GestureDetector(
-                        onTap: () => _dismissBanner(c),
-                        behavior: HitTestBehavior.opaque,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: Icon(Icons.close_rounded, size: 16, color: sub),
+                      Semantics(
+                        button: true,
+                        label: '이 카드 닫기',
+                        child: GestureDetector(
+                          onTap: () => _dismissBanner(c),
+                          behavior: HitTestBehavior.opaque,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: Icon(Icons.close_rounded, size: 16, color: sub),
+                          ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 7),
                   // 헤드라인이 1줄이든 2줄이든 카드 높이를 동일하게 유지 — 아래 보조 문구 위치 고정.
+                  // 높이는 시스템 글자 확대(U-3, 최대 1.3배)에 맞춰 함께 커지도록 textScaler 반영.
                   SizedBox(
-                    height: 22 * 1.2 * 2,
+                    height: MediaQuery.textScalerOf(context).scale(22) * 1.2 * 2,
                     child: Align(
                       alignment: Alignment.topLeft,
                       child: Text(c.headline,
@@ -1720,6 +1733,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -1763,40 +1777,49 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           final selected = _userType == type;
           return Padding(
             padding: const EdgeInsets.only(right: 20),
-            child: GestureDetector(
-              onTap: () => _confirmAndSwitchUserType(type),
-              behavior: HitTestBehavior.opaque,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(type, style: AppTheme.sans(15, selected ? ink : tert, weight: selected ? FontWeight.w700 : FontWeight.w500, spacing: -0.2)),
-                  const SizedBox(height: 6),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    height: 2,
-                    width: selected ? 20 : 0,
-                    color: ink,
-                  ),
-                ],
+            child: Semantics(
+              button: true,
+              selected: selected,
+              label: '$type 유형',
+              child: GestureDetector(
+                onTap: () => _confirmAndSwitchUserType(type),
+                behavior: HitTestBehavior.opaque,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(type, style: AppTheme.sans(15, selected ? ink : tert, weight: selected ? FontWeight.w700 : FontWeight.w500, spacing: -0.2)),
+                    const SizedBox(height: 6),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      height: 2,
+                      width: selected ? 20 : 0,
+                      color: ink,
+                    ),
+                  ],
+                ),
               ),
             ),
           );
         }),
         const Spacer(),
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () async {
-            final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileInputScreen(userType: _userType)));
-            if (result == true) {
-              setState(() => _isProfileCompleted = true);
-              _loadDataFromDB();
-            }
-          },
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(_isProfileCompleted ? Icons.check_circle_outline : Icons.add, size: 15, color: accent),
-            const SizedBox(width: 5),
-            Text(_isProfileCompleted ? '프로필 수정' : '프로필 작성', style: AppTheme.sans(13, accent, weight: FontWeight.w600)),
-          ]),
+        Semantics(
+          button: true,
+          label: _isProfileCompleted ? '프로필 수정' : '프로필 작성',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () async {
+              final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileInputScreen(userType: _userType)));
+              if (result == true) {
+                setState(() => _isProfileCompleted = true);
+                _loadDataFromDB();
+              }
+            },
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(_isProfileCompleted ? Icons.check_circle_outline : Icons.add, size: 15, color: accent),
+              const SizedBox(width: 5),
+              Text(_isProfileCompleted ? '프로필 수정' : '프로필 작성', style: AppTheme.sans(13, accent, weight: FontWeight.w600)),
+            ]),
+          ),
         ),
       ],
     );

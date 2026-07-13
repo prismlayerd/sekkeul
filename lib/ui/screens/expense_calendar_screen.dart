@@ -1087,26 +1087,31 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GestureDetector(
-            onTap: () => setState(() => _reserveCardExpanded = !_reserveCardExpanded),
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 13, 16, 13),
-              child: Row(children: [
-                Icon(Icons.savings_outlined, size: 16, color: sub),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text('이번 달 세금·보험 적립(예상)',
-                      style: AppTheme.sans(13, sub, weight: FontWeight.w600)),
-                ),
-                if (!_reserveCardExpanded) ...[
-                  Text(range(r.minUsable, r.maxUsable),
-                      style: AppTheme.sans(13, ink, weight: FontWeight.w800)),
-                  const SizedBox(width: 4),
-                ],
-                Icon(_reserveCardExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-                    size: 18, color: sub),
-              ]),
+          Semantics(
+            button: true,
+            expanded: _reserveCardExpanded,
+            label: '이번 달 세금·보험 적립 예상 ${range(r.minUsable, r.maxUsable)}',
+            child: GestureDetector(
+              onTap: () => setState(() => _reserveCardExpanded = !_reserveCardExpanded),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 13, 16, 13),
+                child: Row(children: [
+                  Icon(Icons.savings_outlined, size: 16, color: sub),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text('이번 달 세금·보험 적립(예상)',
+                        style: AppTheme.sans(13, sub, weight: FontWeight.w600)),
+                  ),
+                  if (!_reserveCardExpanded) ...[
+                    Text(range(r.minUsable, r.maxUsable),
+                        style: AppTheme.sans(13, ink, weight: FontWeight.w800)),
+                    const SizedBox(width: 4),
+                  ],
+                  Icon(_reserveCardExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                      size: 18, color: sub),
+                ]),
+              ),
             ),
           ),
           if (_reserveCardExpanded)

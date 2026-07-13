@@ -52,6 +52,15 @@ class SeculApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       navigatorObservers: [appRouteObserver],
+      // U-3 — 시스템 글자 확대를 1.3배까지만 허용(그 이상은 촘촘한 도면형 레이아웃이
+      // 깨질 수 있어 캡). 1.0~1.3 구간은 검증 완료.
+      builder: (context, child) {
+        final scaler = MediaQuery.textScalerOf(context).clamp(minScaleFactor: 1.0, maxScaleFactor: 1.3);
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: scaler),
+          child: child!,
+        );
+      },
       home: const _AppLockGate(child: HomeScreen()),
     );
   }
