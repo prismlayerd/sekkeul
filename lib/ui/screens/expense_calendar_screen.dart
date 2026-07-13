@@ -12,6 +12,7 @@ import '../../core/data/ledger_profile.dart';
 import '../../core/notifications/reminder_scheduler.dart';
 import '../../core/tax_engine/reserve_estimator.dart';
 import '../theme/app_theme.dart';
+import '../components/calc_disclaimer.dart';
 import 'my_info_screen.dart';
 import 'recurring_confirm_screen.dart';
 import 'recurring_templates_screen.dart';
@@ -1116,6 +1117,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                       ]),
                     ),
                   ],
+                  const CalcDisclaimer(),
                 ],
               ),
             ),

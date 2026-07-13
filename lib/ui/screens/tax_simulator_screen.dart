@@ -6,6 +6,7 @@ import '../../core/data/occupation_data.dart';
 import '../../core/data/db_helper.dart';
 import 'occupation_search_screen.dart';
 import '../components/tax_pipeline_rail.dart';
+import '../components/calc_disclaimer.dart';
 import '../../core/parsing/pdf_text_extractor.dart';
 import '../../core/parsing/pension_income_parser.dart';
 import '../../core/parsing/freelancer_income_parser.dart';
@@ -1061,9 +1062,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       final r = _freelancerResult!;
       final isRefund = r.expectedRefundOrPayment >= 0;
       final amount = r.expectedRefundOrPayment.abs().toInt();
-      return _renderBanner(isRefund, amount, r.reserveNudgeMessage);
+      return Column(children: [_renderBanner(isRefund, amount, r.reserveNudgeMessage), const CalcDisclaimer()]);
     }
-    
+
     if (_isEmployee && _isFreelancer) {
       if (_combinedResult == null) return const SizedBox.shrink();
       final r = _combinedResult!;
@@ -1074,14 +1075,14 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       final message = isDoubleEntry
           ? '사업소득은 복식부기 대상이라 이 앱이 계산하지 않아요. 근로소득 관련 공제만 반영한 금액이에요 — 사업소득분은 세무사와 확인하세요.'
           : r.reserveNudgeMessage;
-      return _renderBanner(isRefund, amount, message);
+      return Column(children: [_renderBanner(isRefund, amount, message), const CalcDisclaimer()]);
     }
 
     if (_isEmployee && !_isFreelancer) {
       if (_employeeTotalRefund <= 0 && (_employeeRentResult == null || _monthlyRentController.text.isEmpty || _monthlyRentController.text == '0')) {
         return const SizedBox.shrink();
       }
-      return _buildEmployeeRefundBreakdown();
+      return Column(children: [_buildEmployeeRefundBreakdown(), const CalcDisclaimer()]);
     }
 
     return const SizedBox.shrink();
