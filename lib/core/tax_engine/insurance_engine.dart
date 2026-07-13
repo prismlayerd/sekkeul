@@ -62,23 +62,38 @@ const Map<String, double> specialWorkerIndustrialRates = {
 
 /// 2026년 기준 4대보험 계산 엔진 (오프라인 로컬 퍼스트)
 class InsuranceEngine {
-  static const double empNationalPensionRate = 0.045; // 직장인 본인부담 4.5% (사용자가 준 4.5% 캡 기준 수정)
-  static const double empHealthInsuranceRate = 0.03595; // 3.595%
-  static const double longTermCareRate = 0.1314; // 13.14% (건강보험료 대비)
-  static const double empEmploymentInsuranceRate = 0.0090; // 0.90%
-  
-  static const double njobHealthInsuranceRate = 0.0719; // 7.19%
+  // 국민연금(직장인 본인부담)·지역가입자 요율 — 2026-01-01 국민연금법 개정 시행으로
+  // 9.0%→9.5%(지역), 4.5%→4.75%(직장 본인부담)로 인상됨(2033년까지 매년 0.5%p씩 13%로 단계 인상).
+  // 출처: 보건복지부 보도자료(2026 국민연금 개혁, 시행일 2026-01-01) — 확인일 2026-07-13 (D-2).
+  static const double empNationalPensionRate = 0.0475;
+  // 건강보험(직장인 본인부담, 노사 각 50%) — 2026년 전체 요율 7.19%의 절반.
+  // 출처: 보건복지부 고시 "2026년 건강보험료율 7.19%로 결정" — 확인일 2026-07-13.
+  static const double empHealthInsuranceRate = 0.03595;
+  // 장기요양보험료율 — 건강보험료 대비 비율. 2026년 13.14%(2025년 12.95%에서 인상).
+  // 출처: 보건복지부 고시 "2026년도 장기요양보험료율 0.9448%" 보도자료 — 확인일 2026-07-13.
+  static const double longTermCareRate = 0.1314;
+  // 고용보험(실업급여분, 근로자 부담) — 2026년 0.9%로 수년째 동일.
+  // 출처: 고용보험법 시행령 별표, 2026년 4대보험 요율 정리 — 확인일 2026-07-13.
+  static const double empEmploymentInsuranceRate = 0.0090;
 
-  static const double freeNationalPensionRate = 0.090; // 지역가입자 9.0% (수정)
-  static const double healthScoreUnitAmount = 211.5; // 점수당 금액
+  // N잡러 소득월액보험료·지역가입자 건강보험료 — 직장인 본인부담(3.595%)의 2배인
+  // 전체 요율 7.19%를 그대로 적용(소득월액/지역보험료는 노사 분담이 아니라 전액 부과).
+  // 출처: 위 empHealthInsuranceRate와 동일 고시 — 확인일 2026-07-13.
+  static const double njobHealthInsuranceRate = 0.0719;
 
-  // 특고 고용보험 본인부담
+  static const double freeNationalPensionRate = 0.095;
+  // 지역가입자 재산 점수당 금액 — *2026-07-13 기준 미검증*, 국민건강보험공단 고시 대조 필요(다음 패스).
+  static const double healthScoreUnitAmount = 211.5;
+
+  // 특고 고용보험 본인부담 — *2026-07-13 기준 미검증*, 고용보험법 시행령 별표 대조 필요(다음 패스).
   static const double specialWorkerEmploymentRate = 0.008; // 0.8%
 
   // 국민연금 기준소득월액 상·하한 — TaxRates 단일 출처 참조(드리프트 방지).
   static const double pensionLowerBound = TaxRates.nationalPensionBaseLowerLimit;
   static const double pensionUpperBound = TaxRates.nationalPensionBaseUpperLimit;
-  
+
+  // 건강보험료 부과 기준소득월액 상·하한 — *2026-07-13 기준 미검증*,
+  // 국민건강보험공단 고시 대조 필요(다음 패스).
   static const double healthLowerBound = 280667;
   static const double healthUpperBound = 127725731;
 

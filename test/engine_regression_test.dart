@@ -3,6 +3,7 @@ import 'package:secul/core/tax_engine/employee_tax.dart';
 import 'package:secul/core/tax_engine/combined_tax.dart';
 import 'package:secul/core/tax_engine/freelancer_tax.dart';
 import 'package:secul/core/tax_engine/tax_rates.dart';
+import 'package:secul/core/tax_engine/insurance_engine.dart';
 
 /// 세끌 세금 엔진 검산 회귀테스트
 /// 각 테스트는 실제 법령·고시 수치를 기준으로 산출값을 검증한다.
@@ -592,6 +593,41 @@ void main() {
     test('np_cap_3: 건강보험은 상한 클램프 대상 아님(월급 비례 유지)', () {
       final ins = EmployeeTaxCalculator.calculateMonthlyInsurance(8000000);
       expect(ins.healthInsurance, TaxRates.truncateWon(8000000 * 0.03595));
+    });
+  });
+
+  // ──────────────────────────────────────────
+  // InsuranceEngine 국민연금 요율 (D-2: 4.5%→4.75%, 9.0%→9.5% 정정 확인)
+  // ──────────────────────────────────────────
+  group('InsuranceEngine 국민연금 요율 (D-2)', () {
+    test('employee_np: 직장인 본인부담 4.75% 부과(상한 이하 월 500만)', () {
+      final ins = InsuranceEngine.calculateEmployeeInsurance(5000000);
+      expect(ins.nationalPension, TaxRates.truncateWon(5000000 * InsuranceEngine.empNationalPensionRate));
+      expect(InsuranceEngine.empNationalPensionRate, 0.0475);
+    });
+
+    test('freelancer_np: 지역가입자 9.5% 부과(연 6천만원, 상한 이하)', () {
+      final ins = InsuranceEngine.calculateFreelancerInsurance(
+        annualIncome: 60000000,
+        propertyValue: 0,
+      );
+      const monthlyIncome = 60000000 / 12;
+      expect(ins.nationalPension, TaxRates.truncateWon(monthlyIncome * InsuranceEngine.freeNationalPensionRate));
+      expect(InsuranceEngine.freeNationalPensionRate, 0.095);
+    });
+
+    test('njob_health: N잡러 소득월액 건보료는 7.19% 전체 요율 적용', () {
+      final result = InsuranceEngine.calculateNJobExtraInsurance(50000000);
+      const taxableMonthlyIncome = (50000000 - 20000000) / 12;
+      expect(result.extraHealthInsurance, TaxRates.truncateWon(taxableMonthlyIncome * InsuranceEngine.njobHealthInsuranceRate));
+      expect(InsuranceEngine.njobHealthInsuranceRate, 0.0719);
+    });
+
+    test('pension_bounds: 기준소득월액 상·하한이 TaxRates와 동일 출처(659만/41만)', () {
+      expect(InsuranceEngine.pensionUpperBound, TaxRates.nationalPensionBaseUpperLimit);
+      expect(InsuranceEngine.pensionLowerBound, TaxRates.nationalPensionBaseLowerLimit);
+      expect(InsuranceEngine.pensionUpperBound, 6590000.0);
+      expect(InsuranceEngine.pensionLowerBound, 410000.0);
     });
   });
 

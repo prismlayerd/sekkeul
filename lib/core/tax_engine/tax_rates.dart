@@ -12,7 +12,7 @@ class TaxRates {
     TaxBracket(limit: double.infinity, rate: 0.45, deduction: 65940000),
   ];
 
-  /// 인적공제 기본 공제액 (1인당 150만 원)
+  /// 인적공제 기본 공제액 (1인당 150만 원) — 소득세법 §50①, 연도 무관 고정액.
   static const double basicDeductionPerPerson = 1500000.0;
 
   /// 인적공제 추가공제액 (2025 귀속)
@@ -21,7 +21,7 @@ class TaxRates {
   static const double additionalDeductionFemale = 500000.0;    // 부녀자
   static const double additionalDeductionSingleParent = 1000000.0; // 한부모
 
-  /// 표준세액공제 (특별소득·특별세액·월세공제 미신청 근로자)
+  /// 표준세액공제 (특별소득·특별세액·월세공제 미신청 근로자) — 소득세법 §59의4④, 연도 무관 고정액.
   static const double standardTaxCredit = 130000.0;
 
   /// 혼인세액공제 (2024~2026 혼인신고, 생애 1회)
@@ -59,17 +59,18 @@ class TaxRates {
   /// 금융소득 건강보험료 추가 산정 기준 (연 1,000만원 초과 시 소득월액 건보료 부과)
   static const double financialIncomeHealthThreshold = 10000000.0;
 
-  /// 프리랜서 원천징수 소득세율 (3.3% 중 국세 3.0%)
+  /// 프리랜서 원천징수 소득세율 (3.3% 중 국세 3.0%) — 소득세법 §127, 연도 무관 고정율.
   static const double freelancerWithholdingRate = 0.03;
 
-  /// 프리랜서 원천징수 지방소득세율 (3.3% 중 지방세 0.3%)
+  /// 프리랜서 원천징수 지방소득세율 (3.3% 중 지방세 0.3%) — 지방세법 §103의13, 연도 무관 고정율.
   static const double freelancerLocalWithholdingRate = 0.003;
 
-  /// 국민연금 기준소득월액 상·하한 (2025.7~2026.6 적용 — 단일 출처).
+  /// 국민연금 기준소득월액 상·하한 (2026.7~2027.6 적용 — 단일 출처).
   /// 보험료는 이 범위로 클램프한 월소득에 부과된다. (국민연금법 시행령)
+  /// 출처: 보건복지부 고시, 2026-07 시행("659만원→상한, 41만원→하한" 보도) — 확인일 2026-07-13.
   /// 세법유지보수: 매년 7월 고시값으로 갱신. insurance_engine도 이 상수를 참조함.
-  static const double nationalPensionBaseUpperLimit = 6370000.0;
-  static const double nationalPensionBaseLowerLimit = 400000.0;
+  static const double nationalPensionBaseUpperLimit = 6590000.0;
+  static const double nationalPensionBaseLowerLimit = 410000.0;
 
   /// 종합소득 과세표준에 따른 산출세액 연산 함수 (세전 금액 기준)
   static double calculateTax(double taxBase) {

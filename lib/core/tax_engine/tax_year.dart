@@ -12,9 +12,13 @@
 ///      empHealthInsuranceRate / longTermCareRate / empEmploymentInsuranceRate
 ///      njobHealthInsuranceRate / healthScoreUnitAmount 등
 ///    └ 직장인 즉시계산: lib/core/tax_engine/employee_tax.dart 의 보험 요율도 동일 값 확인
-/// 3) 국민연금 기준소득월액 상·하한 (매년 7월 고시)
+/// 3) 국민연금 기준소득월액 상·하한 (매년 7월 고시) **및** 보험료율(%) 자체
 ///    └ TaxRates.nationalPensionBaseUpperLimit / nationalPensionBaseLowerLimit
 ///      (insurance_engine 은 이 상수를 참조 — 한 곳만 고치면 됨)
+///    └ insurance_engine.dart 의 empNationalPensionRate / freeNationalPensionRate
+///      — 상하한(월 소득 범위)만 매년 갱신되는 게 아니라 요율(%) 자체도 개정될 수
+///      있음(2026-01-01 국민연금법 개정으로 9%→9.5%/4.5%→4.75%, D-2에서 발견).
+///      employee_tax.dart 의 하드코딩 요율도 동일 값인지 반드시 함께 확인.
 /// 4) 종합소득세 과세표준 구간·세율 (개정 시)
 ///    └ TaxRates.incomeTaxBrackets
 /// 5) 인적공제·세액공제 (자녀·출산·혼인 등 개정 시)
