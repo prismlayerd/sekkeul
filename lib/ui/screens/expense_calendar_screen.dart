@@ -518,6 +518,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         child: Column(
           children: [
             _buildMonthNav(ink),
+            _buildViewTabs(ink),
             AppTheme.hairline(context),
             Expanded(
               child: IndexedStack(
@@ -546,7 +547,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomBar(ink, sub),
     );
   }
 
@@ -557,46 +557,55 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final accent = AppTheme.accentColor(context);
     final line = AppTheme.line(context);
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.only(top: 8, bottom: 10),
       decoration: BoxDecoration(border: Border(top: BorderSide(color: line, width: 1))),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: [
-            if (_profile.showsPaydayChip)
-              _quickChip(
-                icon: Icons.payments_outlined,
-                label: '월급 $_paydayDay일',
-                ink: ink, sub: sub, line: line,
-                onTap: _showPaydayPicker,
-              ),
-            for (final card in _cardDates)
-              _quickChip(
-                icon: Icons.credit_card_rounded,
-                label: '${card['name']} ${card['day']}일',
-                ink: ink, sub: sub, line: line,
-                onTap: () => _showCardOptions(card),
-              ),
-            _quickChip(
-              icon: Icons.add_rounded,
-              label: '카드결제일',
-              ink: accent, sub: accent, line: accent,
-              onTap: _showAddCardDialog,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: _buildLegend(),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                if (_profile.showsPaydayChip)
+                  _quickChip(
+                    icon: Icons.payments_outlined,
+                    label: '월급 $_paydayDay일',
+                    ink: ink, sub: sub, line: line,
+                    onTap: _showPaydayPicker,
+                  ),
+                for (final card in _cardDates)
+                  _quickChip(
+                    icon: Icons.credit_card_rounded,
+                    label: '${card['name']} ${card['day']}일',
+                    ink: ink, sub: sub, line: line,
+                    onTap: () => _showCardOptions(card),
+                  ),
+                _quickChip(
+                  icon: Icons.add_rounded,
+                  label: '카드결제일',
+                  ink: accent, sub: accent, line: accent,
+                  onTap: _showAddCardDialog,
+                ),
+                _quickChip(
+                  icon: Icons.add_rounded,
+                  label: '고정지출',
+                  ink: accent, sub: accent, line: accent,
+                  onTap: () async {
+                    await Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const RecurringTemplatesScreen(),
+                    ));
+                    _load();
+                  },
+                ),
+              ],
             ),
-            _quickChip(
-              icon: Icons.add_rounded,
-              label: '고정지출',
-              ink: accent, sub: accent, line: accent,
-              onTap: () async {
-                await Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => const RecurringTemplatesScreen(),
-                ));
-                _load();
-              },
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -956,32 +965,12 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           const SizedBox(width: 4),
           Text(label, style: AppTheme.sans(11, sub, weight: FontWeight.w500)),
         ]);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 7),
-      child: Wrap(spacing: 10, runSpacing: 4, children: [
-        dot(_incomeColor,   '수익'),
-        dot(_pmCreditColor, '신용카드'),
-        dot(_pmDebitColor,  '체크/현금'),
-        dot(_pmOtherColor,  '기타'),
-      ]),
-    );
-  }
-
-  Widget _buildBottomBar(Color ink, Color sub) {
-    // SafeArea(top:false)로 시스템 내비게이션 바 높이만큼 하단 인셋을 더해
-    // 탭이 기기 하단 제스처/버튼에 깔리지 않게 한다. 고정 높이 대신 콘텐츠에
-    // 맞춰 커지므로 인셋이 흡수되지 않고 그대로 얹힌다.
-    return SafeArea(
-      top: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AppTheme.hairline(context),
-          if (_activeView == 0) _buildLegend(),
-          _buildViewTabs(ink),
-        ],
-      ),
-    );
+    return Wrap(spacing: 10, runSpacing: 4, children: [
+      dot(_incomeColor,   '수익'),
+      dot(_pmCreditColor, '신용카드'),
+      dot(_pmDebitColor,  '체크/현금'),
+      dot(_pmOtherColor,  '기타'),
+    ]);
   }
 
   Widget _buildViewTabs(Color ink) {
