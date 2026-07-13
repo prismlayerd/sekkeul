@@ -55,6 +55,9 @@ android {
 
         release {
             // key.properties가 있으면 실서명, 없으면 debug로 폴백(빌드는 항상 성공).
+            if (!keystorePropertiesFile.exists()) {
+                logger.warn("⚠️  [세끌] android/key.properties가 없어 release 빌드가 debug 키로 서명됩니다 — 스토어 제출용 APK/AAB가 아닙니다.")
+            }
             signingConfig = if (keystorePropertiesFile.exists())
                 signingConfigs.getByName("release")
             else
