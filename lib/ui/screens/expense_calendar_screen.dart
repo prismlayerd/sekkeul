@@ -526,6 +526,8 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                   // 0: 달력
                   Column(
                     children: [
+                      if (_reserveEstimate != null && !_reserveEstimate!.hasOccupationCode)
+                        _buildProfileGateBanner(),
                       if (_recurringPendingCount > 0) _buildRecurringBanner(),
                       Expanded(child: _buildCalendar(ink, sub)),
                     ],
@@ -860,6 +862,36 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   }
 
   /// 고정 지출 미확인 배너
+  /// 프로필 소프트 게이트 — 업종코드 등 미작성 시 상단 배너(하드 블록 아님, 정보 안내).
+  Widget _buildProfileGateBanner() {
+    final accent = AppTheme.accentColor(context);
+    return GestureDetector(
+      onTap: _openProfileForReserve,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: accent.withAlpha(15),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: accent.withAlpha(60), width: 1),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.badge_outlined, size: 18, color: accent),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                '프로필을 작성하면 적립 계산이 정확해져요',
+                style: AppTheme.sans(13, accent, weight: FontWeight.w600),
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, size: 18, color: accent),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildRecurringBanner() {
     final accent = AppTheme.accentColor(context);
     return GestureDetector(
