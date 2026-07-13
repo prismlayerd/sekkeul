@@ -23,8 +23,9 @@ void main() async {
       );
     };
     if (!kIsWeb) {
+      // 알림 권한은 여기서 즉시 요청하지 않는다(U-1) — 첫 리마인더 화면 진입 또는
+      // 설정에서 알림을 켤 때(맥락과 함께) 요청한다.
       await notificationHelper.init();
-      await notificationHelper.requestPermissions();
     }
     await dbService.initDatabase();
 

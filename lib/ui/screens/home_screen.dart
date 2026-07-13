@@ -103,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
-    notificationHelper.requestPermissions();
+    // 알림 권한 요청은 여기서 하지 않는다(U-1) — 리마인더 화면 진입/설정 알림 토글 시 요청.
     _salaryController.addListener(_calculateTax);
     _monthlyRentController.addListener(_calculateTax);
     _freelancerIncomeController.addListener(_calculateTax);
