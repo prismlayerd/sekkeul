@@ -30,9 +30,6 @@ abstract class DatabaseService {
   Future<void> saveBannerHideTime(String bannerId, int hideUntilEpoch);
   Future<int?> getBannerHideTime(String bannerId);
   Future<Map<String, int>> getAllBannerHideTimes();
-  Future<void> setMonthlyIncome(int year, int month, double amount);
-  Future<Map<int, double>> getMonthlyIncomesForYear(int year);
-  Future<void> deleteMonthlyIncome(int year, int month);
   // 일별 수입 기록 (v14)
   Future<void> insertIncomeEntry(IncomeEntry entry);
   Future<List<IncomeEntry>> getIncomeEntriesForMonth(int year, int month, {String? userType});
@@ -103,7 +100,6 @@ const List<String> kBackupTables = [
   'user_profile',
   'expenses',
   'income_entries',
-  'monthly_income_records',
   'monthly_card_usage',
   'tax_records',
   'report_drafts',
@@ -257,7 +253,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     // 기존 평문 DB가 있고 아직 암호화 전이면: 먼저 평문 상태로 최신 스키마까지 정규화한 뒤
     // SQLCipher 암호화 DB로 1회 이전한다(S-2). 신규 설치는 곧장 암호화 DB로 생성된다.
     if (await File(path).exists() && !await _isAlreadyEncrypted(path, key)) {
-      final normalizeDb = await openDatabase(path, version: 36, onCreate: _onCreate, onUpgrade: _onUpgrade);
+      final normalizeDb = await openDatabase(path, version: 37, onCreate: _onCreate, onUpgrade: _onUpgrade);
       await normalizeDb.close();
       await _encryptExistingPlaintextDb(path, key);
     }
@@ -265,7 +261,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     _db = await openDatabase(
       path,
       password: key,
-      version: 36,
+      version: 37,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -306,7 +302,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     }
     await plainDb.close();
 
-    final encDb = await openDatabase(tempEncPath, password: key, version: 36, onCreate: _onCreate);
+    final encDb = await openDatabase(tempEncPath, password: key, version: 37, onCreate: _onCreate);
     var insertedRows = 0;
     await encDb.transaction((txn) async {
       for (final entry in dump.entries) {
@@ -415,15 +411,6 @@ class SqfliteDatabaseHelper implements DatabaseService {
             month INTEGER,
             credit_card_total REAL DEFAULT 0,
             debit_cash_total REAL DEFAULT 0,
-            PRIMARY KEY (year, month)
-          )
-        ''');
-        // 월별 소득 기록 테이블
-        await db.execute('''
-          CREATE TABLE monthly_income_records (
-            year INTEGER,
-            month INTEGER,
-            amount REAL,
             PRIMARY KEY (year, month)
           )
         ''');
@@ -782,6 +769,13 @@ class SqfliteDatabaseHelper implements DatabaseService {
             await db.execute(_errorLogTableSql);
           } catch (e) {}
         }
+        // monthly_income_records 캐시 제거 (v37) — income_entries를 유형별로 직접
+        // 합산하는 방식(T-3/T-4)으로 대체되어 더 이상 쓰지 않음(T-4).
+        if (oldVersion < 37) {
+          try {
+            await db.execute('DROP TABLE IF EXISTS monthly_income_records');
+          } catch (e) {}
+        }
   }
 
   @override
@@ -1043,7 +1037,6 @@ class SqfliteDatabaseHelper implements DatabaseService {
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-    await _recalcMonthlyIncome(db, entry.date.year, entry.date.month);
   }
 
   @override
@@ -1094,7 +1087,6 @@ class SqfliteDatabaseHelper implements DatabaseService {
       where: 'id = ?',
       whereArgs: [entry.id],
     );
-    await _recalcMonthlyIncome(db, entry.date.year, entry.date.month);
   }
 
   @override
@@ -1102,7 +1094,6 @@ class SqfliteDatabaseHelper implements DatabaseService {
     final db = _db;
     if (db == null) return;
     await db.delete('income_entries', where: 'id = ?', whereArgs: [id]);
-    await _recalcMonthlyIncome(db, year, month);
   }
 
   @override
@@ -1115,27 +1106,6 @@ class SqfliteDatabaseHelper implements DatabaseService {
     final incomeRows = await db.query('income_entries',
         where: 'user_type = ?', whereArgs: [userType], limit: 1);
     return incomeRows.isNotEmpty;
-  }
-
-  Future<void> _recalcMonthlyIncome(Database db, int year, int month) async {
-    final rows = await db.query('income_entries');
-    int total = 0;
-    for (final row in rows) {
-      try {
-        final date = DateTime.parse(row['date'] as String);
-        if (date.year == year && date.month == month) {
-          total += int.parse(row['amount'] as String);
-        }
-      } catch (_) {}
-    }
-    if (total > 0) {
-      await db.insert('monthly_income_records',
-          {'year': year, 'month': month, 'amount': total.toDouble()},
-          conflictAlgorithm: ConflictAlgorithm.replace);
-    } else {
-      await db.delete('monthly_income_records',
-          where: 'year = ? AND month = ?', whereArgs: [year, month]);
-    }
   }
 
   @override
@@ -1167,34 +1137,6 @@ class SqfliteDatabaseHelper implements DatabaseService {
       result[map['banner_id'] as String] = map['hide_until_epoch'] as int;
     }
     return result;
-  }
-
-  @override
-  Future<void> setMonthlyIncome(int year, int month, double amount) async {
-    final db = _db;
-    if (db == null) return;
-    await db.insert('monthly_income_records', {
-      'year': year, 'month': month, 'amount': amount,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
-  }
-
-  @override
-  Future<Map<int, double>> getMonthlyIncomesForYear(int year) async {
-    final db = _db;
-    if (db == null) return {};
-    final rows = await db.query('monthly_income_records', where: 'year = ?', whereArgs: [year]);
-    final result = <int, double>{};
-    for (final r in rows) {
-      result[r['month'] as int] = (r['amount'] as double?) ?? 0.0;
-    }
-    return result;
-  }
-
-  @override
-  Future<void> deleteMonthlyIncome(int year, int month) async {
-    final db = _db;
-    if (db == null) return;
-    await db.delete('monthly_income_records', where: 'year = ? AND month = ?', whereArgs: [year, month]);
   }
 
   @override
@@ -1695,7 +1637,6 @@ class SqfliteDatabaseHelper implements DatabaseService {
       await db.execute("UPDATE expenses SET date='0000', amount='ZERO', content='ZERO', category='ZERO'");
       await db.execute("DELETE FROM banner_states");
       await db.execute("DELETE FROM monthly_card_usage");
-      await db.execute("DELETE FROM monthly_income_records");
       await db.execute("DELETE FROM income_entries");
       await db.execute("DELETE FROM report_drafts");
       await db.execute("DELETE FROM annual_records");
@@ -1874,31 +1815,6 @@ class InMemoryDatabaseHelper implements DatabaseService {
     return Map.from(_bannerHideTimes);
   }
 
-  final Map<String, double> _monthlyIncomes = {};
-
-  @override
-  Future<void> setMonthlyIncome(int year, int month, double amount) async {
-    if (_isClosed) return;
-    _monthlyIncomes['$year-$month'] = amount;
-  }
-
-  @override
-  Future<Map<int, double>> getMonthlyIncomesForYear(int year) async {
-    if (_isClosed) return {};
-    final result = <int, double>{};
-    _monthlyIncomes.forEach((key, value) {
-      final parts = key.split('-');
-      if (parts[0] == '$year') result[int.parse(parts[1])] = value;
-    });
-    return result;
-  }
-
-  @override
-  Future<void> deleteMonthlyIncome(int year, int month) async {
-    if (_isClosed) return;
-    _monthlyIncomes.remove('$year-$month');
-  }
-
   final List<IncomeEntry> _incomeEntries = [];
 
   @override
@@ -1906,7 +1822,6 @@ class InMemoryDatabaseHelper implements DatabaseService {
     if (_isClosed) return;
     _incomeEntries.removeWhere((e) => e.id == entry.id);
     _incomeEntries.add(entry);
-    _recalcMonthlyIncomeInMemory(entry.date.year, entry.date.month);
   }
 
   @override
@@ -1924,14 +1839,12 @@ class InMemoryDatabaseHelper implements DatabaseService {
     if (_isClosed) return;
     final idx = _incomeEntries.indexWhere((e) => e.id == entry.id);
     if (idx >= 0) _incomeEntries[idx] = entry;
-    _recalcMonthlyIncomeInMemory(entry.date.year, entry.date.month);
   }
 
   @override
   Future<void> deleteIncomeEntry(String id, int year, int month) async {
     if (_isClosed) return;
     _incomeEntries.removeWhere((e) => e.id == id);
-    _recalcMonthlyIncomeInMemory(year, month);
   }
 
   @override
@@ -1939,17 +1852,6 @@ class InMemoryDatabaseHelper implements DatabaseService {
     if (_isClosed) return false;
     if (_expenses.values.any((raw) => raw['user_type'] == userType)) return true;
     return _incomeEntries.any((e) => e.userType == userType);
-  }
-
-  void _recalcMonthlyIncomeInMemory(int year, int month) {
-    final total = _incomeEntries
-        .where((e) => e.date.year == year && e.date.month == month)
-        .fold(0, (s, e) => s + e.amount);
-    if (total > 0) {
-      _monthlyIncomes['$year-$month'] = total.toDouble();
-    } else {
-      _monthlyIncomes.remove('$year-$month');
-    }
   }
 
   @override
@@ -2287,7 +2189,6 @@ class InMemoryDatabaseHelper implements DatabaseService {
 
     // 2/3단계: 물리적 소거
     _expenses.clear();
-    _monthlyIncomes.clear();
     _incomeEntries.clear();
     _reportDrafts.clear();
     _annualRecords.clear();
