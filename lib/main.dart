@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'core/data/db_helper.dart';
@@ -11,18 +12,29 @@ import 'core/security/app_lock_service.dart';
 import 'ui/theme/app_theme.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  if (!kIsWeb) {
-    await notificationHelper.init();
-    await notificationHelper.requestPermissions();
-  }
-  await dbService.initDatabase();
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    FlutterError.onError = (details) {
+      FlutterError.presentError(details);
+      dbService.insertErrorLog(
+        details.exceptionAsString(),
+        details.stack?.toString() ?? '',
+      );
+    };
+    if (!kIsWeb) {
+      await notificationHelper.init();
+      await notificationHelper.requestPermissions();
+    }
+    await dbService.initDatabase();
 
-  // 저장된 데이터 수집 모드(제1/제2) 복원
-  final profile = await dbService.getProfile();
-  appModeNotifier.value = appModeFromDb(profile?['data_mode'] as String?);
+    // 저장된 데이터 수집 모드(제1/제2) 복원
+    final profile = await dbService.getProfile();
+    appModeNotifier.value = appModeFromDb(profile?['data_mode'] as String?);
 
-  runApp(const SeculApp());
+    runApp(const SeculApp());
+  }, (error, stack) {
+    dbService.insertErrorLog(error.toString(), stack.toString());
+  });
 }
 
 /// 세끌 어플리케이션 메인 진입점

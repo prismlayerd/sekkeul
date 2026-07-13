@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../theme/app_theme.dart';
 import '../../core/data/app_mode.dart';
@@ -166,6 +169,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
       default:
         _snack('백업에 실패했어요. 다시 시도해주세요.');
     }
+  }
+
+  String _stamp() {
+    final now = DateTime.now();
+    return '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_'
+        '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _exportErrorLogs() async {
+    final logs = await dbService.getErrorLogs();
+    if (logs.isEmpty) {
+      _snack('기록된 오류가 없어요.');
+      return;
+    }
+    final buffer = StringBuffer();
+    for (final log in logs) {
+      buffer.writeln('[${log['occurred_at']}] ${log['message']}');
+      buffer.writeln(log['stack_trace']);
+      buffer.writeln('---');
+    }
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/sekkeul_error_log_${_stamp()}.txt');
+    await file.writeAsString(buffer.toString());
+    await Share.shareXFiles([XFile(file.path)], text: '세끌 오류 기록');
   }
 
   Future<void> _importBackup() async {
@@ -340,6 +367,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _glyphRow(
                 title: '데이터 복원 (가져오기)',
                 onTap: _importBackup,
+              ),
+              AppTheme.hairline(context),
+              _glyphRow(
+                title: '오류 기록 내보내기',
+                onTap: _exportErrorLogs,
               ),
               AppTheme.hairline(context),
             ],

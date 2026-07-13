@@ -66,6 +66,9 @@ abstract class DatabaseService {
   // 잡다한 단일 키-값 앱 상태 (v27) — 알림 히스토리 역산 체크포인트 등
   Future<String?> getAppState(String key);
   Future<void> setAppState(String key, String value);
+  // 전역 에러 로그 (v36, T-1) — 개인정보 없이 메시지·스택트레이스만, 최근 100건 순환
+  Future<void> insertErrorLog(String message, String stackTrace);
+  Future<List<Map<String, dynamic>>> getErrorLogs();
   // 이벤트 트리거형 기본 제공 알림 설정 (v28) — 예산 알림·미기록 넛지처럼 날짜가 아니라
   // 조건 충족 시 발화하는 알림의 on/off + 발화 시각. 행 없으면 코드 기본값 사용.
   Future<Map<String, Map<String, dynamic>>> getEventReminderPrefs();
@@ -172,6 +175,17 @@ class SqfliteDatabaseHelper implements DatabaseService {
   ''';
 
   /// 즐겨찾기 빠른 입력 프리셋 (v33)
+  /// 전역 에러 로그 (v36, T-1) — FlutterError.onError·runZonedGuarded가 여기 적재.
+  /// 개인정보 없이 에러 메시지·스택트레이스만 저장, 최근 100건 순환.
+  static const String _errorLogTableSql = '''
+    CREATE TABLE IF NOT EXISTS error_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      occurred_at TEXT,
+      message TEXT,
+      stack_trace TEXT
+    )
+  ''';
+
   static const String _quickEntryPresetsTableSql = '''
     CREATE TABLE IF NOT EXISTS quick_entry_presets (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -243,7 +257,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     // 기존 평문 DB가 있고 아직 암호화 전이면: 먼저 평문 상태로 최신 스키마까지 정규화한 뒤
     // SQLCipher 암호화 DB로 1회 이전한다(S-2). 신규 설치는 곧장 암호화 DB로 생성된다.
     if (await File(path).exists() && !await _isAlreadyEncrypted(path, key)) {
-      final normalizeDb = await openDatabase(path, version: 35, onCreate: _onCreateV35, onUpgrade: _onUpgradeV35);
+      final normalizeDb = await openDatabase(path, version: 36, onCreate: _onCreate, onUpgrade: _onUpgrade);
       await normalizeDb.close();
       await _encryptExistingPlaintextDb(path, key);
     }
@@ -251,9 +265,9 @@ class SqfliteDatabaseHelper implements DatabaseService {
     _db = await openDatabase(
       path,
       password: key,
-      version: 35,
-      onCreate: _onCreateV35,
-      onUpgrade: _onUpgradeV35,
+      version: 36,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -292,7 +306,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     }
     await plainDb.close();
 
-    final encDb = await openDatabase(tempEncPath, password: key, version: 35, onCreate: _onCreateV35);
+    final encDb = await openDatabase(tempEncPath, password: key, version: 36, onCreate: _onCreate);
     var insertedRows = 0;
     await encDb.transaction((txn) async {
       for (final entry in dump.entries) {
@@ -317,7 +331,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     await tempFile.rename(path);
   }
 
-  Future<void> _onCreateV35(Database db, int version) async {
+  Future<void> _onCreate(Database db, int version) async {
         // 프로필 테이블 생성
         await db.execute('''
           CREATE TABLE user_profile (
@@ -464,9 +478,11 @@ class SqfliteDatabaseHelper implements DatabaseService {
         await db.execute(_profileTypeValuesTableSql);
         // 즐겨찾기 빠른 입력 프리셋 (v33)
         await db.execute(_quickEntryPresetsTableSql);
+        // 전역 에러 로그 (v36) — 최근 100건 순환
+        await db.execute(_errorLogTableSql);
   }
 
-  Future<void> _onUpgradeV35(Database db, int oldVersion, int newVersion) async {
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
         if (oldVersion < 2) {
           try {
             await db.execute('ALTER TABLE user_profile ADD COLUMN monthly_income REAL');
@@ -758,6 +774,12 @@ class SqfliteDatabaseHelper implements DatabaseService {
           } catch (e) {}
           try {
             await db.execute('ALTER TABLE income_entries ADD COLUMN user_type TEXT');
+          } catch (e) {}
+        }
+        // 전역 에러 로그 (v36)
+        if (oldVersion < 36) {
+          try {
+            await db.execute(_errorLogTableSql);
           } catch (e) {}
         }
   }
@@ -1346,6 +1368,27 @@ class SqfliteDatabaseHelper implements DatabaseService {
     if (db == null) return;
     await db.insert('app_state', {'key': key, 'value': value},
         conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  @override
+  Future<void> insertErrorLog(String message, String stackTrace) async {
+    final db = _db;
+    if (db == null) return;
+    await db.insert('error_log', {
+      'occurred_at': DateTime.now().toIso8601String(),
+      'message': message,
+      'stack_trace': stackTrace,
+    });
+    await db.delete('error_log',
+        where:
+            'id NOT IN (SELECT id FROM error_log ORDER BY id DESC LIMIT 100)');
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getErrorLogs() async {
+    final db = _db;
+    if (db == null) return [];
+    return await db.query('error_log', orderBy: 'id DESC', limit: 100);
   }
 
   @override
@@ -2061,6 +2104,28 @@ class InMemoryDatabaseHelper implements DatabaseService {
   Future<void> setAppState(String key, String value) async {
     if (_isClosed) return;
     _appState[key] = value;
+  }
+
+  final List<Map<String, dynamic>> _errorLogs = [];
+
+  @override
+  Future<void> insertErrorLog(String message, String stackTrace) async {
+    if (_isClosed) return;
+    _errorLogs.insert(0, {
+      'id': _errorLogs.length + 1,
+      'occurred_at': DateTime.now().toIso8601String(),
+      'message': message,
+      'stack_trace': stackTrace,
+    });
+    if (_errorLogs.length > 100) {
+      _errorLogs.removeRange(100, _errorLogs.length);
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getErrorLogs() async {
+    if (_isClosed) return [];
+    return List<Map<String, dynamic>>.from(_errorLogs);
   }
 
   final Map<String, Map<String, dynamic>> _eventReminderPrefs = {};
