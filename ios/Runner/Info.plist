@@ -26,6 +26,8 @@
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
+		<key>NSFaceIDUsageDescription</key>
+		<string>앱 잠금을 사용하려면 Face ID 권한이 필요해요.</string>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>

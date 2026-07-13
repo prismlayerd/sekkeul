@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../../core/data/app_mode.dart';
 import '../../core/data/backup_service.dart';
 import '../../core/data/db_helper.dart';
+import '../../core/security/app_lock_service.dart';
 import 'notification_settings_screen.dart';
 
 /// 설정 — 홈 우상단 톱니에서 진입.
@@ -32,11 +33,94 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late bool _notificationsEnabled = widget.notificationsEnabled;
   PackageInfo? _packageInfo;
+  bool _appLockEnabled = false;
 
   @override
   void initState() {
     super.initState();
     _loadPackageInfo();
+    _loadAppLock();
+  }
+
+  Future<void> _loadAppLock() async {
+    final enabled = await appLockService.isEnabled();
+    if (!mounted) return;
+    setState(() => _appLockEnabled = enabled);
+  }
+
+  Future<void> _toggleAppLock(bool want) async {
+    if (want) {
+      final pin = await _showSetPinDialog();
+      if (pin == null) return;
+      await appLockService.setPin(pin);
+      await appLockService.setEnabled(true);
+    } else {
+      await appLockService.setEnabled(false);
+    }
+    if (!mounted) return;
+    setState(() => _appLockEnabled = want);
+  }
+
+  Future<String?> _showSetPinDialog() async {
+    final pinController = TextEditingController();
+    final confirmController = TextEditingController();
+    String? error;
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: Theme.of(ctx).cardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          title: Text('PIN 설정 (4~6자리 숫자)',
+              style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: pinController,
+                obscureText: true,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                decoration: const InputDecoration(counterText: '', labelText: 'PIN'),
+              ),
+              TextField(
+                controller: confirmController,
+                obscureText: true,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                decoration: const InputDecoration(counterText: '', labelText: 'PIN 확인'),
+              ),
+              if (error != null) ...[
+                const SizedBox(height: 8),
+                Text(error!, style: AppTheme.sans(12, AppTheme.colorDanger)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('취소', style: AppTheme.sans(14, AppTheme.inkSecondary(ctx)))),
+            TextButton(
+              onPressed: () {
+                final pin = pinController.text;
+                final confirm = confirmController.text;
+                if (pin.length < 4 || pin.length > 6 || int.tryParse(pin) == null) {
+                  setDialogState(() => error = 'PIN은 4~6자리 숫자여야 해요');
+                  return;
+                }
+                if (pin != confirm) {
+                  setDialogState(() => error = 'PIN이 서로 달라요');
+                  return;
+                }
+                Navigator.pop(ctx, pin);
+              },
+              child: Text('설정',
+                  style: AppTheme.sans(14, AppTheme.accentColor(ctx), weight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _loadPackageInfo() async {
@@ -225,6 +309,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             AppTheme.hairline(context),
+
+            if (!kIsWeb) ...[
+              const SizedBox(height: 24),
+              Text('보안'.toUpperCase(), style: AppTheme.label(context)),
+              const SizedBox(height: 6),
+              AppTheme.hairline(context),
+              _glyphRow(
+                title: '앱 잠금',
+                trailing: Switch(
+                  value: _appLockEnabled,
+                  activeColor: AppTheme.accentColor(context),
+                  onChanged: _toggleAppLock,
+                ),
+                onTap: () => _toggleAppLock(!_appLockEnabled),
+              ),
+              AppTheme.hairline(context),
+            ],
 
             if (!kIsWeb) ...[
               const SizedBox(height: 24),
