@@ -17,7 +17,6 @@ import 'annual_backfill_screen.dart';
 import 'tax_tools_screen.dart';
 import 'settings_screen.dart';
 import 'benefit_screen.dart';
-import 'products_screen.dart';
 import 'calculator_screen.dart';
 import 'all_screen.dart';
 import 'notification_inbox_screen.dart';
@@ -632,7 +631,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _buildHomeTab(),
           BenefitScreen(userType: _userType),
-          ProductsScreen(userType: _userType),
+          // 상품 탭은 V1에서 숨김(L-5) — 화면 코드는 보존, IndexedStack에서만 제외.
           const CalculatorScreen(),
           AllScreen(
             userType: _userType,
@@ -1882,7 +1881,6 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.square_outlined, size: 20), label: '홈'),
           BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined, size: 20), label: '혜택'),
-          BottomNavigationBarItem(icon: Icon(Icons.credit_card_outlined, size: 20), label: '상품'),
           BottomNavigationBarItem(icon: Icon(Icons.calculate_outlined, size: 20), label: '계산기'),
           BottomNavigationBarItem(icon: Icon(Icons.apps_rounded, size: 20), label: '전체'),
         ],
