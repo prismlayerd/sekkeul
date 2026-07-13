@@ -569,7 +569,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           children: [
             Icon(Icons.lock_outline_rounded, color: Theme.of(context).textTheme.labelMedium!.color!, size: 14),
             SizedBox(width: 4),
-            Text('모든 데이터는 기기 내부에서 안전하게 암호화 보관됩니다.', style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 11)),
+            Text('모든 데이터는 서버 전송 없이 기기 내부에만 저장됩니다.', style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 11)),
           ],
         ),
       ],
