@@ -1121,6 +1121,11 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _reserveRow('세금으로 미리 모아둘 돈', range(r.minMonthlyTaxReserve, r.maxMonthlyTaxReserve), ink, sub),
+                  if (r.minMonthlyTaxReserve.round() != r.maxMonthlyTaxReserve.round()) ...[
+                    const SizedBox(height: 4),
+                    Text('단순경비율(최소)~기준경비율(최대) 두 가정 중 어디에 해당할지 몰라 범위로 보여드려요',
+                        style: AppTheme.sans(11, AppTheme.inkTertiary(context), height: 1.4)),
+                  ],
                   const SizedBox(height: 6),
                   _reserveRow('보험료로 대비할 돈', won(r.insuranceReserve), ink, sub),
                   const SizedBox(height: 10),
