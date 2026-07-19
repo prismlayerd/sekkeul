@@ -29,6 +29,9 @@ class FreelancerTaxCalculator {
     // 기타소득(강사료·원고료 등 일시적 용역, 8.8% 원천징수) 누적 수입 — 사업소득과 성격이 달라
     // 업종코드 경비율이 아니라 정률(수입의 40%만 과세, 필요경비 60% 자동 인정)로 별도 계산한다.
     double accumulatedOtherIncome = 0.0,
+    // 성실사업자(조특법 §122의3) 요건 충족 여부 — 근로소득 없는 사업소득자의 월세
+    // 세액공제는 성실사업자만 대상이라, 참일 때만 월세 공제를 적용한다(기본 false).
+    bool isQualifiedFaithfulTaxpayer = false,
   }) {
     // 0. 입력값 방어 코드
     final months = inputMonths < 1 ? 1 : (inputMonths > 12 ? 12 : inputMonths);
@@ -71,7 +74,6 @@ class FreelancerTaxCalculator {
     // 4-1. 기타소득금액 — 업종 경비율과 무관하게 정률 40%만 과세(필요경비 60% 자동 인정).
     final double annualOtherIncome = (otherIncome / months) * 12;
     final double otherIncomeAmount = EmployeeTaxCalculator.calculateOtherIncomeAmount(annualOtherIncome);
-    final double estimatedGlobalIncome = estimatedBusinessIncome + otherIncomeAmount;
 
     // 5. 소득공제 차감
     // 인적공제: 본인 공제(150만 원) + 부양가족 수 * 150만 원
@@ -98,11 +100,29 @@ class FreelancerTaxCalculator {
     
     final double totalDeduction = basicDeduction + disabilityDeduction + yellowUmbrellaDeduction + freelancerHealthInsurance;
 
-    // 과세표준 (사업소득금액 + 기타소득금액 - 소득공제)
-    double taxBase = estimatedGlobalIncome - totalDeduction;
-    if (taxBase < 0) {
-      taxBase = 0;
+    // 기타소득 분리과세 선택 (소득세법 §14③8): 기타소득금액 300만원 이하(원천징수분)는
+    // 종합과세와 분리과세(원천징수 8.8%로 종결) 중 유리한 쪽을 선택할 수 있다.
+    // 종합 합산 시 한계세액(지방세 포함)이 이미 낸 원천징수액보다 크면 분리과세가 유리.
+    // 가계부 수입 입력의 원천징수 토글 기본값이 true라 원천징수됐다고 가정한다.
+    double taxBaseWithoutOther = estimatedBusinessIncome - totalDeduction;
+    if (taxBaseWithoutOther < 0) taxBaseWithoutOther = 0;
+    double taxBaseWithOther = estimatedBusinessIncome + otherIncomeAmount - totalDeduction;
+    if (taxBaseWithOther < 0) taxBaseWithOther = 0;
+
+    bool otherIncomeComprehensive = true;
+    if (otherIncomeAmount > 0 && !EmployeeTaxCalculator.isOtherIncomeComprehensive(otherIncomeAmount)) {
+      final double marginalComprehensiveTax =
+          (TaxRates.calculateTax(taxBaseWithOther) - TaxRates.calculateTax(taxBaseWithoutOther)) * 1.1;
+      final double separateFinalTax = annualOtherIncome *
+          (TaxRates.otherIncomeWithholdingRate + TaxRates.otherIncomeLocalWithholdingRate);
+      if (marginalComprehensiveTax > separateFinalTax) otherIncomeComprehensive = false;
     }
+
+    final double includedOtherIncomeAmount = otherIncomeComprehensive ? otherIncomeAmount : 0.0;
+    final double estimatedGlobalIncome = estimatedBusinessIncome + includedOtherIncomeAmount;
+
+    // 과세표준 (사업소득금액 + 종합과세 선택된 기타소득금액 - 소득공제)
+    final double taxBase = otherIncomeComprehensive ? taxBaseWithOther : taxBaseWithoutOther;
 
     // 6. 종합소득세 산출세액 (국세)
     final double estimatedCalculatedTax = TaxRates.calculateTax(taxBase);
@@ -113,12 +133,15 @@ class FreelancerTaxCalculator {
     // 간편장부 기장과는 무관하다. 간편장부·추계 모두 표준세액공제로 동일 적용.
     double taxCredit = 70000.0;
     
-    // 월세 세액공제 (조특법 §95의2): 프리랜서는 종합소득금액 6천만 이하 + 무주택
+    // 월세 세액공제 (조특법 §95의2·§122의3, 2024 귀속~): 종합소득금액 7,000만 이하 + 무주택.
+    // 근로소득 없는 사업소득자는 "성실사업자" 요건을 충족해야만 대상(일반 프리랜서 제외) —
+    // isQualifiedFaithfulTaxpayer가 참일 때만 적용. 공제율 17%(종합소득금액 4,500만 이하)/15%,
+    // 월세액 한도 연 1,000만. 출처: 국세청 "월세액 세액공제" — 확인일 2026-07-19.
     double rentTaxCredit = 0.0;
-    if (monthlyRent > 0 && isHomeless && estimatedBusinessIncome <= 60000000.0) {
+    if (monthlyRent > 0 && isHomeless && isQualifiedFaithfulTaxpayer && estimatedGlobalIncome <= 70000000.0) {
       final double annualRent = monthlyRent * 12;
       final double rentLimit = annualRent > 10000000.0 ? 10000000.0 : annualRent;
-      final double rentCreditRate = estimatedBusinessIncome <= 55000000.0 ? 0.17 : 0.15;
+      final double rentCreditRate = estimatedGlobalIncome <= 45000000.0 ? 0.17 : 0.15;
       rentTaxCredit = TaxRates.truncateWon(rentLimit * rentCreditRate);
     }
 
@@ -136,15 +159,28 @@ class FreelancerTaxCalculator {
     final double finalAnnualLocalTax = TaxRates.truncateWon(estimatedLocalTax);
     final double finalAnnualTotalTax = finalAnnualIncomeTax + finalAnnualLocalTax;
 
-    // 9. 기납부세액 계산 (현재까지 실제로 원천징수된 3.3% 누적액)
-    // 국세 3% + 지방세 0.3%
+    // 9. 기납부세액 계산 (현재까지 실제로 원천징수된 누적액)
+    // 사업소득 3.3%(국세 3% + 지방세 0.3%). 기타소득 8.8%는 종합과세 선택 시에만
+    // 기납부세액으로 공제(분리과세 선택 시 원천징수로 과세 종결 — 신고 대상 아님).
+    final double paidOtherWithholding = otherIncomeComprehensive
+        ? TaxRates.truncateWon(otherIncome * TaxRates.otherIncomeWithholdingRate) +
+            TaxRates.truncateWon(otherIncome * TaxRates.otherIncomeLocalWithholdingRate)
+        : 0.0;
     final double paidIncomeTax = TaxRates.truncateWon(income * TaxRates.freelancerWithholdingRate);
     final double paidLocalTax = TaxRates.truncateWon(income * TaxRates.freelancerLocalWithholdingRate);
-    final double paidTotalWithholding = paidIncomeTax + paidLocalTax;
+    final double paidTotalWithholding = paidIncomeTax + paidLocalTax + paidOtherWithholding;
 
     // 연환산 기준 기납부세액 예측치
-    final double annualEstimatedWithholdingIncome = TaxRates.truncateWon(annualEstimatedIncome * TaxRates.freelancerWithholdingRate);
-    final double annualEstimatedWithholdingLocal = TaxRates.truncateWon(annualEstimatedIncome * TaxRates.freelancerLocalWithholdingRate);
+    final double annualOtherWithholdingIncome = otherIncomeComprehensive
+        ? TaxRates.truncateWon(annualOtherIncome * TaxRates.otherIncomeWithholdingRate)
+        : 0.0;
+    final double annualOtherWithholdingLocal = otherIncomeComprehensive
+        ? TaxRates.truncateWon(annualOtherIncome * TaxRates.otherIncomeLocalWithholdingRate)
+        : 0.0;
+    final double annualEstimatedWithholdingIncome =
+        TaxRates.truncateWon(annualEstimatedIncome * TaxRates.freelancerWithholdingRate) + annualOtherWithholdingIncome;
+    final double annualEstimatedWithholdingLocal =
+        TaxRates.truncateWon(annualEstimatedIncome * TaxRates.freelancerLocalWithholdingRate) + annualOtherWithholdingLocal;
     final double annualEstimatedTotalWithholding = annualEstimatedWithholdingIncome + annualEstimatedWithholdingLocal;
 
     // 10. 예상 환급액 / 추가 납부액 계산 (예측 연환산 기납부세액 - 추정 결정세액)
@@ -269,6 +305,10 @@ class FreelancerTaxCalculator {
     double freelancerHealthInsurance = 0.0,
     int disabledDependentCount = 0,
     bool hasSelfDisability = false,
+    // 단순경비율 적용 대상이 아니면(직전연도 수입 ≥ 업종별 임계 등) 추계는 기준경비율이
+    // 법적으로 강제된다 — 세금이 낮은 쪽을 임의 선택할 수 없다. 호출부가
+    // isSimpleExpenseRateEligible 판정 결과를 넘겨야 한다.
+    bool forceStandardExpenseRate = false,
   }) {
     final months = inputMonths < 1 ? 1 : (inputMonths > 12 ? 12 : inputMonths);
     final rawExpense = accumulatedActualExpense < 0 ? 0.0 : accumulatedActualExpense;
@@ -289,7 +329,10 @@ class FreelancerTaxCalculator {
       hasSelfDisability: hasSelfDisability,
     );
 
-    final range = calculateTaxRange(
+    // 추계는 적용 대상 경비율 하나로만 계산한다. 과거엔 단순/기준 중 세금이 낮은 쪽
+    // (range.min)을 골랐는데, 경비율은 납세자가 선택하는 게 아니라 수입금액 기준으로
+    // 강제되는 것이라 잘못된 동작이었다.
+    final estimate = calculateTaxSimulation(
       accumulatedIncome: accumulatedIncome,
       inputMonths: inputMonths,
       allowanceCount: allowanceCount,
@@ -300,12 +343,13 @@ class FreelancerTaxCalculator {
       freelancerHealthInsurance: freelancerHealthInsurance,
       disabledDependentCount: disabledDependentCount,
       hasSelfDisability: hasSelfDisability,
+      useStandardExpenseRate: forceStandardExpenseRate,
     );
 
     return (
       bookkeeping: bookkeeping,
-      estimate: range.min,
-      bookkeepingIsBetter: bookkeeping.annualTotalTax <= range.min.annualTotalTax,
+      estimate: estimate,
+      bookkeepingIsBetter: bookkeeping.annualTotalTax <= estimate.annualTotalTax,
     );
   }
 }

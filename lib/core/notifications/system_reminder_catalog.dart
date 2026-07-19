@@ -16,7 +16,9 @@ const kGroupLabels = {
   'eitc':      '근로·자녀장려금',
   'vat':       '부가가치세',
   'midprepay': '종합소득세 중간예납',
+  'biz_status_report': '사업장현황신고',
   'car_tax_prepay': '자동차세 연납',
+  'car_tax_regular': '자동차세 정기분',
   'energy_voucher': '에너지바우처',
   'ev_subsidy': 'EV 보조금',
   'startup_academy': '청년창업사관학교',
@@ -24,15 +26,18 @@ const kGroupLabels = {
   'property_tax': '재산세',
   'comprehensive_tax': '종합부동산세',
   'payment_report': '지급명세서',
+  'resident_tax': '주민세',
 };
 
 const kGroupSchedules = {
-  'year_end':   '1월 15일 · 3월 5일 · 12월 1일',
+  'year_end':   '1월 15일 · 3월 5일 · 11월 1일 · 12월 1일',
   'global_tax': '4월 25일 · 5월 1일 · 5월 25일',
   'eitc':       '매년 3월 1일 · 5월 1일 · 9월 1일',
   'vat':        '1월 20일 · 7월 20일',
   'midprepay':  '매년 11월 25일',
+  'biz_status_report': '매년 2월 5일',
   'car_tax_prepay': '1월 16일 · 3월 16일 · 6월 16일 · 9월 16일',
+  'car_tax_regular': '6월 16일 · 12월 16일',
   'energy_voucher': '5월 27일 · 12월 15일',
   'ev_subsidy': '매년 2월 1일',
   'startup_academy': '매년 1월 10일',
@@ -40,6 +45,7 @@ const kGroupSchedules = {
   'property_tax': '7월 16일 · 9월 16일',
   'comprehensive_tax': '매년 12월 1일',
   'payment_report': '매년 3월 12일',
+  'resident_tax': '매년 8월 16일',
 };
 
 /// 큐레이션된 시스템 알림 1건.
@@ -60,6 +66,7 @@ class SystemReminder {
   final bool requiresCar;   // 차량 보유자에게만 해당
   final bool requiresHouse; // 주택 보유자에게만 해당
   final bool requiresVatLiable; // 부가세 과세 대상만(인적용역 면세 업종은 제외)
+  final bool requiresVatExempt; // 부가세 면세 업종만(인적용역 등 — 사업장현황신고 대상)
 
   const SystemReminder({
     required this.key,
@@ -78,6 +85,7 @@ class SystemReminder {
     this.requiresCar = false,
     this.requiresHouse = false,
     this.requiresVatLiable = false,
+    this.requiresVatExempt = false,
   });
 
   bool get isEvent => month == null || day == null;
@@ -89,6 +97,7 @@ class SystemReminder {
     if (requiresCar && !ownsCar) return false;
     if (requiresHouse && !ownsHouse) return false;
     if (requiresVatLiable && isVatExempt) return false;
+    if (requiresVatExempt && !isVatExempt) return false;
     return (employee && isEmp) || (business && isBiz);
   }
 }
@@ -119,12 +128,23 @@ const List<SystemReminder> kSystemReminderCatalog = [
     employee: true,
   ),
   SystemReminder(
+    key: 'sys_year_end_preview',
+    notifId: 1015,
+    category: SysCategory.deadline,
+    group: 'year_end',
+    title: '연말정산 미리보기가 열렸어요',
+    body: '홈택스 연말정산 미리보기로 올해 예상 세액을 확인하세요. 남은 두 달 카드·기부·연금저축 전략을 조정할 수 있어요.',
+    scheduleLabel: '매년 11월 1일',
+    month: 11, day: 1,
+    employee: true,
+  ),
+  SystemReminder(
     key: 'sys_prep_december',
     notifId: 1010,
     category: SysCategory.deadline,
     group: 'year_end',
     title: '연말정산 막차 — 올해가 가기 전에',
-    body: '카드·기부·의료비는 12월 31일까지 쓴 만큼만 공제돼요. 막판 점검하세요.',
+    body: '카드·기부·의료비·연금저축·IRP는 12월 31일까지 쓴(납입한) 만큼만 공제돼요. 막판 점검하세요.',
     scheduleLabel: '매년 12월 1일',
     month: 12, day: 1,
     employee: true,
@@ -197,6 +217,17 @@ const List<SystemReminder> kSystemReminderCatalog = [
     month: 9, day: 1,
     employee: true, business: true,
   ),
+  SystemReminder(
+    key: 'sys_resident_tax',
+    notifId: 1021,
+    category: SysCategory.deadline,
+    group: 'resident_tax',
+    title: '주민세(개인분) 납부 기간이에요',
+    body: '8/16~8/31 — 세대주에게 부과되는 균등분 주민세 납부 기간이에요.',
+    scheduleLabel: '매년 8월 16일',
+    month: 8, day: 16,
+    employee: true, business: true,
+  ),
 
   // ── 기한 (교통·에너지) ──
   SystemReminder(
@@ -248,6 +279,32 @@ const List<SystemReminder> kSystemReminderCatalog = [
     body: '오늘부터 9월 연납 신청이에요. 약 1.26% 절감돼요.',
     scheduleLabel: '매년 9월 16일',
     month: 9, day: 16,
+    employee: true, business: true,
+    requiresCar: true,
+  ),
+  SystemReminder(
+    key: 'sys_car_tax_regular_jun',
+    notifId: 1108,
+    category: SysCategory.deadline,
+    group: 'car_tax_regular',
+    topCategory: '교통·에너지',
+    title: '자동차세 정기분(1기) 납부 기간이에요',
+    body: '6/16~6/30 — 연납을 안 했다면 상반기분을 정기 납부하세요.',
+    scheduleLabel: '매년 6월 16일',
+    month: 6, day: 16,
+    employee: true, business: true,
+    requiresCar: true,
+  ),
+  SystemReminder(
+    key: 'sys_car_tax_regular_dec',
+    notifId: 1109,
+    category: SysCategory.deadline,
+    group: 'car_tax_regular',
+    topCategory: '교통·에너지',
+    title: '자동차세 정기분(2기) 납부 기간이에요',
+    body: '12/16~12/31 — 올해 하반기분 자동차세를 납부하세요.',
+    scheduleLabel: '매년 12월 16일',
+    month: 12, day: 16,
     employee: true, business: true,
     requiresCar: true,
   ),
@@ -350,6 +407,18 @@ const List<SystemReminder> kSystemReminderCatalog = [
     month: 7, day: 20,
     business: true,
     requiresVatLiable: true,
+  ),
+  SystemReminder(
+    key: 'sys_biz_status_report',
+    notifId: 1014,
+    category: SysCategory.deadline,
+    group: 'biz_status_report',
+    title: '사업장현황신고 기간이에요',
+    body: '2/10까지 — 면세사업자(인적용역 등)는 부가세 대신 지난해 수입·경비 현황을 신고해요.',
+    scheduleLabel: '매년 2월 5일',
+    month: 2, day: 5,
+    business: true,
+    requiresVatExempt: true,
   ),
   SystemReminder(
     key: 'sys_midprepay',

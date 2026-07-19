@@ -14,6 +14,7 @@ import '../../core/parsing/withholding_parser.dart';
 import '../../core/tax_engine/freelancer_tax.dart';
 import '../../core/tax_engine/combined_tax.dart';
 import '../../core/tax_engine/employee_tax.dart';
+import '../../core/tax_engine/tax_rates.dart';
 import '../../core/tax_engine/bookkeeping_duty.dart';
 import 'expense_calendar_screen.dart';
 import 'tax_report_form_screen.dart';
@@ -96,6 +97,8 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
   // 기장 vs 추계 비교 (2단계) — 가계부 사업경비 누적 + 비교 결과.
   double _businessExpenseAccumulated = 0.0;
   BookkeepingComparison? _bookkeepingComparison;
+  // 추계 쪽에 적용된 경비율(직전연도 수입 기준 강제 판정 결과) — 비교 카드 라벨용.
+  bool _estimateUsesStandardRate = false;
 
   // N잡러 소득공제 추가항목 컨트롤러
   final TextEditingController _mortgageSimController = TextEditingController();
@@ -383,10 +386,62 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         mortgageInterestExpense: 0,
       );
 
+      // 자녀세액공제·연금계좌세액공제·보장성보험료세액공제 — N잡러 계산(_isEmployee &&
+      // _isFreelancer 분기)과 동일한 컨트롤러를 공유하는데, 과거엔 그 분기에서만 계산돼
+      // 순수 직장인은 입력해도 예상환급액에 전혀 반영되지 않았다.
+      final children8Plus = int.tryParse(_childrenCount8PlusController.text) ?? 0;
+      final newborns = int.tryParse(_newbornCountController.text) ?? 0;
+      final childCredit = EmployeeTaxCalculator.calculateChildTaxCredit(
+        childrenCount: children8Plus,
+        newbornCount: newborns,
+      );
+      final pensionSav = double.tryParse(_pensionSavingsSimController.text) ?? 0.0;
+      final irpPay = double.tryParse(_irpSimController.text) ?? 0.0;
+      final pensionCredit = EmployeeTaxCalculator.calculatePensionAccountTaxCredit(
+        pensionSavingsPayment: pensionSav,
+        retirementPensionPayment: irpPay,
+        grossIncome: salary,
+      );
+      final insurancePrem = double.tryParse(_insurancePremiumController.text) ?? 0.0;
+      final insuranceCredit = EmployeeTaxCalculator.calculateInsurancePremiumTaxCredit(
+        generalInsurancePremium: insurancePrem,
+        disabledInsurancePremium: 0,
+      );
+
+      // 주담대이자·고향사랑기부금은 세액공제가 아니라 과세표준을 낮추는 소득공제라,
+      // 간이 과세표준을 근사 산출해 절세액(세율 적용분 차이)으로 환산한다.
+      // (year_end_tax_screen.dart의 wizard 추가공제와 동일한 방식.)
+      final mortgage = double.tryParse(_mortgageSimController.text) ?? 0.0;
+      final hometown = double.tryParse(_hometownDonationSimController.text) ?? 0.0;
+      double incomeDedSaving = 0.0;
+      if (mortgage > 0 || hometown > 0) {
+        final laborDeduction = EmployeeTaxCalculator.calculateLaborDeduction(salary);
+        final personalExemption = (1 + _dependentCount) * TaxRates.basicDeductionPerPerson;
+        final insDeduction =
+            EmployeeTaxCalculator.calculateAnnualInsuranceDeduction(salary / 12).total;
+        final baseTaxable = (salary -
+                laborDeduction -
+                personalExemption -
+                cResult.finalDeduction -
+                insDeduction)
+            .clamp(0.0, double.infinity);
+        final mortgageDeduction = EmployeeTaxCalculator.calculateMortgageIncomeDeduction(mortgage);
+        final hometownDeduction = EmployeeTaxCalculator.calculateHometownDonationDeduction(hometown);
+        final newBase =
+            (baseTaxable - mortgageDeduction - hometownDeduction).clamp(0.0, double.infinity);
+        incomeDedSaving = TaxRates.truncateWon(
+          TaxRates.calculateTax(baseTaxable) - TaxRates.calculateTax(newBase),
+        );
+      }
+
       final double totalCredit = rResult.expectedRefund
           + specialResult.medicalTaxCredit
           + specialResult.donationTaxCredit
-          + specialResult.educationTaxCredit;
+          + specialResult.educationTaxCredit
+          + childCredit
+          + pensionCredit
+          + insuranceCredit
+          + incomeDedSaving;
       final double netRefund = paidTax > 0 ? (totalCredit > paidTax ? paidTax : totalCredit) : totalCredit;
 
       setState(() {
@@ -410,6 +465,16 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       final healthIns = double.tryParse(_freelancerHealthInsController.text) ?? 0.0;
       final judgment = _bookkeepingJudgment;
 
+      // 추계 시 적용 경비율은 직전연도 수입 기준으로 강제된다(단순경비율 미대상이면
+      // 기준경비율) — 세금 낮은 쪽을 고르는 선택 사항이 아님.
+      final priorIncome = int.tryParse(_priorYearIncomeController.text.replaceAll(',', '')) ?? 0;
+      final simpleRateEligible = isSimpleExpenseRateEligible(
+        occupation: _selectedOccupation!,
+        priorYearIncome: priorIncome,
+        isNewBusiness: _isNewBusiness,
+        currentYearIncome: (income / months) * 12,
+      );
+
       if (judgment != null && judgment.isSimplified) {
         // 간편장부대상자 — 가계부 실제경비(기장) vs 경비율(추계) 중 유리한 쪽을 채택.
         final comparison = FreelancerTaxCalculator.compareBookkeepingVsEstimate(
@@ -422,9 +487,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           freelancerHealthInsurance: healthIns,
           disabledDependentCount: _disabledDependentCount,
           hasSelfDisability: _hasSelfDisability,
+          forceStandardExpenseRate: !simpleRateEligible,
         );
         setState(() {
           _bookkeepingComparison = comparison;
+          _estimateUsesStandardRate = !simpleRateEligible;
           _freelancerResult = comparison.bookkeepingIsBetter ? comparison.bookkeeping : comparison.estimate;
         });
       } else {
@@ -439,6 +506,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           freelancerHealthInsurance: healthIns,
           disabledDependentCount: _disabledDependentCount,
           hasSelfDisability: _hasSelfDisability,
+          useStandardExpenseRate: !simpleRateEligible,
         );
         setState(() {
           _bookkeepingComparison = null;
@@ -484,11 +552,20 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       final collegeEdu = double.tryParse(_collegeEduController.text) ?? 0.0;
       final collegeEduCnt = int.tryParse(_collegeCountController.text) ?? 0;
       final laborPaidTax = double.tryParse(_paidTaxController.text) ?? 0.0;
+      // 부업 사업소득 추계 경비율도 직전연도 수입 기준으로 강제된다(프리랜서 분기와 동일).
+      final priorIncome = int.tryParse(_priorYearIncomeController.text.replaceAll(',', '')) ?? 0;
+      final simpleRateEligible = isSimpleExpenseRateEligible(
+        occupation: _selectedOccupation!,
+        priorYearIncome: priorIncome,
+        isNewBusiness: _isNewBusiness,
+        currentYearIncome: (fIncome / months) * 12,
+      );
       final result = CombinedTaxCalculator.calculateCombinedTax(
         grossIncome: salary,
         accumulatedFreelancerIncome: fIncome,
         inputMonths: months,
         occupationCode: _selectedOccupation!.code,
+        useStandardExpenseRate: !simpleRateEligible,
         creditCard: creditCard,
         debitCardAndCash: 0,
         traditionalMarket: 0,
@@ -674,7 +751,8 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           const SizedBox(height: 4),
           Text(
             '가계부에 기록한 사업경비(${fmt(_businessExpenseAccumulated)}원)를 실제 경비로 인정받는 간편장부와, '
-            '업종 경비율로 추정하는 추계 중 세금이 더 적은 쪽을 골랐어요.',
+            '업종 경비율로 추정하는 추계 중 세금이 더 적은 쪽을 골랐어요. '
+            '추계에는 직전연도 수입 기준으로 ${_estimateUsesStandardRate ? '기준' : '단순'}경비율이 적용돼요.',
             style: TextStyle(color: bodyColor.withOpacity(0.6), fontSize: 12, height: 1.5),
           ),
           const SizedBox(height: 12),
@@ -683,7 +761,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
             children: [
               column('간편장부(실제경비)', c.bookkeeping.annualTotalTax, c.bookkeepingIsBetter),
               const SizedBox(width: 12),
-              column('추계(경비율)', c.estimate.annualTotalTax, !c.bookkeepingIsBetter),
+              column('추계(${_estimateUsesStandardRate ? '기준' : '단순'}경비율)', c.estimate.annualTotalTax, !c.bookkeepingIsBetter),
             ],
           ),
         ],
@@ -1718,8 +1796,15 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Container(
+                ],
+              ],
+
+              // 직장인 공통(N잡러 포함): 연말정산에서 흔히 쓰는 소득·세액공제 카드.
+              // 과거엔 이 두 카드가 if (_isFreelancer) 블록 안에 갇혀 있어 순수
+              // 직장인은 입력 자체가 불가능했다(①진단 예상환급액이 과소 계산됨).
+              if (_isEmployee) ...[
+                const SizedBox(height: 16),
+                Container(
                     padding: const EdgeInsets.all(20),
                     decoration: AppTheme.getCardDecoration(context),
                     child: Column(
@@ -1750,7 +1835,12 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                       children: [
                         Text('세액공제 (선택)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 4),
-                        Text('보험료·자녀·연금저축은 5월 신고 시 추가 공제됩니다.', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.6), fontSize: 12)),
+                        Text(
+                          _isFreelancer
+                              ? '보험료·자녀·연금저축은 5월 신고 시 추가 공제됩니다.'
+                              : '보험료·자녀·연금저축 등 놓치기 쉬운 세액공제 항목이에요.',
+                          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.6), fontSize: 12),
+                        ),
                         const SizedBox(height: 20),
                         Text('보장성보험료 (12% 공제, 연 100만원 한도)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),
@@ -1780,7 +1870,6 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                ],
               ],
 
               _buildBookkeepingComparisonCard(),

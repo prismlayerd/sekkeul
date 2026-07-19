@@ -277,9 +277,11 @@ class EmployeeTaxCalculator {
     required double globalIncomeAmount, // 종합소득금액 (직장인은 근로소득금액)
     required bool isHomeless,
   }) {
+    // 조특법 §95의2 (2024 귀속~): 총급여 8,000만 이하 + 종합소득금액 7,000만 이하 + 무주택.
+    // 출처: 국세청 "월세액 세액공제" 안내 — 확인일 2026-07-19 (종전 6,000만에서 상향).
     if (!isHomeless) return false;
     if (grossIncome > 80000000.0) return false;
-    if (globalIncomeAmount > 60000000.0) return false;
+    if (globalIncomeAmount > 70000000.0) return false;
     return true;
   }
 

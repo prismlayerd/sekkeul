@@ -62,6 +62,13 @@ const List<TaxTip> _allTips = [
     types: {'프리랜서', 'N잡러'},
     action: 'simulator',
   ),
+  TaxTip(
+    label: '꿀팁',
+    title: '월세공제 문턱, 생각보다 넓어요',
+    body: '총급여 8,000만(종합소득 7,000만)까지 대상 — 한도는 연 1,000만원.',
+    types: {'직장인', 'N잡러'},
+    action: 'simulator',
+  ),
 
   // ── 유형별 꿀팁 (상시) ──
   TaxTip(

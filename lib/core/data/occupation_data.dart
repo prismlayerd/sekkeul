@@ -1581,6 +1581,21 @@ class OccupationInfo {
   /// 복식부기의무 임계(직전연도 수입금액, 원). 직전연도 수입이 이 값 **이상**이면
   /// 복식부기의무자, 미만이면 간편장부대상자. 전문직은 수입 무관 복식부기(임계 무의미).
   int get complexBookkeepingThreshold => bookkeepingGroup.complexBookkeepingThreshold;
+
+  /// 단순경비율 적용 임계(직전연도 수입금액, 원). 직전연도 수입이 이 값 **미만**이어야
+  /// 추계신고 시 단순경비율을 적용할 수 있다(이상이면 기준경비율 강제 — 선택 불가).
+  /// 그룹 구성은 기장의무 그룹과 같지만 임계값이 다르다: 가군 6,000만 / 나군 3,600만 / 다군 2,400만.
+  /// 특례: 인적용역(940xxx)은 기장의무 판정은 다군(7,500만)이지만 경비율 판정은
+  /// 나군(3,600만) 적용 — 2023년 귀속부터 2,400만→3,600만 상향.
+  /// 출처: 국세청 "기장의무와 추계신고시 적용할 경비율 판단기준" — 확인일 2026-07-19.
+  int get simpleExpenseRateThreshold {
+    if (code.startsWith('940')) return 36000000;
+    return switch (bookkeepingGroup) {
+      BookkeepingGroup.a => 60000000,
+      BookkeepingGroup.b => 36000000,
+      BookkeepingGroup.c => 24000000,
+    };
+  }
 }
 
 /// 기장의무 판정용 업종그룹. 그룹별 복식부기의무 직전연도 수입금액 임계가 다르다.

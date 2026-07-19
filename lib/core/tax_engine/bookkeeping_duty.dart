@@ -98,6 +98,28 @@ BookkeepingJudgment judgeBookkeepingDuty({
   );
 }
 
+/// 추계신고 시 단순경비율을 적용할 수 있는지 판정한다.
+/// (기장의무 판정과는 별개 규칙 — 임계 테이블이 다르다. 단순경비율 미대상이면
+/// 기준경비율이 **강제** 적용되며, 세금이 낮은 쪽을 고를 수 있는 선택 사항이 아니다.)
+///
+/// 규칙(국세청 "기장의무와 추계신고시 적용할 경비율 판단기준", 확인일 2026-07-19):
+/// 1. 전문직 → 수입 무관 단순경비율 배제(어차피 복식부기의무라 이 판정에 오지 않음).
+/// 2. 당해연도 수입금액(연환산) ≥ 복식부기의무 임계 → 단순경비율 배제.
+/// 3. 신규사업자 → (2 통과 시) 첫해는 단순경비율.
+/// 4. 계속사업자 → 직전연도 수입 < 업종별 경비율 임계(가 6,000만/나 3,600만/
+///    다 2,400만, 인적용역 940xxx는 3,600만)일 때만 단순경비율.
+bool isSimpleExpenseRateEligible({
+  required OccupationInfo occupation,
+  required int priorYearIncome,
+  bool isNewBusiness = false,
+  double currentYearIncome = 0,
+}) {
+  if (occupation.isProfessional) return false;
+  if (currentYearIncome >= occupation.complexBookkeepingThreshold) return false;
+  if (isNewBusiness) return true;
+  return priorYearIncome < occupation.simpleExpenseRateThreshold;
+}
+
 /// 원 단위 임계를 "3억 원"·"1억 5천만 원"·"7,500만 원" 식으로 표기.
 String _manwon(int won) {
   switch (won) {

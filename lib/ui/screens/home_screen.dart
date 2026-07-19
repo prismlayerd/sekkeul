@@ -25,6 +25,8 @@ import 'home/home_banner_carousel.dart';
 import 'home/home_status_section.dart';
 import '../../core/data/tax_tips.dart';
 import '../../core/data/db_helper.dart';
+import '../../core/data/occupation_data.dart';
+import '../../core/tax_engine/bookkeeping_duty.dart';
 import '../../core/tax_engine/reserve_estimator.dart';
 import '../../core/security/notification_helper.dart';
 import '../../core/notifications/reminder_scheduler.dart';
@@ -74,6 +76,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   double _otherIncomeGrossEstimate = 0.0; // 기타 수익(사업/기타소득) 원천징수 역산 세전 추정 — 근로소득은 간이세액표 기반이라 역산 불가, 제외
   double _expenseTarget = 0.0; // 이번 달 지출 목표
   int _payDay = 25; // 직장인·N잡 월급여일 (1~31, 알림 넛지 기준)
+  // 경비율 개인화 배너용 — 프로필(①진단)에 저장된 값이 있을 때만 카드 판단에 쓴다.
+  String? _occupationCode;
+  int _priorYearIncome = 0;
+  bool _isNewBusiness = false;
   bool _notificationsEnabled = true; // 세금·가계부 알림 마스터 on/off (reminder_settings 'master'에 영속)
   bool _thresholdNotified = false; // 공제 문턱 도달 알림 중복 방지(세션 내)
   bool _thresholdNearNotified = false; // 공제 문턱 80% 임박 알림 중복 방지(세션 내)
@@ -171,6 +177,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
           _decidedTax = profile['decided_tax'] as double? ?? 0.0;
           _payDay = (profile['pay_day'] as int? ?? 25).clamp(1, 31);
+          _occupationCode = profile['occupation_code'] as String?;
+          _priorYearIncome = (profile['prior_year_income'] as num?)?.toInt() ?? 0;
+          _isNewBusiness = profile['is_new_business'] == true;
           _isTypeIdentified = profile['type_identified'] == true;
           _isProfileCompleted = true;
           // 기존 사용자 호환: 프로필이 있으면 유형 파악 완료로 처리
@@ -1104,12 +1113,31 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       ]);
     } else if (_userType == 'N잡러') {
       cards.addAll([
-        BannerCardData(label: '건강보험', headline: '부업 2,000만 넘으면\n건보료가 따라와요', action: '가계부에서 확인', glyph: '보', onTap: _goToLedger),
+        BannerCardData(label: '건강보험', headline: '부업 소득금액 2,000만 넘으면\n건보료가 따라와요', action: '가계부에서 확인', glyph: '보', onTap: _goToLedger),
       ]);
     } else {
       cards.addAll([
         BannerCardData(label: '경비율', headline: '장부를 쓰면 경비\n인정 폭이 넓어져요', action: '가계부 열기', glyph: '장', onTap: _goToLedger),
       ]);
+      // ①진단에 저장된 직전연도 수입·신규 여부로 판정 가능할 때만 — 단순경비율
+      // 대상에서 벗어났으면(기준경비율 강제) 장부 작성 동기를 구체적으로 짚어준다.
+      final occ = OccupationData.occupations[_occupationCode];
+      if (occ != null && (_isNewBusiness || _priorYearIncome > 0)) {
+        final eligible = isSimpleExpenseRateEligible(
+          occupation: occ,
+          priorYearIncome: _priorYearIncome,
+          isNewBusiness: _isNewBusiness,
+        );
+        if (!eligible) {
+          cards.add(BannerCardData(
+            label: '경비율 변경',
+            headline: '올해부터 기준경비율\n대상이 됐어요',
+            action: '가계부로 경비 인정받기',
+            glyph: '기',
+            onTap: _goToLedger,
+          ));
+        }
+      }
     }
 
     // 연말정산 시즌(1~2월, 회사 처리 전)에만 — 회사에 알리고 싶지 않은 공제를

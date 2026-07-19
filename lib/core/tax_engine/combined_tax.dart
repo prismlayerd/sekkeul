@@ -113,7 +113,9 @@ class CombinedTaxCalculator {
     final double estimatedFreelancerBusinessIncome = annualEstimatedFreelancerIncome - estimatedFreelancerExpense;
     final double pensionIncomeAmount = EmployeeTaxCalculator.calculatePensionIncomeAmount(pensionIncome);
     final double otherIncomeAmount = EmployeeTaxCalculator.calculateOtherIncomeAmount(otherIncome);
-    final double totalGlobalIncome = laborIncomeAmount + estimatedFreelancerBusinessIncome + pensionIncomeAmount + otherIncomeAmount;
+    // 기타소득 분리과세 선택 여부는 소득공제 합계가 나온 뒤 판정하므로,
+    // 종합소득금액은 일단 기타소득 제외분으로 계산해 둔다.
+    final double globalIncomeWithoutOther = laborIncomeAmount + estimatedFreelancerBusinessIncome + pensionIncomeAmount;
 
     final double personalDeduction = (dependents + 1) * TaxRates.basicDeductionPerPerson;
     final double additionalPersonalDed = EmployeeTaxCalculator.calculateAdditionalPersonalDeduction(
@@ -150,9 +152,29 @@ class CombinedTaxCalculator {
     final InsuranceDeduction insDeduction = EmployeeTaxCalculator.calculateAnnualInsuranceDeduction(grossIncome / 12);
     final double mortgageDeduction = EmployeeTaxCalculator.calculateMortgageIncomeDeduction(mortgageInterest);
     final double hometownDeduction = EmployeeTaxCalculator.calculateHometownDonationDeduction(hometownDonation);
-    double taxBase = totalGlobalIncome - personalDeduction - additionalPersonalDed - cardDeduction
-        - yellowUmbrellaDeduction - insDeduction.total - mortgageDeduction - hometownDeduction;
-    if (taxBase < 0) taxBase = 0;
+    final double deductionTotal = personalDeduction + additionalPersonalDed + cardDeduction
+        + yellowUmbrellaDeduction + insDeduction.total + mortgageDeduction + hometownDeduction;
+
+    // 기타소득 분리과세 선택 (소득세법 §14③8): 기타소득금액 300만원 이하(원천징수분)는
+    // 종합과세와 분리과세(원천징수 8.8%로 종결) 중 유리한 쪽 선택 가능 — 합산 시
+    // 한계세액(지방세 포함)이 원천징수액보다 크면 분리과세를 택한다.
+    double taxBaseWithoutOther = globalIncomeWithoutOther - deductionTotal;
+    if (taxBaseWithoutOther < 0) taxBaseWithoutOther = 0;
+    double taxBaseWithOther = globalIncomeWithoutOther + otherIncomeAmount - deductionTotal;
+    if (taxBaseWithOther < 0) taxBaseWithOther = 0;
+
+    bool otherIncomeComprehensive = true;
+    if (otherIncomeAmount > 0 && !EmployeeTaxCalculator.isOtherIncomeComprehensive(otherIncomeAmount)) {
+      final double marginalComprehensiveTax =
+          (TaxRates.calculateTax(taxBaseWithOther) - TaxRates.calculateTax(taxBaseWithoutOther)) * 1.1;
+      final double separateFinalTax = otherIncome *
+          (TaxRates.otherIncomeWithholdingRate + TaxRates.otherIncomeLocalWithholdingRate);
+      if (marginalComprehensiveTax > separateFinalTax) otherIncomeComprehensive = false;
+    }
+
+    final double totalGlobalIncome =
+        globalIncomeWithoutOther + (otherIncomeComprehensive ? otherIncomeAmount : 0.0);
+    final double taxBase = otherIncomeComprehensive ? taxBaseWithOther : taxBaseWithoutOther;
 
     final double estimatedCalculatedTax = TaxRates.calculateTax(taxBase);
 
@@ -165,7 +187,7 @@ class CombinedTaxCalculator {
       calculatedTaxShare: laborCalculatedTaxShare,
     );
 
-    // 월세 세액공제 (조특법 §95의2): 총급여 7천만·종합소득금액 6천만 이하·무주택 세대주
+    // 월세 세액공제 (조특법 §95의2, 2024 귀속~): 총급여 8천만·종합소득금액 7천만 이하·무주택 세대주
     double rawRentTaxCredit = 0.0;
     if (monthlyRent > 0 && EmployeeTaxCalculator.isRentCreditEligible(
       grossIncome: grossIncome,
@@ -236,11 +258,23 @@ class CombinedTaxCalculator {
     final double annualFreelancerWithholdingLocal = TaxRates.truncateWon(annualEstimatedFreelancerIncome * TaxRates.freelancerLocalWithholdingRate);
     final double annualEstimatedFreelancerWithholdingTotal = annualFreelancerWithholdingIncome + annualFreelancerWithholdingLocal;
 
-    final double annualEstimatedTotalWithholding = decidedTax + annualEstimatedFreelancerWithholdingTotal;
+    // 기타소득 8.8% 원천징수분 — 종합과세 선택 시에만 기납부세액으로 공제
+    // (분리과세 선택 시 원천징수로 과세 종결이라 신고·정산 대상이 아님).
+    final double annualOtherWithholdingIncome = otherIncomeComprehensive
+        ? TaxRates.truncateWon(otherIncome * TaxRates.otherIncomeWithholdingRate)
+        : 0.0;
+    final double annualOtherWithholdingLocal = otherIncomeComprehensive
+        ? TaxRates.truncateWon(otherIncome * TaxRates.otherIncomeLocalWithholdingRate)
+        : 0.0;
+
+    final double annualEstimatedTotalWithholding = decidedTax + annualEstimatedFreelancerWithholdingTotal
+        + annualOtherWithholdingIncome + annualOtherWithholdingLocal;
 
     final double expectedRefundOrPayment = annualEstimatedTotalWithholding - finalTotalTax;
-    final double expectedIncomeTaxRefundOrPayment = (decidedTax + annualFreelancerWithholdingIncome) - finalIncomeTax;
-    final double expectedLocalTaxRefundOrPayment = (decidedTax * 0.1 + annualFreelancerWithholdingLocal) - finalLocalTax;
+    final double expectedIncomeTaxRefundOrPayment =
+        (decidedTax + annualFreelancerWithholdingIncome + annualOtherWithholdingIncome) - finalIncomeTax;
+    final double expectedLocalTaxRefundOrPayment =
+        (decidedTax * 0.1 + annualFreelancerWithholdingLocal + annualOtherWithholdingLocal) - finalLocalTax;
 
     double monthlyReserve = 0.0;
     String reserveNudgeMessage = '';
