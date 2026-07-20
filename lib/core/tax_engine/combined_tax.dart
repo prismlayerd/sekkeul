@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../data/occupation_data.dart';
 import 'employee_tax.dart';
 import 'tax_rates.dart';
@@ -286,10 +288,10 @@ class CombinedTaxCalculator {
       if (remainingMonths > 0) {
         monthlyReserve = additionalPayment / remainingMonths;
         monthlyReserve = TaxRates.truncateWon(monthlyReserve);
-        reserveNudgeMessage = 'N잡러 수입 합산으로 인해 이번 달 소득에 대해 ${monthlyReserve.toInt()}원을 준비해 주세요.';
+        reserveNudgeMessage = 'N잡러 수입 합산으로 인해 이번 달 소득에 대해 ${NumberFormat('#,###').format(monthlyReserve.toInt())}원을 준비해 주세요.';
       } else {
         monthlyReserve = TaxRates.truncateWon(additionalPayment);
-        reserveNudgeMessage = '내년 5월 종합소득세 신고 시 요긴하게 쓰실 수 있도록 ${monthlyReserve.toInt()}원을 준비해 주세요.';
+        reserveNudgeMessage = '내년 5월 종합소득세 신고 시 요긴하게 쓰실 수 있도록 ${NumberFormat('#,###').format(monthlyReserve.toInt())}원을 준비해 주세요.';
       }
     } else {
       reserveNudgeMessage = '현재 환급이 예상되는 상태입니다! 신호등 넛지 지침에 맞춰 현명하게 지출하세요.';

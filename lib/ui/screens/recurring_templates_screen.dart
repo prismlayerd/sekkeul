@@ -631,10 +631,12 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
     if (n >= 10000) {
       final man = n ~/ 10000;
       final rem = n % 10000;
-      if (rem == 0) return '${man}만';
+      final manStr = man.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+$)'), (m) => '${m[1]},');
+      if (rem == 0) return '$manStr만';
       final remStr = rem.toString().replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+$)'), (m) => '${m[1]},');
-      return '${man}만 $remStr';
+      return '$manStr만 $remStr';
     }
     return n
         .toString()

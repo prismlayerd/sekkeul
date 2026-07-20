@@ -51,11 +51,16 @@ class HomeBannerCarousel extends StatelessWidget {
     final idx = activeIndex % cards.length;
     final reduce = MediaQuery.of(context).disableAnimations;
 
+    // 라벨(1줄) + 헤드라인(2줄) + 보조 문구(2줄)를 모두 담을 수 있도록 실측 산출.
+    // 시스템 글자 확대(U-3)에 맞춰 함께 커지도록 textScaler 반영, 헤드라인 높이 계산과 동일 패턴.
+    final ts = MediaQuery.textScalerOf(context);
+    final cardHeight = ts.scale(11) * 1.2 + 7 + ts.scale(22) * 1.2 * 2 + 6 + ts.scale(12) * 1.4 * 2 + 4;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(
-          height: 104,
+          height: cardHeight,
           child: AnimatedSwitcher(
             duration: Duration(milliseconds: reduce ? 0 : 500),
             switchInCurve: Curves.easeOut,
@@ -134,8 +139,10 @@ class HomeBannerCarousel extends StatelessWidget {
                   if (subText != null)
                     Row(children: [
                       Flexible(
-                        child: Text(subText,
-                            maxLines: 1,
+                        // 두 문장짜리 팁이 폭 기준으로 아무 데서나 잘려 넘어가지 않도록
+                        // 문장 경계('. ')에서 명시적으로 줄바꿈.
+                        child: Text(subText.replaceAll('. ', '.\n'),
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: AppTheme.sans(12, sub, height: 1.4)),
                       ),

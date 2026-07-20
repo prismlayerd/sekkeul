@@ -1195,7 +1195,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(12)),
               child: Text(
-                message,
+                // 두 문장짜리 안내가 폭 기준으로 아무 데서나 잘려 넘어가지 않도록
+                // 문장 경계('. ')에서 명시적으로 줄바꿈.
+                message.replaceAll('. ', '.\n'),
                 style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, height: 1.5),
               ),
             ),

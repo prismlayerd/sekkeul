@@ -1079,7 +1079,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           Semantics(
             button: true,
             expanded: _reserveCardExpanded,
-            label: '이번 달 세금·보험 적립 예상 ${range(r.minUsable, r.maxUsable)}',
+            label: '이번 달 세금·보험 적립 예상 ${range(r.minMonthlyTaxReserve + r.insuranceReserve, r.maxMonthlyTaxReserve + r.insuranceReserve)}',
             child: GestureDetector(
               onTap: () => setState(() => _reserveCardExpanded = !_reserveCardExpanded),
               behavior: HitTestBehavior.opaque,
@@ -1093,7 +1093,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                         style: AppTheme.sans(13, sub, weight: FontWeight.w600)),
                   ),
                   if (!_reserveCardExpanded) ...[
-                    Text(range(r.minUsable, r.maxUsable),
+                    Text(range(r.minMonthlyTaxReserve + r.insuranceReserve, r.maxMonthlyTaxReserve + r.insuranceReserve),
                         style: AppTheme.sans(13, ink, weight: FontWeight.w800)),
                     const SizedBox(width: 4),
                   ],
@@ -1876,7 +1876,8 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           Container(width: 1, height: 44, color: AppTheme.line(context)),
           _summaryCell(
             '잔액',
-            (totalInc - totalExp).abs(),
+            // 적자면 '-950,000원'처럼 마이너스 기호를 그대로 노출(색 + 부호 이중 신호).
+            totalInc - totalExp,
             totalInc - totalExp >= 0 ? _incomeColor : AppTheme.colorDanger,
             ink, sub,
           ),

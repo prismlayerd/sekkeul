@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../data/occupation_data.dart';
 import 'employee_tax.dart';
 import 'tax_rates.dart';
@@ -201,11 +203,11 @@ class FreelancerTaxCalculator {
         monthlyReserve = additionalPayment / remainingMonths;
         // 10원 단위 절사하여 저축액 산출
         monthlyReserve = TaxRates.truncateWon(monthlyReserve);
-        reserveNudgeMessage = '이번 달 소득에 대해 ${monthlyReserve.toInt()}원을 준비해 주세요. 내년 5월 종합소득세 신고 시 요긴하게 쓰실 수 있어요.';
+        reserveNudgeMessage = '이번 달 소득에 대해 ${NumberFormat('#,###').format(monthlyReserve.toInt())}원을 준비해 주세요. 내년 5월 종합소득세 신고 시 요긴하게 쓰실 수 있어요.';
       } else {
         // 12월의 경우 남은 달이 없으므로 추가 납부액 총액 자체를 준비하도록 안내
         monthlyReserve = TaxRates.truncateWon(additionalPayment);
-        reserveNudgeMessage = '내년 5월 종합소득세 신고 시 요긴하게 쓰실 수 있도록 이번 달 소득에 대해 ${monthlyReserve.toInt()}원을 준비해 주세요.';
+        reserveNudgeMessage = '내년 5월 종합소득세 신고 시 요긴하게 쓰실 수 있도록 이번 달 소득에 대해 ${NumberFormat('#,###').format(monthlyReserve.toInt())}원을 준비해 주세요.';
       }
     } else {
       reserveNudgeMessage = '현재 환급이 예상되는 상태입니다! 남은 기간 동안 사업 필요경비 적격증빙(사업용 신용카드, 지출증빙용 현금영수증)을 꼼꼼히 챙겨두시면 세금을 더 줄일 수 있어요.';

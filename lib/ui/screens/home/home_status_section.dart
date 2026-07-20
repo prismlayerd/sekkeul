@@ -124,8 +124,13 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     final hasThreshold = isEmployee && annualSalary > 0;
     final thresholdProgress = hasThreshold ? (widget.creditCardYtdTotal / deductionThreshold).clamp(0.0, 1.0) : 0.0;
     final overThreshold = hasThreshold && widget.creditCardYtdTotal >= deductionThreshold;
-    final monthlyCardPace = deductionThreshold / 12 * now.month;
-    final onPace = widget.creditCardYtdTotal >= monthlyCardPace;
+    final monthlyPaceBaseline = deductionThreshold / 12; // 균등 월 권장 페이스
+    final cumulativePaceTarget = monthlyPaceBaseline * now.month; // 이번 달까지 있어야 할 누적
+    final onPace = widget.creditCardYtdTotal >= cumulativePaceTarget;
+    final remainingMonths = 12 - now.month + 1; // 이번 달 포함 남은 개월
+    final monthlyToReachThreshold = remainingMonths > 0
+        ? (deductionThreshold - widget.creditCardYtdTotal) / remainingMonths
+        : 0.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,8 +309,8 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             overThreshold
                 ? '지금부터는 체크·현금이 공제율 2배(30%)예요.'
                 : onPace
-                    ? '월 권장 페이스(${_toWon(monthlyCardPace)}) 이상 쓰고 있어요. 연내 문턱 도달 가능.'
-                    : '월 ${_toWon(monthlyCardPace)}씩 쓰면 연내 문턱을 넘겨요.',
+                    ? '월 권장 페이스(${_toWon(monthlyPaceBaseline)}) 이상 쓰고 있어요. 연내 문턱 도달 가능.'
+                    : '월 ${_toWon(monthlyToReachThreshold)}씩 쓰면 연내 문턱을 넘겨요.',
           ),
         ],
 
@@ -395,7 +400,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           Expanded(child: Text(
             promptText,
             style: AppTheme.sans(12, AppTheme.inkSecondary(context), weight: FontWeight.w500),
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           )),
           const SizedBox(width: 8),
