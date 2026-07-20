@@ -17,6 +17,9 @@ class ReserveEstimate {
   final double minUsable;
   final double maxUsable;
   final bool hasOccupationCode;
+  /// 보험 적립을 계산할 수 있을 만큼 프로필(가입 보험)이 설정됐는지.
+  /// false면 insuranceReserve 0은 "몰라서 0"이므로 UI에서 '0원' 대신 설정 유도 표현을 쓴다.
+  final bool insuranceProfileSet;
 
   ReserveEstimate({
     required this.minMonthlyTaxReserve,
@@ -27,6 +30,7 @@ class ReserveEstimate {
     required this.minUsable,
     required this.maxUsable,
     required this.hasOccupationCode,
+    required this.insuranceProfileSet,
   });
 }
 
@@ -246,6 +250,13 @@ class ReserveEstimator {
       minUsable: minUsableRaw < 0 ? 0 : minUsableRaw,
       maxUsable: maxUsableRaw < 0 ? 0 : maxUsableRaw,
       hasOccupationCode: hasOccupation,
+      // N잡러 건보 소득월액은 프로필 없이도 소득 기반 자동 산정(0이면 실제 미부과)이라 '설정됨'으로 본다.
+      // 프리랜서는 가입 보험을 하나라도 켜야 계산 가능 — 아무것도 없으면 '몰라서 0'.
+      insuranceProfileSet: userType == 'N잡러' ||
+          pensionEnrolled ||
+          healthEnrolled ||
+          employmentEnrolled ||
+          industrialEnrolled,
     );
   }
 }

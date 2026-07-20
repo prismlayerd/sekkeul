@@ -70,7 +70,7 @@ class LedgerProfile {
       case '직장인':
       default:
         return const LedgerProfile(
-          incomeTypes: ['급여'],
+          incomeTypes: ['급여', '기타소득'],
           showsSalaryInput: true,
           tracksBusinessExpense: false,
           showsReserveCard: false,

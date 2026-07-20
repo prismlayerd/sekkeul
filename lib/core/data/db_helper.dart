@@ -7,9 +7,32 @@ import '../security/crypto_helper.dart';
 import '../security/db_key_manager.dart';
 import 'expense_item.dart';
 import 'income_entry.dart';
+import 'ledger_profile.dart';
 import 'recurring_template.dart';
 import 'quick_entry_preset.dart';
 import 'legacy_migration.dart';
+
+/// 가계부 유형 이동(가져오기) 미리보기 — 몇 건이 옮겨지고 몇 건이 원본에 남는지.
+class LedgerMoveSummary {
+  final int expenseCount;       // 옮겨질 지출 건수(지출은 유형 무관하게 전부 이동)
+  final int movableIncomeCount; // 대상 유형이 지원하는 소득이라 옮겨질 수입 건수
+  final int orphanIncomeCount;  // 대상 유형에 맞지 않아 원본에 남는 수입 건수
+  const LedgerMoveSummary({
+    required this.expenseCount,
+    required this.movableIncomeCount,
+    required this.orphanIncomeCount,
+  });
+  int get totalMovable => expenseCount + movableIncomeCount;
+}
+
+/// 대상 유형으로 옮길 수 있는 소득(income_type) 집합.
+/// 지출은 개인 소비라 유형과 무관하게 전부 이동하지만, 수입은 소득 성격이 있어
+/// 대상 유형이 실제로 기록하는 소득 유형만 옮긴다(예: 급여는 프리랜서로 못 감).
+Set<String> movableIncomeTypesTo(String target) {
+  final valid = {...LedgerProfile.of(target).incomeTypes};
+  if (valid.contains('기타소득')) valid.add('기타'); // 레거시 '기타' 기록 호환
+  return valid;
+}
 
 /// 온디바이스 데이터베이스 보안 인터페이스 정의
 abstract class DatabaseService {
@@ -25,6 +48,9 @@ abstract class DatabaseService {
   Future<void> updateExpense(ExpenseItem item);
   // 유형 전환 확인 다이얼로그용 — 해당 유형으로 "전용" 태깅된 기록이 하나라도 있는지.
   Future<bool> hasOwnLedgerHistory(String userType);
+  // 가계부 유형 이동(가져오기) — from→to로 user_type 재태깅. 미리보기와 실제 이동.
+  Future<LedgerMoveSummary> previewLedgerMove({required String from, required String to});
+  Future<void> moveLedgerRecords({required String from, required String to});
   Future<void> insertTaxRecord(Map<String, dynamic> record);
   Future<List<Map<String, dynamic>>> getTaxRecords();
   Future<void> saveBannerHideTime(String bannerId, int hideUntilEpoch);
@@ -1109,6 +1135,40 @@ class SqfliteDatabaseHelper implements DatabaseService {
   }
 
   @override
+  Future<LedgerMoveSummary> previewLedgerMove({required String from, required String to}) async {
+    final db = _db;
+    if (db == null) {
+      return const LedgerMoveSummary(expenseCount: 0, movableIncomeCount: 0, orphanIncomeCount: 0);
+    }
+    final valid = movableIncomeTypesTo(to);
+    final expenseRows = await db.query('expenses',
+        columns: ['id'], where: 'user_type = ?', whereArgs: [from]);
+    final incomeRows = await db.query('income_entries',
+        columns: ['income_type'], where: 'user_type = ?', whereArgs: [from]);
+    int movable = 0, orphan = 0;
+    for (final r in incomeRows) {
+      if (valid.contains(r['income_type'] as String?)) { movable++; } else { orphan++; }
+    }
+    return LedgerMoveSummary(
+        expenseCount: expenseRows.length, movableIncomeCount: movable, orphanIncomeCount: orphan);
+  }
+
+  @override
+  Future<void> moveLedgerRecords({required String from, required String to}) async {
+    final db = _db;
+    if (db == null) return;
+    final valid = movableIncomeTypesTo(to);
+    // 지출은 개인 소비라 전부 이동.
+    await db.update('expenses', {'user_type': to}, where: 'user_type = ?', whereArgs: [from]);
+    // 수입은 대상 유형이 지원하는 소득 유형만 이동(나머지는 원본 유형에 그대로 남는다).
+    if (valid.isNotEmpty) {
+      final ph = List.filled(valid.length, '?').join(',');
+      await db.update('income_entries', {'user_type': to},
+          where: 'user_type = ? AND income_type IN ($ph)', whereArgs: [from, ...valid]);
+    }
+  }
+
+  @override
   Future<void> saveBannerHideTime(String bannerId, int hideUntilEpoch) async {
     final db = _db;
     if (db == null) return;
@@ -1852,6 +1912,36 @@ class InMemoryDatabaseHelper implements DatabaseService {
     if (_isClosed) return false;
     if (_expenses.values.any((raw) => raw['user_type'] == userType)) return true;
     return _incomeEntries.any((e) => e.userType == userType);
+  }
+
+  @override
+  Future<LedgerMoveSummary> previewLedgerMove({required String from, required String to}) async {
+    if (_isClosed) {
+      return const LedgerMoveSummary(expenseCount: 0, movableIncomeCount: 0, orphanIncomeCount: 0);
+    }
+    final valid = movableIncomeTypesTo(to);
+    final expenseCount = _expenses.values.where((r) => r['user_type'] == from).length;
+    int movable = 0, orphan = 0;
+    for (final e in _incomeEntries.where((e) => e.userType == from)) {
+      if (valid.contains(e.incomeType)) { movable++; } else { orphan++; }
+    }
+    return LedgerMoveSummary(
+        expenseCount: expenseCount, movableIncomeCount: movable, orphanIncomeCount: orphan);
+  }
+
+  @override
+  Future<void> moveLedgerRecords({required String from, required String to}) async {
+    if (_isClosed) return;
+    final valid = movableIncomeTypesTo(to);
+    for (final raw in _expenses.values) {
+      if (raw['user_type'] == from) raw['user_type'] = to;
+    }
+    for (int i = 0; i < _incomeEntries.length; i++) {
+      final e = _incomeEntries[i];
+      if (e.userType == from && valid.contains(e.incomeType)) {
+        _incomeEntries[i] = e.copyWith(userType: to);
+      }
+    }
   }
 
   @override

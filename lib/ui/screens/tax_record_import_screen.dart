@@ -31,6 +31,10 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
   // 추출값 편집 — 파서가 잘못 읽은 값을 사용자가 보정(잘못된 신고 방지)
   final Map<String, TextEditingController> _ctrls = {};
 
+  // 사용자가 '회사에 안 냄'으로 직접 고른 공제 항목 키(av_*). 기본 비어 있음 —
+  // 민감한 판단을 앱이 대신 결정하지 않고, 체크한 항목만 미신고분으로 계산한다.
+  final Set<String> _notReported = {};
+
   @override
   void initState() {
     super.initState();
@@ -57,19 +61,24 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
     _ctrl(key).text = value == 0 ? '' : _fmt.format(value);
   }
 
+  /// 수기 모드에서는 '회사에 안 냄'으로 체크한 항목만 미신고분으로 반영한다
+  /// (앱이 입력값 전부를 '안 냈다'고 결정하지 않음). PDF 모드는 원천 신고액으로 대조하므로 그대로.
+  int _avFor(String key) =>
+      (_manualMode && !_notReported.contains(key)) ? 0 : _v(key);
+
   /// 편집된 값으로 재구성한 간소화/원천 (보정 반영).
   GansoDeductions _effGanso() => GansoDeductions(
-        creditCard: _v('av_card'),
-        debitCard: _v('av_debit'),
-        medical: _v('av_med'),
+        creditCard: _avFor('av_card'),
+        debitCard: _avFor('av_debit'),
+        medical: _avFor('av_med'),
         medicalReimbursed: 0,
         // 난임은 총액 편집과 별개로 파싱값 보존(편집 표에 별도 필드 없음)
         medicalInfertility: _ganso?.medicalInfertility ?? 0,
-        education: _v('av_edu'),
-        donation: _v('av_don'),
-        lifeInsurance: _v('av_life'),
-        pensionSavings: _v('av_pen'),
-        rent: _v('av_rent'),
+        education: _avFor('av_edu'),
+        donation: _avFor('av_don'),
+        lifeInsurance: _avFor('av_life'),
+        pensionSavings: _avFor('av_pen'),
+        rent: _avFor('av_rent'),
       );
   WithholdingReceipt _effWh() {
     final b = _wh!;
@@ -174,14 +183,14 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
     await dbService.saveAnnualRecord(widget.userType, {
       'grossSalary': _v('salary'),
       'decidedTax': _v('decided'),
-      'creditCard': _v('av_card'),
-      'debitCash': _v('av_debit'),
-      'medical': _v('av_med'),
-      'education': _v('av_edu'),
-      'donation': _v('av_don'),
-      'lifeInsurance': _v('av_life'),
-      'pensionSavings': _v('av_pen'),
-      'rent': _v('av_rent'),
+      'creditCard': _avFor('av_card'),
+      'debitCash': _avFor('av_debit'),
+      'medical': _avFor('av_med'),
+      'education': _avFor('av_edu'),
+      'donation': _avFor('av_don'),
+      'lifeInsurance': _avFor('av_life'),
+      'pensionSavings': _avFor('av_pen'),
+      'rent': _avFor('av_rent'),
     });
     if (c != null && c.hasMissed) {
       await dbService.saveReportDraft(widget.userType,
@@ -225,7 +234,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
                 style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
             const SizedBox(height: 10),
             Text(_manualMode
-                ? '회사에 안 낸 공제를 직접 적으면 빠진 공제를 찾아 5월 종합소득세 신고에 써드려요. 모두 기기 안에서만 분석돼요.'
+                ? '회사에 안 낸 공제만 직접 골라 적으면 빠진 공제를 찾아 5월 종합소득세 신고에 써드려요. 모두 기기 안에서만 분석돼요.'
                 : '홈택스에서 받은 간소화 자료·원천징수영수증 PDF를 올리면 값을 자동으로 채워요. 모두 기기 안에서만 분석돼요.',
                 style: AppTheme.sans(14, sub, height: 1.55)),
             const SizedBox(height: 20),
@@ -400,17 +409,20 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
         _manualRow('총급여', 'salary'),
         _manualRow('결정세액', 'decided'),
         const SizedBox(height: 14),
-        Text('공제 항목 (회사에 안 낸 금액)', style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
-        const SizedBox(height: 6),
+        Text('공제 항목 — 회사에 안 낸 것만 골라주세요', style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+        const SizedBox(height: 4),
+        Text('체크한 항목만 5월에 직접 신고할 미신고분으로 계산해요. 앱이 대신 정하지 않아요.',
+            style: AppTheme.sans(11.5, AppTheme.inkTertiary(context), height: 1.4)),
+        const SizedBox(height: 8),
         AppTheme.hairline(context),
-        _manualRow('신용카드', 'av_card'),
-        _manualRow('체크·현금', 'av_debit'),
-        _manualRow('의료비', 'av_med'),
-        _manualRow('월세 (연 납입액)', 'av_rent'),
-        _manualRow('보장성보험', 'av_life'),
-        _manualRow('연금저축·IRP', 'av_pen'),
-        _manualRow('교육비', 'av_edu'),
-        _manualRow('기부금', 'av_don'),
+        _manualDeductionRow('신용카드', 'av_card'),
+        _manualDeductionRow('체크·현금', 'av_debit'),
+        _manualDeductionRow('의료비', 'av_med'),
+        _manualDeductionRow('월세 (연 납입액)', 'av_rent'),
+        _manualDeductionRow('보장성보험', 'av_life'),
+        _manualDeductionRow('연금저축·IRP', 'av_pen'),
+        _manualDeductionRow('교육비', 'av_edu'),
+        _manualDeductionRow('기부금', 'av_don'),
       ],
     );
   }
@@ -423,6 +435,51 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
         Expanded(child: Text(label, style: AppTheme.sans(14, AppTheme.ink(context)))),
         _amount(key, width: 150),
       ]),
+    );
+  }
+
+  /// 공제 항목 행 — '회사에 안 냄' 체크 + 금액. 체크한 항목만 미신고분 계산에 포함한다.
+  /// 기본은 체크 해제라, 사용자가 직접 고르기 전까지 앱은 어떤 것도 '안 냈다'고 정하지 않는다.
+  Widget _manualDeductionRow(String label, String key) {
+    final ink = AppTheme.ink(context);
+    final tert = AppTheme.inkTertiary(context);
+    final checked = _notReported.contains(key);
+    return GestureDetector(
+      onTap: () => setState(() {
+        if (checked) {
+          _notReported.remove(key);
+        } else {
+          _notReported.add(key);
+        }
+      }),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.line(context)))),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(children: [
+          // 사각 체크박스 — 선택 시 잉크로 채움(회사에 안 낸 항목 표시)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              color: checked ? ink : null,
+              border: Border.all(color: checked ? ink : AppTheme.lineStrong(context), width: 1.4),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: checked
+                ? Icon(Icons.check, size: 15, color: AppTheme.backgroundColor(context))
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(label,
+                style: AppTheme.sans(14, checked ? ink : tert,
+                    weight: checked ? FontWeight.w600 : FontWeight.w400)),
+          ),
+          _amount(key, width: 130),
+        ]),
+      ),
     );
   }
 

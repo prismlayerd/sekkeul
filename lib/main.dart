@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'core/data/db_helper.dart';
 import 'core/data/app_mode.dart';
+import 'core/data/theme_pref.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/app_lock_screen.dart';
 
@@ -33,6 +34,10 @@ void main() async {
     final profile = await dbService.getProfile();
     appModeNotifier.value = appModeFromDb(profile?['data_mode'] as String?);
 
+    // 저장된 화면 테마(시스템/라이트/다크) 복원 — 미설정 시 시스템(OS 따라감)
+    themeModeNotifier.value =
+        themeModeFromDb(await dbService.getAppState('theme_mode'));
+
     runApp(const SeculApp());
   }, (error, stack) {
     dbService.insertErrorLog(error.toString(), stack.toString());
@@ -45,23 +50,27 @@ class SeculApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '세끌',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      navigatorObservers: [appRouteObserver],
-      // U-3 — 시스템 글자 확대를 1.3배까지만 허용(그 이상은 촘촘한 도면형 레이아웃이
-      // 깨질 수 있어 캡). 1.0~1.3 구간은 검증 완료.
-      builder: (context, child) {
-        final scaler = MediaQuery.textScalerOf(context).clamp(minScaleFactor: 1.0, maxScaleFactor: 1.3);
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaler: scaler),
-          child: child!,
-        );
-      },
-      home: const _AppLockGate(child: HomeScreen()),
+    // 화면 테마는 설정에서 고른 값(시스템/라이트/다크)을 따른다 — themeModeNotifier로 즉시 반영.
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeModeNotifier,
+      builder: (context, themeMode, _) => MaterialApp(
+        title: '세끌',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeMode,
+        navigatorObservers: [appRouteObserver],
+        // U-3 — 시스템 글자 확대를 1.3배까지만 허용(그 이상은 촘촘한 도면형 레이아웃이
+        // 깨질 수 있어 캡). 1.0~1.3 구간은 검증 완료.
+        builder: (context, child) {
+          final scaler = MediaQuery.textScalerOf(context).clamp(minScaleFactor: 1.0, maxScaleFactor: 1.3);
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: scaler),
+            child: child!,
+          );
+        },
+        home: const _AppLockGate(child: HomeScreen()),
+      ),
     );
   }
 }

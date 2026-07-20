@@ -85,6 +85,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   ReserveEstimate? _reserveEstimate; // 프리랜서·N잡러 + 이번 달일 때만 채워짐
   bool _reserveCardExpanded = false; // 기본 접힘 — 캘린더 위 크롬 최소화
 
+  // 다른 유형에서 가져올 수 있는 가계부 기록 — _load에서 채운다. 비어 있으면 배너 숨김.
+  List<({String from, LedgerMoveSummary summary})> _importOptions = [];
+
   // 결제/고정지출 관리 — 달력 아래 인라인 노출(월급날·카드결제일·고정지출)
   int _paydayDay = 25;
   List<Map<String, dynamic>> _cardDates = [];
@@ -203,9 +206,17 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     expMap.forEach((k, list) { for (final e in list) { absorb(k, e.id); } });
     incMap.forEach((k, list) { for (final e in list) { absorb(k, e.id); } });
 
+    // 다른 유형에 쌓아둔 기록을 이 유형으로 가져올 수 있는지 미리보기(허용된 출처만).
+    final importOpts = <({String from, LedgerMoveSummary summary})>[];
+    for (final src in _importSourcesFor(loadedType)) {
+      final summary = await dbService.previewLedgerMove(from: src, to: loadedType);
+      if (summary.totalMovable > 0) importOpts.add((from: src, summary: summary));
+    }
+
     if (mounted) {
       setState(() {
         _userType = loadedType;
+        _importOptions = importOpts;
         _incomeType = LedgerProfile.of(loadedType).defaultIncomeType;
         _expensesByDay = expMap;
         _incomesByDay  = incMap;
@@ -220,6 +231,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       });
     }
     await _loadReserveEstimate();
+    await _maybeShowOtherIncomeThresholdDialog(loadedType);
   }
 
   bool get _isCurrentMonth =>
@@ -527,6 +539,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                   // 0: 달력
                   Column(
                     children: [
+                      if (_importOptions.isNotEmpty) _buildImportBanner(ink),
                       if (_reserveEstimate != null && !_reserveEstimate!.hasOccupationCode)
                         _buildProfileGateBanner(),
                       if (_recurringPendingCount > 0) _buildRecurringBanner(),
@@ -546,6 +559,191 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             if (_activeView == 0) _buildQuickSettingsRow(ink, sub),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── 가계부 가져오기(유형 이동) ─────────────────────────────────────
+  /// 이 유형이 '대상'일 때 기록을 가져올 수 있는 '출처' 유형들.
+  /// 4방향만 허용 — 직장인·프리랜서→N잡러(전부 이동), N잡러→직장인·프리랜서(맞는 것만).
+  List<String> _importSourcesFor(String target) {
+    switch (target) {
+      case 'N잡러':
+        return const ['직장인', '프리랜서'];
+      case '직장인':
+      case '프리랜서':
+        return const ['N잡러'];
+      default:
+        return const [];
+    }
+  }
+
+  Widget _buildImportBanner(Color ink) {
+    final accent = AppTheme.accentColor(context);
+    return Column(
+      children: [
+        for (final opt in _importOptions)
+          Container(
+            margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+            padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.06),
+              border: Border.all(color: accent.withValues(alpha: 0.35)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.drive_file_move_outline, size: 18, color: accent),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '${opt.from} 때 기록한 가계부 ${opt.summary.totalMovable}건이 있어요.',
+                    style: AppTheme.sans(13, ink, height: 1.4),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => _confirmImport(opt.from, opt.summary),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(6)),
+                    child: Text('가져오기',
+                        style: AppTheme.sans(12, AppTheme.backgroundColor(context), weight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// 방향별 맞춤 안내/유의 문구. to = 현재 유형(_userType).
+  ({String title, String body}) _importDialogText(String from, LedgerMoveSummary s) {
+    final to = _userType;
+    final moved = s.totalMovable;
+    if (to == 'N잡러') {
+      // 직장인·프리랜서 → N잡러: 소득이 모두 N잡러 범위 안이라 전부 이동(남는 것 없음).
+      // 직장인도 급여·기타소득 둘 다 기록할 수 있어 두 소득 모두 옮겨간다.
+      final kinds = from == '직장인' ? '급여·기타소득·지출' : '사업·기타소득·지출';
+      return (
+        title: '$from 기록을 N잡러로 가져올까요?',
+        body: '$from 때 기록한 $kinds $moved건을 N잡러 가계부로 옮겨요. '
+            'N잡러는 근로·사업·기타소득을 모두 관리하니 그대로 이어서 볼 수 있어요. '
+            '$from 가계부는 비워져요.',
+      );
+    }
+    // N잡러 → 직장인·프리랜서: 대상에 맞는 소득만 이동, 나머지는 N잡러에 남는다.
+    // 직장인도 기타소득을 기록할 수 있어 급여·기타소득 둘 다 옮겨가고, 사업소득만 N잡러에 남는다.
+    final movedKinds = to == '직장인' ? '급여·기타소득·지출' : '사업·기타소득·지출';
+    final orphanKinds = to == '직장인' ? '사업소득' : '급여';
+    final orphan = s.orphanIncomeCount;
+    final orphanNote = orphan > 0
+        ? ' $orphanKinds $orphan건은 $to 가계부에 맞지 않아 N잡러에 그대로 남아요.'
+        : '';
+    return (
+      title: 'N잡러 기록을 $to 가계부로 가져올까요?',
+      body: 'N잡러 기록 중 $movedKinds $moved건을 $to 가계부로 옮겨요.$orphanNote',
+    );
+  }
+
+  Future<void> _confirmImport(String from, LedgerMoveSummary summary) async {
+    final ink = AppTheme.ink(context);
+    final sub = AppTheme.inkSecondary(context);
+    final accent = AppTheme.accentColor(context);
+    final t = _importDialogText(from, summary);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(ctx).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        title: Text(t.title, style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
+        content: Text(t.body, style: AppTheme.sans(13, sub, height: 1.5)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('취소', style: AppTheme.sans(14, sub)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('가져오기', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await dbService.moveLedgerRecords(from: from, to: _userType);
+    if (!mounted) return;
+    await _load();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${summary.totalMovable}건을 가져왔어요.')),
+    );
+  }
+
+  /// 직장인의 올해 기타소득(필요경비 60% 자동 인정 후 소득금액)이 연 300만원을 넘으면
+  /// 종합과세 대상임을 알리고 N잡러 전환을 안내한다. 연도별로 한 번만 띄운다.
+  Future<void> _maybeShowOtherIncomeThresholdDialog(String loadedType) async {
+    if (loadedType != '직장인') return;
+    final year = DateTime.now().year;
+    final flagKey = 'other_income_threshold_notice_$year';
+    if (await dbService.getAppState(flagKey) != null) return;
+
+    final futures = List.generate(
+        12, (i) => dbService.getIncomeEntriesForMonth(year, i + 1, userType: loadedType));
+    final results = await Future.wait(futures);
+    int otherIncomeSum = 0;
+    for (final month in results) {
+      for (final e in month) {
+        if (e.incomeType == '기타소득') otherIncomeSum += e.amount;
+      }
+    }
+    final taxableAmount = otherIncomeSum * 0.4; // 필요경비 60% 자동 인정 후 소득금액
+    if (taxableAmount <= 3000000) return;
+
+    await dbService.setAppState(flagKey, 'true');
+    if (!mounted) return;
+    _showOtherIncomeThresholdDialog();
+  }
+
+  void _showOtherIncomeThresholdDialog() {
+    if (!mounted) return;
+    final ink = AppTheme.ink(context);
+    final sub = AppTheme.inkSecondary(context);
+    final accent = AppTheme.accentColor(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(ctx).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        title: Text('기타소득이 300만원을 넘었어요', style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
+        content: Text(
+          '올해 기록한 기타소득의 소득금액(필요경비 60% 제외 후)이 300만원을 넘었어요. '
+          '근로소득과 합산해 5월에 종합소득세를 신고해야 해요. '
+          'N잡러로 전환하면 소득 구분과 세금 적립을 더 정확히 안내받을 수 있어요.',
+          style: AppTheme.sans(13, sub, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('나중에', style: AppTheme.sans(14, sub)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final existing = await dbService.getProfile() ?? <String, dynamic>{};
+              await dbService.saveProfile({...existing, 'user_type': 'N잡러'});
+              if (!mounted) return;
+              await _load();
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('N잡러로 전환했어요. 기존 기록은 위 가져오기 배너로 옮길 수 있어요.')),
+              );
+            },
+            child: Text('N잡러로 전환', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
+          ),
+        ],
       ),
     );
   }
@@ -1116,7 +1314,26 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                         style: AppTheme.sans(11, AppTheme.inkTertiary(context), height: 1.4)),
                   ],
                   const SizedBox(height: 6),
-                  _reserveRow('보험료로 대비할 돈', won(r.insuranceReserve), ink, sub),
+                  // 프로필(가입 보험) 미설정이라 계산 불가한 0은 '0원'(=낼 것 없음)으로
+                  // 오해될 수 있어, 설정을 유도하는 표현 + 프로필 이동으로 바꾼다.
+                  if (r.insuranceReserve == 0 && !r.insuranceProfileSet)
+                    GestureDetector(
+                      onTap: _openProfileForReserve,
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('보험료로 대비할 돈', style: AppTheme.sans(13, sub)),
+                          Row(mainAxisSize: MainAxisSize.min, children: [
+                            Text('프로필 설정 시',
+                                style: AppTheme.sans(13, AppTheme.accentColor(context), weight: FontWeight.w700)),
+                            Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.accentColor(context)),
+                          ]),
+                        ],
+                      ),
+                    )
+                  else
+                    _reserveRow('보험료로 대비할 돈', won(r.insuranceReserve), ink, sub),
                   const SizedBox(height: 10),
                   AppTheme.hairline(context),
                   const SizedBox(height: 10),

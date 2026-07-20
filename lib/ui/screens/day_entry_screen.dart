@@ -480,10 +480,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
               const SizedBox(height: 8),
               _BlueprintAmountField(label: '', ctrl: _incomeCtrl, color: _incomeColor, fmt: _fmt),
               const SizedBox(height: 8),
-              if (_profile.incomeTypes.length > 1)
-                _incomeTypeToggle(sub)
-              else
-                _employeeOtherIncomeNotice(sub),
+              _incomeTypeToggle(sub),
               if (_profile.tracksBusinessExpense && _incomeType != '급여') _withheldToggle(ink, sub),
               const SizedBox(height: 18),
 
@@ -583,32 +580,6 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
             ]),
           ),
         ),
-      ),
-    );
-  }
-
-  /// 직장인 — 기타수익 입력란 대신 종합과세 기준 안내.
-  Widget _employeeOtherIncomeNotice(Color sub) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 9),
-      decoration: BoxDecoration(
-        color: sub.withValues(alpha: 0.06),
-        border: Border.all(color: AppTheme.line(context)),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline_rounded, size: 13, color: sub),
-          const SizedBox(height: 5),
-          Text(
-            '직장인은 급여만 기록해요. 근로 외 기타소득이 연 300만 원을 넘으면 '
-            '종합과세 대상 — N잡러로 전환해 따로 기록하세요.',
-            textAlign: TextAlign.left,
-            style: AppTheme.sans(12, sub, height: 1.45),
-          ),
-        ],
       ),
     );
   }

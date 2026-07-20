@@ -25,6 +25,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<bool> _selected = List.filled(5, false);
 
+  final ScrollController _scrollCtrl = ScrollController();
+  bool _moreBelow = false; // 리스트 아래에 가려진(안 보이는) 항목이 더 있는지
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollCtrl.addListener(_updateMoreBelow);
+    // 첫 레이아웃 후 overflow 여부를 판정(작은 화면이면 즉시 화살표 노출)
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updateMoreBelow());
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.removeListener(_updateMoreBelow);
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _updateMoreBelow() {
+    if (!_scrollCtrl.hasClients) return;
+    final pos = _scrollCtrl.position;
+    final more = pos.maxScrollExtent > 0 && pos.pixels < pos.maxScrollExtent - 4;
+    if (more != _moreBelow && mounted) setState(() => _moreBelow = more);
+  }
+
   bool get _hasSelection => _selected.contains(true);
   bool get _hasLabor => _selected[0];
   bool get _hasBusiness => _selected[1] || _selected[2] || _selected[3] || _selected[4];
@@ -101,18 +126,48 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
             // ── 소득 항목 점검 리스트 ──
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: _sources.length,
-                itemBuilder: (context, i) {
-                  return Column(
-                    children: [
-                      if (i == 0) AppTheme.hairline(context),
-                      _sourceRow(i),
-                      AppTheme.hairline(context),
-                    ],
-                  );
-                },
+              child: Stack(
+                children: [
+                  ListView.builder(
+                    controller: _scrollCtrl,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    itemCount: _sources.length,
+                    itemBuilder: (context, i) {
+                      return Column(
+                        children: [
+                          if (i == 0) AppTheme.hairline(context),
+                          _sourceRow(i),
+                          AppTheme.hairline(context),
+                        ],
+                      );
+                    },
+                  ),
+                  // 아래에 가려진 항목이 더 있을 때만 페이드 + 아래 화살표로 스크롤 단서를 준다.
+                  if (_moreBelow)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: IgnorePointer(
+                        child: Container(
+                          height: 44,
+                          alignment: Alignment.bottomCenter,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0),
+                                Theme.of(context).scaffoldBackgroundColor,
+                              ],
+                            ),
+                          ),
+                          child: Icon(Icons.keyboard_arrow_down_rounded,
+                              size: 22, color: AppTheme.inkSecondary(context)),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
 

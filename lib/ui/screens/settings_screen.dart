@@ -7,14 +7,15 @@ import 'package:share_plus/share_plus.dart';
 
 import '../theme/app_theme.dart';
 import '../../core/data/app_mode.dart';
+import '../../core/data/theme_pref.dart';
 import '../../core/data/backup_service.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/security/app_lock_service.dart';
 import 'notification_settings_screen.dart';
 
 /// 설정 — 홈 우상단 톱니에서 진입.
-/// 알림(마스터+세부) · 데이터 수집방식 · 백업/복원 · 개인정보처리방침 · 면책 · 파기 · 버전.
-/// 다크모드는 OS 설정을 그대로 따르며 별도 토글 없음(main.dart 참고).
+/// 알림(마스터+세부) · 화면 테마 · 데이터 수집방식 · 백업/복원 · 개인정보처리방침 · 면책 · 파기 · 버전.
+/// 화면 테마는 설정에서 시스템/라이트/다크 중 선택(기본 시스템, main.dart 참고).
 class SettingsScreen extends StatefulWidget {
   final String userType;
   final bool notificationsEnabled;
@@ -336,6 +337,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             AppTheme.hairline(context),
+            ValueListenableBuilder<ThemeMode>(
+              valueListenable: themeModeNotifier,
+              builder: (context, mode, _) => _glyphRow(
+                title: '화면 테마',
+                trailingTag: _tag(context, themeModeLabel(mode)),
+                onTap: _showThemePicker,
+              ),
+            ),
+            AppTheme.hairline(context),
 
             if (!kIsWeb) ...[
               const SizedBox(height: 24),
@@ -505,6 +515,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
         await widget.onNotificationsChanged(v);
       },
     );
+  }
+
+  /// 화면 테마 선택(시스템/라이트/다크) — 고르면 즉시 반영 + DB 영속화.
+  Future<void> _showThemePicker() async {
+    final current = themeModeNotifier.value;
+    final selected = await showDialog<ThemeMode>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        backgroundColor: Theme.of(ctx).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: Text('화면 테마',
+            style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
+        children: [
+          for (final mode in ThemeMode.values)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, mode),
+              child: Row(children: [
+                Icon(
+                  mode == current
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  size: 20,
+                  color: mode == current
+                      ? AppTheme.accentColor(ctx)
+                      : AppTheme.inkTertiary(ctx),
+                ),
+                const SizedBox(width: 12),
+                Text(themeModeLabel(mode), style: AppTheme.sans(14, AppTheme.ink(ctx))),
+              ]),
+            ),
+        ],
+      ),
+    );
+    if (selected == null || selected == current) return;
+    themeModeNotifier.value = selected;
+    await dbService.setAppState('theme_mode', themeModeToDb(selected));
   }
 
   /// 설정 행 — 제목 한 줄 + 우측 컨트롤(스위치·태그·화살표)만 남긴 단순 리스트 행.

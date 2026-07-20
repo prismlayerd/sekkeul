@@ -39,6 +39,9 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
 
   final _fmt = NumberFormat('#,###');
 
+  final ScrollController _scrollCtrl = ScrollController();
+  bool _moreBelow = false; // 목록 아래에 가려진(안 보이는) 항목이 더 있는지
+
   // 확인 완료 건수: DB confirmed + 로컬 확인 선택
   int get _confirmedCount => _allItems.where((item) {
     final t = item['template'] as RecurringTemplate;
@@ -66,7 +69,18 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    _scrollCtrl.addListener(_updateMoreBelow);
+    // 비동기 로드로 목록이 채워진 뒤 overflow 여부를 판정(작은 화면이면 화살표 노출)
+    _load().then((_) {
+      if (mounted) WidgetsBinding.instance.addPostFrameCallback((_) => _updateMoreBelow());
+    });
+  }
+
+  void _updateMoreBelow() {
+    if (!_scrollCtrl.hasClients) return;
+    final pos = _scrollCtrl.position;
+    final more = pos.maxScrollExtent > 0 && pos.pixels < pos.maxScrollExtent - 4;
+    if (more != _moreBelow && mounted) setState(() => _moreBelow = more);
   }
 
   @override
@@ -74,6 +88,8 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
     for (final c in _amountCtrls.values) {
       c.dispose();
     }
+    _scrollCtrl.removeListener(_updateMoreBelow);
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
@@ -200,11 +216,41 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
                     _buildProgressHeader(),
                     AppTheme.hairline(context),
                     Expanded(
-                      child: ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                        itemCount: _allItems.length,
-                        separatorBuilder: (_, __) => AppTheme.hairline(context),
-                        itemBuilder: (_, i) => _buildLedgerRow(_allItems[i]),
+                      child: Stack(
+                        children: [
+                          ListView.separated(
+                            controller: _scrollCtrl,
+                            padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                            itemCount: _allItems.length,
+                            separatorBuilder: (_, __) => AppTheme.hairline(context),
+                            itemBuilder: (_, i) => _buildLedgerRow(_allItems[i]),
+                          ),
+                          // 아래에 가려진 항목이 더 있을 때만 페이드 + 화살표로 스크롤 단서를 준다.
+                          if (_moreBelow)
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              child: IgnorePointer(
+                                child: Container(
+                                  height: 44,
+                                  alignment: Alignment.bottomCenter,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0),
+                                        Theme.of(context).scaffoldBackgroundColor,
+                                      ],
+                                    ),
+                                  ),
+                                  child: Icon(Icons.keyboard_arrow_down_rounded,
+                                      size: 22, color: AppTheme.inkSecondary(context)),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ],

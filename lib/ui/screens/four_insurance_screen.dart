@@ -119,7 +119,10 @@ class _FourInsuranceScreenState extends State<FourInsuranceScreen> {
                           fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   if (hasInput) ...[
-                    _row('국민연금 (4.5%)', _won(r.nationalPension), subColor,
+                    _row(
+                        '국민연금 (${(InsuranceEngine.empNationalPensionRate * 100).toStringAsFixed(2)}%)',
+                        _won(r.nationalPension),
+                        subColor,
                         textColor),
                     const SizedBox(height: 8),
                     _row('건강보험 (3.595%)', _won(r.healthInsurance), subColor,
@@ -171,7 +174,8 @@ class _FourInsuranceScreenState extends State<FourInsuranceScreen> {
                   ]),
                   const SizedBox(height: 8),
                   Text(
-                    '• 국민연금 상한 월 6,370,000원 / 하한 400,000원 적용됩니다.\n'
+                    '• 국민연금 상한 월 ${_fmt.format(InsuranceEngine.pensionUpperBound.round())}원 / '
+                    '하한 ${_fmt.format(InsuranceEngine.pensionLowerBound.round())}원 적용됩니다.\n'
                     '• 건강보험료 기준으로 장기요양보험료가 산정됩니다.\n'
                     '• 사업주도 동일 금액을 부담합니다 (산재는 전액 사업주 부담).\n'
                     '• 소득세·지방소득세는 별도 세율표에 따라 추가 공제됩니다.',
