@@ -8,10 +8,10 @@ import '../../core/data/db_helper.dart';
 import '../../core/parsing/pdf_text_extractor.dart';
 import '../../core/parsing/simplified_data_parser.dart';
 import '../../core/parsing/withholding_parser.dart';
-import '../../core/parsing/correction_report.dart';
 
-/// ① 연말정산 자료 입력 — 간소화 자료 + 원천징수영수증 PDF를 온디바이스로 파싱해
-/// 신고 결과를 읽고, 두 자료를 대조해 '빠진 공제'를 찾는다. 모두 기기 안에서 처리.
+/// ① 연말정산 기록 — 간소화 자료 + 원천징수영수증 PDF를 온디바이스로 파싱하거나
+/// 총급여·결정세액을 직접 적어 이번 연말정산 결과를 기록한다. 모두 기기 안에서 처리.
+/// (빠진 공제 진단은 '빠진 공제 항목 찾기' 단계가 전담 — 여기서는 기록만 한다.)
 class TaxRecordImportScreen extends StatefulWidget {
   final String userType;
   const TaxRecordImportScreen({super.key, required this.userType});
@@ -28,17 +28,13 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
   bool _manualMode = true; // 기본 직접 입력 (PDF 없이도 기록 가능)
   String? _error;
 
-  // 추출값 편집 — 파서가 잘못 읽은 값을 사용자가 보정(잘못된 신고 방지)
+  // 추출값 편집 — 파서가 잘못 읽은 값을 사용자가 보정(잘못된 기록 방지)
   final Map<String, TextEditingController> _ctrls = {};
-
-  // 사용자가 '회사에 안 냄'으로 직접 고른 공제 항목 키(av_*). 기본 비어 있음 —
-  // 민감한 판단을 앱이 대신 결정하지 않고, 체크한 항목만 미신고분으로 계산한다.
-  final Set<String> _notReported = {};
 
   @override
   void initState() {
     super.initState();
-    // 기본 직접 입력 모드 — 계산·저장 경로 활성화를 위해 빈 객체 시드
+    // 기본 직접 입력 모드 — 저장 경로 활성화를 위해 빈 객체 시드
     if (_manualMode) {
       _ganso = const GansoDeductions();
       _wh = const WithholdingReceipt();
@@ -61,25 +57,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
     _ctrl(key).text = value == 0 ? '' : _fmt.format(value);
   }
 
-  /// 수기 모드에서는 '회사에 안 냄'으로 체크한 항목만 미신고분으로 반영한다
-  /// (앱이 입력값 전부를 '안 냈다'고 결정하지 않음). PDF 모드는 원천 신고액으로 대조하므로 그대로.
-  int _avFor(String key) =>
-      (_manualMode && !_notReported.contains(key)) ? 0 : _v(key);
-
-  /// 편집된 값으로 재구성한 간소화/원천 (보정 반영).
-  GansoDeductions _effGanso() => GansoDeductions(
-        creditCard: _avFor('av_card'),
-        debitCard: _avFor('av_debit'),
-        medical: _avFor('av_med'),
-        medicalReimbursed: 0,
-        // 난임은 총액 편집과 별개로 파싱값 보존(편집 표에 별도 필드 없음)
-        medicalInfertility: _ganso?.medicalInfertility ?? 0,
-        education: _avFor('av_edu'),
-        donation: _avFor('av_don'),
-        lifeInsurance: _avFor('av_life'),
-        pensionSavings: _avFor('av_pen'),
-        rent: _avFor('av_rent'),
-      );
+  /// 편집된 값으로 재구성한 원천징수 (보정 반영).
   WithholdingReceipt _effWh() {
     final b = _wh!;
     return WithholdingReceipt(
@@ -158,7 +136,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
     }
   }
 
-  // 누락 없음(또는 간소화 미입력) → 신고된 연말정산 결과 그대로
+  // 신고된 연말정산 결과 장부
   List<Map<String, dynamic>> _asFiledItems(WithholdingReceipt w) => [
         {'title': '총급여액 (수입금액)', 'amount': w.grossSalary.toDouble(), 'isHeader': true},
         {'title': '(-) 근로소득공제', 'amount': w.laborDeduction.toDouble()},
@@ -168,37 +146,24 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
         {'title': '(-) 기납부세액', 'amount': w.paidTax.toDouble()},
       ];
 
-  // 빠진 공제 → 경정청구(추가환급) 신고서
-  List<Map<String, dynamic>> _correctionItems(CorrectionReport c) => [
-        for (final l in c.lines)
-          {'title': '${l.category} 추가 세액공제', 'amount': l.missedCredit.toDouble()},
-        {'title': '(=) 예상 추가 환급액 합계', 'amount': c.additionalRefund.toDouble(), 'isHeader': true, 'highlight': true},
-      ];
-
   Future<void> _save() async {
     final w = _effWh();
-    final g = _ganso != null ? _effGanso() : null;
-    final c = g != null ? buildCorrectionReport(g, w) : null;
-    // 진단 자동기입용 원시값 영속화 (PDF·수기 공통)
+    // 진단·자동기입용 원시값 영속화 — PDF 간소화 파싱값은 실제 지출 가능액이라
+    // 빠진 공제 진단·합산진단이 그대로 당겨 쓴다. 수기 모드에선 이 키들이 0.
     await dbService.saveAnnualRecord(widget.userType, {
       'grossSalary': _v('salary'),
       'decidedTax': _v('decided'),
-      'creditCard': _avFor('av_card'),
-      'debitCash': _avFor('av_debit'),
-      'medical': _avFor('av_med'),
-      'education': _avFor('av_edu'),
-      'donation': _avFor('av_don'),
-      'lifeInsurance': _avFor('av_life'),
-      'pensionSavings': _avFor('av_pen'),
-      'rent': _avFor('av_rent'),
+      'creditCard': _v('av_card'),
+      'debitCash': _v('av_debit'),
+      'medical': _v('av_med'),
+      'education': _v('av_edu'),
+      'donation': _v('av_don'),
+      'lifeInsurance': _v('av_life'),
+      'pensionSavings': _v('av_pen'),
+      'rent': _v('av_rent'),
     });
-    if (c != null && c.hasMissed) {
-      await dbService.saveReportDraft(widget.userType,
-          reportType: '경정청구', items: _correctionItems(c), finalAmount: c.additionalRefund.toDouble(), isRefund: true);
-    } else {
-      await dbService.saveReportDraft(widget.userType,
-          reportType: '연말정산', items: _asFiledItems(w), finalAmount: w.finalSettlement.toDouble(), isRefund: w.isRefund);
-    }
+    await dbService.saveReportDraft(widget.userType,
+        reportType: '연말정산', items: _asFiledItems(w), finalAmount: w.finalSettlement.toDouble(), isRefund: w.isRefund);
     if (mounted) Navigator.pop(context, true);
   }
 
@@ -210,7 +175,6 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
     final sub = AppTheme.inkSecondary(context);
     final w = _wh;
     final g = _ganso;
-    final correction = (g != null && w != null) ? buildCorrectionReport(_effGanso(), _effWh()) : null;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -230,12 +194,12 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
           children: [
             Text('연말정산 기록'.toUpperCase(), style: AppTheme.label(context)),
             const SizedBox(height: 12),
-            Text(_manualMode ? '공제 항목을\n직접 적어주세요' : '홈택스 PDF로\n한 번에 채우기',
+            Text(_manualMode ? '연말정산 결과를\n기록해요' : '홈택스 PDF로\n한 번에 기록',
                 style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
             const SizedBox(height: 10),
             Text(_manualMode
-                ? '회사에 안 낸 공제만 직접 골라 적으면 빠진 공제를 찾아 5월 종합소득세 신고에 써드려요. 모두 기기 안에서만 분석돼요.'
-                : '홈택스에서 받은 간소화 자료·원천징수영수증 PDF를 올리면 값을 자동으로 채워요. 모두 기기 안에서만 분석돼요.',
+                ? '총급여와 결정세액을 적어 이번 연말정산 결과를 남겨두세요. 빠진 공제는 다음 단계에서 찾아드려요. 모두 기기 안에서만 처리돼요.'
+                : '홈택스에서 받은 간소화 자료·원천징수영수증 PDF를 올리면 값을 자동으로 채워요. 모두 기기 안에서만 처리돼요.',
                 style: AppTheme.sans(14, sub, height: 1.55)),
             const SizedBox(height: 20),
 
@@ -254,7 +218,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
               AppTheme.hairline(context),
               _slot(
                 label: '원천징수영수증',
-                hint: '총급여·이미 신고한 공제',
+                hint: '총급여·결정세액·신고한 공제',
                 done: w != null,
                 summary: w == null ? null : '총급여 ${_won(w.grossSalary)} · ${w.isRefund ? '환급' : '추가납부'} ${_won(w.settlementAbs)}',
                 onTap: _busy ? null : () => _pick(isGanso: false),
@@ -268,13 +232,6 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
                 const SizedBox(height: 16),
                 Text(_error!, style: AppTheme.sans(13, AppTheme.colorDanger, height: 1.45)),
               ],
-              if (w != null && g == null) ...[
-                const SizedBox(height: 28),
-                Text('빠진 공제 · 추가 환급'.toUpperCase(), style: AppTheme.label(context)),
-                const SizedBox(height: 12),
-                Text('간소화 자료도 넣으면 빠뜨린 공제와 추가 환급액을 찾아드려요.',
-                    style: AppTheme.sans(13, sub, height: 1.45)),
-              ],
               if (w != null && g != null) ...[
                 const SizedBox(height: 28),
                 _confirmSection(),
@@ -286,20 +243,10 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
               _manualSection(),
             ],
 
-            // ── 빠진 공제 → 추가 환급 + 저장 (양쪽 공통) ──
-            if (w != null && g != null) ...[
-              const SizedBox(height: 24),
-              Text('빠진 공제 · 추가 환급'.toUpperCase(), style: AppTheme.label(context)),
-              const SizedBox(height: 12),
-              if (correction == null || !correction.hasMissed)
-                _emptyMissed()
-              else ...[
-                _refundHeadline(correction.additionalRefund),
-                const SizedBox(height: 8),
-                ...correction.lines.map(_correctionRow),
-              ],
+            // ── 저장 (수기: 항상 / PDF: 원천징수 파싱 후) ──
+            if (w != null) ...[
               const SizedBox(height: 28),
-              _saveButton(hasMissed: correction?.hasMissed ?? false),
+              _saveButton(),
             ],
           ],
         ),
@@ -367,7 +314,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
         _manualMode = manual;
         _error = null;
         if (manual) {
-          // 직접 입력 모드 진입 — 빈 객체 시드로 계산·저장 경로 활성화
+          // 직접 입력 모드 진입 — 빈 객체 시드로 저장 경로 활성화
           _ganso = const GansoDeductions();
           _wh = const WithholdingReceipt();
         } else {
@@ -394,8 +341,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
     );
   }
 
-  /// 직접 입력 패널 — 핵심 항목만 단일 열로. 입력값은 _effGanso/_effWh가 읽어
-  /// 기존 빠진 공제·저장 경로를 그대로 탄다. (신고액 cl_*는 0 = 회사에 안 냄)
+  /// 직접 입력 패널 — 총급여·결정세액만 기록(빠진 공제 진단은 다음 단계 전담).
   Widget _manualSection() {
     final sub = AppTheme.inkSecondary(context);
     return Column(
@@ -403,26 +349,11 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
       children: [
         Text('핵심 항목'.toUpperCase(), style: AppTheme.label(context)),
         const SizedBox(height: 8),
-        Text('PDF 없이도 핵심 항목만 입력하면 빠진 공제·환급을 계산해드려요.',
+        Text('총급여와 결정세액은 원천징수영수증에서 확인할 수 있어요.',
             style: AppTheme.sans(13, sub, height: 1.45)),
         const SizedBox(height: 16),
         _manualRow('총급여', 'salary'),
         _manualRow('결정세액', 'decided'),
-        const SizedBox(height: 14),
-        Text('공제 항목 — 회사에 안 낸 것만 골라주세요', style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
-        const SizedBox(height: 4),
-        Text('체크한 항목만 5월에 직접 신고할 미신고분으로 계산해요. 앱이 대신 정하지 않아요.',
-            style: AppTheme.sans(11.5, AppTheme.inkTertiary(context), height: 1.4)),
-        const SizedBox(height: 8),
-        AppTheme.hairline(context),
-        _manualDeductionRow('신용카드', 'av_card'),
-        _manualDeductionRow('체크·현금', 'av_debit'),
-        _manualDeductionRow('의료비', 'av_med'),
-        _manualDeductionRow('월세 (연 납입액)', 'av_rent'),
-        _manualDeductionRow('보장성보험', 'av_life'),
-        _manualDeductionRow('연금저축·IRP', 'av_pen'),
-        _manualDeductionRow('교육비', 'av_edu'),
-        _manualDeductionRow('기부금', 'av_don'),
       ],
     );
   }
@@ -434,64 +365,6 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
       child: Row(children: [
         Expanded(child: Text(label, style: AppTheme.sans(14, AppTheme.ink(context)))),
         _amount(key, width: 150),
-      ]),
-    );
-  }
-
-  /// 공제 항목 행 — '회사에 안 냄' 체크 + 금액. 체크한 항목만 미신고분 계산에 포함한다.
-  /// 기본은 체크 해제라, 사용자가 직접 고르기 전까지 앱은 어떤 것도 '안 냈다'고 정하지 않는다.
-  Widget _manualDeductionRow(String label, String key) {
-    final ink = AppTheme.ink(context);
-    final tert = AppTheme.inkTertiary(context);
-    final checked = _notReported.contains(key);
-    return GestureDetector(
-      onTap: () => setState(() {
-        if (checked) {
-          _notReported.remove(key);
-        } else {
-          _notReported.add(key);
-        }
-      }),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.line(context)))),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(children: [
-          // 사각 체크박스 — 선택 시 잉크로 채움(회사에 안 낸 항목 표시)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            width: 22,
-            height: 22,
-            decoration: BoxDecoration(
-              color: checked ? ink : null,
-              border: Border.all(color: checked ? ink : AppTheme.lineStrong(context), width: 1.4),
-              borderRadius: BorderRadius.circular(3),
-            ),
-            child: checked
-                ? Icon(Icons.check, size: 15, color: AppTheme.backgroundColor(context))
-                : null,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(label,
-                style: AppTheme.sans(14, checked ? ink : tert,
-                    weight: checked ? FontWeight.w600 : FontWeight.w400)),
-          ),
-          _amount(key, width: 130),
-        ]),
-      ),
-    );
-  }
-
-  Widget _emptyMissed() {
-    return Container(
-      decoration: BoxDecoration(border: Border.all(color: AppTheme.line(context), width: 1), borderRadius: BorderRadius.circular(3)),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      child: Row(children: [
-        Icon(Icons.verified_outlined, size: 20, color: AppTheme.colorSuccess),
-        const SizedBox(width: 12),
-        Expanded(child: Text('빠뜨린 공제가 없어요. 이미 잘 챙기셨네요.',
-            style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w600, height: 1.4))),
       ]),
     );
   }
@@ -543,7 +416,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
     );
   }
 
-  /// 공용 액수 입력칸 — 입력 시 라이브 재계산.
+  /// 공용 액수 입력칸.
   Widget _amount(String key, {bool expand = false, double width = 150}) {
     return AmountField(
       controller: _ctrl(key),
@@ -553,63 +426,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
     );
   }
 
-  /// 추가 환급 합계 — 표제란.
-  Widget _refundHeadline(int refund) {
-    final accent = AppTheme.accentColor(context);
-    final sub = AppTheme.inkSecondary(context);
-    return Container(
-      decoration: BoxDecoration(border: Border.all(color: AppTheme.lineStrong(context), width: 1.4), borderRadius: BorderRadius.circular(3)),
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('예상 추가 환급액', style: AppTheme.label(context)),
-          const SizedBox(height: 10),
-          Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-            Text(_fmt.format(refund), style: AppTheme.serif(34, accent, spacing: -1.2, height: 1.0)),
-            const SizedBox(width: 5),
-            Text('원', style: AppTheme.sans(15, sub, weight: FontWeight.w600)),
-          ]),
-          const SizedBox(height: 6),
-          Text('연말정산에 안 넣은 공제예요. 경정청구로 돌려받을 수 있어요.', style: AppTheme.sans(12, sub, height: 1.45)),
-        ],
-      ),
-    );
-  }
-
-  Widget _correctionRow(CorrectionLine l) {
-    final ink = AppTheme.ink(context);
-    final sub = AppTheme.inkSecondary(context);
-    final accent = AppTheme.accentColor(context);
-    return Container(
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.line(context)))),
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(width: 3, height: 34, color: accent),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Text(l.category, style: AppTheme.sans(15, ink, weight: FontWeight.w700)),
-                  const Spacer(),
-                  Text('+${_won(l.missedCredit)}', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
-                ]),
-                const SizedBox(height: 4),
-                Text('가능 ${_won(l.available)} · 신고 ${_won(l.claimed)}',
-                    style: AppTheme.sans(12, sub, height: 1.4)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _saveButton({required bool hasMissed}) {
+  Widget _saveButton() {
     final bg = AppTheme.backgroundColor(context);
     return GestureDetector(
       onTap: _save,
@@ -619,7 +436,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
         alignment: Alignment.center,
         decoration: BoxDecoration(color: AppTheme.ink(context), borderRadius: BorderRadius.circular(4)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(hasMissed ? '경정청구 신고서로 저장' : '연말정산 결과 저장',
+          Text('연말정산 결과 저장',
               style: AppTheme.sans(15, bg, weight: FontWeight.w700)),
           const SizedBox(width: 8),
           Icon(Icons.arrow_forward, size: 16, color: bg),

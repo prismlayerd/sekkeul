@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// 세무 신고 파이프라인 스텝 레일 — ①진단 · ②가상신고서 · ③홈택스.
+/// 세무 신고 파이프라인 스텝 레일.
 ///
-/// 세 단계는 실제 순서가 있는 시퀀스(진단 → 신고서 미리보기 → 홈택스 제출)라
-/// 각 화면 상단에 "지금 몇 단계인지"를 도면 눈금처럼 상시 표시한다. 현재 단계는
-/// 도면 블루 + 헤어라인 위 눈금(밑줄)으로 위치를 표시(you-are-here).
+/// 단계 수·라벨은 유형마다 달라(직장인·프리랜서 3단계, N잡러 4단계) 고정하지 않고
+/// 메뉴와 같은 단일 출처(`taxRailLabels`)에서 받아 그린다. 각 화면 상단에 "지금 몇
+/// 단계인지"를 도면 눈금처럼 상시 표시하고, 현재 단계는 도면 블루 + 헤어라인 위
+/// 눈금(밑줄)으로 위치를 표시(you-are-here).
 class TaxPipelineRail extends StatelessWidget {
-  /// 1 = 진단, 2 = 가상신고서, 3 = 홈택스
+  /// 유형별 단계 라벨(순서대로). `taxRailLabels(userType)`로 얻는다.
+  final List<String> labels;
+
+  /// 현재 단계 (1-based). `taxRailIndex(userType, railKey)`로 얻는다.
   final int current;
 
-  const TaxPipelineRail({super.key, required this.current});
-
-  static const List<String> _labels = ['진단', '가상신고서', '홈택스'];
+  const TaxPipelineRail({super.key, required this.labels, required this.current});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,7 @@ class TaxPipelineRail extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              for (int i = 0; i < _labels.length; i++) _tick(context, i + 1, _labels[i]),
+              for (int i = 0; i < labels.length; i++) _tick(context, i + 1, labels[i]),
             ],
           ),
         ),

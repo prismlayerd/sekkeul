@@ -519,6 +519,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           style: AppTheme.serif(22, ink),
         ),
         actions: [
+          if (_selected.isEmpty && _importOptions.isNotEmpty) _buildImportAction(),
           if (_selected.isNotEmpty)
             TextButton(
               onPressed: _deselect,
@@ -539,7 +540,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                   // 0: 달력
                   Column(
                     children: [
-                      if (_importOptions.isNotEmpty) _buildImportBanner(ink),
                       if (_reserveEstimate != null && !_reserveEstimate!.hasOccupationCode)
                         _buildProfileGateBanner(),
                       if (_recurringPendingCount > 0) _buildRecurringBanner(),
@@ -578,44 +578,72 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     }
   }
 
-  Widget _buildImportBanner(Color ink) {
+  Widget _buildImportAction() {
     final accent = AppTheme.accentColor(context);
-    return Column(
-      children: [
-        for (final opt in _importOptions)
-          Container(
-            margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-            padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.06),
-              border: Border.all(color: accent.withValues(alpha: 0.35)),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.drive_file_move_outline, size: 18, color: accent),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    '${opt.from} 때 기록한 가계부 ${opt.summary.totalMovable}건이 있어요.',
-                    style: AppTheme.sans(13, ink, height: 1.4),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => _confirmImport(opt.from, opt.summary),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(6)),
-                    child: Text('가져오기',
-                        style: AppTheme.sans(12, AppTheme.backgroundColor(context), weight: FontWeight.w700)),
-                  ),
-                ),
-              ],
-            ),
+    final count = _importOptions.length;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: GestureDetector(
+        onTap: _onImportTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.08),
+            border: Border.all(color: accent.withValues(alpha: 0.4)),
+            borderRadius: BorderRadius.circular(16),
           ),
-      ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.drive_file_move_outline, size: 14, color: accent),
+              const SizedBox(width: 4),
+              Text('가져오기', style: AppTheme.sans(12, accent, weight: FontWeight.w700)),
+              if (count > 1) ...[
+                const SizedBox(width: 4),
+                Text('$count', style: AppTheme.sans(12, accent, weight: FontWeight.w700)),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _onImportTap() {
+    if (_importOptions.length == 1) {
+      final opt = _importOptions.first;
+      _confirmImport(opt.from, opt.summary);
+      return;
+    }
+    final ink = AppTheme.ink(context);
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.backgroundColor(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Text('가계부 가져오기', style: AppTheme.serif(18, ink)),
+            const SizedBox(height: 4),
+            for (final opt in _importOptions)
+              ListTile(
+                leading: Icon(Icons.drive_file_move_outline, color: AppTheme.accentColor(context)),
+                title: Text('${opt.from} 때 기록', style: AppTheme.sans(14, ink)),
+                subtitle: Text('${opt.summary.totalMovable}건', style: AppTheme.sans(12, AppTheme.inkSecondary(context))),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _confirmImport(opt.from, opt.summary);
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
     );
   }
 
@@ -2417,11 +2445,13 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   // ── 연간 뷰 ──────────────────────────────────────────────────────
 
   Widget _buildAnnualView(Color ink, Color sub) {
+    final tert = AppTheme.inkTertiary(context);
+    final accent = AppTheme.accentColor(context);
+    final yearExps = _allExpenses.where((e) => e.date.year == _year).toList();
+
     final monthExp = <int, int>{};
-    for (final e in _allExpenses) {
-      if (e.date.year == _year) {
-        monthExp[e.date.month] = (monthExp[e.date.month] ?? 0) + e.amount;
-      }
+    for (final e in yearExps) {
+      monthExp[e.date.month] = (monthExp[e.date.month] ?? 0) + e.amount;
     }
 
     // 순수익 = 수입 - 지출 (월별)
@@ -2431,12 +2461,99 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     }
     final maxAbs = monthNet.values.fold(0, (mx, v) => v.abs() > mx ? v.abs() : mx);
 
+    // 연간 세금 공제 가능 지출 — 월간 분석의 카테고리 정의를 그대로 1년치로 집계.
+    final yearCatTotals = <String, int>{};
+    for (final e in yearExps) {
+      yearCatTotals[e.category] = (yearCatTotals[e.category] ?? 0) + e.amount;
+    }
+    final yearTaxCatAmounts = <String, int>{};
+    for (final cat in _taxDeductCats.keys) {
+      final amt = yearCatTotals[cat] ?? 0;
+      if (amt > 0) yearTaxCatAmounts[cat] = amt;
+    }
+    final yearTotalTaxDeduct = yearTaxCatAmounts.values.fold(0, (s, v) => s + v);
+
+    // 연간 신용카드 문턱 — 조회 연도가 올해면 1/1~오늘, 지난 연도면 1년 전체.
+    final now = DateTime.now();
+    final isCurrentYear = _year == now.year;
+    final yearEnd = isCurrentYear ? now : DateTime(_year, 12, 31);
+    final creditYtd = yearExps
+        .where((e) => e.paymentMethod == _catCredit && !e.date.isAfter(yearEnd))
+        .fold(0, (s, e) => s + e.amount);
+    final hasThreshold = _profile.showsCardThreshold && _grossIncome > 0;
+    final cardThreshold = _grossIncome * 0.25;
+
+    // 연간 사업경비 총액 — 프리랜서·N잡러만.
+    final yearBusinessExp = yearExps.where((e) => e.isBusiness).fold(0, (s, e) => s + e.amount);
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       children: [
+        // ── 연간 세금 공제 가능 지출 ──────────────────────
+        Row(children: [
+          Text('$_year년 세금 공제 가능 지출'.toUpperCase(), style: AppTheme.label(context)),
+          const SizedBox(width: 8),
+          if (yearTotalTaxDeduct > 0)
+            AppTheme.blueprintBadge(context, '${_fmt.format(yearTotalTaxDeduct)}원'),
+        ]),
+        const SizedBox(height: 10),
+        if (yearTotalTaxDeduct == 0)
+          Text('의료비·교육비·보험료·기부금을 기록하면 1년 합계를 여기서 볼 수 있어요.',
+              style: AppTheme.sans(13, tert, height: 1.5))
+        else
+          for (final entry in yearTaxCatAmounts.entries) ...[
+            _taxDeductRow(entry.key, entry.value, ink, sub),
+            const SizedBox(height: 6),
+          ],
+        const SizedBox(height: 8),
+        Text('가계부 기록 기준 참고값이에요. 실제 공제액은 홈택스 간소화 자료로 확인하세요.',
+            style: AppTheme.sans(11.5, tert, height: 1.4)),
+        const SizedBox(height: 20),
+        AppTheme.hairline(context),
+
+        // ── 연간 신용카드 공제 문턱 ────────────────────────
+        if (hasThreshold) ...[
+          const SizedBox(height: 20),
+          Text('$_year년 신용카드 공제 문턱'.toUpperCase(), style: AppTheme.label(context)),
+          const SizedBox(height: 10),
+          _analysisSimpleBar(
+            label: '연봉의 25% (${_fmt.format(cardThreshold.toInt())}원)',
+            amount: creditYtd,
+            max: cardThreshold.toInt(),
+            color: creditYtd >= cardThreshold ? AppTheme.colorSuccess : accent,
+            trailText: creditYtd >= cardThreshold
+                ? '돌파 — 체크·현금이 공제율 2배예요'
+                : '${_fmt.format(cardThreshold.toInt() - creditYtd)}원 남음',
+            ink: ink, sub: sub,
+          ),
+          const SizedBox(height: 20),
+          AppTheme.hairline(context),
+        ],
+
+        // ── 연간 인정 경비(사업경비) 합계 ───────────────────
+        if (_isBusinessUser) ...[
+          const SizedBox(height: 20),
+          Row(children: [
+            Text('$_year년 인정 경비 합계'.toUpperCase(), style: AppTheme.label(context)),
+            const SizedBox(width: 8),
+            if (yearBusinessExp > 0)
+              AppTheme.blueprintBadge(context, '${_fmt.format(yearBusinessExp)}원'),
+          ]),
+          const SizedBox(height: 10),
+          if (yearBusinessExp == 0)
+            Text('지출 입력 시 "사업경비로 인정"을 체크하면 여기에 합산돼요.',
+                style: AppTheme.sans(13, tert, height: 1.5))
+          else
+            Text('${_fmt.format(yearBusinessExp)}원', style: AppTheme.sans(20, ink, weight: FontWeight.w700)),
+          const SizedBox(height: 20),
+          AppTheme.hairline(context),
+        ],
+
+        // ── 월별 순수익 ─────────────────────────────────
+        const SizedBox(height: 20),
         Text('$_year년 순수익'.toUpperCase(), style: AppTheme.label(context)),
         const SizedBox(height: 4),
-        Text('수입 − 지출', style: AppTheme.sans(12, AppTheme.inkTertiary(context))),
+        Text('수입 − 지출', style: AppTheme.sans(12, tert)),
         const SizedBox(height: 16),
         for (int m = 1; m <= 12; m++) ...[
           _annualMonthRow(m, monthNet[m] ?? 0, maxAbs, ink, sub),

@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../theme/app_theme.dart';
 import '../../core/data/app_mode.dart';
@@ -231,6 +233,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  /// 의견 보내기 — 서버 없이 사용자 기본 메일 앱을 mailto로 연다.
+  /// 온디바이스라 개발자가 사용자 상황을 원격으로 볼 수 없어, 피드백이 유일한 개선 통로.
+  /// 유형·버전·기기 정보만 본문에 자동으로 채운다(개인 세무 데이터는 넣지 않음).
+  Future<void> _sendFeedback() async {
+    final v = _packageInfo;
+    final device = kIsWeb
+        ? 'Web'
+        : '${Platform.operatingSystem} ${Platform.operatingSystemVersion}';
+    final body = '(여기에 의견이나 불편한 점을 적어주세요)\n\n\n'
+        '──────────\n'
+        '아래는 문제 확인용 정보예요. 지우셔도 괜찮아요.\n'
+        '유형: ${widget.userType}\n'
+        '버전: ${v != null ? 'v${v.version} (${v.buildNumber})' : '-'}\n'
+        '기기: $device';
+    final uri = Uri.parse('mailto:prismlayerd@gmail.com'
+        '?subject=${Uri.encodeComponent('세끌 의견')}'
+        '&body=${Uri.encodeComponent(body)}');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      await Clipboard.setData(const ClipboardData(text: 'prismlayerd@gmail.com'));
+      _snack('메일 앱이 없어 이메일 주소를 복사했어요. prismlayerd@gmail.com');
+    }
+  }
+
   void _showPrivacyPolicy() {
     showDialog(
       context: context,
@@ -385,6 +412,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               AppTheme.hairline(context),
             ],
+
+            const SizedBox(height: 24),
+            Text('문의'.toUpperCase(), style: AppTheme.label(context)),
+            const SizedBox(height: 6),
+            AppTheme.hairline(context),
+            _glyphRow(
+              title: '의견 보내기',
+              onTap: _sendFeedback,
+            ),
+            AppTheme.hairline(context),
 
             const SizedBox(height: 24),
             Text('법적 고지'.toUpperCase(), style: AppTheme.label(context)),

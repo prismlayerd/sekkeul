@@ -192,27 +192,12 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           ),
         ),
 
-        // ── N잡러: 다른소득 — 근로소득 헤드라인과 대등한 크기의 별도 헤드라인으로
-        // 보여준다(작은 칩이면 근로소득 숫자만 눈에 띄어 총수입으로 오독할 위험).
-        if (userType == 'N잡러' && widget.otherIncome > 0) ...[
+        // ── N잡러: 다른소득 헤드라인 — 근로소득 헤드라인과 대등하게 항상 노출.
+        // 기록이 없으면 근로소득과 똑같이 '기록 없음'으로 표시(별도 '나눠 기록' 버튼 대신
+        // 두 소득 버킷을 대칭으로 보여 어느 쪽이든 기록하도록 유도).
+        if (userType == 'N잡러') ...[
           const SizedBox(height: 20),
           _otherIncomeHeadline(),
-        ]
-        // N잡러인데 분리 기록이 없으면 나눠 기록 동선만 노출.
-        else if (userType == 'N잡러' && monthlyIncome > 0) ...[
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: GestureDetector(
-              onTap: widget.onOpenLedger,
-              behavior: HitTestBehavior.opaque,
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.call_split_rounded, size: 14, color: accent),
-                const SizedBox(width: 6),
-                Text('근로·기타로 나눠 기록하기', style: AppTheme.sans(12, accent, weight: FontWeight.w600)),
-              ]),
-            ),
-          ),
         ],
 
         const SizedBox(height: 14),
@@ -264,14 +249,6 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             ],
           ),
         ),
-        if (totalSpent > 0) ...[
-          const SizedBox(height: 12),
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            _spendChip('신용카드', widget.creditCardTotal),
-            const SizedBox(width: 8),
-            _spendChip('체크·현금', widget.debitCashTotal),
-          ]),
-        ],
 
         // ── 지출 목표 진행 + 수정 ──
         if (hasBudget && !widget.showExpenseInput) ...[
@@ -347,8 +324,8 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     return _inlinePrompt(
       expanded: widget.showExpenseInput,
       promptText: widget.isEmployee
-          ? '이번 달 지출 목표액을 설정하면 공제 기준을 잡아드려요'
-          : '이번 달 지출 목표액을 설정하면 지출 현황을 알려드려요',
+          ? '지출 목표를 설정하면 공제 기준을 잡아드려요'
+          : '지출 목표를 설정하면 지출 현황을 알려드려요',
       hintText: '이번 달 지출 목표',
       controller: widget.expenseTargetInlineCtrl,
       ink: ink, sub: sub, accent: accent,
@@ -470,17 +447,6 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     );
   }
 
-  Widget _spendChip(String label, double amount) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppTheme.line(context), width: 1),
-        borderRadius: BorderRadius.circular(2),
-      ),
-      child: Text('$label ${_toWon(amount)}', style: AppTheme.sans(12, AppTheme.inkSecondary(context), weight: FontWeight.w500)),
-    );
-  }
-
   /// N잡러의 "다른소득" 헤드라인 — 근로소득 헤드라인과 대등한 크기로 보여준다(작은 칩이면
   /// 근로소득 숫자만 눈에 띄어 "이게 내 총수입"으로 오독할 위험이 있어 승격, 2026-07-12).
   /// 탭하면 세전 환산으로 페이드 전환(사업/기타소득만 원천징수 역산 가능,
@@ -488,28 +454,37 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
   Widget _otherIncomeHeadline() {
     final ink = AppTheme.ink(context);
     final tert = AppTheme.inkTertiary(context);
+    final hasOther = widget.otherIncome > 0;
     return Align(
       alignment: Alignment.centerRight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           GestureDetector(
-            onTap: () => setState(() => _showOtherIncomeGross = !_showOtherIncomeGross),
+            onTap: hasOther
+                ? () => setState(() => _showOtherIncomeGross = !_showOtherIncomeGross)
+                : null,
             behavior: HitTestBehavior.opaque,
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 220),
-              child: Text(
-                _toWon(_showOtherIncomeGross ? widget.otherIncomeGrossEstimate : widget.otherIncome),
-                key: ValueKey(_showOtherIncomeGross),
-                style: AppTheme.serif(44, ink, spacing: -1.5, height: 1.0),
-              ),
+              child: hasOther
+                  ? Text(
+                      _toWon(_showOtherIncomeGross ? widget.otherIncomeGrossEstimate : widget.otherIncome),
+                      key: ValueKey(_showOtherIncomeGross),
+                      style: AppTheme.serif(44, ink, spacing: -1.5, height: 1.0),
+                    )
+                  : Text('기록 없음',
+                      key: const ValueKey('empty'),
+                      style: AppTheme.serif(28, tert, spacing: -0.5, height: 1.0)),
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            _showOtherIncomeGross
-                ? '이번 달 다른소득 (세전 환산 · 탭해서 되돌리기)'
-                : '이번 달 다른소득 (세후 · 탭해서 세전 보기)',
+            !hasOther
+                ? '이번 달 다른소득'
+                : _showOtherIncomeGross
+                    ? '이번 달 다른소득 (세전 환산 · 탭해서 되돌리기)'
+                    : '이번 달 다른소득 (세후 · 탭해서 세전 보기)',
             style: AppTheme.sans(12, tert),
           ),
         ],

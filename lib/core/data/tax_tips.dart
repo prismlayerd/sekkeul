@@ -44,7 +44,7 @@ const List<TaxTip> _allTips = [
   TaxTip(
     label: '2026 혜택',
     title: '월세 세액공제 대상 확대',
-    body: '2026년부터 무주택 주말부부 배우자·다자녀 주택까지 넓어졌어요.',
+    body: '2026년부터 무주택 주말부부·다자녀 가구까지 대상이 넓어졌어요.',
     types: {'직장인', 'N잡러'},
     action: 'simulator',
   ),

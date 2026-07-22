@@ -271,7 +271,29 @@ class TaxStage {
   final String subtitle;
   final String? badge;
   final Widget Function(String userType) build;
-  const TaxStage({required this.title, required this.subtitle, this.badge, required this.build});
+  final String? railKey;    // 상단 파이프라인 레일에서 이 단계를 식별하는 키 (레일 대상 단계만)
+  final String? railLabel;  // 레일용 짧은 라벨 (title은 길어서 별도)
+  const TaxStage({
+    required this.title,
+    required this.subtitle,
+    this.badge,
+    required this.build,
+    this.railKey,
+    this.railLabel,
+  });
+}
+
+/// 유형별 파이프라인 레일 라벨 목록 — 메뉴(`taxPipelineFor`)와 단일 출처.
+List<String> taxRailLabels(String userType) =>
+    taxPipelineFor(userType).map((s) => s.railLabel ?? s.title).toList();
+
+/// [railKey] 단계가 해당 유형 파이프라인에서 몇 번째인지(1-based). 없으면 1.
+int taxRailIndex(String userType, String railKey) {
+  final stages = taxPipelineFor(userType);
+  for (int i = 0; i < stages.length; i++) {
+    if (stages[i].railKey == railKey) return i + 1;
+  }
+  return 1;
 }
 
 /// 빠른 계산 항목 (단발 계산기).
@@ -296,22 +318,22 @@ String _pipelineIntroFor(String userType) => userType == '직장인'
 List<TaxStage> taxPipelineFor(String userType) {
   if (userType == '직장인') {
     return const [
-      TaxStage(title: '빠진 공제 항목 찾기', subtitle: '연말정산에 안 넣은 공제를 골라 추가 환급을 진단', build: _missedDiagnosis),
-      TaxStage(title: '종합소득세 신고서', subtitle: '회사 안 거치고 직접 낼 서식을 자동으로 작성', build: _emptyForm),
-      TaxStage(title: '홈택스 제출 가이드', subtitle: '5월 종합소득세를 어디에 어떻게 낼지 1:1 안내', badge: '5월 신고', build: _annualReport),
+      TaxStage(title: '빠진 공제 항목 찾기', subtitle: '연말정산에 안 넣은 공제로 추가 환급 진단', build: _missedDiagnosis, railKey: 'missed', railLabel: '빠진공제'),
+      TaxStage(title: '종합소득세 신고서', subtitle: '회사 안 거치고 직접 낼 서식 자동 작성', build: _emptyForm, railKey: 'form', railLabel: '신고서'),
+      TaxStage(title: '홈택스 제출 가이드', subtitle: '5월 종합소득세를 어디에 어떻게 낼지 안내', badge: '5월 신고', build: _annualReport, railKey: 'annual', railLabel: '홈택스'),
     ];
   } else if (userType == 'N잡러') {
     return const [
-      TaxStage(title: '빠진 공제 항목 찾기', subtitle: '연말정산에 안 넣은 공제를 골라 추가 환급을 진단', build: _missedDiagnosis),
-      TaxStage(title: '합산 진단', subtitle: '합치면 세율이 얼마나 오르는지 계산', build: _simulator),
-      TaxStage(title: '가상 신고서', subtitle: '합산 결과가 자동으로 채워진 신고서 미리보기', build: _emptyForm),
-      TaxStage(title: '홈택스 신고 가이드', subtitle: '합산 신고 항목을 1:1 안내', badge: '5월 신고', build: _annualReport),
+      TaxStage(title: '빠진 공제 항목 찾기', subtitle: '연말정산에 안 넣은 공제로 추가 환급 진단', build: _missedDiagnosis, railKey: 'missed', railLabel: '빠진공제'),
+      TaxStage(title: '합산 진단', subtitle: '합치면 세율이 얼마나 오르는지 계산', build: _simulator, railKey: 'simulator', railLabel: '합산진단'),
+      TaxStage(title: '가상 신고서', subtitle: '합산 결과가 자동 채워진 신고서 미리보기', build: _emptyForm, railKey: 'form', railLabel: '신고서'),
+      TaxStage(title: '홈택스 신고 가이드', subtitle: '합산 신고 항목을 1:1 안내', badge: '5월 신고', build: _annualReport, railKey: 'annual', railLabel: '홈택스'),
     ];
   } else {
     return const [
-      TaxStage(title: '종소세 진단', subtitle: '경비율·공제를 반영해 세금을 계산', build: _simulator),
-      TaxStage(title: '가상 신고서', subtitle: '진단 결과가 자동으로 채워진 신고서 미리보기', build: _emptyForm),
-      TaxStage(title: '홈택스 신고 가이드', subtitle: '어디에 무엇을 입력할지 1:1 안내', badge: '5월 신고', build: _annualReport),
+      TaxStage(title: '종소세 진단', subtitle: '경비율·공제를 반영해 세금을 계산', build: _simulator, railKey: 'simulator', railLabel: '진단'),
+      TaxStage(title: '가상 신고서', subtitle: '진단 결과가 자동 채워진 신고서 미리보기', build: _emptyForm, railKey: 'form', railLabel: '신고서'),
+      TaxStage(title: '홈택스 신고 가이드', subtitle: '어디에 무엇을 입력할지 1:1 안내', badge: '5월 신고', build: _annualReport, railKey: 'annual', railLabel: '홈택스'),
     ];
   }
 }
@@ -321,7 +343,7 @@ List<TaxStage> taxPipelineFor(String userType) {
 /// 동일하게 필요하다. 프리랜서는 근로소득이 없어 연말정산 대상이 아니라 제외.
 TaxStage? taxRecordEntryFor(String userType) {
   if (userType == '프리랜서') return null;
-  return const TaxStage(title: '연말정산 기록하기', subtitle: 'PDF 또는 직접 입력으로 회사에 안 낸 공제 기록', build: _record);
+  return const TaxStage(title: '연말정산 기록하기', subtitle: 'PDF 또는 직접 입력으로 이번 연말정산 결과 기록', build: _record);
 }
 
 /// 행3 — 경정청구 준비하기 (직장인·N잡러만; 프리랜서는 5월 신고가 본 신고라 제외).

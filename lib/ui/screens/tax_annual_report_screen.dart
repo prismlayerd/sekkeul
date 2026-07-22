@@ -6,6 +6,7 @@ import '../../core/data/db_helper.dart';
 import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/tax_rates.dart';
 import 'tax_simulator_screen.dart';
+import 'tax_tools_screen.dart';
 import '../theme/app_theme.dart';
 import '../components/tax_pipeline_rail.dart';
 
@@ -256,9 +257,12 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 4),
-                  child: TaxPipelineRail(current: 3),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: TaxPipelineRail(
+                    labels: taxRailLabels(widget.userType),
+                    current: taxRailIndex(widget.userType, 'annual'),
+                  ),
                 ),
                 Expanded(
                   child: _isBusiness

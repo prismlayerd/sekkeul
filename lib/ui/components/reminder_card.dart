@@ -147,7 +147,7 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (_reminders.isEmpty)
-            Text('가계부 기록·월세·건강검진처럼 챙길 일을 알림으로 만들어 보세요.',
+            Text('가계부 기록·월세·건강검진, 알림으로 챙겨보세요.',
                 style: AppTheme.sans(12.5, tert, height: 1.5))
           else
             ..._reminders.take(3).map((r) => _reminderRow(r, ink, sub, tert, accent)),

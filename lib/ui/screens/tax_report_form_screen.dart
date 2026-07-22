@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
 import 'tax_simulator_screen.dart';
 import 'tax_annual_report_screen.dart';
+import 'tax_tools_screen.dart';
 import '../components/tax_pipeline_rail.dart';
 
 /// 가상 신고서 — 세금 계산의 하향식 흐름을 '장부' 형식으로 보여준다.
@@ -34,7 +35,7 @@ class TaxReportFormScreen extends StatelessWidget {
       ? '근로소득 원천징수영수증'
       : reportType == '경정청구'
           ? '종합소득세 경정청구서'
-          : '종합소득세 과세표준확정신고서';
+          : '종합소득세 과세표준\n확정신고서';
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +58,12 @@ class TaxReportFormScreen extends StatelessWidget {
         top: false,
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.only(bottom: 4),
-              child: TaxPipelineRail(current: 2),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: TaxPipelineRail(
+                labels: taxRailLabels(userType ?? '프리랜서'),
+                current: taxRailIndex(userType ?? '프리랜서', 'form'),
+              ),
             ),
             Expanded(
               child: ListView(

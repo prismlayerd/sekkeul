@@ -1086,7 +1086,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     // 유형별 도구 카드
     if (_userType == '직장인') {
       cards.addAll([
-        BannerCardData(label: '환급', headline: '회사가 놓친 공제,\n5월 신고나 경정청구로 돌려받아요', action: '환급액 계산하기', glyph: '환', onTap: () => _go(TaxSimulatorScreen(userType: _userType))),
+        BannerCardData(label: '환급', headline: '회사가 놓친 공제,\n5월 경정청구로 돌려받아요', action: '환급액 계산하기', glyph: '환', onTap: () => _go(TaxSimulatorScreen(userType: _userType))),
       ]);
     } else if (_userType == 'N잡러') {
       cards.addAll([

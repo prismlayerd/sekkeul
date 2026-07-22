@@ -9,6 +9,8 @@ import '../../core/data/deduction_catalog.dart';
 import '../../core/parsing/correction_report.dart';
 import 'tax_report_form_screen.dart';
 import 'tax_simulator_screen.dart';
+import 'tax_tools_screen.dart';
+import '../components/tax_pipeline_rail.dart';
 
 /// ① 진단 — "연말정산에 안 넣은 공제"를 체크리스트로 고르고 그 항목만 입력한다.
 /// 놓친 환급을 추정해 보여주고, 신고서 단계로 이어가도록 초안을 저장한다.
@@ -97,7 +99,17 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
       ),
       body: SafeArea(
         top: false,
-        child: ListView(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: TaxPipelineRail(
+                labels: taxRailLabels(widget.userType),
+                current: taxRailIndex(widget.userType, 'missed'),
+              ),
+            ),
+            Expanded(
+              child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 4, 24, 32),
           children: [
             Text('빠진 공제 찾기'.toUpperCase(), style: AppTheme.label(context)),
@@ -150,6 +162,9 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
                 const SizedBox(width: 6),
                 Text('정밀 계산기로 직접 계산하기', style: AppTheme.sans(13, accent, weight: FontWeight.w600)),
               ]),
+            ),
+          ],
+              ),
             ),
           ],
         ),
