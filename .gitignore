@@ -46,3 +46,7 @@ app.*.map.json
 
 # Stray literal '~' dir (accidentally nested Claude Code skill checkout, broke GitHub Pages checkout)
 /~
+
+# 내부 사업·성장 전략 문서 (민감 — GitHub 미공개)
+/성장계획.html
+/성장계획.pdf
