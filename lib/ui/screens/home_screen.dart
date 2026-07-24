@@ -701,7 +701,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  /// 홈 탭 — 세끌 워드마크 + 설정 톱니 + 대시보드 본문.
+  /// 홈 탭 — 세끌 워드마크 + 알림함 + 대시보드 본문. (설정은 전체 탭으로 일원화)
   Widget _buildHomeTab() {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -743,11 +743,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   ),
                 ),
             ],
-          ),
-          IconButton(
-            icon: Icon(Icons.settings_outlined, color: AppTheme.inkSecondary(context), size: 22),
-            onPressed: _openSettings,
-            tooltip: '설정',
           ),
           const SizedBox(width: 4),
         ],

@@ -7,6 +7,7 @@ import '../../core/data/db_helper.dart';
 import '../../core/data/occupation_data.dart';
 import '../../core/tax_engine/insurance_engine.dart';
 import '../../core/notifications/reminder_scheduler.dart';
+import '../../core/tax_engine/employee_tax.dart';
 import 'occupation_search_screen.dart';
 import '../components/amount_field.dart';
 import 'profile_input_screen.dart';
@@ -36,10 +37,25 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   Map<String, dynamic>? _profile;
   bool _loading = true;
 
+  // ── 항목별 인라인 수정 — 팝업 없이 항목을 펼쳐 그 자리에서 편집한다 ──
+  String? _editingKey;
+  final TextEditingController _grossEditCtrl = TextEditingController();
+  final TextEditingController _ageEditCtrl = TextEditingController();
+  int _dependentsEditValue = 0;
+  String _residenceEditValue = '전세';
+  int _payDayEditValue = 0;
+
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _grossEditCtrl.dispose();
+    _ageEditCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -51,13 +67,23 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     });
   }
 
+  /// 프리랜서는 예상 연봉·나이·급여일이 세금 계산에 안 쓰인다 —
+  /// 소득은 가계부 실적으로 잡고, 청년 감면·급여일 알림은 근로자 개념이라서다.
+  bool get _isFreelancer => widget.userType == '프리랜서';
+
   // ── 프로필 완성도 ───────────────────────────────────────────────
   /// 절세 진단에 직접 쓰이는 핵심 입력값들이 채워졌는지로 완성도를 읽는다.
-  /// 빈 항목이 곧 "진단이 부정확해지는 이유"라서 그대로 안내에 쓴다.
+  /// 프리랜서는 관련 없는 항목(예상 연봉·나이·급여일)을 완성도에서 뺀다.
   List<({String label, bool filled})> get _checklist {
     final p = _profile ?? const {};
     double d(String k) => (p[k] as num?)?.toDouble() ?? 0.0;
     int i(String k) => (p[k] as int?) ?? 0;
+    if (_isFreelancer) {
+      return [
+        (label: '부양가족', filled: p.containsKey('dependents')),
+        (label: '거주 형태', filled: p.containsKey('is_monthly_rent')),
+      ];
+    }
     return [
       (label: '예상 연봉', filled: d('gross_income') > 0),
       (label: '나이', filled: i('age') > 0),
@@ -81,14 +107,67 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     }
   }
 
-  Future<void> _openPayDayPicker() async {
-    final current = (_profile?['pay_day'] as int?) ?? 0;
-    final picked = await showDialog<int>(
-      context: context,
-      builder: (ctx) => _PayDayDialog(current: current),
-    );
-    if (picked == null || picked == current) return;
-    await _savePayDay(picked);
+  /// 항목 행을 펼치거나 접는다. 펼칠 때 편집값을 현재 프로필로 초기화.
+  void _toggleEdit(String key) {
+    final p = _profile ?? const {};
+    setState(() {
+      if (_editingKey == key) {
+        _editingKey = null;
+        return;
+      }
+      _editingKey = key;
+      switch (key) {
+        case 'gross_income':
+          final v = (p['gross_income'] as num?)?.toDouble() ?? 0.0;
+          _grossEditCtrl.text = v > 0 ? _fmt.format(v.toInt()) : '';
+        case 'age':
+          final v = (p['age'] as int?) ?? 0;
+          _ageEditCtrl.text = v > 0 ? '$v' : '';
+        case 'dependents':
+          _dependentsEditValue = (p['dependents'] as int?) ?? 0;
+        case 'residence':
+          _residenceEditValue = p['owns_house'] == true
+              ? '자가'
+              : (p['is_monthly_rent'] == true ? '월세' : '전세');
+        case 'pay_day':
+          _payDayEditValue = (p['pay_day'] as int?) ?? 0;
+      }
+    });
+  }
+
+  /// 예상 연봉은 홈 화면이 읽는 유형별 독립 저장(profile_type_values)에도 함께 쓴다.
+  Future<void> _saveGrossIncomeInline() async {
+    final v = double.tryParse(_grossEditCtrl.text.replaceAll(',', '')) ?? 0.0;
+    await _updateProfileFields({'gross_income': v});
+    await dbService.setProfileTypeValues(widget.userType, grossIncome: v);
+    if (mounted) setState(() => _editingKey = null);
+  }
+
+  Future<void> _saveAgeInline() async {
+    final v = int.tryParse(_ageEditCtrl.text.trim()) ?? 0;
+    await _updateProfileFields({'age': v});
+    if (mounted) setState(() => _editingKey = null);
+  }
+
+  Future<void> _saveDependentsInline() async {
+    final updates = <String, dynamic>{'dependents': _dependentsEditValue};
+    final disabled = (_profile?['disabled_dependent_count'] as int?) ?? 0;
+    if (disabled > _dependentsEditValue) updates['disabled_dependent_count'] = _dependentsEditValue;
+    await _updateProfileFields(updates);
+    if (mounted) setState(() => _editingKey = null);
+  }
+
+  Future<void> _saveResidenceInline() async {
+    await _updateProfileFields({
+      'is_monthly_rent': _residenceEditValue == '월세',
+      'owns_house': _residenceEditValue == '자가',
+    });
+    if (mounted) setState(() => _editingKey = null);
+  }
+
+  Future<void> _savePayDayInline() async {
+    await _savePayDay(_payDayEditValue);
+    if (mounted) setState(() => _editingKey = null);
   }
 
   Future<void> _savePayDay(int day) async {
@@ -136,7 +215,11 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     final current = (_profile?['property_value'] as num?)?.toDouble() ?? 0.0;
     final picked = await showDialog<double>(
       context: context,
-      builder: (ctx) => _PropertyValueDialog(current: current),
+      builder: (ctx) => _AmountDialog(
+        title: '재산액',
+        subtitle: '전세보증금 등 재산가액을 입력해주세요',
+        current: current,
+      ),
     );
     if (picked == null) return;
     await _updateProfileFields({'property_value': picked});
@@ -177,12 +260,11 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     );
   }
 
-  /// 프로필 완성도 블록 — 도면 시트 메타포(측정 스케일 + 항목 체크).
+  /// 프로필 완성도 블록 — 도면 시트 메타포(측정 스케일 + 항목 목록).
   Widget _profileBlock(Color ink, Color sub) {
     final accent = AppTheme.accentColor(context);
     final done = _filledCount == _checklist.length;
     final pct = (_completeness * 100).round();
-    final gross = (_profile?['gross_income'] as num?)?.toDouble() ?? 0.0;
 
     return Container(
       decoration: BoxDecoration(
@@ -197,15 +279,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.userType, style: AppTheme.serif(22, ink, spacing: -0.5)),
-                    const SizedBox(height: 4),
-                    Text(gross > 0 ? '예상 연봉 ${_fmt.format(gross.toInt())}원' : '예상 연봉 미설정',
-                        style: AppTheme.sans(13, sub)),
-                  ],
-                ),
+                child: Text(widget.userType, style: AppTheme.serif(22, ink, spacing: -0.5)),
               ),
               Text('$pct%',
                   style: AppTheme.serif(28, done ? AppTheme.colorSuccess : accent, spacing: -1, height: 1.0)),
@@ -218,31 +292,35 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
             backgroundColor: AppTheme.line(context),
             valueColor: AlwaysStoppedAnimation<Color>(done ? AppTheme.colorSuccess : accent),
           ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _checklist.map(_checkChip).toList(),
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 4),
           AppTheme.hairline(context),
-          _payDayRow(ink, sub, accent),
+          _infoRows(ink, sub, accent),
           if (_isBusinessUser) ...[
             AppTheme.hairline(context),
             _professionSection(ink, sub, accent),
           ],
           AppTheme.hairline(context),
+          // 위 인라인 항목은 대표 5종뿐 — 나머지 세부 공제 질문 전체로 가는 입구.
           GestureDetector(
             onTap: _openProfile,
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 14),
               child: Row(children: [
-                Icon(done ? Icons.check_circle_outline : Icons.edit_outlined, size: 18, color: accent),
+                Icon(Icons.edit_outlined, size: 18, color: accent),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(done ? '세부 정보 수정하기' : '빈 항목 채우러 가기',
-                      style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('더 많은 공제 항목 입력하기',
+                        style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+                    const SizedBox(height: 2),
+                    Text(
+                      _isFreelancer
+                          ? '혼인·장애·경로우대 등 세부 공제를 확인해요'
+                          : '군 감면·혼인·장애·경로우대 등 세부 공제를 확인해요',
+                      style: AppTheme.sans(12, sub),
+                    ),
+                  ]),
                 ),
                 Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.inkTertiary(context)),
               ]),
@@ -253,33 +331,293 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     );
   }
 
-  Widget _payDayRow(Color ink, Color sub, Color accent) {
-    final day = (_profile?['pay_day'] as int?) ?? 0;
-    final isSet = day > 0;
-    return GestureDetector(
-      onTap: _openPayDayPicker,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Row(children: [
-          Icon(Icons.calendar_today_outlined, size: 18, color: isSet ? sub : accent),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('급여일',
-                  style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
-              const SizedBox(height: 2),
-              Text(isSet ? '매월 $day일 지급' : '설정되지 않았어요 — 급여일 알림에 쓰여요',
-                  style: AppTheme.sans(12, isSet ? sub : accent)),
+  /// 핵심 입력값 5종 — 세로로 나열, 탭하면 그 자리에서 펼쳐져 편집된다(팝업 없음).
+  Widget _infoRows(Color ink, Color sub, Color accent) {
+    final p = _profile ?? const {};
+    final gross = (p['gross_income'] as num?)?.toDouble() ?? 0.0;
+    final age = (p['age'] as int?) ?? 0;
+    final dependents = p['dependents'] as int?;
+    final hasResidence = p.containsKey('is_monthly_rent');
+    // 전세·반전세는 저장상 구분되지 않아(둘 다 is_monthly_rent=false, owns_house=false) '전세'로 표시.
+    final residence = p['owns_house'] == true ? '자가' : (p['is_monthly_rent'] == true ? '월세' : '전세');
+    final payDay = (p['pay_day'] as int?) ?? 0;
+    // 항목엔 세전 연봉을 적었으니, 바로 아래에 4대보험·소득세 반영한 세후 추정치를 덧붙인다.
+    double netAnnual = 0.0;
+    if (gross > 0) {
+      final insurance = EmployeeTaxCalculator.calculateMonthlyInsurance(gross / 12);
+      final monthlyTax = EmployeeTaxCalculator.estimateMonthlyIncomeTax(
+        grossAnnual: gross,
+        dependentsIncludingSelf: 1 + (dependents ?? 0),
+      );
+      netAnnual = gross - (insurance.total + monthlyTax) * 12;
+    }
+
+    // 프리랜서는 예상 연봉·나이·급여일이 세금 계산에 안 쓰여 노출하지 않는다.
+    final rows = <Widget>[
+      if (!_isFreelancer)
+        _infoRow(
+          icon: Icons.payments_outlined,
+          label: '예상 연봉',
+          value: gross > 0 ? '${_fmt.format(gross.toInt())}원 (세전)' : null,
+          valueExtra: gross > 0 ? '세후 약 ${_fmt.format(netAnnual.toInt())}원' : null,
+          placeholder: '설정되지 않았어요 — 카드공제·환급 계산 기준이 돼요',
+          isSet: gross > 0,
+          editKey: 'gross_income',
+          ink: ink,
+          sub: sub,
+          accent: accent,
+          editor: _grossIncomeEditor(),
+        ),
+      if (!_isFreelancer)
+        _infoRow(
+          icon: Icons.cake_outlined,
+          label: '나이',
+          value: age > 0 ? '$age세' : null,
+          placeholder: '설정되지 않았어요 — 청년 감면 확인에 필요해요',
+          isSet: age > 0,
+          editKey: 'age',
+          ink: ink,
+          sub: sub,
+          accent: accent,
+          editor: _ageEditor(sub, accent),
+        ),
+      _infoRow(
+        icon: Icons.groups_outlined,
+        label: '부양가족',
+        value: dependents != null ? '$dependents명' : null,
+        placeholder: '설정되지 않았어요 — 1명당 150만 원 공제돼요',
+        isSet: dependents != null,
+        editKey: 'dependents',
+        ink: ink,
+        sub: sub,
+        accent: accent,
+        editor: _dependentsEditor(ink),
+      ),
+      _infoRow(
+        icon: Icons.home_outlined,
+        label: '거주 형태',
+        value: hasResidence ? residence : null,
+        placeholder: '설정되지 않았어요 — 월세·전세 공제 기준이 달라요',
+        isSet: hasResidence,
+        editKey: 'residence',
+        ink: ink,
+        sub: sub,
+        accent: accent,
+        editor: _residenceEditor(ink),
+      ),
+      if (!_isFreelancer)
+        _infoRow(
+          icon: Icons.calendar_today_outlined,
+          label: '급여일',
+          value: payDay > 0 ? '매월 $payDay일' : null,
+          placeholder: '설정되지 않았어요 — 급여일 알림에 쓰여요',
+          isSet: payDay > 0,
+          editKey: 'pay_day',
+          ink: ink,
+          sub: sub,
+          accent: accent,
+          editor: _payDayEditor(ink, accent),
+        ),
+    ];
+
+    // 행 사이에만 헤어라인을 끼운다.
+    final children = <Widget>[];
+    for (var i = 0; i < rows.length; i++) {
+      if (i > 0) children.add(AppTheme.hairline(context));
+      children.add(rows[i]);
+    }
+    return Column(children: children);
+  }
+
+  /// 행 하나 — 라벨·값·펼침 화살표. 탭하면 [editor]가 바로 아래에 펼쳐진다.
+  Widget _infoRow({
+    required IconData icon,
+    required String label,
+    required String? value,
+    String? valueExtra,
+    required String placeholder,
+    required bool isSet,
+    required String editKey,
+    required Color ink,
+    required Color sub,
+    required Color accent,
+    required Widget editor,
+  }) {
+    final expanded = _editingKey == editKey;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: () => _toggleEdit(editKey),
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Row(children: [
+              Icon(icon, size: 18, color: isSet ? sub : accent),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(label, style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+                  const SizedBox(height: 2),
+                  Text(value ?? placeholder, style: AppTheme.sans(12, isSet ? sub : accent)),
+                  if (valueExtra != null) ...[
+                    const SizedBox(height: 1),
+                    Text(valueExtra, style: AppTheme.sans(12, sub)),
+                  ],
+                ]),
+              ),
+              Icon(expanded ? Icons.expand_less_rounded : Icons.chevron_right_rounded,
+                  size: 20, color: AppTheme.inkTertiary(context)),
             ]),
           ),
-          Text(isSet ? '$day일' : '설정',
-              style: AppTheme.sans(15, isSet ? ink : accent, weight: FontWeight.w600)),
-          const SizedBox(width: 4),
-          Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.inkTertiary(context)),
-        ]),
-      ),
+        ),
+        if (expanded) Padding(padding: const EdgeInsets.only(bottom: 14), child: editor),
+      ],
     );
+  }
+
+  Widget _editActions({required VoidCallback onCancel, required VoidCallback onSave}) {
+    final sub = AppTheme.inkSecondary(context);
+    final accent = AppTheme.accentColor(context);
+    return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+      TextButton(onPressed: onCancel, child: Text('취소', style: AppTheme.sans(13, sub))),
+      const SizedBox(width: 4),
+      TextButton(onPressed: onSave, child: Text('저장', style: AppTheme.sans(13, accent, weight: FontWeight.w700))),
+    ]);
+  }
+
+  Widget _grossIncomeEditor() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      AmountField(controller: _grossEditCtrl, expand: true, autofocus: true),
+      const SizedBox(height: 10),
+      _editActions(onCancel: () => setState(() => _editingKey = null), onSave: _saveGrossIncomeInline),
+    ]);
+  }
+
+  Widget _ageEditor(Color sub, Color accent) {
+    final ink = AppTheme.ink(context);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Expanded(
+          child: TextField(
+            controller: _ageEditCtrl,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.right,
+            style: AppTheme.sans(16, ink, weight: FontWeight.w700),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: '0',
+              hintStyle: AppTheme.sans(16, AppTheme.inkTertiary(context)),
+              filled: true,
+              fillColor: AppTheme.surface(context),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4), borderSide: BorderSide(color: AppTheme.line(context))),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4), borderSide: BorderSide(color: AppTheme.line(context))),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4), borderSide: BorderSide(color: accent, width: 1.5)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text('세', style: AppTheme.sans(15, sub, weight: FontWeight.w600)),
+      ]),
+      const SizedBox(height: 10),
+      _editActions(onCancel: () => setState(() => _editingKey = null), onSave: _saveAgeInline),
+    ]);
+  }
+
+  Widget _dependentsEditor(Color ink) {
+    return Column(children: [
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        IconButton(
+          onPressed: _dependentsEditValue > 0 ? () => setState(() => _dependentsEditValue--) : null,
+          icon: const Icon(Icons.remove_rounded),
+        ),
+        SizedBox(
+          width: 60,
+          child: Text('$_dependentsEditValue명',
+              textAlign: TextAlign.center, style: AppTheme.serif(22, ink, spacing: -0.5)),
+        ),
+        IconButton(
+          onPressed: () => setState(() => _dependentsEditValue++),
+          icon: const Icon(Icons.add_rounded),
+        ),
+      ]),
+      const SizedBox(height: 6),
+      _editActions(onCancel: () => setState(() => _editingKey = null), onSave: _saveDependentsInline),
+    ]);
+  }
+
+  Widget _residenceEditor(Color ink) {
+    const types = ['전세', '월세', '반전세', '자가'];
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      GridView.count(
+        crossAxisCount: 2,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 2.6,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        children: types.map((type) {
+          final isSelected = _residenceEditValue == type;
+          return GestureDetector(
+            onTap: () => setState(() => _residenceEditValue = type),
+            child: Container(
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isSelected ? ink : null,
+                border: Border.all(color: isSelected ? ink : AppTheme.line(context), width: 1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(type,
+                  style: AppTheme.sans(13, isSelected ? Theme.of(context).cardColor : ink,
+                      weight: isSelected ? FontWeight.w700 : FontWeight.w500)),
+            ),
+          );
+        }).toList(),
+      ),
+      const SizedBox(height: 10),
+      _editActions(onCancel: () => setState(() => _editingKey = null), onSave: _saveResidenceInline),
+    ]);
+  }
+
+  Widget _payDayEditor(Color ink, Color accent) {
+    return Column(children: [
+      GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 7,
+          mainAxisSpacing: 6,
+          crossAxisSpacing: 6,
+          childAspectRatio: 1,
+        ),
+        itemCount: 31,
+        itemBuilder: (ctx, i) {
+          final day = i + 1;
+          final isSelected = day == _payDayEditValue;
+          return GestureDetector(
+            onTap: () => setState(() => _payDayEditValue = day),
+            child: Container(
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isSelected ? accent : Colors.transparent,
+                border: Border.all(color: isSelected ? accent : AppTheme.line(context), width: 1),
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: Text('$day',
+                  style: AppTheme.sans(13, isSelected ? Colors.white : ink,
+                      weight: isSelected ? FontWeight.w700 : FontWeight.w400)),
+            ),
+          );
+        },
+      ),
+      const SizedBox(height: 10),
+      _editActions(onCancel: () => setState(() => _editingKey = null), onSave: _savePayDayInline),
+    ]);
   }
 
   /// 프리랜서·N잡러 전용 — 세금·4대보험 적립 추정에 쓰이는 값들.
@@ -375,35 +713,20 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       ]),
     );
   }
-
-  Widget _checkChip(({String label, bool filled}) e) {
-    final c = e.filled ? AppTheme.inkSecondary(context) : AppTheme.accentColor(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        border: Border.all(color: e.filled ? AppTheme.line(context) : AppTheme.accentColor(context), width: 1),
-        borderRadius: BorderRadius.circular(2),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(e.filled ? Icons.check_rounded : Icons.add_rounded, size: 13, color: c),
-        const SizedBox(width: 5),
-        Text(e.label, style: AppTheme.sans(12, c, weight: FontWeight.w500)),
-      ]),
-    );
-  }
-
 }
 
-/// 재산액(건강보험 부과점수 계산용) 입력 다이얼로그.
-class _PropertyValueDialog extends StatefulWidget {
+/// 금액(원) 입력 다이얼로그 — 재산액(프리랜서·N잡러 전용 세부 섹션) 전용.
+class _AmountDialog extends StatefulWidget {
+  final String title;
+  final String subtitle;
   final double current;
-  const _PropertyValueDialog({required this.current});
+  const _AmountDialog({required this.title, required this.subtitle, required this.current});
 
   @override
-  State<_PropertyValueDialog> createState() => _PropertyValueDialogState();
+  State<_AmountDialog> createState() => _AmountDialogState();
 }
 
-class _PropertyValueDialogState extends State<_PropertyValueDialog> {
+class _AmountDialogState extends State<_AmountDialog> {
   late final TextEditingController _ctrl = TextEditingController(
     text: widget.current > 0 ? NumberFormat('#,###').format(widget.current.toInt()) : '',
   );
@@ -426,9 +749,9 @@ class _PropertyValueDialogState extends State<_PropertyValueDialog> {
       titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
       contentPadding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
       title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('재산액', style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
+        Text(widget.title, style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
         const SizedBox(height: 4),
-        Text('전세보증금 등 재산가액을 입력해주세요', style: AppTheme.sans(12, sub, height: 1.4)),
+        Text(widget.subtitle, style: AppTheme.sans(12, sub, height: 1.4)),
       ]),
       content: SizedBox(
         width: 280,
@@ -445,92 +768,6 @@ class _PropertyValueDialogState extends State<_PropertyValueDialog> {
             final value = double.tryParse(_ctrl.text.replaceAll(',', '')) ?? 0.0;
             Navigator.pop(context, value);
           },
-          child: Text('저장', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
-        ),
-      ],
-    );
-  }
-}
-
-/// 1~31 날짜 그리드 선택 다이얼로그.
-class _PayDayDialog extends StatefulWidget {
-  final int current;
-  const _PayDayDialog({required this.current});
-
-  @override
-  State<_PayDayDialog> createState() => _PayDayDialogState();
-}
-
-class _PayDayDialogState extends State<_PayDayDialog> {
-  late int _selected = widget.current;
-
-  @override
-  Widget build(BuildContext context) {
-    final ink = AppTheme.ink(context);
-    final sub = AppTheme.inkSecondary(context);
-    final accent = AppTheme.accentColor(context);
-    final line = AppTheme.line(context);
-
-    return AlertDialog(
-      backgroundColor: Theme.of(context).cardColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
-      contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('급여일 선택',
-            style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
-        const SizedBox(height: 4),
-        Text('매월 몇 일에 급여가 지급되나요?',
-            style: AppTheme.sans(12, sub, height: 1.4)),
-      ]),
-      content: SizedBox(
-        width: 280,
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7,
-            mainAxisSpacing: 6,
-            crossAxisSpacing: 6,
-            childAspectRatio: 1,
-          ),
-          itemCount: 31,
-          itemBuilder: (ctx, i) {
-            final day = i + 1;
-            final isSelected = day == _selected;
-            return GestureDetector(
-              onTap: () => setState(() => _selected = day),
-              child: Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: isSelected ? accent : Colors.transparent,
-                  border: Border.all(
-                    color: isSelected ? accent : line,
-                    width: 1,
-                  ),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: Text(
-                  '$day',
-                  style: AppTheme.sans(
-                    13,
-                    isSelected ? Colors.white : ink,
-                    weight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-      actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text('취소', style: AppTheme.sans(14, sub)),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, _selected),
           child: Text('저장', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
         ),
       ],
