@@ -16,6 +16,24 @@ class CreditCardDeductionResult {
   });
 }
 
+/// 신용카드 등 소득공제로 줄어드는 결정세액(=연말정산 환급 예상분) 추정 결과.
+/// "올해 쌓인 예상 환급" 홈 표시용 — 카드공제만 반영(의료·교육·기부 등은 별도).
+class CreditCardRefundEstimate {
+  final double deduction;          // 카드 소득공제액
+  final double taxSaving;          // 카드공제로 줄어든 결정세액(=환급 예상)
+  final bool isCapped;             // 공제 한도(기본 300/250만) 도달 여부
+  final double threshold;          // 공제 문턱(연봉 25%)
+  final double totalEligibleSpend; // 공제 대상 연 누적(신용+체크·현금)
+
+  const CreditCardRefundEstimate({
+    required this.deduction,
+    required this.taxSaving,
+    required this.isCapped,
+    required this.threshold,
+    required this.totalEligibleSpend,
+  });
+}
+
 class RentRefundResult {
   final double totalAnnualRent;
   final double expectedRefund;
@@ -611,6 +629,62 @@ class EmployeeTaxCalculator {
       excessSpend: excessSpend,
       finalDeduction: TaxRates.truncateWon(finalDeduction),
       guideMessage: guideMessage,
+    );
+  }
+
+  /// 카드 소득공제로 줄어드는 결정세액(=연말정산 환급 예상분)을 추정한다.
+  /// 카드공제만 반영 — 홈 "올해 쌓인 예상 환급"의 자라는 숫자용.
+  /// taxSaving = 결정세액(카드공제 전) − 결정세액(카드공제 후). 근로세액공제까지 반영해
+  /// 정직한 환급 예상액을 낸다. 과표가 0(무세액)이면 saving도 0.
+  static CreditCardRefundEstimate estimateCreditCardRefund({
+    required double grossAnnual,
+    int dependentsIncludingSelf = 1,
+    required double creditCardYtd,
+    required double debitCashYtd,
+  }) {
+    final double threshold = grossAnnual * 0.25;
+    final double totalEligible = creditCardYtd + debitCashYtd;
+    if (grossAnnual <= 0) {
+      return const CreditCardRefundEstimate(
+        deduction: 0, taxSaving: 0, isCapped: false, threshold: 0, totalEligibleSpend: 0);
+    }
+
+    final cc = calculateCreditCardDeduction(
+      grossIncome: grossAnnual,
+      creditCard: creditCardYtd,
+      debitCardAndCash: debitCashYtd,
+      traditionalMarket: 0, publicTransport: 0, cultureExpense: 0,
+    );
+    final double deduction = cc.finalDeduction;
+
+    // 과세표준(카드공제 제외) 구성 — estimateMonthlyIncomeTax와 동일 조합.
+    final double laborIncome = grossAnnual - calculateLaborDeduction(grossAnnual);
+    final int heads = dependentsIncludingSelf < 1 ? 1 : dependentsIncludingSelf;
+    final double personal = TaxRates.basicDeductionPerPerson * heads;
+    final double insurance = calculateAnnualInsuranceDeduction(grossAnnual / 12).total;
+    double baseBeforeCard = laborIncome - personal - insurance;
+    if (baseBeforeCard < 0) baseBeforeCard = 0;
+    double baseAfterCard = baseBeforeCard - deduction;
+    if (baseAfterCard < 0) baseAfterCard = 0;
+
+    double decidedTaxOf(double taxBase) {
+      final double calc = TaxRates.calculateTax(taxBase);
+      final double labor =
+          calculateLaborTaxCredit(grossIncome: grossAnnual, calculatedTaxShare: calc);
+      final double d = calc - labor;
+      return d < 0 ? 0 : d;
+    }
+
+    final double saving = decidedTaxOf(baseBeforeCard) - decidedTaxOf(baseAfterCard);
+    // 카드공제만 쓰면 기본한도(300/250만)가 실질 상한 — 추가한도(전통시장 등)는 미반영.
+    final double baseLimit = grossAnnual <= 70000000 ? 3000000.0 : 2500000.0;
+
+    return CreditCardRefundEstimate(
+      deduction: deduction,
+      taxSaving: saving < 0 ? 0 : TaxRates.truncateWon(saving),
+      isCapped: deduction >= baseLimit - 1,
+      threshold: threshold,
+      totalEligibleSpend: totalEligible,
     );
   }
 

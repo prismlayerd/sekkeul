@@ -53,6 +53,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   double _debitCashTotal = 0.0;
   // 신용카드 연간(1월~오늘) 누계 — 공제 문턱(연봉의 25%)은 연 누적 기준이라 당월 합계와 분리.
   double _creditCardYtdTotal = 0.0;
+  // 체크+현금 연간 누계 — 카드공제 환급 추정에 신용(15%)/체크·현금(30%) 분리 필요.
+  double _debitCashYtdTotal = 0.0;
 
   // 신용카드/체크+현금 입력용 (더하기 버튼 전 임시값)
   final TextEditingController _creditCardInputController = TextEditingController();
@@ -417,6 +419,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     double credit = 0.0;
     double debit = 0.0;
     double creditYtd = 0.0;
+    double debitYtd = 0.0;
     DateTime? lastExpenseDate;
     for (final e in all) {
       final eStart = DateTime(e.date.year, e.date.month, e.date.day);
@@ -434,9 +437,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           debit += e.amount;
         }
       }
-      // 신카 공제 문턱은 연 누적 기준 — 올해 1월~오늘까지 신용카드 사용액만 합산.
-      if (e.paymentMethod == '신용카드' && !eStart.isBefore(firstOfYear) && !eStart.isAfter(now)) {
-        creditYtd += e.amount;
+      // 카드공제는 연 누적 기준 — 올해 1월~오늘. 신용/체크·현금은 공제율이 달라 분리 집계.
+      // ('기타' 결제수단은 현금영수증 없는 지출로 보아 공제 대상에서 제외.)
+      if (!eStart.isBefore(firstOfYear) && !eStart.isAfter(now)) {
+        if (e.paymentMethod == '신용카드') {
+          creditYtd += e.amount;
+        } else if (e.paymentMethod == '체크+현금') {
+          debitYtd += e.amount;
+        }
       }
     }
     if (mounted) {
@@ -444,6 +452,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         _creditCardTotal = credit;
         _debitCashTotal = debit;
         _creditCardYtdTotal = creditYtd;
+        _debitCashYtdTotal = debitYtd;
       });
       _checkCardThreshold();
       _checkBudget();
@@ -579,6 +588,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   _creditCardTotal = 0.0;
                   _debitCashTotal = 0.0;
                   _creditCardYtdTotal = 0.0;
+                  _debitCashYtdTotal = 0.0;
                   _monthlyRentController.clear();
                   _freelancerIncomeController.clear();
                   _monthsController.text = '12';
@@ -863,6 +873,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             creditCardTotal: _creditCardTotal,
             debitCashTotal: _debitCashTotal,
             creditCardYtdTotal: _creditCardYtdTotal,
+            debitCashYtdTotal: _debitCashYtdTotal,
             onOpenLedger: _goToLedger,
             showSalaryInput: _showSalaryInput,
             grossIncomeInlineCtrl: _grossIncomeInlineCtrl,

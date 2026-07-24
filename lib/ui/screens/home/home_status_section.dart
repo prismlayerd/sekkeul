@@ -24,6 +24,7 @@ class HomeStatusSection extends StatefulWidget {
   final double creditCardTotal;
   final double debitCashTotal;
   final double creditCardYtdTotal;
+  final double debitCashYtdTotal;
 
   final VoidCallback onOpenLedger;
 
@@ -53,6 +54,7 @@ class HomeStatusSection extends StatefulWidget {
     required this.creditCardTotal,
     required this.debitCashTotal,
     required this.creditCardYtdTotal,
+    required this.debitCashYtdTotal,
     required this.onOpenLedger,
     required this.showSalaryInput,
     required this.grossIncomeInlineCtrl,
@@ -115,22 +117,14 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     final totalSpent = widget.creditCardTotal + widget.debitCashTotal;
     final hasBudget = budget > 0;
     final budgetProgress = hasBudget ? (totalSpent / budget).clamp(0.0, 1.0) : 0.0;
+    // 표시용 비율은 100% 상한 없이 실제값(초과 시 100% 이상). 막대는 budgetProgress로 상한 유지.
+    final budgetPercent = hasBudget ? (totalSpent / budget * 100) : 0.0;
     final overBudget = hasBudget && totalSpent > budget;
     final underBudget = hasBudget && totalSpent <= budget;
 
     final annualSalary = grossIncome > 0 ? grossIncome : monthlyIncome * 12;
-    final deductionThreshold = annualSalary * 0.25;
     // 신용카드 등 사용금액 소득공제는 근로소득자 전용 — 프리랜서(사업소득만 있는 경우)는 대상 아님.
     final hasThreshold = isEmployee && annualSalary > 0;
-    final thresholdProgress = hasThreshold ? (widget.creditCardYtdTotal / deductionThreshold).clamp(0.0, 1.0) : 0.0;
-    final overThreshold = hasThreshold && widget.creditCardYtdTotal >= deductionThreshold;
-    final monthlyPaceBaseline = deductionThreshold / 12; // 균등 월 권장 페이스
-    final cumulativePaceTarget = monthlyPaceBaseline * now.month; // 이번 달까지 있어야 할 누적
-    final onPace = widget.creditCardYtdTotal >= cumulativePaceTarget;
-    final remainingMonths = 12 - now.month + 1; // 이번 달 포함 남은 개월
-    final monthlyToReachThreshold = remainingMonths > 0
-        ? (deductionThreshold - widget.creditCardYtdTotal) / remainingMonths
-        : 0.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,11 +249,11 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           const SizedBox(height: 14),
           _progressBlock(
             '지출 목표 ${_toWon(budget)}',
-            '${(budgetProgress * 100).toStringAsFixed(0)}%',
+            '${budgetPercent.toStringAsFixed(0)}%',
             budgetProgress,
             overBudget ? AppTheme.colorDanger : accent,
             overBudget
-                ? '이번 달 지출이 목표를 넘었어요. 남은 날 조금만 줄여봐요.'
+                ? '목표보다 ${_toWon(totalSpent - budget)} 더 썼어요. 남은 날 조금만 줄여봐요.'
                 : underBudget && totalSpent > 0
                     ? '목표 대비 ${_toWon(budget - totalSpent)} 절약 중이에요.'
                     : '지출을 추가해보세요.',
@@ -275,20 +269,10 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           _buildExpensePromptOrInput(ink, sub, accent),
         ],
 
-        // ── 신용카드 공제 문턱 ──
+        // ── 카드 공제 → 올해 쌓인 예상 환급 (직장인 전용, A/B/C 3단계) ──
         if (hasThreshold) ...[
           const SizedBox(height: 14),
-          _progressBlock(
-            '신용카드 공제 문턱 (연봉의 25%)',
-            overThreshold ? '돌파' : '${_toWon(deductionThreshold - widget.creditCardYtdTotal)} 남음',
-            thresholdProgress,
-            overThreshold ? AppTheme.colorSuccess : accent,
-            overThreshold
-                ? '지금부터는 체크·현금이 공제율 2배(30%)예요.'
-                : onPace
-                    ? '월 권장 페이스(${_toWon(monthlyPaceBaseline)}) 이상 쓰고 있어요. 연내 문턱 도달 가능.'
-                    : '월 ${_toWon(monthlyToReachThreshold)}씩 쓰면 연내 문턱을 넘겨요.',
-          ),
+          _buildCardRefundBlock(annualSalary, sub, tert, accent),
         ],
 
       ],
@@ -486,6 +470,54 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
                     ? '이번 달 다른소득 (세전 환산 · 탭해서 되돌리기)'
                     : '이번 달 다른소득 (세후 · 탭해서 세전 보기)',
             style: AppTheme.sans(12, tert),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 카드 공제 → "올해 쌓인 예상 환급" 3단계 블록.
+  /// A: 문턱 전(진행바) → B: 문턱~한도(환급 카운터 자람) → C: 한도 도달(멈춤 안내).
+  /// 복잡한 세법(문턱 순서·공제율·한도)은 엔진(estimateCreditCardRefund)이 삼키고,
+  /// 화면엔 숫자 1개 + 안내 1줄만 노출한다.
+  Widget _buildCardRefundBlock(double annualSalary, Color sub, Color tert, Color accent) {
+    final r = EmployeeTaxCalculator.estimateCreditCardRefund(
+      grossAnnual: annualSalary,
+      dependentsIncludingSelf: 1 + widget.dependentCount,
+      creditCardYtd: widget.creditCardYtdTotal,
+      debitCashYtd: widget.debitCashYtdTotal,
+    );
+
+    // A단계 — 문턱 미달(또는 아직 세액 감소 없음): 기존 진행바 + 다음 보상 예고.
+    if (r.totalEligibleSpend < r.threshold || r.taxSaving <= 0) {
+      final remaining = (r.threshold - r.totalEligibleSpend).clamp(0.0, double.infinity);
+      final progress = r.threshold > 0 ? (r.totalEligibleSpend / r.threshold).clamp(0.0, 1.0) : 0.0;
+      return _progressBlock(
+        '신용카드 공제 문턱 (연봉의 25%)',
+        '${_toWon(remaining)} 남음',
+        progress,
+        accent,
+        '문턱을 넘으면 여기에 올해 예상 환급이 쌓이기 시작해요.',
+      );
+    }
+
+    // B/C단계 — 환급 카운터(히어로). C는 한도 도달로 멈춤 안내.
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text('올해 쌓인 예상 환급', style: AppTheme.sans(12, tert)),
+          const SizedBox(height: 4),
+          Text(_toWon(r.taxSaving),
+              style: AppTheme.serif(34, accent, weight: FontWeight.w700, spacing: -1.0, height: 1.0)),
+          const SizedBox(height: 6),
+          Text(
+            r.isCapped
+                ? '올해 카드 소득공제 한도를 다 채웠어요 · 신용·체크·현금 모두 더 써도 공제는 안 늘어요'
+                : '이제 체크카드·현금영수증으로 쓰면 공제율 2배(30%)예요 · 예상',
+            style: AppTheme.sans(11, r.isCapped ? sub : tert),
+            textAlign: TextAlign.right,
           ),
         ],
       ),
