@@ -236,7 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Web3Forms access key — https://web3forms.com 에서 이메일만 넣으면 발급(가입·서버 불필요).
   // 발급받은 키로 교체하면 앱에서 바로 개발자 메일로 전송된다. 비어 있으면 mailto 폴백.
-  static const String _feedbackKey = 'YOUR_WEB3FORMS_ACCESS_KEY';
+  static const String _feedbackKey = '4c4f2513-1e3d-44ea-986a-7d1e6d158c3c';
 
   /// 의견 보내기 — 사용자가 앱 안에서 직접 쓴 의견을 개발자 메일로 전송한다.
   /// (세무·개인 데이터가 아니라 자발적으로 작성한 앱 피드백이라 온디바이스 원칙과 무관.)
@@ -304,9 +304,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  /// Web3Forms로 직접 전송. 성공 시 true. 키 미설정·웹·네트워크 오류 시 false(→ mailto 폴백).
+  /// Web3Forms로 직접 전송. 성공 시 true. 웹·네트워크 오류 시 false(→ mailto 폴백).
   Future<bool> _postFeedback({required String text, required String message}) async {
-    if (kIsWeb || _feedbackKey == 'YOUR_WEB3FORMS_ACCESS_KEY') return false;
+    if (kIsWeb) return false;
     try {
       final client = HttpClient()..connectionTimeout = const Duration(seconds: 10);
       final req = await client.postUrl(Uri.parse('https://api.web3forms.com/submit'));
