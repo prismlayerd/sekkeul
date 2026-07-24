@@ -1,7 +1,7 @@
 name: secul
 description: 세끌 — 직장인·프리랜서·N잡러를 위한 온디바이스 종합소득세·연말정산 도우미 (민감정보는 기기에만 저장)
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -56,5 +56,5 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/icon/icon.png"
   adaptive_icon_background: "#0A0A0B"
-  adaptive_icon_foreground: "assets/icon/icon_fg.png"
+  adaptive_icon_foreground: "assets/icon/icon.png"
   remove_alpha_ios: true

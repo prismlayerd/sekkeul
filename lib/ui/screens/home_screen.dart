@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../theme/app_theme.dart';
 import '../components/reminder_card.dart';
@@ -237,10 +238,39 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     if (kIsWeb) return;
     if (enabled) {
       await notificationHelper.requestPermissions();
+      await _requestExactAlarmPermission();
       await ReminderScheduler.scheduleAll(payDay: _payDay, userType: _userType);
     } else {
       await ReminderScheduler.cancelAll();
     }
+  }
+
+  /// 정확한 알람 권한 안내 — 시스템 설정으로 이동하기 전에 이유를 먼저 보여준다.
+  /// (API 31 미만은 무조건 자동 허용이라 시스템 화면 전환 없이 바로 통과된다.)
+  Future<void> _requestExactAlarmPermission() async {
+    final android = notificationHelper.flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (android == null || !mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('정확한 시간에 알림 받기',
+            style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontWeight: FontWeight.bold)),
+        content: Text(
+          '신고·납부 기한 알림이 정확한 시각에 오도록, 다음 화면에서 "정확한 알람" 권한을 허용해 주세요.',
+          style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('확인', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!)),
+          ),
+        ],
+      ),
+    );
+    await android.requestExactAlarmsPermission();
   }
 
   /// 홈 소득 카드가 사용하는 컨트롤러 (직장인/N잡러 → 급여, 프리랜서 → 수입)

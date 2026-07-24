@@ -1,9 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <!-- 정확 알람: USE_EXACT_ALARM(API33+)은 자동 부여라 사용자 설정 변경 불필요.
-         SCHEDULE_EXACT_ALARM은 API31~32 호환용. 세끌은 리마인더가 핵심 기능이라 정책상 사용 가능. -->
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32"/>
+    <!-- 정확 알람: USE_EXACT_ALARM은 '알람 시계'·'캘린더' 앱만 허용되는 Play 정책 제약이 있어
+         세끌(리마인더)에는 쓸 수 없다. SCHEDULE_EXACT_ALARM만 사용 — API33+에서 사용자가
+         설정에서 허용 안 하면 notification_helper.dart가 비정확 알람으로 자동 폴백한다. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- 앱 잠금(S-3) 생체 인증 -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
