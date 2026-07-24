@@ -6,10 +6,10 @@ import '../../../core/tax_engine/employee_tax.dart';
 
 /// 홈 "이번 달 현황" 패널 — 수입 + 지출 통합(에디토리얼: 카드 없이 선과 여백).
 ///
-/// 예상 연봉·지출 목표 자체(그리고 인라인 입력 컨트롤러)는 홈 화면 다른 곳
-/// (배너 카드의 "연봉 설정하기" 유도, 프로필 로드)에서도 참조되는 공유 상태라
-/// 그대로 부모(HomeScreen)가 소유하고, 이 위젯은 그 값들을 전달받아 그린다.
-/// 반면 "세전/세후 보기 토글"(_showGrossIncome류)은 이 패널 안에서만 쓰여
+/// 예상 연봉은 "내 정보"(프로필)에서만 입력·수정한다 — 프로필 발견성 문제로
+/// 홈 인라인 입력은 제거됨(2026-07-24). 지출 목표는 자주 바뀌는 이달 값이라
+/// 계속 홈 인라인 입력(부모 HomeScreen이 컨트롤러 소유)을 유지한다.
+/// "세전/세후 보기 토글"(_showGrossIncome류)은 이 패널 안에서만 쓰여
 /// 위젯 내부 상태로 둔다.
 class HomeStatusSection extends StatefulWidget {
   final String userType;
@@ -27,12 +27,7 @@ class HomeStatusSection extends StatefulWidget {
   final double debitCashYtdTotal;
 
   final VoidCallback onOpenLedger;
-
-  final bool showSalaryInput;
-  final TextEditingController grossIncomeInlineCtrl;
-  final VoidCallback onRequestSalaryInput;
-  final Future<void> Function(double value) onApplySalaryInput;
-  final VoidCallback onCancelSalaryInput;
+  final VoidCallback onOpenMyInfo;
 
   final bool showExpenseInput;
   final TextEditingController expenseTargetInlineCtrl;
@@ -56,11 +51,7 @@ class HomeStatusSection extends StatefulWidget {
     required this.creditCardYtdTotal,
     required this.debitCashYtdTotal,
     required this.onOpenLedger,
-    required this.showSalaryInput,
-    required this.grossIncomeInlineCtrl,
-    required this.onRequestSalaryInput,
-    required this.onApplySalaryInput,
-    required this.onCancelSalaryInput,
+    required this.onOpenMyInfo,
     required this.showExpenseInput,
     required this.expenseTargetInlineCtrl,
     required this.onRequestExpenseInput,
@@ -98,20 +89,6 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     final grossIncome = widget.grossIncome;
     final isEmployee = widget.isEmployee;
     final userType = widget.userType;
-
-    final double baseMonthly = grossIncome > 0 ? grossIncome / 12 : monthlyIncome;
-    InsuranceBreakdown? insurance;
-    double monthlyIncomeTax = 0.0;
-    if (isEmployee && baseMonthly > 0) {
-      insurance = EmployeeTaxCalculator.calculateMonthlyInsurance(baseMonthly);
-      // 세후 = 4대보험 + 소득세(간이세액 추정) 차감. 부양가족 수 반영.
-      monthlyIncomeTax = EmployeeTaxCalculator.estimateMonthlyIncomeTax(
-        grossAnnual: baseMonthly * 12,
-        dependentsIncludingSelf: 1 + widget.dependentCount,
-      );
-    }
-    final double? netEstimate =
-        insurance != null ? baseMonthly - insurance.total - monthlyIncomeTax : null;
 
     final budget = widget.expenseTarget;
     final totalSpent = widget.creditCardTotal + widget.debitCashTotal;
@@ -194,38 +171,20 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           _otherIncomeHeadline(),
         ],
 
-        const SizedBox(height: 14),
-
-        // ── 예상 연봉 / 실수령 정보 or 프롬프트 ──
-        if (grossIncome > 0 && netEstimate != null && !widget.showSalaryInput) ...[
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Row(mainAxisSize: MainAxisSize.min, children: [
-              Text('예상 연봉(세전)', style: AppTheme.sans(13, sub)),
-              const SizedBox(width: 6),
-              GestureDetector(
-                onTap: () {
-                  widget.grossIncomeInlineCtrl.text = _numberFormat.format(grossIncome.toInt());
-                  widget.onRequestSalaryInput();
-                },
-                behavior: HitTestBehavior.opaque,
-                child: Icon(Icons.edit_outlined, size: 14, color: sub),
+        // ── 연봉 미설정 유도 — 입력은 "내 정보"에서(발견성 문제로 홈 인라인 제거, 2026-07-24) ──
+        if (isEmployee && grossIncome <= 0) ...[
+          const SizedBox(height: 14),
+          GestureDetector(
+            onTap: widget.onOpenMyInfo,
+            behavior: HitTestBehavior.opaque,
+            child: Row(children: [
+              Expanded(
+                child: Text('내 정보에서 연봉을 설정하면 예상 환급을 계산해드려요',
+                    style: AppTheme.sans(12, accent, weight: FontWeight.w600)),
               ),
+              Icon(Icons.arrow_forward, size: 14, color: accent),
             ]),
-            Text(_toWon(grossIncome), style: AppTheme.sans(14, ink, weight: FontWeight.w600)),
-          ]),
-          const SizedBox(height: 7),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Row(mainAxisSize: MainAxisSize.min, children: [
-              Text('예상 연봉(세후)', style: AppTheme.sans(13, sub)),
-              const SizedBox(width: 6),
-              Text('4대보험·소득세 반영', style: AppTheme.sans(11, tert)),
-            ]),
-            Text('약 ${_toWon(netEstimate * 12)}', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
-          ]),
-          const SizedBox(height: 14),
-        ] else if (isEmployee) ...[
-          _buildSalaryPromptOrInput(ink, sub, accent),
-          const SizedBox(height: 14),
+          ),
         ],
 
         const SizedBox(height: 14),
@@ -276,30 +235,6 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         ],
 
       ],
-    );
-  }
-
-  /// 예상 연봉 프롬프트 → 탭 시 인라인 입력 전환 (높이 고정)
-  Widget _buildSalaryPromptOrInput(Color ink, Color sub, Color accent) {
-    return _inlinePrompt(
-      expanded: widget.showSalaryInput,
-      promptText: '예상 연봉을 설정하면 절세 기준을 잡아드려요',
-      hintText: '예상 연봉 입력',
-      controller: widget.grossIncomeInlineCtrl,
-      ink: ink, sub: sub, accent: accent,
-      onTapBanner: () {
-        widget.grossIncomeInlineCtrl.text =
-            widget.grossIncome > 0 ? _numberFormat.format(widget.grossIncome.toInt()) : '';
-        widget.onRequestSalaryInput();
-      },
-      onApply: () async {
-        final val = double.tryParse(widget.grossIncomeInlineCtrl.text.replaceAll(',', '')) ?? 0.0;
-        if (val > 0) {
-          await widget.onApplySalaryInput(val);
-        } else {
-          widget.onCancelSalaryInput();
-        }
-      },
     );
   }
 

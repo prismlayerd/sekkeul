@@ -8,7 +8,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../theme/app_theme.dart';
 import '../components/reminder_card.dart';
 import 'onboarding_screen.dart';
-import 'profile_input_screen.dart';
+import 'my_info_screen.dart';
 import 'year_end_tax_screen.dart';
 import 'tax_simulator_screen.dart';
 import 'tax_persona_question_screen.dart';
@@ -89,10 +89,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   bool _budgetNearNotified = false; // 지출 목표 80% 알림 중복 방지(세션 내)
   bool _budgetOverNotified = false; // 지출 목표 초과 알림 중복 방지(세션 내)
   int _unreadNotifCount = 0; // 알림함 안읽음 배지
-
-  // 홈 인라인 연봉 입력
-  bool _showSalaryInput = false;
-  final TextEditingController _grossIncomeInlineCtrl = TextEditingController();
 
   // 홈 인라인 지출 목표 입력
   bool _showExpenseInput = false;
@@ -552,7 +548,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _freelancerIncomeController.dispose();
     _monthsController.dispose();
     _yellowUmbrellaController.dispose();
-    _grossIncomeInlineCtrl.dispose();
     _expenseTargetInlineCtrl.dispose();
     _bannerTimer?.cancel();
     appRouteObserver.unsubscribe(this);
@@ -623,8 +618,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     setState(() {
       _grossIncome = values['gross_income'] ?? 0.0;
       _expenseTarget = values['expense_target'] ?? 0.0;
-      _grossIncomeInlineCtrl.text =
-          _grossIncome > 0 ? _numberFormat.format(_grossIncome.toInt()) : '';
       _savingGoalController.text =
           _expenseTarget > 0 ? _numberFormat.format(_expenseTarget.toInt()) : '';
     });
@@ -875,18 +868,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             creditCardYtdTotal: _creditCardYtdTotal,
             debitCashYtdTotal: _debitCashYtdTotal,
             onOpenLedger: _goToLedger,
-            showSalaryInput: _showSalaryInput,
-            grossIncomeInlineCtrl: _grossIncomeInlineCtrl,
-            onRequestSalaryInput: () => setState(() => _showSalaryInput = true),
-            onApplySalaryInput: (val) async {
-              setState(() {
-                _grossIncome = val;
-                _showSalaryInput = false;
-              });
-              await dbService.setProfileTypeValues(_userType, grossIncome: val);
-              _calculateTax();
-            },
-            onCancelSalaryInput: () => setState(() => _showSalaryInput = false),
+            onOpenMyInfo: _openProfile,
             showExpenseInput: _showExpenseInput,
             expenseTargetInlineCtrl: _expenseTargetInlineCtrl,
             onRequestExpenseInput: () => setState(() => _showExpenseInput = true),
@@ -978,19 +960,25 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  /// 프로필 작성 진입 — 완료 시 홈 데이터 재동기화.
+  /// 내 정보 진입 — 프로필 발견성 문제로 온보딩·배너·홈 카드 전부 여기로 모은다(2026-07-24).
+  /// 변경 시 콜백으로 홈 데이터(연봉 포함) 재동기화.
   Future<void> _openProfile() async {
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ProfileInputScreen(userType: _userType)),
+      MaterialPageRoute(
+        builder: (_) => MyInfoScreen(
+          userType: _userType,
+          onProfileChanged: () {
+            if (!mounted) return;
+            setState(() {
+              _isProfileCompleted = true;
+              _bannerIndex = 0;
+            });
+            _loadDataFromDB();
+          },
+        ),
+      ),
     );
-    if (result == true && mounted) {
-      setState(() {
-        _isProfileCompleted = true;
-        _bannerIndex = 0;
-      });
-      _loadDataFromDB();
-    }
   }
 
   /// 유형별 회전 배너 카드 세트 — 온보딩 단계에 따라 4가지 상태 분기.
@@ -1041,9 +1029,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       final typeGlyph = _userType == '직장인' ? '결' : _userType == 'N잡러' ? '합' : '신';
       return [
         BannerCardData(
-          label: '프로필',
-          headline: '$_userType 절세 기준을\n잡으려면 프로필이 필요해요',
-          action: '기초 프로필 작성',
+          label: '내 정보',
+          headline: '$_userType 절세 기준을\n잡으려면 내 정보가 필요해요',
+          action: '내 정보 설정',
           glyph: '1',
           onTap: _openProfile,
         ),
@@ -1067,7 +1055,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         headline: '예상 연봉을 입력하면\n공제 기준이 잡혀요',
         action: '연봉 설정하기',
         glyph: '₩',
-        onTap: () => setState(() => _showSalaryInput = true),
+        onTap: _openProfile,
       ));
     } else if (_grossIncome > 0) {
       // ── 상태 D: 완료 + 소득 설정됨 — 개인화 카드 ──
@@ -1219,20 +1207,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         const Spacer(),
         Semantics(
           button: true,
-          label: _isProfileCompleted ? '프로필 수정' : '프로필 작성',
+          label: _isProfileCompleted ? '내 정보 수정' : '내 정보 설정',
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () async {
-              final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileInputScreen(userType: _userType)));
-              if (result == true) {
-                setState(() => _isProfileCompleted = true);
-                _loadDataFromDB();
-              }
-            },
+            onTap: _openProfile,
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(_isProfileCompleted ? Icons.check_circle_outline : Icons.add, size: 15, color: accent),
               const SizedBox(width: 5),
-              Text(_isProfileCompleted ? '프로필 수정' : '프로필 작성', style: AppTheme.sans(13, accent, weight: FontWeight.w600)),
+              Text(_isProfileCompleted ? '내 정보 수정' : '내 정보 설정', style: AppTheme.sans(13, accent, weight: FontWeight.w600)),
             ]),
           ),
         ),

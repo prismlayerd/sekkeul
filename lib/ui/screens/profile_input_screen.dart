@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
+import '../../core/tax_engine/employee_tax.dart';
+
+final NumberFormat _amountFormat = NumberFormat('#,###');
 
 /// 기초 프로필 작성 — 치수가 매겨진 도면 시트 메타포.
 /// 각 질문은 세금신고의 실제 챕터(청년 감면·거주·인적 공제…)로 묶이고,
@@ -18,6 +21,9 @@ class ProfileInputScreen extends StatefulWidget {
 class _ProfileInputScreenState extends State<ProfileInputScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+
+  // 0. 예상 연봉 (직장인·N잡러만 — 유형별 독립 저장, profile_type_values)
+  final TextEditingController _grossIncomeController = TextEditingController();
 
   // 1. 중소기업 및 청년 감면 관련
   final TextEditingController _ageController = TextEditingController();
@@ -65,6 +71,16 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
   void initState() {
     super.initState();
     _loadProfileData();
+    _loadGrossIncome();
+  }
+
+  /// 예상 연봉은 유형별 독립 저장(profile_type_values) — 홈 화면과 동일한 출처.
+  Future<void> _loadGrossIncome() async {
+    final values = await dbService.getProfileTypeValues(widget.userType);
+    final gross = values['gross_income'] ?? 0.0;
+    if (mounted && gross > 0) {
+      setState(() => _grossIncomeController.text = _amountFormat.format(gross.toInt()));
+    }
   }
 
   Future<void> _loadProfileData() async {
@@ -113,9 +129,13 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
     final int militaryMonths = _hasMilitaryService
         ? (int.tryParse(_militaryMonthsController.text.trim()) ?? 0)
         : 0;
+    // 프리랜서는 입력 페이지 자체가 없어 텍스트가 비어있음 — 기존 값 보존.
+    final double? enteredGross =
+        double.tryParse(_grossIncomeController.text.replaceAll(',', ''));
+    final double gross = enteredGross ?? (existingProfile['gross_income'] as num?)?.toDouble() ?? 0.0;
     final newProfile = {
       'user_type': existingProfile['user_type'] ?? widget.userType,
-      'gross_income': existingProfile['gross_income'] ?? 0.0,
+      'gross_income': gross,
       'dependents': _dependentCount,
       'age': age,
       'military_months': militaryMonths,
@@ -151,6 +171,10 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
       'owns_house': _residenceType == '자가',
     };
     await dbService.saveProfile(newProfile);
+    // 홈 화면은 유형별 독립 저장(profile_type_values)을 출처로 쓰므로 함께 갱신.
+    if (enteredGross != null) {
+      await dbService.setProfileTypeValues(widget.userType, grossIncome: enteredGross);
+    }
   }
 
   void _nextPage() {
@@ -241,6 +265,8 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
     String? subtitle,
     required TextEditingController controller,
     String? suffix,
+    ValueChanged<String>? onChanged,
+    Widget? footer,
   }) {
     final ink = AppTheme.ink(context);
     final accent = AppTheme.accentColor(context);
@@ -277,6 +303,7 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
                     ),
+                    onChanged: onChanged,
                   ),
                 ),
                 if (suffix != null) ...[
@@ -286,8 +313,46 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
               ],
             ),
           ),
+          if (footer != null) ...[
+            const SizedBox(height: 14),
+            footer,
+          ],
         ],
       ),
+    );
+  }
+
+  /// 예상 연봉 입력 페이지 — 천 단위 콤마 자동 삽입 + 실시간 세후 예상 표시.
+  Widget _buildGrossIncomePage() {
+    final gross = double.tryParse(_grossIncomeController.text.replaceAll(',', '')) ?? 0.0;
+    final accent = AppTheme.accentColor(context);
+    Widget? footer;
+    if (gross > 0) {
+      final insurance = EmployeeTaxCalculator.calculateMonthlyInsurance(gross / 12);
+      final monthlyTax = EmployeeTaxCalculator.estimateMonthlyIncomeTax(
+        grossAnnual: gross,
+        dependentsIncludingSelf: 1 + _dependentCount,
+      );
+      final netAnnual = gross - (insurance.total + monthlyTax) * 12;
+      footer = Text(
+        '예상 세후 연 ${_amountFormat.format(netAnnual.toInt())}원 (4대보험·소득세 반영)',
+        style: AppTheme.sans(13, accent, weight: FontWeight.w600),
+      );
+    }
+    return _buildInputPage(
+      label: '예상 연봉',
+      title: '올해 예상 연봉이\n어느 정도 되시나요?',
+      subtitle: '카드 소득공제·연말정산 예상 환급 계산의 기준이 돼요.',
+      controller: _grossIncomeController,
+      suffix: '원',
+      onChanged: (v) {
+        final n = v.replaceAll(RegExp(r'[^0-9]'), '');
+        final f = n.isEmpty ? '' : _amountFormat.format(int.parse(n));
+        _grossIncomeController.value =
+            TextEditingValue(text: f, selection: TextSelection.collapsed(offset: f.length));
+        setState(() {});
+      },
+      footer: footer,
     );
   }
 
@@ -565,6 +630,7 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
     bool isFreelancerOnly = widget.userType == '프리랜서';
 
     if (!isFreelancerOnly) {
+      pages.add(_buildGrossIncomePage());
       pages.add(_buildInputPage(
         label: '청년 감면',
         title: '올해 만 나이가\n어떻게 되시나요?',

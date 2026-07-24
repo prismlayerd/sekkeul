@@ -241,7 +241,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                 Icon(done ? Icons.check_circle_outline : Icons.edit_outlined, size: 18, color: accent),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(done ? '프로필 수정하기' : '빈 항목 채우러 가기',
+                  child: Text(done ? '세부 정보 수정하기' : '빈 항목 채우러 가기',
                       style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
                 ),
                 Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.inkTertiary(context)),
@@ -283,7 +283,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   }
 
   /// 프리랜서·N잡러 전용 — 세금·4대보험 적립 추정에 쓰이는 값들.
-  /// 가계부 적립 카드에서 "프로필 수정"으로 이 섹션에 바로 진입한다.
+  /// 가계부 적립 카드에서 "내 정보 수정"으로 이 섹션에 바로 진입한다.
   Widget _professionSection(Color ink, Color sub, Color accent) {
     final occ = _occupationInfo;
     final propertyValue = (_profile?['property_value'] as num?)?.toDouble() ?? 0.0;

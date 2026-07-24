@@ -1116,7 +1116,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                '프로필을 작성하면 적립 계산이 정확해져요',
+                '내 정보를 설정하면 적립 계산이 정확해져요',
                 style: AppTheme.sans(13, accent, weight: FontWeight.w600),
               ),
             ),
@@ -1389,7 +1389,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Icon(Icons.tune_rounded, size: 13, color: sub),
                         const SizedBox(width: 6),
-                        Text('프로필 수정', style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                        Text('내 정보 수정', style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
                       ]),
                     ),
                   ],
