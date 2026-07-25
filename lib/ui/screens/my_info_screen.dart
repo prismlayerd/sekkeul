@@ -571,8 +571,12 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
               ? () => setState(() => _children8PlusEditValue++)
               : null),
       const SizedBox(height: 6),
-      Text('자녀 수는 카드공제 한도(1명 +50만·2명 이상 +100만), '
-          '8세 이상은 자녀세액공제에 쓰여요.',
+      // 카드공제는 근로소득자 전용(조특법 §126의2)이라 프리랜서에게 안내하면 안 된다.
+      Text(
+          _isFreelancer
+              ? '8세 이상 자녀만 자녀세액공제에 쓰여요. 1명 25만·2명 55만·셋째부터 40만씩.'
+              : '자녀 수는 카드공제 한도(1명 +50만·2명 이상 +100만), '
+                  '8세 이상은 자녀세액공제에 쓰여요.',
           style: AppTheme.sans(11.5, AppTheme.inkTertiary(context), height: 1.4)),
       const SizedBox(height: 10),
       _editActions(onCancel: () => setState(() => _editingKey = null), onSave: _saveChildrenInline),
