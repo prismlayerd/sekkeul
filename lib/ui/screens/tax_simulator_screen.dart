@@ -417,13 +417,14 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         disabledInsurancePremium: 0,
       );
 
-      // 주담대이자·고향사랑기부금은 세액공제가 아니라 과세표준을 낮추는 소득공제라,
-      // 간이 과세표준을 근사 산출해 절세액(세율 적용분 차이)으로 환산한다.
-      // (year_end_tax_screen.dart의 wizard 추가공제와 동일한 방식.)
+      // 주담대이자는 과세표준을 낮추는 소득공제라, 간이 과세표준을 근사 산출해
+      // 절세액(세율 적용분 차이)으로 환산한다. 고향사랑기부금은 세액공제(조특법 §58)라
+      // 공제액이 곧 절세액이다. (year_end_tax_screen.dart의 wizard와 동일한 방식.)
       final mortgage = double.tryParse(_mortgageSimController.text) ?? 0.0;
       final hometown = double.tryParse(_hometownDonationSimController.text) ?? 0.0;
-      double incomeDedSaving = 0.0;
-      if (mortgage > 0 || hometown > 0) {
+      double incomeDedSaving =
+          EmployeeTaxCalculator.calculateHometownDonationTaxCredit(hometown);
+      if (mortgage > 0) {
         final laborDeduction = EmployeeTaxCalculator.calculateLaborDeduction(salary);
         final personalExemption = (1 + _dependentCount) * TaxRates.basicDeductionPerPerson;
         final insDeduction =
@@ -435,10 +436,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                 insDeduction)
             .clamp(0.0, double.infinity);
         final mortgageDeduction = EmployeeTaxCalculator.calculateMortgageIncomeDeduction(mortgage);
-        final hometownDeduction = EmployeeTaxCalculator.calculateHometownDonationDeduction(hometown);
         final newBase =
-            (baseTaxable - mortgageDeduction - hometownDeduction).clamp(0.0, double.infinity);
-        incomeDedSaving = TaxRates.truncateWon(
+            (baseTaxable - mortgageDeduction).clamp(0.0, double.infinity);
+        incomeDedSaving += TaxRates.truncateWon(
           TaxRates.calculateTax(baseTaxable) - TaxRates.calculateTax(newBase),
         );
       }
@@ -1849,7 +1849,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         const SizedBox(height: 6),
                         _buildSensitiveTextField(_mortgageSimController, '예: 8,000,000'),
                         const SizedBox(height: 16),
-                        Text('고향사랑기부금 (연 2,000만원 한도, 100% 과표차감)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
+                        Text('고향사랑기부금 (10만원까지 전액 환급, 초과분 세액공제)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),
                         _buildSensitiveTextField(_hometownDonationSimController, '예: 500,000'),
                         ],

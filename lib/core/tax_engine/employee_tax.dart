@@ -135,7 +135,7 @@ class EmployeeTaxCalculator {
     );
   }
 
-  /// 자녀세액공제 (소법 §59의2, 2025 귀속 개정)
+  /// 자녀세액공제 (소법 §59의2, 2025 개정 — 2026 개정 없음)
   /// - 8세 이상 자녀·손자녀: 첫째 25만/둘째 30만(누적55)/셋째이상 1명당 40만
   /// - 출산·입양 자녀: 첫째 30만/둘째 50만/셋째이상 70만
   /// 참고: 2024귀속까지는 15/20/30이었으나 2025 개정으로 상향
@@ -168,7 +168,7 @@ class EmployeeTaxCalculator {
     return TaxRates.truncateWon(credit);
   }
 
-  /// 연금계좌 세액공제 (연금저축 + 퇴직연금/IRP, 소법 §59의3, 2025 귀속)
+  /// 연금계좌 세액공제 (연금저축 + 퇴직연금/IRP, 소법 §59의3, 2025~2026 귀속 동일)
   /// - 연금저축 공제대상 한도 600만, (연금저축+퇴직연금) 합산 900만
   /// - 공제율 12% (총급여 5,500만 이하 또는 종합소득금액 4,500만 이하는 15%)
   static double calculatePensionAccountTaxCredit({
@@ -187,7 +187,7 @@ class EmployeeTaxCalculator {
     return TaxRates.truncateWon(eligibleTotal * rate);
   }
 
-  /// 보장성보험료 세액공제 (소법 §59의4, 2025 귀속)
+  /// 보장성보험료 세액공제 (소법 §59의4, 2025~2026 귀속 동일)
   /// - 보장성보험: 연 100만 한도 12%
   /// - 장애인전용보장성보험: 연 100만 한도 15%
   static double calculateInsurancePremiumTaxCredit({
@@ -201,14 +201,14 @@ class EmployeeTaxCalculator {
     return TaxRates.truncateWon(general + disabled);
   }
 
-  /// 표준세액공제 (소법 §59의5, 2025 귀속 13만원)
+  /// 표준세액공제 (소법 §59의5, 2025~2026 귀속 13만원)
   /// 특별소득공제·특별세액공제·월세세액공제를 신청하지 않는 경우 일괄 공제
   /// 사용자가 공제항목이 적을 때 자동으로 표준공제(13만)가 더 유리하면 적용
   static double getStandardTaxCredit() {
     return 130000.0;
   }
 
-  /// 중소기업취업자 소득세 감면 (조특법 §30, 2025 귀속)
+  /// 중소기업취업자 소득세 감면 (조특법 §30, 2025~2026 귀속 동일)
   /// - 청년(만15~34세, 군복무기간 최대 6년 차감): 취업 후 5년간 90% 감면
   /// - 60세이상·장애인·경력단절여성: 취업 후 3년간 70% 감면
   /// - 공통: 연 200만원 한도
@@ -307,7 +307,7 @@ class EmployeeTaxCalculator {
   }
 
   /// 월세액 세액공제 자격 판정 (조특법 §95의2, 2024 귀속부터 8천만원으로 상향)
-  /// - 총급여 8,000만원 이하 (종합소득금액 6,000만원 초과자 제외)
+  /// - 총급여 8,000만원 이하 (종합소득금액 7,000만원 초과자 제외)
   /// - 무주택 세대주(또는 세대원)
   static bool isRentCreditEligible({
     required double grossIncome,
@@ -322,7 +322,7 @@ class EmployeeTaxCalculator {
     return true;
   }
 
-  /// 연금소득공제 계산 (소득세법 §47의2, 2025 귀속)
+  /// 연금소득공제 계산 (소득세법 §47의2, 2025~2026 귀속 동일)
   /// 총연금액 구간별 차등 공제, 한도 900만원
   static double calculatePensionIncomeDeduction(double totalPension) {
     if (totalPension <= 0) return 0.0;
@@ -452,7 +452,7 @@ class EmployeeTaxCalculator {
     );
   }
 
-  /// 교육비 세액공제 (소득세법 제59조의4, 2025 귀속)
+  /// 교육비 세액공제 (소득세법 제59조의4, 2025~2026 귀속 동일)
   /// - 취학전아동: 1인당 300만원 한도, 공제율 15%
   /// - 유치원~고등학생: 1인당 300만원 한도, 공제율 15%
   /// - 대학생: 1인당 900만원 한도, 공제율 15%
@@ -491,11 +491,10 @@ class EmployeeTaxCalculator {
     return TaxRates.truncateWon(totalAllowable * 0.15);
   }
 
-  /// 기부금 세액공제 (소득세법 제59조의3, 2025 귀속)
+  /// 기부금 세액공제 (소득세법 제59조의3)
   /// - 일반기부금/지정기부금: 1천만 이하 15%, 초과 30%
   /// - 정치자금기부금: 10만원까지 100% (환급), 초과 15% (3천만 초과시 25%)
-  /// - 고향사랑기부금(2025신설): 2천만 한도 공제율 100% → 세액공제 아님, 과표차감
-  /// 참고: 고향사랑기부금은 여기서는 과표 차감으로 처리하므로, 세액공제는 정치자금·일반기부금만
+  /// 고향사랑기부금은 공제율 구간이 달라 [calculateHometownDonationTaxCredit]로 분리.
   static double calculateDonationTaxCredit({
     required double generalDonation,      // 일반 지정기부금
     required double politicalDonation,    // 정치자금기부금
@@ -526,13 +525,37 @@ class EmployeeTaxCalculator {
     return TaxRates.truncateWon(credit);
   }
 
-  /// 고향사랑기부금 과표차감 (2025신설, 조특법 신설)
-  /// - 연간 2천만원 한도, 100% 과표차감 (세액공제 아님)
-  /// 참고: 이 메서드는 과표 계산 시 소득공제로 사용
-  static double calculateHometownDonationDeduction(double hometownDonation) {
+  /// 고향사랑기부금 **세액공제** (조특법 §58) — 2026 귀속.
+  ///
+  /// 소득공제가 아니라 세액공제다. 과거 이 앱은 기부액 전액을 과세표준에서
+  /// 빼는 소득공제로 처리해, 저소득자에게는 과소(10만원 기부 시 9만원 →
+  /// 1.5만원)·고소득자에게는 과대(2천만원 기부 시 310만원 → 900만원)했다.
+  ///
+  /// 공제율 (개정세법 해설 2026 p.207, 2026.1.1. 이후 기부분부터):
+  /// - 10만원 이하: 110분의 100
+  /// - 10만원 초과 ~ 20만원 이하: 40%   ← 2026 신설 구간
+  /// - 20만원 초과 ~ 2천만원 이하: 15%
+  ///
+  /// 특별재난지역 기부의 30% 특례는 지역 판정을 앱이 할 수 없어 미반영(보수적).
+  static double calculateHometownDonationTaxCredit(double hometownDonation) {
     if (hometownDonation <= 0) return 0.0;
-    final double limit = 20000000.0; // 2천만원 한도
-    return hometownDonation > limit ? limit : hometownDonation;
+    const double limit = 20000000.0; // 기부·공제 한도 2천만원
+    final double amount = hometownDonation > limit ? limit : hometownDonation;
+
+    double credit = 0.0;
+    // ① 10만원 이하분 — 110분의 100
+    final double tier1 = amount > 100000.0 ? 100000.0 : amount;
+    credit += tier1 * 100 / 110;
+    // ② 10만원 초과 ~ 20만원 이하분 — 40%
+    if (amount > 100000.0) {
+      final double tier2 = (amount > 200000.0 ? 200000.0 : amount) - 100000.0;
+      credit += tier2 * 0.40;
+    }
+    // ③ 20만원 초과분 — 15%
+    if (amount > 200000.0) {
+      credit += (amount - 200000.0) * 0.15;
+    }
+    return TaxRates.truncateWon(credit);
   }
 
   /// 주택담보대출 이자상환액 소득공제 (15년 이상 고정+비거치 기준 최대 2000만원 한도 소득공제)
@@ -589,7 +612,9 @@ class EmployeeTaxCalculator {
   }
 
   /// 신용카드 소득공제 연산
-  /// 카드공제 기본한도 — 조특법 §126의2⑩ (2025 귀속 개정, 2028.12.31까지).
+  /// 카드공제 기본한도 — 조특법 §126의2⑩ (2026 개정, 2028.12.31까지).
+  /// 적용시기: 2026.1.1. 이후 사용분부터 (개정세법 해설 2026 p.216~217).
+  /// 2025 귀속까지는 자녀 가산이 없어 300만/250만 단일이었다.
   /// 자녀등(자녀·손자녀 등 기본공제대상 부양가족) 1명당 50만원씩, 최대 100만원 상향.
   ///
   /// | 총급여 | 무자녀 | 자녀등 1명 | 자녀등 2명 이상 |
@@ -616,7 +641,7 @@ class EmployeeTaxCalculator {
     required double traditionalMarket,
     required double publicTransport,
     required double cultureExpense,
-    /// 자녀등 수 — 기본한도 상향(2025 개정)에 쓰인다.
+    /// 자녀등 수 — 기본한도 상향(2026 개정)에 쓰인다.
     int childrenCount = 0,
   }) {
     final double threshold = grossIncome * 0.25;
@@ -683,7 +708,7 @@ class EmployeeTaxCalculator {
     int dependentsIncludingSelf = 1,
     required double creditCardYtd,
     required double debitCashYtd,
-    /// 자녀등 수 — 기본한도 상향(조특법 §126의2⑩, 2025 개정).
+    /// 자녀등 수 — 기본한도 상향(조특법 §126의2⑩, 2026 개정).
     int childrenCount = 0,
   }) {
     final double threshold = grossAnnual * 0.25;

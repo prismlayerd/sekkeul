@@ -135,12 +135,13 @@ class CombinedTaxCalculator {
       traditionalMarket: traditionalMarket,
       publicTransport: publicTransport,
       cultureExpense: cultureExpense,
-      // 카드공제 기본한도는 자녀등 수에 따라 올라간다(조특법 §126의2⑩, 2025 개정).
+      // 카드공제 기본한도는 자녀등 수에 따라 올라간다(조특법 §126의2⑩, 2026 개정 —
+      // 2026.1.1. 이후 사용분부터. 개정세법 해설 2026 p.216~217).
       childrenCount: childrenCountTotal,
     );
     final double cardDeduction = cardResult.finalDeduction;
 
-    // 노란우산공제(소기업·소상공인 공제부금) 한도 — 2025년 귀속
+    // 노란우산공제(소기업·소상공인 공제부금) 한도 — 2025~2026 귀속 동일
     // 사업소득금액 4천만 이하 600만 / 6천만 이하 500만 / 1억 이하 400만 / 1억 초과 200만
     double yellowUmbrellaLimit = 0.0;
     if (estimatedFreelancerBusinessIncome <= 40000000) {
@@ -157,9 +158,9 @@ class CombinedTaxCalculator {
     // 4대보험 소득공제 (연금보험료공제 §51의3 + 특별소득공제 보험료 §52①)
     final InsuranceDeduction insDeduction = EmployeeTaxCalculator.calculateAnnualInsuranceDeduction(grossIncome / 12);
     final double mortgageDeduction = EmployeeTaxCalculator.calculateMortgageIncomeDeduction(mortgageInterest);
-    final double hometownDeduction = EmployeeTaxCalculator.calculateHometownDonationDeduction(hometownDonation);
+    // 고향사랑기부금은 소득공제가 아니라 세액공제(조특법 §58)라 여기서 빼지 않는다.
     final double deductionTotal = personalDeduction + additionalPersonalDed + cardDeduction
-        + yellowUmbrellaDeduction + insDeduction.total + mortgageDeduction + hometownDeduction;
+        + yellowUmbrellaDeduction + insDeduction.total + mortgageDeduction;
 
     // 기타소득 분리과세 선택 (소득세법 §14③8): 기타소득금액 300만원 이하(원천징수분)는
     // 종합과세와 분리과세(원천징수 8.8%로 종결) 중 유리한 쪽 선택 가능 — 합산 시
@@ -261,10 +262,13 @@ class CombinedTaxCalculator {
       politicalDonation: 0,
     );
     final double weddingTaxCreditAmt = weddingCredit2426 ? TaxRates.marriageTaxCredit : 0.0;
+    final double hometownTaxCreditAmt =
+        EmployeeTaxCalculator.calculateHometownDonationTaxCredit(hometownDonation);
 
     double estimatedIncomeTax = estimatedCalculatedTax - smeExemptionAmt - laborTaxCredit - rawRentTaxCredit
         - insuranceTaxCreditAmt - childTaxCreditAmt - pensionTaxCreditAmt
-        - medicalTaxCreditAmt - educationTaxCreditAmt - donationTaxCreditAmt - weddingTaxCreditAmt;
+        - medicalTaxCreditAmt - educationTaxCreditAmt - donationTaxCreditAmt - weddingTaxCreditAmt
+        - hometownTaxCreditAmt;
     if (estimatedIncomeTax < 0) estimatedIncomeTax = 0;
     
     final double finalIncomeTax = TaxRates.truncateWon(estimatedIncomeTax);
@@ -345,7 +349,7 @@ class CombinedTaxCalculator {
       pensionTaxCredit: pensionTaxCreditAmt,
       additionalPersonalDeduction: additionalPersonalDed,
       mortgageDeduction: mortgageDeduction,
-      hometownDeduction: hometownDeduction,
+      hometownTaxCredit: hometownTaxCreditAmt,
       smeExemption: smeExemptionAmt,
       medicalTaxCredit: medicalTaxCreditAmt,
       educationTaxCredit: educationTaxCreditAmt,
@@ -448,7 +452,7 @@ class CombinedTaxCalculator {
     return (min: lower, max: higher);
   }
 
-  /// 금융소득 비교과세 시뮬레이션 (소득세법 §62, 2025 귀속)
+  /// 금융소득 비교과세 시뮬레이션 (소득세법 §62, 2025~2026 귀속 동일)
   ///
   /// • 2,000만원 이하 → 분리과세 14% 원천징수 완납, 종합과세 불필요
   /// • 2,000만원 초과 → 비교과세:
@@ -597,7 +601,8 @@ class CombinedTaxResult {
   final double pensionTaxCredit;
   final double additionalPersonalDeduction;
   final double mortgageDeduction;
-  final double hometownDeduction;
+  /// 고향사랑기부금 세액공제액 (조특법 §58).
+  final double hometownTaxCredit;
   final double smeExemption;
   final double medicalTaxCredit;
   final double educationTaxCredit;
@@ -633,7 +638,7 @@ class CombinedTaxResult {
     required this.pensionTaxCredit,
     required this.additionalPersonalDeduction,
     required this.mortgageDeduction,
-    required this.hometownDeduction,
+    required this.hometownTaxCredit,
     required this.smeExemption,
     required this.medicalTaxCredit,
     required this.educationTaxCredit,

@@ -1296,7 +1296,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         const SizedBox(height: 24),
         _buildWizardAmountField('주택담보대출 이자상환액', '15년 이상 고정금리 기준, 연 최대 2,000만원 소득공제', _mortgageController),
         const SizedBox(height: 20),
-        _buildWizardAmountField('고향사랑기부금', '연 2,000만원 한도, 100% 과표차감', _hometownDonationController),
+        _buildWizardAmountField('고향사랑기부금', '10만원까지 전액 환급 · 초과분 세액공제 (연 2,000만원 한도)', _hometownDonationController),
       ],
     );
   }
@@ -1423,15 +1423,18 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       grossIncome: salary,
     );
 
-    // 주담대 이자·고향사랑기부금 소득공제 (과세표준 차감 → 세율 적용으로 절세액 산출)
+    // 주담대 이자는 소득공제(과세표준 차감 → 세율 적용으로 절세액 산출).
+    // 고향사랑기부금은 세액공제(조특법 §58)라 절세액이 곧 공제액이다 — 과거 이를
+    // 소득공제로 처리해 저소득자에겐 과소·고소득자에겐 과대 계산됐다.
     final double mortgage = double.tryParse(_mortgageController.text.replaceAll(',', '')) ?? 0.0;
     final double hometown = double.tryParse(_hometownDonationController.text.replaceAll(',', '')) ?? 0.0;
     final double mortgageDeduction = EmployeeTaxCalculator.calculateMortgageIncomeDeduction(mortgage);
-    final double hometownDeduction = EmployeeTaxCalculator.calculateHometownDonationDeduction(hometown);
-    _wizardIncomeDedSaving = 0.0;
-    if (mortgageDeduction + hometownDeduction > 0 && _taxableIncome > 0) {
-      final double newBase = (_taxableIncome - mortgageDeduction - hometownDeduction).clamp(0.0, double.infinity);
-      _wizardIncomeDedSaving = TaxRates.truncateWon(
+    _wizardIncomeDedSaving =
+        EmployeeTaxCalculator.calculateHometownDonationTaxCredit(hometown);
+    if (mortgageDeduction > 0 && _taxableIncome > 0) {
+      final double newBase =
+          (_taxableIncome - mortgageDeduction).clamp(0.0, double.infinity);
+      _wizardIncomeDedSaving += TaxRates.truncateWon(
         TaxRates.calculateTax(_taxableIncome) - TaxRates.calculateTax(newBase),
       );
     }
@@ -1537,7 +1540,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               if (_wizardRentRefund > 0)
                 _buildDeductionRow('월세 세액공제', '-${_numberFormat.format(_wizardRentRefund.toInt())}', true),
               if (_wizardIncomeDedSaving > 0)
-                _buildDeductionRow('주담대·고향사랑 소득공제', '-${_numberFormat.format(_wizardIncomeDedSaving.toInt())}', true),
+                _buildDeductionRow('주담대 소득공제·고향사랑 세액공제', '-${_numberFormat.format(_wizardIncomeDedSaving.toInt())}', true),
               if (_wizardStandardTaxCredit > 0)
                 _buildDeductionRow('표준세액공제 (13만)', '-${_numberFormat.format(_wizardStandardTaxCredit.toInt())}', true),
               if (_wizardChildTaxCredit == 0 && _wizardMarriageTaxCredit == 0 &&
@@ -1614,7 +1617,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                     if (_wizardRentRefund > 0)
                       {'title': '(-) 월세 세액공제', 'amount': _wizardRentRefund},
                     if (_wizardIncomeDedSaving > 0)
-                      {'title': '(-) 주담대·고향사랑 소득공제 절세액', 'amount': _wizardIncomeDedSaving},
+                      {'title': '(-) 주담대·고향사랑 절세액', 'amount': _wizardIncomeDedSaving},
                     if (_wizardStandardTaxCredit > 0)
                       {'title': '(-) 표준세액공제', 'amount': _wizardStandardTaxCredit},
                     {'title': '(=) 예상 절세액', 'amount': _additionalTaxCredit, 'isHeader': true, 'highlight': true},

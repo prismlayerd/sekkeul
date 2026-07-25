@@ -84,7 +84,7 @@ class FreelancerTaxCalculator {
     final double disabilityDeduction = (disabledDependentCount + (hasSelfDisability ? 1 : 0)) * 2000000.0;
 
     // 노란우산공제 한도 산출
-    // 노란우산공제(소기업·소상공인 공제부금) 한도 — 2025년 귀속
+    // 노란우산공제(소기업·소상공인 공제부금) 한도 — 2025~2026 귀속 동일
     // 사업소득금액 4천만 이하 600만 / 6천만 이하 500만 / 1억 이하 400만 / 1억 초과 200만
     double yellowUmbrellaLimit = 0.0;
     if (estimatedBusinessIncome <= 40000000) {

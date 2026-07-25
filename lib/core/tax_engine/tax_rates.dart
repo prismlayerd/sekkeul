@@ -1,6 +1,6 @@
 /// 종합소득세 및 각종 세제 혜택 산정에 필요한 세율 구간 및 요율 정의 클래스
 class TaxRates {
-  /// 종합소득세 세율 구간 정의 정보 (2024~2025년 귀속 기준 동일)
+  /// 종합소득세 세율 구간 정의 정보 (2024~2026년 귀속 기준 동일)
   static const List<TaxBracket> incomeTaxBrackets = [
     TaxBracket(limit: 14000000, rate: 0.06, deduction: 0),
     TaxBracket(limit: 50000000, rate: 0.15, deduction: 1260000),
@@ -15,7 +15,7 @@ class TaxRates {
   /// 인적공제 기본 공제액 (1인당 150만 원) — 소득세법 §50①, 연도 무관 고정액.
   static const double basicDeductionPerPerson = 1500000.0;
 
-  /// 인적공제 추가공제액 (2025 귀속)
+  /// 인적공제 추가공제액 (2025~2026 귀속 동일)
   static const double additionalDeductionElderly = 1000000.0;  // 경로우대(70세 이상)
   static const double additionalDeductionDisabled = 2000000.0; // 장애인
   static const double additionalDeductionFemale = 500000.0;    // 부녀자
@@ -27,7 +27,7 @@ class TaxRates {
   /// 혼인세액공제 (2024~2026 혼인신고, 생애 1회)
   static const double marriageTaxCredit = 500000.0;
 
-  /// 자녀세액공제 (소법 §59의2, 2025 귀속 개정)
+  /// 자녀세액공제 (소법 §59의2, 2025 개정 — 2026 개정 없음)
   /// 8세 이상 기본공제대상 자녀·손자녀: 첫째 25만, 둘째 30만(누적55), 셋째부터 1명당 40만
   static double calculateChildTaxCredit(int childrenCount8OrOlder) {
     if (childrenCount8OrOlder <= 0) return 0.0;

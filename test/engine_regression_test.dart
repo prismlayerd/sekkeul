@@ -677,4 +677,30 @@ void main() {
       expect(range.min.annualTotalTax, lessThanOrEqualTo(range.max.annualTotalTax));
     });
   });
+
+  group('고향사랑기부금 세액공제 (조특법 §58, 2026 개정)', () {
+    // 소득공제가 아니라 세액공제다. 과거 앱은 기부액 전액을 과세표준에서 빼
+    // 저소득자에겐 과소·고소득자에겐 과대 계산했다.
+    double credit(double d) =>
+        EmployeeTaxCalculator.calculateHometownDonationTaxCredit(d);
+
+    test('10만원 이하 — 110분의 100', () {
+      expect(credit(100000), 90900); // 90,909 → 10원 절사
+    });
+    test('10만~20만 구간 — 40% (2026 신설)', () {
+      // 10만×100/110 + 10만×40% = 90,909 + 40,000 = 130,909
+      expect(credit(200000), 130900);
+    });
+    test('20만 초과분 — 15%', () {
+      // 130,909 + 80만×15% = 130,909 + 120,000 = 250,909
+      expect(credit(1000000), 250900);
+    });
+    test('연 2천만원 한도', () {
+      expect(credit(30000000), credit(20000000));
+    });
+    test('0 이하는 0', () {
+      expect(credit(0), 0);
+      expect(credit(-1), 0);
+    });
+  });
 }
