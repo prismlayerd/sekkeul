@@ -301,6 +301,9 @@ class FreelancerTaxCalculator {
     required int inputMonths,
     required int allowanceCount,
     required String occupationCode,
+    // 기타소득도 종합소득에 합산해야 과세표준·세율구간이 맞는다 — 두 방식에 똑같이
+    // 들어가므로 격차(환급 증가분)에는 간접 영향(구간 이동)만 준다.
+    double accumulatedOtherIncome = 0.0,
     double yellowUmbrellaPayment = 0.0,
     double monthlyRent = 0.0,
     bool isHomeless = false,
@@ -318,6 +321,7 @@ class FreelancerTaxCalculator {
 
     final bookkeeping = calculateTaxSimulation(
       accumulatedIncome: accumulatedIncome,
+      accumulatedOtherIncome: accumulatedOtherIncome,
       inputMonths: inputMonths,
       allowanceCount: allowanceCount,
       occupationCode: occupationCode,
@@ -336,6 +340,7 @@ class FreelancerTaxCalculator {
     // 강제되는 것이라 잘못된 동작이었다.
     final estimate = calculateTaxSimulation(
       accumulatedIncome: accumulatedIncome,
+      accumulatedOtherIncome: accumulatedOtherIncome,
       inputMonths: inputMonths,
       allowanceCount: allowanceCount,
       occupationCode: occupationCode,

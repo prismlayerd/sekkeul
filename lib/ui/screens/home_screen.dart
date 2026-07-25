@@ -55,6 +55,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   double _creditCardYtdTotal = 0.0;
   // 체크+현금 연간 누계 — 카드공제 환급 추정에 신용(15%)/체크·현금(30%) 분리 필요.
   double _debitCashYtdTotal = 0.0;
+  // 프리랜서 '올해 쌓인 예상 환급'. null이면 계산 근거가 없다(업종·직전연도 수입 미입력 등).
+  RefundProgress? _refundProgress;
 
   // 신용카드/체크+현금 입력용 (더하기 버튼 전 임시값)
   final TextEditingController _creditCardInputController = TextEditingController();
@@ -66,7 +68,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final TextEditingController _yellowUmbrellaController = TextEditingController();
 
   // 절세 프로필 상태 변수
-  int _dependentCount = 1;
+  // 부양가족 기본값은 0(본인만) — my_info·프로필 마법사와 같은 규칙. 1로 두면
+  // 프로필 미설정 직장인의 간이세액(세후·환급)이 2인 가족 가정으로 계산된다.
+  int _dependentCount = 0;
   bool _isMonthlyRent = false;
   bool _isTypeIdentified = false;   // 유형 파악 완료 여부 (온보딩 1단계)
   bool _isProfileCompleted = false; // 프로필 완성 여부 (온보딩 2단계)
@@ -167,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             _salaryController.text = _numberFormat.format(monthlyIncome.toInt());
           }
           
-          _dependentCount = profile['dependents'] as int? ?? 1;
+          _dependentCount = profile['dependents'] as int? ?? 0;
           _isMonthlyRent = profile['is_monthly_rent'] == true;
           
           final monthlyRent = profile['monthly_rent'] as double? ?? 0.0;
@@ -456,6 +460,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         ReminderScheduler.checkInactivityNudge(lastExpenseDate);
       }
     }
+    await _loadRefundProgress();
+  }
+
+  /// 프리랜서 '올해 쌓인 예상 환급' — 홈 수익지출카드에 간략히 노출.
+  /// 직장인은 신용카드 소득공제로 카운터가 자라지만(estimateCreditCardRefund),
+  /// 프리랜서는 그 제도 대상이 아니라 필요경비 → 이미 뗀 3.3% 환급으로 자란다.
+  Future<void> _loadRefundProgress() async {
+    if (_userType != '프리랜서') {
+      if (mounted && _refundProgress != null) {
+        setState(() => _refundProgress = null);
+      }
+      return;
+    }
+    final estimate = await ReserveEstimator.estimateForCurrentMonth(userType: _userType);
+    if (!mounted) return;
+    setState(() => _refundProgress = estimate.refundProgress);
   }
 
   /// 이번 달 지출 합계가 목표액의 80%·100%에 처음 닿으면 각각 1회 지연 알림 예약,
@@ -487,14 +507,17 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  /// 신용카드 누계가 공제 문턱(연봉 25%)의 80%·100%에 처음 닿으면 각각 1회 알림.
+  /// 카드 사용 누계가 공제 문턱(연봉 25%)의 80%·100%에 처음 닿으면 각각 1회 알림.
+  /// 문턱 판정은 신용+체크·현금 합계 기준(조특법 §126의2 최저사용금액) — 신용만 세면
+  /// 홈 카운터(엔진 합계 기준)와 다른 진행률을 알리게 된다.
   void _checkCardThreshold() {
     if (kIsWeb || !_notificationsEnabled || !_isEmployee) return;
     final monthlyIncome = double.tryParse(_salaryController.text.replaceAll(',', '')) ?? 0.0;
     final annualSalary = _grossIncome > 0 ? _grossIncome : monthlyIncome * 12;
     if (annualSalary <= 0) return;
     final threshold = annualSalary * 0.25;
-    if (_creditCardYtdTotal >= threshold) {
+    final totalEligibleYtd = _creditCardYtdTotal + _debitCashYtdTotal;
+    if (totalEligibleYtd >= threshold) {
       if (!_thresholdNotified) {
         _thresholdNotified = true;
         ReminderScheduler.showThresholdReached();
@@ -502,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     } else {
       _thresholdNotified = false; // 문턱 아래로 내려가면 리셋
       // 80% 임박 — 문턱 넘기 전에 한 번만.
-      if (_creditCardYtdTotal >= threshold * 0.8) {
+      if (totalEligibleYtd >= threshold * 0.8) {
         if (!_thresholdNearNotified) {
           _thresholdNearNotified = true;
           ReminderScheduler.showThresholdNear();
@@ -862,6 +885,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             debitCashTotal: _debitCashTotal,
             creditCardYtdTotal: _creditCardYtdTotal,
             debitCashYtdTotal: _debitCashYtdTotal,
+            refundProgress: _refundProgress,
             onOpenLedger: _goToLedger,
             onOpenMyInfo: _openProfile,
             showExpenseInput: _showExpenseInput,
@@ -879,7 +903,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             onCancelExpenseInput: () => setState(() => _showExpenseInput = false),
           )),
           const SizedBox(height: 14),
-          if (_showBackfillPrompt) ...[
+          // 상태 카드에 아직 유도가 떠 있으면 백필 유도는 뒤로 미룬다 —
+          // 요청은 한 번에 하나여야 눈에 들어온다(2026-07-25).
+          if (_showBackfillPrompt &&
+              !((_isEmployee && _grossIncome <= 0) || _expenseTarget <= 0)) ...[
             AppTheme.panel(context, child: _buildBackfillPrompt()),
             const SizedBox(height: 14),
           ],

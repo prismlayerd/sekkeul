@@ -10,9 +10,11 @@ import '../../core/data/income_entry.dart';
 import '../../core/data/kr_holidays.dart';
 import '../../core/data/ledger_profile.dart';
 import '../../core/notifications/reminder_scheduler.dart';
+import '../../core/tax_engine/bookkeeping_duty.dart';
 import '../../core/tax_engine/reserve_estimator.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import 'bookkeeping_guide_screen.dart';
 import 'my_info_screen.dart';
 import 'recurring_confirm_screen.dart';
 import 'recurring_templates_screen.dart';
@@ -286,6 +288,16 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       ),
     );
     await _load();
+  }
+
+  /// 기장의무 안내 + 가계부 기록으로 간편장부 만들기.
+  Future<void> _openBookkeepingGuide() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BookkeepingGuideScreen(userType: _userType),
+      ),
+    );
   }
 
   int _batchOf(String id) {
@@ -1305,7 +1317,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           Semantics(
             button: true,
             expanded: _reserveCardExpanded,
-            label: '이번 달 세금·보험 적립 예상 ${range(r.minMonthlyTaxReserve + r.insuranceReserve, r.maxMonthlyTaxReserve + r.insuranceReserve)}',
+            label: r.hasOccupationCode
+                ? '이번 달 세금·보험 적립 예상 ${range(r.minMonthlyTaxReserve + r.insuranceReserve, r.maxMonthlyTaxReserve + r.insuranceReserve)}'
+                : '이번 달 세금·보험 적립 예상 — 업종 설정 필요',
             child: GestureDetector(
               onTap: () => setState(() => _reserveCardExpanded = !_reserveCardExpanded),
               behavior: HitTestBehavior.opaque,
@@ -1319,8 +1333,15 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                         style: AppTheme.sans(13, sub, weight: FontWeight.w600)),
                   ),
                   if (!_reserveCardExpanded) ...[
-                    Text(range(r.minMonthlyTaxReserve + r.insuranceReserve, r.maxMonthlyTaxReserve + r.insuranceReserve),
-                        style: AppTheme.sans(13, ink, weight: FontWeight.w800)),
+                    // 업종 미설정이면 경비율을 몰라 세액이 과대 계상된다 — 요약값도 숨긴다.
+                    Text(
+                      r.hasOccupationCode
+                          ? range(r.minMonthlyTaxReserve + r.insuranceReserve,
+                              r.maxMonthlyTaxReserve + r.insuranceReserve)
+                          : '업종 설정 필요',
+                      style: AppTheme.sans(13, r.hasOccupationCode ? ink : AppTheme.accentColor(context),
+                          weight: FontWeight.w800),
+                    ),
                     const SizedBox(width: 4),
                   ],
                   Icon(_reserveCardExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
@@ -1335,11 +1356,32 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _reserveRow('세금으로 미리 모아둘 돈', range(r.minMonthlyTaxReserve, r.maxMonthlyTaxReserve), ink, sub),
-                  if (r.minMonthlyTaxReserve.round() != r.maxMonthlyTaxReserve.round()) ...[
-                    const SizedBox(height: 4),
-                    Text('단순경비율(최소)~기준경비율(최대) 두 가정 중 어디에 해당할지 몰라 범위로 보여드려요',
-                        style: AppTheme.sans(11, AppTheme.inkTertiary(context), height: 1.4)),
+                  // 업종을 모르면 경비율을 모르고, 경비율이 0으로 잡혀 "경비가 하나도 없다"는
+                  // 최악 가정의 세액이 나온다(실측 5배 이상 과대). 추정이 아니라 오류라서
+                  // 숫자를 내지 않고 업종 설정으로 보낸다.
+                  if (!r.hasOccupationCode)
+                    GestureDetector(
+                      onTap: _openProfileForReserve,
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('세금으로 미리 모아둘 돈', style: AppTheme.sans(13, sub)),
+                          Row(mainAxisSize: MainAxisSize.min, children: [
+                            Text('업종 설정 시',
+                                style: AppTheme.sans(13, AppTheme.accentColor(context), weight: FontWeight.w700)),
+                            Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.accentColor(context)),
+                          ]),
+                        ],
+                      ),
+                    )
+                  else ...[
+                    _reserveRow('세금으로 미리 모아둘 돈', range(r.minMonthlyTaxReserve, r.maxMonthlyTaxReserve), ink, sub),
+                    if (r.minMonthlyTaxReserve.round() != r.maxMonthlyTaxReserve.round()) ...[
+                      const SizedBox(height: 4),
+                      Text('단순경비율(최소)~기준경비율(최대) 두 가정 중 어디에 해당할지 몰라 범위로 보여드려요',
+                          style: AppTheme.sans(11, AppTheme.inkTertiary(context), height: 1.4)),
+                    ],
                   ],
                   const SizedBox(height: 6),
                   // 프로필(가입 보험) 미설정이라 계산 불가한 0은 '0원'(=낼 것 없음)으로
@@ -1365,7 +1407,26 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                   const SizedBox(height: 10),
                   AppTheme.hairline(context),
                   const SizedBox(height: 10),
-                  _reserveRow('지금 써도 되는 돈', range(r.minUsable, r.maxUsable), ink, sub, emphasize: true),
+                  // 세금 적립을 모르면 거기서 뺀 "써도 되는 돈"도 모른다 — 같이 감춘다.
+                  if (r.hasOccupationCode)
+                    _reserveRow('지금 써도 되는 돈', range(r.minUsable, r.maxUsable), ink, sub, emphasize: true),
+                  // ── 무기장가산세 경고 ──
+                  // 적립액에 이미 20%가 포함돼 있다. 왜 늘었는지 말해주지 않으면
+                  // 사용자는 숫자가 튄 이유를 알 수 없고, 피할 방법도 모른 채 넘어간다.
+                  if (r.includesNoBookkeepingPenalty) ...[
+                    const SizedBox(height: 10),
+                    AppTheme.hairline(context),
+                    const SizedBox(height: 10),
+                    _noBookkeepingWarning(r.bookkeepingJudgment, ink, sub),
+                  ],
+                  // ── 올해 쌓인 예상 환급 (A/B/C) ──
+                  // 기록의 이유를 기록하는 자리에 둔다. 지금까진 세무 시뮬레이터에만 있었다.
+                  if (r.refundProgress != null) ...[
+                    const SizedBox(height: 10),
+                    AppTheme.hairline(context),
+                    const SizedBox(height: 10),
+                    _refundProgressBlock(r.refundProgress!, ink, sub, won),
+                  ],
                   if (!r.hasOccupationCode) ...[
                     const SizedBox(height: 10),
                     GestureDetector(
@@ -1397,6 +1458,114 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  /// 무기장가산세 경고 — 위 적립액에 산출세액 20%가 이미 포함돼 있음을 밝힌다.
+  ///
+  /// 소득세법 §81의5. 소규모사업자(신규·직전연도 수입 4,800만 미만)는 면제라
+  /// 이 블록은 그 밖의 사업자에게만 뜬다. 복식부기의무자만의 문제가 아니라,
+  /// 간편장부대상자도 4,800만을 넘으면 장부 없이 신고할 때 똑같이 맞는다.
+  Widget _noBookkeepingWarning(BookkeepingJudgment? j, Color ink, Color sub) {
+    final danger = AppTheme.colorDanger;
+    final isDouble = j?.isDoubleEntry ?? false;
+    return GestureDetector(
+      onTap: _openBookkeepingGuide,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.error_outline_rounded, size: 14, color: danger),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text('위 적립액에 무기장가산세 20%가 들어 있어요',
+                  style: AppTheme.sans(13, ink, weight: FontWeight.w700)),
+            ),
+            Icon(Icons.chevron_right_rounded, size: 18, color: sub),
+          ]),
+          const SizedBox(height: 4),
+          Text(
+            isDouble
+                ? '${j!.reason} 장부를 갖추면 이 20%가 빠져요.'
+                : '직전연도 수입이 4,800만원을 넘어, 장부 없이 신고하면 산출세액의 20%가 더 붙어요. '
+                    '가계부 기록으로 간편장부를 만들면 빠집니다.',
+            style: AppTheme.sans(12, sub, height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 적은 경비 → "올해 쌓인 예상 환급" A/B/C 블록.
+  ///
+  /// 직장인 홈(home_status_section._buildCardRefundBlock)과 같은 말·같은 모양을 쓴다.
+  /// 다만 자라는 기전이 다르다 — 직장인은 신용카드 소득공제, 프리랜서는 그 제도
+  /// 대상이 아니라서 "필요경비 → 소득금액 감소 → 이미 뗀 3.3% 환급"으로 자란다.
+  ///
+  /// A: 분기점 아래 — 더 적어도 환급이 안 는다(추계가 유리해 기록이 세금을 안 바꾼다).
+  ///    여기서 "더 쓰세요"는 틀린 처방이라(100을 써서 30을 아끼는 짓) "찾아 적으라"고 말한다.
+  /// B: 분기점 위 — 적을수록 환급이 는다.
+  /// C: 결정세액 0 — 낸 3.3%를 다 돌려받아 더는 안 는다.
+  Widget _refundProgressBlock(
+      RefundProgress p, Color ink, Color sub, String Function(double) won) {
+    final accent = AppTheme.accentColor(context);
+    final tert = AppTheme.inkTertiary(context);
+
+    // 소득이 과세 문턱 아래거나(낼 세금 0) 다 찾아봐야 실익이 미미하면
+    // 카운터도 유도도 띄우지 않는다 — 돌려받을 게 없는데 재촉하면 거짓 약속이 된다.
+    if (p.noTaxEitherWay || (!p.isAhead && !p.worthPursuing)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _reserveRow('올해 적은 경비', won(p.recordedExpense), ink, sub),
+          const SizedBox(height: 4),
+          Text(
+            p.noTaxEitherWay
+                ? '지금 소득에선 어느 쪽으로 신고해도 낼 세금이 없어요'
+                : '공제를 빼면 낼 세금이 거의 없어서, 경비를 더 찾아도 돌려받을 게 적어요',
+            style: AppTheme.sans(12, sub, height: 1.4),
+          ),
+        ],
+      );
+    }
+
+    // A — 분기점 전. 남은 금액과 함께 "그래봐야 얼마"까지 같이 말한다.
+    // 상한(추계 세액)을 숨기면 360만원을 더 찾아 1천원을 버는 요구가 되어버린다.
+    if (!p.isAhead) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _reserveRow('올해 적은 경비', won(p.recordedExpense), ink, sub),
+          const SizedBox(height: 4),
+          Text('${won(p.shortfall)}을 더 찾으면 환급이 쌓이기 시작해요 (최대 ${won(p.maxGain)})',
+              style: AppTheme.sans(12, sub, height: 1.4)),
+        ],
+      );
+    }
+
+    // B/C — 환급 카운터(히어로). C는 결정세액 0으로 멈춤 안내.
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text('올해 쌓인 예상 환급', style: AppTheme.sans(12, tert)),
+          const SizedBox(height: 4),
+          Text(won(p.refundGain),
+              style: AppTheme.serif(26, accent,
+                  weight: FontWeight.w700, spacing: -0.8, height: 1.0)),
+          const SizedBox(height: 6),
+          Text(
+            p.isCapped
+                // 사업 3.3%+기타 8.8% 원천징수를 합쳐 말해야 정확하다 — "3.3%"로 좁히지 않는다.
+                ? '올해 원천징수된 세금을 다 돌려받는 상태예요 · 더 적어도 환급은 안 늘어요'
+                : '경비를 더 찾을수록 늘어요 · 예상',
+            style: AppTheme.sans(11, p.isCapped ? sub : tert),
+            textAlign: TextAlign.right,
+          ),
         ],
       ),
     );
@@ -2094,13 +2263,14 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final hasData = totalExp > 0;
     final totalBusinessExp = allExps.where((e) => e.isBusiness).fold(0, (s, e) => s + e.amount);
 
-    // 신용카드 공제 문턱 — 연 누적(1월~오늘) 신용카드 사용액 기준. 조회 중인 월과 무관하게
-    // 항상 실제 올해 기준으로 계산해 홈 화면과 같은 수치를 보여준다.
+    // 신용카드 공제 문턱 — 연 누적(1월~오늘) 기준. 문턱(최저사용금액, 조특법 §126의2)
+    // 판정은 신용+체크·현금 "합계"라서 신용만 세면 진행률이 실제보다 낮게 나온다.
+    // ('기타' 결제수단은 현금영수증 없는 지출로 보아 제외 — 홈과 같은 규칙.)
     final now = DateTime.now();
     final firstOfYear = DateTime(now.year, 1, 1);
-    final creditYtd = _allExpenses
+    final cardEligibleYtd = _allExpenses
         .where((e) =>
-            e.paymentMethod == _catCredit &&
+            (e.paymentMethod == _catCredit || e.paymentMethod == _catDebit) &&
             !e.date.isBefore(firstOfYear) &&
             !e.date.isAfter(now))
         .fold(0, (s, e) => s + e.amount);
@@ -2226,16 +2396,16 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         // ── 신용카드 공제 문턱 (연봉 있는 직장인·N잡러) ──
         if (hasThreshold) ...[
           const SizedBox(height: 20),
-          Text('신용카드 공제 문턱'.toUpperCase(), style: AppTheme.label(context)),
+          Text('카드 공제 문턱'.toUpperCase(), style: AppTheme.label(context)),
           const SizedBox(height: 10),
           _analysisSimpleBar(
             label: '연봉의 25% (${_fmt.format(cardThreshold.toInt())}원)',
-            amount: creditYtd,
+            amount: cardEligibleYtd,
             max: cardThreshold.toInt(),
-            color: creditYtd >= cardThreshold ? AppTheme.colorSuccess : accent,
-            trailText: creditYtd >= cardThreshold
+            color: cardEligibleYtd >= cardThreshold ? AppTheme.colorSuccess : accent,
+            trailText: cardEligibleYtd >= cardThreshold
                 ? '돌파 — 체크·현금이 공제율 2배예요'
-                : '${_fmt.format(cardThreshold.toInt() - creditYtd)}원 남음',
+                : '${_fmt.format(cardThreshold.toInt() - cardEligibleYtd)}원 남음',
             ink: ink, sub: sub,
           ),
           const SizedBox(height: 20),
@@ -2473,12 +2643,15 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     }
     final yearTotalTaxDeduct = yearTaxCatAmounts.values.fold(0, (s, v) => s + v);
 
-    // 연간 신용카드 문턱 — 조회 연도가 올해면 1/1~오늘, 지난 연도면 1년 전체.
+    // 연간 카드 문턱 — 조회 연도가 올해면 1/1~오늘, 지난 연도면 1년 전체.
+    // 문턱 판정은 신용+체크·현금 합계 기준(조특법 §126의2) — 분석 뷰·홈과 같은 규칙.
     final now = DateTime.now();
     final isCurrentYear = _year == now.year;
     final yearEnd = isCurrentYear ? now : DateTime(_year, 12, 31);
-    final creditYtd = yearExps
-        .where((e) => e.paymentMethod == _catCredit && !e.date.isAfter(yearEnd))
+    final cardEligibleYtd = yearExps
+        .where((e) =>
+            (e.paymentMethod == _catCredit || e.paymentMethod == _catDebit) &&
+            !e.date.isAfter(yearEnd))
         .fold(0, (s, e) => s + e.amount);
     final hasThreshold = _profile.showsCardThreshold && _grossIncome > 0;
     final cardThreshold = _grossIncome * 0.25;
@@ -2514,16 +2687,16 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         // ── 연간 신용카드 공제 문턱 ────────────────────────
         if (hasThreshold) ...[
           const SizedBox(height: 20),
-          Text('$_year년 신용카드 공제 문턱'.toUpperCase(), style: AppTheme.label(context)),
+          Text('$_year년 카드 공제 문턱'.toUpperCase(), style: AppTheme.label(context)),
           const SizedBox(height: 10),
           _analysisSimpleBar(
             label: '연봉의 25% (${_fmt.format(cardThreshold.toInt())}원)',
-            amount: creditYtd,
+            amount: cardEligibleYtd,
             max: cardThreshold.toInt(),
-            color: creditYtd >= cardThreshold ? AppTheme.colorSuccess : accent,
-            trailText: creditYtd >= cardThreshold
+            color: cardEligibleYtd >= cardThreshold ? AppTheme.colorSuccess : accent,
+            trailText: cardEligibleYtd >= cardThreshold
                 ? '돌파 — 체크·현금이 공제율 2배예요'
-                : '${_fmt.format(cardThreshold.toInt() - creditYtd)}원 남음',
+                : '${_fmt.format(cardThreshold.toInt() - cardEligibleYtd)}원 남음',
             ink: ink, sub: sub,
           ),
           const SizedBox(height: 20),

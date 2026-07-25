@@ -13,7 +13,7 @@ import 'pension_calculator_screen.dart';
 import 'dependent_deduction_screen.dart';
 import 'insurance_premium_screen.dart';
 import 'financial_income_screen.dart';
-import 'expense_calendar_screen.dart';
+import 'bookkeeping_guide_screen.dart';
 
 /// 세무 도구 — 상단 4단계 신고 파이프라인(기록→진단→신고서→경정청구) +
 /// 하단 빠르게 계산(단발 계산기). 구 "5월에 챙길 항목" 나열을 대체.
@@ -105,6 +105,11 @@ class _TaxToolsMenuState extends State<TaxToolsMenu> {
         const SizedBox(height: 6),
         AppTheme.hairline(context),
         _checklistRow(context),
+        // 장부는 사업소득이 있는 유형만 — 직장인은 기장의무 자체가 없다.
+        if (userType != '직장인') ...[
+          AppTheme.hairline(context),
+          _bookkeepingRow(context),
+        ],
         AppTheme.hairline(context),
         const SizedBox(height: 28),
         Text('양식'.toUpperCase(), style: AppTheme.label(context)),
@@ -261,6 +266,34 @@ class _TaxToolsMenuState extends State<TaxToolsMenu> {
     );
   }
 
+  /// 장부 만들기 — 기장의무 판정 + 가계부 기록으로 간편장부(CSV) 생성.
+  /// 무기장가산세(산출세액 20%)를 피하는 유일한 방법이라 서류 준비에 둔다.
+  Widget _bookkeepingRow(BuildContext context) {
+    final ink = AppTheme.ink(context);
+    final sub = AppTheme.inkSecondary(context);
+    final tert = AppTheme.inkTertiary(context);
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(
+          builder: (_) => BookkeepingGuideScreen(userType: userType))),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('장부 만들기',
+                  style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+              const SizedBox(height: 3),
+              Text('내 기장의무 확인 + 가계부 기록으로 간편장부 생성',
+                  style: AppTheme.sans(12, sub, height: 1.4)),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.chevron_right_rounded, size: 20, color: tert),
+        ]),
+      ),
+    );
+  }
 }
 
 // ── 데이터 모델 (홈과 공유) ──────────────────────────────────────────
@@ -388,4 +421,6 @@ Widget _pension(String u) => const PensionCalculatorScreen();
 Widget _dependent(String u) => const DependentDeductionScreen();
 Widget _insurance(String u) => const InsurancePremiumScreen();
 Widget _financial(String u) => const FinancialIncomeScreen();
-Widget _freelancerBook(String u) => const ExpenseCalendarScreen();
+// 과거엔 가계부를 그대로 열었는데, 제목이 약속하는 "간편장부"는 나오지 않았다.
+// 기장의무 판정 + 가계부 기록으로 만든 장부(CSV)를 내주는 화면으로 연결한다.
+Widget _freelancerBook(String u) => BookkeepingGuideScreen(userType: u);

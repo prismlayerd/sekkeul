@@ -147,6 +147,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     _pensionSavingsSimController.addListener(_calculateTax);
     _irpSimController.addListener(_calculateTax);
     _freelancerHealthInsController.addListener(_calculateTax);
+    _freelancerHealthInsController.addListener(_saveHealthInsuranceToProfile);
     _mortgageSimController.addListener(_calculateTax);
     _hometownDonationSimController.addListener(_calculateTax);
     _priorYearIncomeController.addListener(_onBookkeepingInputChanged);
@@ -203,6 +204,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       priorYearIncome = profile['prior_year_income'] as double? ?? 0.0;
       isNewBusiness = profile['is_new_business'] == true;
       hasMultipleBusinesses = profile['has_multiple_businesses'] == true;
+      // 건보료는 적립·환급 계산에도 쓰이므로 프로필 값으로 미리 채운다.
+      final savedHealthIns = (profile['freelancer_health_insurance'] as num?)?.toDouble() ?? 0.0;
+      if (savedHealthIns > 0 && _freelancerHealthInsController.text.isEmpty) {
+        _freelancerHealthInsController.text = savedHealthIns.toInt().toString();
+      }
       final profileOccCode = profile['occupation_code'] as String?;
       if (profileOccCode != null) profileOccupation = OccupationData.occupations[profileOccCode];
     }
@@ -651,6 +657,17 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     updated['prior_year_income'] = double.tryParse(_priorYearIncomeController.text) ?? 0.0;
     updated['is_new_business'] = _isNewBusiness;
     updated['has_multiple_businesses'] = _hasMultipleBusinesses;
+    _profileCache = updated;
+    await dbService.saveProfile(updated);
+  }
+
+  /// 건보료(지역가입 연 납부액)를 프로필에 남긴다 — 적립·환급 계산이 같은 값을 쓰도록.
+  /// 이 화면에서만 들고 있으면 가계부 적립액이 이 소득공제를 빼놓고 과대 추정한다.
+  Future<void> _saveHealthInsuranceToProfile() async {
+    final v = double.tryParse(_freelancerHealthInsController.text.replaceAll(',', '')) ?? 0.0;
+    final updated = Map<String, dynamic>.from(_profileCache ?? {});
+    if ((updated['freelancer_health_insurance'] as num?)?.toDouble() == v) return;
+    updated['freelancer_health_insurance'] = v;
     _profileCache = updated;
     await dbService.saveProfile(updated);
   }

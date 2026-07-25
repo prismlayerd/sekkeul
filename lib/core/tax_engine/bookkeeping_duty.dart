@@ -48,6 +48,43 @@ class BookkeepingJudgment {
 
   bool get isDoubleEntry => duty == BookkeepingDuty.doubleEntry;
   bool get isSimplified => duty == BookkeepingDuty.simplified;
+
+  /// 무기장가산세가 면제되는 소규모사업자인가.
+  ///
+  /// 국세청 "종합소득세 가산세 요약표" — 제외 대상은 ①해당 과세기간 신규사업자
+  /// ②직전 과세기간 수입금액 4,800만원 미만 ③연말정산되는 사업소득만 있는 자.
+  /// (③은 이 앱의 프리랜서 경로에 해당하지 않아 판정에 넣지 않는다.)
+  /// 확인일 2026-07-25.
+  bool get isSmallBusinessExemptFromPenalty =>
+      isNewBusiness || priorYearIncome < kNoBookkeepingPenaltyExemptIncome;
+}
+
+/// 무기장가산세 면제 기준 — 직전 과세기간 수입금액(원).
+const int kNoBookkeepingPenaltyExemptIncome = 48000000;
+
+/// 무기장가산세율 — 산출세액에 곱하는 비율(소득세법 §81의5).
+const double kNoBookkeepingPenaltyRate = 0.20;
+
+/// 장부 없이 추계신고할 때 붙는 무기장가산세(장부의 기록·보관 불성실 가산세).
+///
+/// 국세청 산식: `종합소득산출세액 × (무기장·미달기장 소득금액 ÷ 종합소득금액) × 20%`.
+/// [businessIncomeAmount]는 장부를 안 쓴 사업소득금액, [globalIncomeAmount]는 종합소득금액.
+/// 소규모사업자([BookkeepingJudgment.isSmallBusinessExemptFromPenalty])는 0.
+///
+/// 주의 — 무신고·과소신고가산세와 동시 해당 시 국세청은 "큰 것 하나만" 적용한다.
+/// 이 함수는 기한 내 신고를 전제로 무기장분만 산출하므로, 무신고까지 겹치는 상황은
+/// 대상이 아니다.
+double calculateNoBookkeepingPenalty({
+  required double calculatedTax,
+  required double businessIncomeAmount,
+  required double globalIncomeAmount,
+}) {
+  if (calculatedTax <= 0 || businessIncomeAmount <= 0 || globalIncomeAmount <= 0) {
+    return 0;
+  }
+  final ratio = businessIncomeAmount / globalIncomeAmount;
+  final capped = ratio > 1.0 ? 1.0 : ratio;
+  return calculatedTax * capped * kNoBookkeepingPenaltyRate;
 }
 
 /// 업종·직전연도 수입 등으로 기장의무를 판정한다.

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../theme/app_theme.dart';
 import '../../../core/tax_engine/employee_tax.dart';
+import '../../../core/tax_engine/reserve_estimator.dart';
 
 /// 홈 "이번 달 현황" 패널 — 수입 + 지출 통합(에디토리얼: 카드 없이 선과 여백).
 ///
@@ -25,6 +26,9 @@ class HomeStatusSection extends StatefulWidget {
   final double debitCashTotal;
   final double creditCardYtdTotal;
   final double debitCashYtdTotal;
+
+  /// 프리랜서 '올해 쌓인 예상 환급'. null이면 계산 근거가 없어 노출하지 않는다.
+  final RefundProgress? refundProgress;
 
   final VoidCallback onOpenLedger;
   final VoidCallback onOpenMyInfo;
@@ -50,6 +54,7 @@ class HomeStatusSection extends StatefulWidget {
     required this.debitCashTotal,
     required this.creditCardYtdTotal,
     required this.debitCashYtdTotal,
+    this.refundProgress,
     required this.onOpenLedger,
     required this.onOpenMyInfo,
     required this.showExpenseInput,
@@ -102,6 +107,14 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     final annualSalary = grossIncome > 0 ? grossIncome : monthlyIncome * 12;
     // 신용카드 등 사용금액 소득공제는 근로소득자 전용 — 프리랜서(사업소득만 있는 경우)는 대상 아님.
     final hasThreshold = isEmployee && annualSalary > 0;
+
+    // ── 유도는 한 번에 하나만 ──────────────────────────────────────
+    // 빈 상태에서 유도 문구가 여럿 뜨면 서로 시선을 잡아먹어 아무것도 안 보인다
+    // (테스터가 프로필 기능을 못 찾은 원인으로 의심됨, 2026-07-25).
+    // 연봉 → 지출 목표 순서. 다 채우면 유도를 걷고 조용한 안내만 남긴다.
+    final needsSalary = isEmployee && grossIncome <= 0;
+    final needsBudget = !hasBudget;
+    final allSet = !needsSalary && !needsBudget && !widget.showExpenseInput;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,8 +184,8 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           _otherIncomeHeadline(),
         ],
 
-        // ── 연봉 미설정 유도 — 입력은 "내 정보"에서(발견성 문제로 홈 인라인 제거, 2026-07-24) ──
-        if (isEmployee && grossIncome <= 0) ...[
+        // ── 1순위 유도: 연봉 — 입력은 "내 정보"에서(발견성 문제로 홈 인라인 제거, 2026-07-24) ──
+        if (needsSalary) ...[
           const SizedBox(height: 14),
           GestureDetector(
             onTap: widget.onOpenMyInfo,
@@ -222,8 +235,9 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             },
           ),
         ],
-        // ── 지출 목표 설정 프롬프트 (목표 없음) 또는 인라인 수정 ──
-        if (!hasBudget || widget.showExpenseInput) ...[
+        // ── 2순위 유도: 지출 목표 — 연봉을 채운 뒤에만 뜬다.
+        // (showExpenseInput은 기존 목표를 수정하려고 연 상태라 순서와 무관하게 유지)
+        if ((!needsSalary && needsBudget) || widget.showExpenseInput) ...[
           const SizedBox(height: 12),
           _buildExpensePromptOrInput(ink, sub, accent),
         ],
@@ -232,6 +246,32 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         if (hasThreshold) ...[
           const SizedBox(height: 14),
           _buildCardRefundBlock(annualSalary, sub, tert, accent),
+        ],
+
+        // ── 올해 쌓인 예상 환급 (프리랜서) ──
+        // 같은 자리·같은 말이지만 자라는 기전이 다르다 — 직장인은 신용카드 소득공제,
+        // 프리랜서는 그 제도 대상이 아니라 필요경비 → 이미 뗀 3.3% 환급으로 자란다.
+        // 자세한 내역(적은 경비·분기점)은 가계부 적립 카드에 있고 여기선 숫자만 보여준다.
+        if (widget.refundProgress != null) ...[
+          const SizedBox(height: 14),
+          _buildFreelancerRefundBlock(widget.refundProgress!, sub, tert, accent),
+        ],
+
+        // ── 다 채운 뒤: 유도 대신 조용한 안내 ──
+        // 요청(파란색)이 아니라 참조라서 accent가 아닌 tertiary로 둔다.
+        if (allSet) ...[
+          const SizedBox(height: 14),
+          GestureDetector(
+            onTap: widget.onOpenMyInfo,
+            behavior: HitTestBehavior.opaque,
+            child: Row(children: [
+              Expanded(
+                child: Text('바뀐 내용이 있으면 내 정보에서 수정하세요',
+                    style: AppTheme.sans(12, tert)),
+              ),
+              Icon(Icons.chevron_right_rounded, size: 16, color: tert),
+            ]),
+          ),
         ],
 
       ],
@@ -427,8 +467,10 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     if (r.totalEligibleSpend < r.threshold || r.taxSaving <= 0) {
       final remaining = (r.threshold - r.totalEligibleSpend).clamp(0.0, double.infinity);
       final progress = r.threshold > 0 ? (r.totalEligibleSpend / r.threshold).clamp(0.0, 1.0) : 0.0;
+      // 문턱 판정은 신용+체크·현금 합계(조특법 §126의2) — '신용카드'로 좁혀 부르면
+      // 체크카드 사용분이 진행바에 반영되는 이유를 설명할 수 없다.
       return _progressBlock(
-        '신용카드 공제 문턱 (연봉의 25%)',
+        '카드 공제 문턱 (연봉의 25%)',
         '${_toWon(remaining)} 남음',
         progress,
         accent,
@@ -452,6 +494,55 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
                 ? '올해 카드 소득공제 한도를 다 채웠어요 · 신용·체크·현금 모두 더 써도 공제는 안 늘어요'
                 : '이제 체크카드·현금영수증으로 쓰면 공제율 2배(30%)예요 · 예상',
             style: AppTheme.sans(11, r.isCapped ? sub : tert),
+            textAlign: TextAlign.right,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 프리랜서 "올해 쌓인 예상 환급" — 홈에선 숫자 1개 + 안내 1줄만.
+  ///
+  /// A(분기점 전)는 아직 환급이 안 자라는 구간이라 카운터 대신 남은 금액을 알린다.
+  /// 과세 문턱 아래(어느 쪽으로 신고해도 세금 0)면 보여줄 환급이 없어 아예 감춘다.
+  Widget _buildFreelancerRefundBlock(
+      RefundProgress p, Color sub, Color tert, Color accent) {
+    // 낼 세금이 없거나(과세 문턱 아래) 다 찾아봐야 실익이 미미하면 홈에선 아예 감춘다 —
+    // 홈은 요약 자리라, 실익 없는 유도를 띄우면 다른 유도의 자리를 뺏는다.
+    if (p.noTaxEitherWay || (!p.isAhead && !p.worthPursuing)) {
+      return const SizedBox.shrink();
+    }
+
+    if (!p.isAhead) {
+      return _progressBlock(
+        '경비 기록',
+        '${_toWon(p.shortfall)} 남음',
+        p.breakevenExpense > 0
+            ? (p.recordedExpense / p.breakevenExpense).clamp(0.0, 1.0)
+            : 0.0,
+        accent,
+        // 상한을 같이 말해야 "그래봐야 얼마"를 사용자가 판단할 수 있다.
+        '여기까지 찾아 적으면 예상 환급이 쌓이기 시작해요 (최대 ${_toWon(p.maxGain)}).',
+      );
+    }
+
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text('올해 쌓인 예상 환급', style: AppTheme.sans(12, tert)),
+          const SizedBox(height: 4),
+          Text(_toWon(p.refundGain),
+              style: AppTheme.serif(34, accent,
+                  weight: FontWeight.w700, spacing: -1.0, height: 1.0)),
+          const SizedBox(height: 6),
+          Text(
+            p.isCapped
+                // 사업 3.3%+기타 8.8% 원천징수를 합쳐 말해야 정확하다 — "3.3%"로 좁히지 않는다.
+                ? '올해 원천징수된 세금을 다 돌려받는 상태예요 · 더 적어도 환급은 안 늘어요'
+                : '경비를 더 찾을수록 늘어요 · 예상',
+            style: AppTheme.sans(11, p.isCapped ? sub : tert),
             textAlign: TextAlign.right,
           ),
         ],

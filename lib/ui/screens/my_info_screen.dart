@@ -44,6 +44,11 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   int _dependentsEditValue = 0;
   String _residenceEditValue = '전세';
   int _payDayEditValue = 0;
+  final TextEditingController _healthInsEditCtrl = TextEditingController();
+
+  /// 건강보험 지역가입자 연 납부액(전액 소득공제) — 프리랜서만.
+  double get _healthInsPaid =>
+      (_profile?['freelancer_health_insurance'] as num?)?.toDouble() ?? 0.0;
 
   @override
   void initState() {
@@ -54,6 +59,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   @override
   void dispose() {
     _grossEditCtrl.dispose();
+    _healthInsEditCtrl.dispose();
     _ageEditCtrl.dispose();
     super.dispose();
   }
@@ -131,6 +137,9 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
               : (p['is_monthly_rent'] == true ? '월세' : '전세');
         case 'pay_day':
           _payDayEditValue = (p['pay_day'] as int?) ?? 0;
+        case 'health_ins':
+          final v = (p['freelancer_health_insurance'] as num?)?.toDouble() ?? 0.0;
+          _healthInsEditCtrl.text = v > 0 ? _fmt.format(v.toInt()) : '';
       }
     });
   }
@@ -140,6 +149,12 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     final v = double.tryParse(_grossEditCtrl.text.replaceAll(',', '')) ?? 0.0;
     await _updateProfileFields({'gross_income': v});
     await dbService.setProfileTypeValues(widget.userType, grossIncome: v);
+    if (mounted) setState(() => _editingKey = null);
+  }
+
+  Future<void> _saveHealthInsInline() async {
+    final v = double.tryParse(_healthInsEditCtrl.text.replaceAll(',', '')) ?? 0.0;
+    await _updateProfileFields({'freelancer_health_insurance': v});
     if (mounted) setState(() => _editingKey = null);
   }
 
@@ -494,6 +509,18 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     ]);
   }
 
+  /// 건보료 — 연 납부액. 월 고지서만 아는 경우가 많아 환산 안내를 붙인다.
+  Widget _healthInsEditor(Color sub, Color accent) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      AmountField(controller: _healthInsEditCtrl, expand: true, autofocus: true),
+      const SizedBox(height: 6),
+      Text('월 고지액 × 12로 적으면 돼요. 건강보험공단 앱·홈페이지에서 확인할 수 있어요.',
+          style: AppTheme.sans(11.5, AppTheme.inkTertiary(context), height: 1.4)),
+      const SizedBox(height: 10),
+      _editActions(onCancel: () => setState(() => _editingKey = null), onSave: _saveHealthInsInline),
+    ]);
+  }
+
   Widget _ageEditor(Color sub, Color accent) {
     final ink = AppTheme.ink(context);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -676,6 +703,21 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
           ),
         ),
         AppTheme.hairline(context),
+        // 건보료는 지역가입자(프리랜서)만 전액 소득공제 대상 — N잡러는 직장가입자라 제외.
+        if (_isFreelancer) ...[
+          _infoRow(
+            icon: Icons.local_hospital_outlined,
+            label: '건강보험료 (연 납부액)',
+            value: _healthInsPaid > 0 ? '${_fmt.format(_healthInsPaid.toInt())}원' : null,
+            valueExtra: _healthInsPaid > 0 ? '전액 소득공제로 세금이 줄어요' : null,
+            placeholder: '지역가입자는 낸 만큼 전액 소득공제돼요',
+            isSet: _healthInsPaid > 0,
+            editKey: 'health_ins',
+            ink: ink, sub: sub, accent: accent,
+            editor: _healthInsEditor(sub, accent),
+          ),
+          AppTheme.hairline(context),
+        ],
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 14),
           child: Column(

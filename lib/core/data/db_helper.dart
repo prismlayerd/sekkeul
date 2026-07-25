@@ -279,7 +279,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     // 기존 평문 DB가 있고 아직 암호화 전이면: 먼저 평문 상태로 최신 스키마까지 정규화한 뒤
     // SQLCipher 암호화 DB로 1회 이전한다(S-2). 신규 설치는 곧장 암호화 DB로 생성된다.
     if (await File(path).exists() && !await _isAlreadyEncrypted(path, key)) {
-      final normalizeDb = await openDatabase(path, version: 37, onCreate: _onCreate, onUpgrade: _onUpgrade);
+      final normalizeDb = await openDatabase(path, version: 38, onCreate: _onCreate, onUpgrade: _onUpgrade);
       await normalizeDb.close();
       await _encryptExistingPlaintextDb(path, key);
     }
@@ -287,7 +287,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     _db = await openDatabase(
       path,
       password: key,
-      version: 37,
+      version: 38,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -328,7 +328,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     }
     await plainDb.close();
 
-    final encDb = await openDatabase(tempEncPath, password: key, version: 37, onCreate: _onCreate);
+    final encDb = await openDatabase(tempEncPath, password: key, version: 38, onCreate: _onCreate);
     var insertedRows = 0;
     await encDb.transaction((txn) async {
       for (final entry in dump.entries) {
@@ -395,7 +395,8 @@ class SqfliteDatabaseHelper implements DatabaseService {
             industrial_accident_enrolled INTEGER DEFAULT 0,
             prior_year_income REAL,
             is_new_business INTEGER DEFAULT 0,
-            has_multiple_businesses INTEGER DEFAULT 0
+            has_multiple_businesses INTEGER DEFAULT 0,
+            freelancer_health_insurance REAL
           )
         ''');
         // 지출 내역 테이블 생성 (민감 정보는 텍스트 암호화 상태로 저장)
@@ -802,6 +803,15 @@ class SqfliteDatabaseHelper implements DatabaseService {
             await db.execute('DROP TABLE IF EXISTS monthly_income_records');
           } catch (e) {}
         }
+        // 건강보험 지역가입자 연간 납부액 (v38) — 전액 소득공제 대상인데 그동안
+        // 세무 시뮬레이터 화면 안에서만 살아 있어, 적립·환급 계산이 이 공제를
+        // 빼놓고 세액을 과대 추정했다.
+        if (oldVersion < 38) {
+          try {
+            await db.execute(
+                'ALTER TABLE user_profile ADD COLUMN freelancer_health_insurance REAL');
+          } catch (e) {}
+        }
   }
 
   @override
@@ -850,6 +860,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'employment_enrolled': profile['employment_enrolled'] == true ? 1 : 0,
         'industrial_accident_enrolled': profile['industrial_accident_enrolled'] == true ? 1 : 0,
         'prior_year_income': profile['prior_year_income'],
+        'freelancer_health_insurance': profile['freelancer_health_insurance'],
         'is_new_business': profile['is_new_business'] == true ? 1 : 0,
         'has_multiple_businesses': profile['has_multiple_businesses'] == true ? 1 : 0,
       });
@@ -905,6 +916,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
       'employment_enrolled': map['employment_enrolled'] == 1,
       'industrial_accident_enrolled': map['industrial_accident_enrolled'] == 1,
       'prior_year_income': map['prior_year_income'],
+      'freelancer_health_insurance': map['freelancer_health_insurance'],
       'is_new_business': map['is_new_business'] == 1,
       'has_multiple_businesses': map['has_multiple_businesses'] == 1,
     };
