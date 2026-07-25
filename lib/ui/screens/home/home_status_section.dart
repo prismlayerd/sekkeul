@@ -30,6 +30,10 @@ class HomeStatusSection extends StatefulWidget {
   /// 프리랜서 '올해 쌓인 예상 환급'. null이면 계산 근거가 없어 노출하지 않는다.
   final RefundProgress? refundProgress;
 
+  /// N잡러 카드공제 절세액 — 종합 과세표준 기준(합산 엔진 산출).
+  /// null이면 근로소득만 보는 estimateCreditCardRefund 값을 그대로 쓴다.
+  final double? cardSavingCombined;
+
   final VoidCallback onOpenLedger;
   final VoidCallback onOpenMyInfo;
 
@@ -55,6 +59,7 @@ class HomeStatusSection extends StatefulWidget {
     required this.creditCardYtdTotal,
     required this.debitCashYtdTotal,
     this.refundProgress,
+    this.cardSavingCombined,
     required this.onOpenLedger,
     required this.onOpenMyInfo,
     required this.showExpenseInput,
@@ -104,7 +109,12 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     final overBudget = hasBudget && totalSpent > budget;
     final underBudget = hasBudget && totalSpent <= budget;
 
-    final annualSalary = grossIncome > 0 ? grossIncome : monthlyIncome * 12;
+    // 카드공제 문턱은 "총급여액의 25%"(조특법 §126의2) — 총급여는 근로소득이다.
+    // N잡러의 monthlyIncome은 근로+사업 합계라, 그대로 쓰면 사업소득이 문턱을
+    // 밀어올려 카드공제를 과소 계산한다. 연봉 미설정 시엔 근로소득만 연환산한다.
+    final annualSalary = grossIncome > 0
+        ? grossIncome
+        : (userType == 'N잡러' ? widget.laborIncome : monthlyIncome) * 12;
     // 신용카드 등 사용금액 소득공제는 근로소득자 전용 — 프리랜서(사업소득만 있는 경우)는 대상 아님.
     final hasThreshold = isEmployee && annualSalary > 0;
 
@@ -463,8 +473,13 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
       debitCashYtd: widget.debitCashYtdTotal,
     );
 
+    // 문턱·공제액·한도는 총급여 기준이 맞다(조특법 §126의2). 절세액만 종합 과세표준
+    // 기준이라, N잡러는 합산 엔진이 낸 값으로 갈아끼운다 — 근로소득만 보면 부업이
+    // 세율 구간을 밀어올린 만큼 과소 추정된다.
+    final taxSaving = widget.cardSavingCombined ?? r.taxSaving;
+
     // A단계 — 문턱 미달(또는 아직 세액 감소 없음): 기존 진행바 + 다음 보상 예고.
-    if (r.totalEligibleSpend < r.threshold || r.taxSaving <= 0) {
+    if (r.totalEligibleSpend < r.threshold || taxSaving <= 0) {
       final remaining = (r.threshold - r.totalEligibleSpend).clamp(0.0, double.infinity);
       final progress = r.threshold > 0 ? (r.totalEligibleSpend / r.threshold).clamp(0.0, 1.0) : 0.0;
       // 문턱 판정은 신용+체크·현금 합계(조특법 §126의2) — '신용카드'로 좁혀 부르면
@@ -486,7 +501,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         children: [
           Text('올해 쌓인 예상 환급', style: AppTheme.sans(12, tert)),
           const SizedBox(height: 4),
-          Text(_toWon(r.taxSaving),
+          Text(_toWon(taxSaving),
               style: AppTheme.serif(34, accent, weight: FontWeight.w700, spacing: -1.0, height: 1.0)),
           const SizedBox(height: 6),
           Text(

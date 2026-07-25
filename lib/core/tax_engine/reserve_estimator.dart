@@ -101,6 +101,11 @@ class ReserveEstimate {
   /// 소규모사업자(신규·직전연도 4,800만 미만)는 면제라 false.
   final bool includesNoBookkeepingPenalty;
 
+  /// N잡러 카드공제로 줄어드는 연간 세액 — 종합 과세표준 기준.
+  /// null이면 해당 없음(프리랜서·직장인). 직장인은 사업소득이 없어
+  /// EmployeeTaxCalculator.estimateCreditCardRefund와 결과가 같으므로 쓰지 않는다.
+  final double? cardDeductionTaxSaving;
+
   ReserveEstimate({
     required this.minMonthlyTaxReserve,
     required this.maxMonthlyTaxReserve,
@@ -114,6 +119,7 @@ class ReserveEstimate {
     this.refundProgress,
     this.bookkeepingJudgment,
     this.includesNoBookkeepingPenalty = false,
+    this.cardDeductionTaxSaving,
   });
 }
 
@@ -163,6 +169,7 @@ class ReserveEstimator {
     double ytdBusinessIncome = 0;
     double ytdOtherIncome = 0;
     double ytdLaborIncome = 0;
+    double thisMonthLaborIncome = 0;
     double thisMonthBusinessIncome = 0;
     double thisMonthOtherIncome = 0;
 
@@ -182,6 +189,7 @@ class ReserveEstimator {
             break;
           case '급여':
             ytdLaborIncome += e.amount;
+            if (m == now.month) thisMonthLaborIncome += e.amount;
             break;
           default:
             // 레거시 '기타'(N잡러 구분 추가 이전 기록) — 사업소득(3.3%)에 준해 근사 처리.
@@ -230,6 +238,7 @@ class ReserveEstimator {
 
     double minMonthlyTaxReserve;
     double maxMonthlyTaxReserve;
+    double? cardDeductionTaxSaving; // N잡러만 채워진다
     // 건보료(소득월액·지역가입자) 부과 기준은 수입금액(매출)이 아니라 필요경비를 차감한
     // "소득금액"(기타소득은 정률 40%) — 국민건강보험법 §71·시행령 §41, 확인일 2026-07-19.
     double incomeAmountForInsurance;
@@ -306,10 +315,15 @@ class ReserveEstimator {
         incomeAmountForInsurance = range.max.estimatedBusinessIncome + otherAmt;
       }
     } else {
-      // N잡러 — 근로소득은 프로필의 예상 연봉을 우선 쓰고, 없으면 지금까지 기록을 연환산한다.
+      // N잡러 — 근로소득은 프로필의 예상 연봉을 우선 쓴다. 없으면 이번 달 급여 × 12로
+      // 잡는다(급여는 매달 규칙적이라 자연스러운 연환산이고, 무엇보다 홈이 카드공제
+      // 문턱을 그 기준으로 그리므로 같은 카드 안 두 숫자가 어긋나지 않는다).
+      // 이번 달 기록이 아직 없으면(급여일 전) 누적을 경과월로 나눠 대신한다.
       final annualGrossLabor = profileGrossIncome > 0
           ? profileGrossIncome
-          : (ytdLaborIncome / now.month) * 12;
+          : (thisMonthLaborIncome > 0
+              ? thisMonthLaborIncome * 12
+              : (ytdLaborIncome / now.month) * 12);
       // 근로소득분은 매달 회사가 간이세액표로 이미 원천징수 중이므로, 그 추정 결정세액을
       // decidedTax로 넘겨 "이미 낸 돈"으로 반영한다. 0으로 넘기면 근로소득 전체 세액까지
       // 부업 수입에서 적립하라는 요구가 되어 이중으로 걷어가는 결과가 된다.
@@ -320,29 +334,56 @@ class ReserveEstimator {
           12;
       // 카드 사용액·월세(무주택 월세 거주 시)·인적공제를 실제 기록·프로필에서 넘긴다 —
       // 근로소득이 있는 N잡러는 카드공제·월세 세액공제 대상이라 0으로 두면 세액이 과대된다.
-      if (pinnedStandardRate != null) {
-        final result = CombinedTaxCalculator.calculateCombinedTax(
-          grossIncome: annualGrossLabor,
-          accumulatedFreelancerIncome: ytdBusinessIncome,
-          inputMonths: now.month,
-          occupationCode: occupationCode,
+      CombinedTaxResult combined({
+        required double creditCard,
+        required double debitCardAndCash,
+        required bool useStandardRate,
+      }) =>
+          CombinedTaxCalculator.calculateCombinedTax(
+            grossIncome: annualGrossLabor,
+            accumulatedFreelancerIncome: ytdBusinessIncome,
+            inputMonths: now.month,
+            occupationCode: occupationCode,
+            creditCard: creditCard,
+            debitCardAndCash: debitCardAndCash,
+            traditionalMarket: 0,
+            publicTransport: 0,
+            cultureExpense: 0,
+            allowanceCount: allowance,
+            decidedTax: estimatedLaborDecidedTax,
+            monthlyRent: monthlyRent,
+            isHomeless: isMonthlyRent && !ownsHouse,
+            yellowUmbrellaPayment: yellowUmbrella,
+            childrenCount8Plus: childrenCount8Plus,
+            newbornCount: newbornCount,
+            hasElderly70Plus: hasElderly70Plus,
+            isSingleParent: isSingleParent,
+            isSingleFemaleHead: isFemaleHead,
+            otherIncome: annualOtherIncome,
+            useStandardExpenseRate: useStandardRate,
+          );
+
+      // ── 카드공제 절세액 (홈 '올해 쌓인 예상 환급' 카운터용) ──────────────
+      // 공제액·한도·문턱은 총급여 기준이 맞다(조특법 §126의2 — "근로소득금액에서
+      // 공제"). 다만 그렇게 줄어든 과세표준은 종합소득 구간에서 세율이 매겨지므로,
+      // 절세액을 근로소득만으로 계산하면 부업이 구간을 밀어올린 만큼 과소 추정된다
+      // (실측: 급여 4,000만·부업 8,000만에서 45만 → 79.2만).
+      // 경비율은 미확정이면 단순경비율로 둔다 — 차액이라 경비율 선택의 영향은 2차적이다.
+      final cardRateBasis = pinnedStandardRate ?? false;
+      final taxWithCard = combined(
           creditCard: ytdCreditCard,
           debitCardAndCash: ytdDebitCash,
-          traditionalMarket: 0,
-          publicTransport: 0,
-          cultureExpense: 0,
-          allowanceCount: allowance,
-          decidedTax: estimatedLaborDecidedTax,
-          monthlyRent: monthlyRent,
-          isHomeless: isMonthlyRent && !ownsHouse,
-          yellowUmbrellaPayment: yellowUmbrella,
-          childrenCount8Plus: childrenCount8Plus,
-          newbornCount: newbornCount,
-          hasElderly70Plus: hasElderly70Plus,
-          isSingleParent: isSingleParent,
-          isSingleFemaleHead: isFemaleHead,
-          otherIncome: annualOtherIncome,
-          useStandardExpenseRate: pinnedStandardRate,
+          useStandardRate: cardRateBasis);
+      final taxWithoutCard = combined(
+          creditCard: 0, debitCardAndCash: 0, useStandardRate: cardRateBasis);
+      final rawCardSaving = taxWithoutCard.annualTotalTax - taxWithCard.annualTotalTax;
+      cardDeductionTaxSaving = rawCardSaving > 0 ? rawCardSaving : 0;
+
+      if (pinnedStandardRate != null) {
+        final result = combined(
+          creditCard: ytdCreditCard,
+          debitCardAndCash: ytdDebitCash,
+          useStandardRate: pinnedStandardRate,
         );
         // monthlyReserve는 이미 "원천징수 대비 부족분"만 남은 개월수로 나눈 값이라
         // annualTotalTax(근로+사업 합산 전체 세액)를 그대로 12분할하지 않는다.
@@ -491,6 +532,7 @@ class ReserveEstimator {
       refundProgress: refundProgress,
       bookkeepingJudgment: bookkeepingJudgment,
       includesNoBookkeepingPenalty: !penaltyExempt,
+      cardDeductionTaxSaving: cardDeductionTaxSaving,
     );
   }
 }

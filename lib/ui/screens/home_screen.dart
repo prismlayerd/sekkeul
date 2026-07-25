@@ -57,6 +57,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   double _debitCashYtdTotal = 0.0;
   // 프리랜서 '올해 쌓인 예상 환급'. null이면 계산 근거가 없다(업종·직전연도 수입 미입력 등).
   RefundProgress? _refundProgress;
+  // N잡러 카드공제 절세액(종합 과세표준 기준). null이면 근로소득 기준 추정을 그대로 쓴다.
+  double? _cardSavingCombined;
 
   // 신용카드/체크+현금 입력용 (더하기 버튼 전 임시값)
   final TextEditingController _creditCardInputController = TextEditingController();
@@ -463,19 +465,27 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     await _loadRefundProgress();
   }
 
-  /// 프리랜서 '올해 쌓인 예상 환급' — 홈 수익지출카드에 간략히 노출.
-  /// 직장인은 신용카드 소득공제로 카운터가 자라지만(estimateCreditCardRefund),
-  /// 프리랜서는 그 제도 대상이 아니라 필요경비 → 이미 뗀 3.3% 환급으로 자란다.
+  /// 홈 수익지출카드의 환급 관련 값 — 유형마다 자라는 기전이 다르다.
+  /// - 프리랜서: 필요경비 → 이미 뗀 원천징수 환급 (refundProgress, A/B/C)
+  /// - N잡러: 카드공제. 절세액은 종합 과세표준에서 결정되므로 근로소득만 보는
+  ///   estimateCreditCardRefund 대신 합산 엔진이 낸 값을 쓴다.
+  /// - 직장인: 사업소득이 없어 두 방식의 결과가 같아 estimator를 부르지 않는다.
   Future<void> _loadRefundProgress() async {
-    if (_userType != '프리랜서') {
-      if (mounted && _refundProgress != null) {
-        setState(() => _refundProgress = null);
+    if (_userType != '프리랜서' && _userType != 'N잡러') {
+      if (mounted && (_refundProgress != null || _cardSavingCombined != null)) {
+        setState(() {
+          _refundProgress = null;
+          _cardSavingCombined = null;
+        });
       }
       return;
     }
     final estimate = await ReserveEstimator.estimateForCurrentMonth(userType: _userType);
     if (!mounted) return;
-    setState(() => _refundProgress = estimate.refundProgress);
+    setState(() {
+      _refundProgress = estimate.refundProgress;
+      _cardSavingCombined = estimate.cardDeductionTaxSaving;
+    });
   }
 
   /// 이번 달 지출 합계가 목표액의 80%·100%에 처음 닿으면 각각 1회 지연 알림 예약,
@@ -512,7 +522,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   /// 홈 카운터(엔진 합계 기준)와 다른 진행률을 알리게 된다.
   void _checkCardThreshold() {
     if (kIsWeb || !_notificationsEnabled || !_isEmployee) return;
-    final monthlyIncome = double.tryParse(_salaryController.text.replaceAll(',', '')) ?? 0.0;
+    // N잡러의 _salaryController는 근로+사업 합계라, 총급여 기준 문턱에 그대로 쓰면
+    // 사업소득만큼 문턱이 부풀려진다. 홈 카드와 같은 규칙으로 근로소득만 쓴다.
+    final monthlyIncome = _userType == 'N잡러'
+        ? _laborIncome
+        : (double.tryParse(_salaryController.text.replaceAll(',', '')) ?? 0.0);
     final annualSalary = _grossIncome > 0 ? _grossIncome : monthlyIncome * 12;
     if (annualSalary <= 0) return;
     final threshold = annualSalary * 0.25;
@@ -886,6 +900,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             creditCardYtdTotal: _creditCardYtdTotal,
             debitCashYtdTotal: _debitCashYtdTotal,
             refundProgress: _refundProgress,
+            cardSavingCombined: _cardSavingCombined,
             onOpenLedger: _goToLedger,
             onOpenMyInfo: _openProfile,
             showExpenseInput: _showExpenseInput,
