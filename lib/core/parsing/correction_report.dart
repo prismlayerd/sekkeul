@@ -40,6 +40,11 @@ int _min(int a, int b) => a < b ? a : b;
 CorrectionReport buildCorrectionReport(GansoDeductions g, WithholdingReceipt w,
     {bool isHomeless = true}) {
   final salary = w.grossSalary.toDouble();
+  // 총급여를 못 읽으면(파싱 실패·미입력) 의료비 3% 문턱이 0이 되어 공제가 과대 계산되고,
+  // 연금저축·월세 공제율 구간도 판정할 수 없다. 근거 없는 금액을 내느니 빈 결과를 준다.
+  if (salary <= 0) {
+    return CorrectionReport(lines: const [], additionalRefund: 0, decidedTax: w.decidedTax);
+  }
   final pensionRate = salary <= 55000000.0 ? 0.15 : 0.12;
   final rentRate = salary <= 55000000.0 ? 0.17 : 0.15;
 
@@ -126,7 +131,7 @@ CorrectionReport buildCorrectionReport(GansoDeductions g, WithholdingReceipt w,
     (_min(w.claimedPensionSavings, 6000000) * pensionRate).round(),
   );
 
-  // 월세액 (조특법 §95의2, 연 1천만 한도, 15~17%): 총급여 8천·종합소득금액 6천 이하
+  // 월세액 (조특법 §95의2, 연 1천만 한도, 15~17%): 총급여 8천·종합소득금액 7천 이하
   // 무주택 세대주만 대상. 무주택·세대주는 자가신고 영역이라 월세 기록자는 충족으로
   // 보되(기본 true), 계산 가능한 소득 요건은 게이트해 고소득자 과대 환급을 막는다.
   final laborIncomeAmount = salary - EmployeeTaxCalculator.calculateLaborDeduction(salary);
