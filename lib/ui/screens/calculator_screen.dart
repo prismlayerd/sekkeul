@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../components/search_field.dart';
 import 'salary_net_screen.dart';
 import 'pension_calculator_screen.dart';
 import 'insurance_premium_screen.dart';
@@ -151,8 +152,39 @@ final _categories = <_CalcCategory>[
   ]),
 ];
 
-class CalculatorScreen extends StatelessWidget {
+class CalculatorScreen extends StatefulWidget {
   const CalculatorScreen({super.key});
+
+  @override
+  State<CalculatorScreen> createState() => _CalculatorScreenState();
+}
+
+class _CalculatorScreenState extends State<CalculatorScreen> {
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+  bool _searchExpanded = false;
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _searchExpanded = !_searchExpanded;
+      if (!_searchExpanded) {
+        _searchCtrl.clear();
+        _query = '';
+      }
+    });
+  }
+
+  /// 이름·설명 어디에 걸려도 잡는다 — 사용자가 제도명을 정확히 아는 경우가 드물어서다.
+  bool _matches(_Calc c) {
+    final q = _query.toLowerCase();
+    return c.name.toLowerCase().contains(q) || c.desc.toLowerCase().contains(q);
+  }
 
   void _onTap(BuildContext context, _Calc calc) {
     if (calc.builder != null) {
@@ -191,27 +223,79 @@ class CalculatorScreen extends StatelessWidget {
         title: Text('계산기',
             style: AppTheme.serif(17, ink,
                 weight: FontWeight.w400, spacing: -0.5)),
+        actions: [
+          IconButton(
+            icon: Icon(_searchExpanded ? Icons.close_rounded : Icons.search_rounded, color: ink),
+            onPressed: _toggleSearch,
+          ),
+        ],
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.only(bottom: 32),
-        itemCount: _categories.fold<int>(0, (sum, c) => sum + 1 + c.items.length),
-        itemBuilder: (context, idx) {
-          int offset = 0;
-          for (final cat in _categories) {
+      body: Column(
+        children: [
+          AnimatedSize(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: _searchExpanded
+                ? SearchField(
+                    controller: _searchCtrl,
+                    hint: '연봉, 퇴직금, 대출…',
+                    onChanged: (v) => setState(() => _query = v.trim()),
+                    autofocus: true,
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+          Expanded(child: _buildList(ink, sub, tert, line)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildList(Color ink, Color sub, Color tert, Color line) {
+    // 검색 중엔 카테고리를 접고 결과만 편다 — 찾는 사람은 폴더가 아니라 답을 원한다.
+    if (_query.isNotEmpty) {
+      final hits = [
+        for (final cat in _categories)
+          for (final calc in cat.items)
+            if (_matches(calc)) (cat.label, calc),
+      ];
+      if (hits.isEmpty) {
+        return ListView(children: [
+          SearchEmptyState(
+            query: _query,
+            suggestion: '이 이름의 계산기는 없어요.\n받을 수 있는 지원금이라면 혜택 탭에 있어요.',
+          ),
+        ]);
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.only(top: 8, bottom: 32),
+        itemCount: hits.length,
+        itemBuilder: (context, i) => _buildItem(
+          context, hits[i].$2, ink, sub, tert, line,
+          category: hits[i].$1,
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 32),
+      itemCount: _categories.fold<int>(0, (sum, c) => sum + 1 + c.items.length),
+      itemBuilder: (context, idx) {
+        int offset = 0;
+        for (final cat in _categories) {
+          if (idx == offset) {
+            return _buildHeader(context, cat.label, line);
+          }
+          offset++;
+          for (final calc in cat.items) {
             if (idx == offset) {
-              return _buildHeader(context, cat.label, line);
+              return _buildItem(context, calc, ink, sub, tert, line);
             }
             offset++;
-            for (final calc in cat.items) {
-              if (idx == offset) {
-                return _buildItem(context, calc, ink, sub, tert, line);
-              }
-              offset++;
-            }
           }
-          return null;
-        },
-      ),
+        }
+        return null;
+      },
     );
   }
 
@@ -228,8 +312,9 @@ class CalculatorScreen extends StatelessWidget {
     );
   }
 
+  /// [category]가 있으면 검색 결과 — 어느 묶음에서 나왔는지 위에 얹어준다.
   Widget _buildItem(BuildContext context, _Calc calc, Color ink, Color sub,
-      Color tert, Color line) {
+      Color tert, Color line, {String? category}) {
     final ready = calc.builder != null;
     return Column(
       children: [
@@ -244,6 +329,10 @@ class CalculatorScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (category != null) ...[
+                        Text(category.toUpperCase(), style: AppTheme.label(context)),
+                        const SizedBox(height: 5),
+                      ],
                       Text(calc.name,
                           style: AppTheme.sans(15, ink,
                               weight: FontWeight.w600)),

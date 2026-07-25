@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
+import '../components/search_field.dart';
 import 'pension_calculator_screen.dart';
 import 'insurance_premium_screen.dart';
 import 'dependent_deduction_screen.dart';
@@ -1257,9 +1258,43 @@ Future<void> _launchUrl(String url) async {
   }
 }
 
-class BenefitScreen extends StatelessWidget {
+class BenefitScreen extends StatefulWidget {
   final String userType;
   const BenefitScreen({super.key, required this.userType});
+
+  @override
+  State<BenefitScreen> createState() => _BenefitScreenState();
+}
+
+class _BenefitScreenState extends State<BenefitScreen> {
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+  bool _searchExpanded = false;
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _searchExpanded = !_searchExpanded;
+      if (!_searchExpanded) {
+        _searchCtrl.clear();
+        _query = '';
+      }
+    });
+  }
+
+  /// 이름·금액·설명 어디에 걸려도 잡는다. 설명에 지급 요건이 다 들어있어서
+  /// "무주택", "34세" 같은 조건으로 찾는 사람도 걸린다.
+  bool _matches(_Benefit b) {
+    final q = _query.toLowerCase();
+    return b.name.toLowerCase().contains(q) ||
+        b.amount.toLowerCase().contains(q) ||
+        b.desc.toLowerCase().contains(q);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1279,33 +1314,89 @@ class BenefitScreen extends StatelessWidget {
         title: Text('혜택',
             style: AppTheme.serif(17, ink,
                 weight: FontWeight.w400, spacing: -0.5)),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 32),
-        children: [
-          for (final cat in _categories) ...[
-            Divider(height: 1, thickness: 1, color: line),
-            Theme(
-              data: Theme.of(context)
-                  .copyWith(dividerColor: Colors.transparent),
-              child: ExpansionTile(
-                iconColor: sub,
-                collapsedIconColor: sub,
-                tilePadding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                childrenPadding: EdgeInsets.zero,
-                shape: const Border(),
-                collapsedShape: const Border(),
-                title: Text(cat.label.toUpperCase(),
-                    style: AppTheme.label(context)),
-                children: [
-                  for (final benefit in cat.items)
-                    _buildItem(context, benefit, ink, sub, line, accent),
-                ],
-              ),
-            ),
-          ],
+        actions: [
+          IconButton(
+            icon: Icon(_searchExpanded ? Icons.close_rounded : Icons.search_rounded, color: ink),
+            onPressed: _toggleSearch,
+          ),
         ],
       ),
+      body: Column(
+        children: [
+          AnimatedSize(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: _searchExpanded
+                ? SearchField(
+                    controller: _searchCtrl,
+                    hint: '월세, 청년, 육아…',
+                    onChanged: (v) => setState(() => _query = v.trim()),
+                    autofocus: true,
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+          Expanded(child: _buildList(ink, sub, line, accent)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildList(Color ink, Color sub, Color line, Color accent) {
+    // 검색 중엔 카테고리를 접고 결과만 편다 — 찾는 사람은 폴더가 아니라 답을 원한다.
+    if (_query.isNotEmpty) {
+      final hits = [
+        for (final cat in _categories)
+          for (final benefit in cat.items)
+            if (_matches(benefit)) (cat.label, benefit),
+      ];
+      if (hits.isEmpty) {
+        return ListView(children: [
+          SearchEmptyState(
+            query: _query,
+            suggestion: '이 이름의 혜택은 없어요.\n숫자를 계산해보려는 거라면 계산기 탭에 있어요.',
+          ),
+        ]);
+      }
+      return ListView(
+        padding: const EdgeInsets.only(top: 8, bottom: 32),
+        children: [
+          for (final (label, benefit) in hits) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Text(label.toUpperCase(), style: AppTheme.label(context)),
+            ),
+            _buildItem(context, benefit, ink, sub, line, accent),
+          ],
+        ],
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 32),
+      children: [
+        for (final cat in _categories) ...[
+          Divider(height: 1, thickness: 1, color: line),
+          Theme(
+            data: Theme.of(context)
+                .copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              iconColor: sub,
+              collapsedIconColor: sub,
+              tilePadding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              childrenPadding: EdgeInsets.zero,
+              shape: const Border(),
+              collapsedShape: const Border(),
+              title: Text(cat.label.toUpperCase(),
+                  style: AppTheme.label(context)),
+              children: [
+                for (final benefit in cat.items)
+                  _buildItem(context, benefit, ink, sub, line, accent),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 
