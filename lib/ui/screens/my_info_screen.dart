@@ -8,6 +8,7 @@ import '../../core/data/occupation_data.dart';
 import '../../core/tax_engine/insurance_engine.dart';
 import '../../core/notifications/reminder_scheduler.dart';
 import '../../core/tax_engine/employee_tax.dart';
+import '../../core/tax_engine/tax_rates.dart';
 import 'occupation_search_screen.dart';
 import '../components/amount_field.dart';
 import 'profile_input_screen.dart';
@@ -44,7 +45,6 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   int _dependentsEditValue = 0;
   String _residenceEditValue = '전세';
   int _payDayEditValue = 0;
-  final TextEditingController _healthInsEditCtrl = TextEditingController();
   int _childrenTotalEditValue = 0;
   int _children8PlusEditValue = 0;
 
@@ -53,10 +53,6 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
 
   /// 8세 이상 자녀 수 — 자녀세액공제(소법 §59의2)에 쓰인다.
   int get _children8Plus => (_profile?['children_count_8plus'] as int?) ?? 0;
-
-  /// 건강보험 지역가입자 연 납부액(전액 소득공제) — 프리랜서만.
-  double get _healthInsPaid =>
-      (_profile?['freelancer_health_insurance'] as num?)?.toDouble() ?? 0.0;
 
   @override
   void initState() {
@@ -67,7 +63,6 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   @override
   void dispose() {
     _grossEditCtrl.dispose();
-    _healthInsEditCtrl.dispose();
     _ageEditCtrl.dispose();
     super.dispose();
   }
@@ -95,6 +90,8 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     if (_isFreelancer) {
       return [
         (label: '부양가족', filled: p.containsKey('dependents')),
+        // 자녀세액공제는 종합소득자 전원 대상이라 프리랜서도 채워야 한다.
+        (label: '자녀', filled: p.containsKey('children_count_total')),
         (label: '거주 형태', filled: p.containsKey('is_monthly_rent')),
       ];
     }
@@ -147,9 +144,6 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
               : (p['is_monthly_rent'] == true ? '월세' : '전세');
         case 'pay_day':
           _payDayEditValue = (p['pay_day'] as int?) ?? 0;
-        case 'health_ins':
-          final v = (p['freelancer_health_insurance'] as num?)?.toDouble() ?? 0.0;
-          _healthInsEditCtrl.text = v > 0 ? _fmt.format(v.toInt()) : '';
         case 'children':
           _childrenTotalEditValue = (p['children_count_total'] as int?) ?? 0;
           _children8PlusEditValue = (p['children_count_8plus'] as int?) ?? 0;
@@ -174,12 +168,6 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       'children_count_total': _childrenTotalEditValue,
       'children_count_8plus': eight,
     });
-    if (mounted) setState(() => _editingKey = null);
-  }
-
-  Future<void> _saveHealthInsInline() async {
-    final v = double.tryParse(_healthInsEditCtrl.text.replaceAll(',', '')) ?? 0.0;
-    await _updateProfileFields({'freelancer_health_insurance': v});
     if (mounted) setState(() => _editingKey = null);
   }
 
@@ -435,24 +423,30 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       ),
       // 자녀는 부양가족과 별도로 받는다 — 카드공제 한도가 자녀 수에만 반응하고
       // (조특법 §126의2⑩), 자녀세액공제는 그중 8세 이상만 대상이라 수가 따로 필요하다.
-      if (!_isFreelancer)
-        _infoRow(
-          icon: Icons.child_care_outlined,
-          label: '자녀',
-          value: _profile?.containsKey('children_count_total') == true
-              ? '$_childrenTotal명${_children8Plus > 0 ? ' (8세 이상 $_children8Plus명)' : ''}'
-              : null,
-          valueExtra: _childrenTotal > 0
-              ? '카드공제 한도 +${_fmt.format((_childrenTotal > 2 ? 2 : _childrenTotal) * 500000)}원'
-              : null,
-          placeholder: '설정되지 않았어요 — 카드공제 한도가 올라가요',
-          isSet: _profile?.containsKey('children_count_total') == true,
-          editKey: 'children',
-          ink: ink,
-          sub: sub,
-          accent: accent,
-          editor: _childrenEditor(ink, sub),
-        ),
+      // 카드공제는 근로소득자 전용이라 프리랜서에겐 자녀세액공제(소법 §59의2)만 걸린다.
+      _infoRow(
+        icon: Icons.child_care_outlined,
+        label: '자녀',
+        value: _profile?.containsKey('children_count_total') == true
+            ? '$_childrenTotal명${_children8Plus > 0 ? ' (8세 이상 $_children8Plus명)' : ''}'
+            : null,
+        valueExtra: _isFreelancer
+            ? (_children8Plus > 0
+                ? '자녀세액공제 ${_fmt.format(TaxRates.calculateChildTaxCredit(_children8Plus).toInt())}원'
+                : null)
+            : (_childrenTotal > 0
+                ? '카드공제 한도 +${_fmt.format((_childrenTotal > 2 ? 2 : _childrenTotal) * 500000)}원'
+                : null),
+        placeholder: _isFreelancer
+            ? '설정되지 않았어요 — 8세 이상 자녀는 세금에서 바로 빠져요'
+            : '설정되지 않았어요 — 카드공제 한도가 올라가요',
+        isSet: _profile?.containsKey('children_count_total') == true,
+        editKey: 'children',
+        ink: ink,
+        sub: sub,
+        accent: accent,
+        editor: _childrenEditor(ink, sub),
+      ),
       _infoRow(
         icon: Icons.home_outlined,
         label: '거주 형태',
@@ -605,18 +599,6 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
         icon: const Icon(Icons.add_circle_outline_rounded, size: 22),
         visualDensity: VisualDensity.compact,
       ),
-    ]);
-  }
-
-  /// 건보료 — 연 납부액. 월 고지서만 아는 경우가 많아 환산 안내를 붙인다.
-  Widget _healthInsEditor(Color sub, Color accent) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      AmountField(controller: _healthInsEditCtrl, expand: true, autofocus: true),
-      const SizedBox(height: 6),
-      Text('월 고지액 × 12로 적으면 돼요. 건강보험공단 앱·홈페이지에서 확인할 수 있어요.',
-          style: AppTheme.sans(11.5, AppTheme.inkTertiary(context), height: 1.4)),
-      const SizedBox(height: 10),
-      _editActions(onCancel: () => setState(() => _editingKey = null), onSave: _saveHealthInsInline),
     ]);
   }
 
@@ -802,21 +784,6 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
           ),
         ),
         AppTheme.hairline(context),
-        // 건보료는 지역가입자(프리랜서)만 전액 소득공제 대상 — N잡러는 직장가입자라 제외.
-        if (_isFreelancer) ...[
-          _infoRow(
-            icon: Icons.local_hospital_outlined,
-            label: '건강보험료 (연 납부액)',
-            value: _healthInsPaid > 0 ? '${_fmt.format(_healthInsPaid.toInt())}원' : null,
-            valueExtra: _healthInsPaid > 0 ? '전액 소득공제로 세금이 줄어요' : null,
-            placeholder: '지역가입자는 낸 만큼 전액 소득공제돼요',
-            isSet: _healthInsPaid > 0,
-            editKey: 'health_ins',
-            ink: ink, sub: sub, accent: accent,
-            editor: _healthInsEditor(sub, accent),
-          ),
-          AppTheme.hairline(context),
-        ],
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 14),
           child: Column(

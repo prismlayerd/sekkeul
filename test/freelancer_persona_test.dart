@@ -239,6 +239,45 @@ void main() {
       print('              보험적립/월=${r.insuranceProfileSet ? won(r.insuranceReserve) : "프로필 설정 시"}'
           '   지금써도되는돈=$usableTxt');
 
+      // ── 세무도구: 가계부 → 간편장부 만들기 (bookkeeping_guide_screen이 부르는 경로) ──
+      final ledgerIncomes = <IncomeEntry>[];
+      for (int m = 1; m <= 12; m++) {
+        ledgerIncomes.addAll(
+            await dbService.getIncomeEntriesForMonth(now.year, m, userType: '프리랜서'));
+      }
+      final ledger = SimpleLedgerBuilder.build(
+        year: now.year,
+        incomes: ledgerIncomes,
+        expenses: await dbService.getExpenses(userType: '프리랜서'),
+      );
+      final csv = SimpleLedgerBuilder.toCsv(ledger);
+      final csvLines = csv.trim().split('\n');
+      // ignore: avoid_print
+      print(' [세무도구]   장부 ${ledger.rows.length}줄  수입계=${won(ledger.totalIncome)}'
+          '  비용계=${won(ledger.totalExpense)}  거래내용 빈칸=${ledger.blankDescriptionCount}줄');
+      // ignore: avoid_print
+      print('              CSV 헤더: ${csvLines.first.replaceFirst('﻿', '')}');
+      // ignore: avoid_print
+      print('              CSV 합계: ${csvLines.last}');
+
+      // 장부 수입은 세전(총수입금액)이어야 한다 — 실수령액을 적으면 매출 과소신고가 된다.
+      expect(ledger.totalIncome, closeTo(ytdGross, 2 * usableIncomes.length),
+          reason: '${p.name}: 장부 수입계 = 세전 환산 누계');
+      // 장부 비용은 사업경비만 — 개인 지출이 섞이면 필요경비 과대계상이 된다.
+      expect(ledger.totalExpense, ytdBizExp,
+          reason: '${p.name}: 장부 비용계 = isBusiness 지출만');
+      expect(ledger.rows.length,
+          usableIncomes.length + usableExpenses.where((e) => e.$4).length,
+          reason: '${p.name}: 장부 줄 수 = 수입 건 + 사업경비 건');
+      expect(csvLines.last, '합계,,,,${ledger.totalIncome},,${ledger.totalExpense},,',
+          reason: '${p.name}: CSV 합계 줄이 장부 합계와 같아야 한다');
+      // 장부 총액은 적립·환급 계산이 쓰는 값과 같은 세계에 있어야 한다.
+      final progressForLedger = r.refundProgress;
+      if (progressForLedger != null) {
+        expect(ledger.totalExpense, closeTo(progressForLedger.recordedExpense, 1),
+            reason: '${p.name}: 장부 비용계 = 환급블록 기록경비');
+      }
+
       final rp = r.refundProgress;
       if (rp == null) {
         // ignore: avoid_print
@@ -319,14 +358,17 @@ void main() {
     expect(d3, lessThan(d0), reason: '부양가족이 늘면 세금 적립이 줄어야 한다');
   });
 
-  test('건보료(지역가입 연납부액)가 세금을 낮추는가 — 전액 소득공제 배선', () async {
-    Future<double> reserveWith(double healthIns) async {
+  // 자녀세액공제(소법 §59의2)는 "종합소득이 있는 거주자"가 대상이라 프리랜서도 받는다.
+  // 과거엔 엔진에 파라미터 자체가 없어 늘 0이었다.
+  test('8세 이상 자녀가 세금을 낮추는가 — 자녀세액공제 배선', () async {
+    Future<double> reserveWith(int children8Plus) async {
       dbService = InMemoryDatabaseHelper();
       await dbService.initDatabase();
       await dbService.saveProfile({
         'user_type': '프리랜서', 'occupation_code': '940306',
         'prior_year_income': 30000000.0,
-        'freelancer_health_insurance': healthIns,
+        'children_count_total': children8Plus,
+        'children_count_8plus': children8Plus,
       });
       for (int m = 1; m <= now.month; m++) {
         await dbService.insertIncomeEntry(IncomeEntry(
@@ -338,10 +380,10 @@ void main() {
     }
 
     final none = await reserveWith(0);
-    final paid = await reserveWith(2400000); // 월 20만 × 12
+    final two = await reserveWith(2); // 8세 이상 2명 → 연 55만 세액공제
     // ignore: avoid_print
-    print('\n[건보료] 미입력 적립/월=${won(none)}  →  연 240만 입력=${won(paid)}');
-    expect(paid, lessThan(none), reason: '건보료는 전액 소득공제라 세금이 줄어야 한다');
+    print('\n[자녀세액공제] 0명 적립/월=${won(none)}  →  8세 이상 2명=${won(two)}');
+    expect(two, lessThan(none), reason: '자녀세액공제는 종합소득자 전원 대상이라 세금이 줄어야 한다');
   });
 
   test('무기장가산세 — 소규모사업자는 면제, 넘으면 산출세액 20%', () async {

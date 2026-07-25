@@ -93,9 +93,6 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
   final TextEditingController _pensionSavingsSimController = TextEditingController();
   final TextEditingController _irpSimController = TextEditingController();
 
-  // 프리랜서 건강보험 지역가입자 컨트롤러
-  final TextEditingController _freelancerHealthInsController = TextEditingController();
-
   // 기장의무 판정 컨트롤러 — 직전연도 수입·신규사업자·겸업 (프로필에 영속 저장)
   final TextEditingController _priorYearIncomeController = TextEditingController();
   bool _isNewBusiness = false;
@@ -146,8 +143,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     _newbornCountController.addListener(_calculateTax);
     _pensionSavingsSimController.addListener(_calculateTax);
     _irpSimController.addListener(_calculateTax);
-    _freelancerHealthInsController.addListener(_calculateTax);
-    _freelancerHealthInsController.addListener(_saveHealthInsuranceToProfile);
+    _childrenCount8PlusController.addListener(_saveChildren8PlusToProfile);
     _mortgageSimController.addListener(_calculateTax);
     _hometownDonationSimController.addListener(_calculateTax);
     _priorYearIncomeController.addListener(_onBookkeepingInputChanged);
@@ -204,10 +200,10 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       priorYearIncome = profile['prior_year_income'] as double? ?? 0.0;
       isNewBusiness = profile['is_new_business'] == true;
       hasMultipleBusinesses = profile['has_multiple_businesses'] == true;
-      // 건보료는 적립·환급 계산에도 쓰이므로 프로필 값으로 미리 채운다.
-      final savedHealthIns = (profile['freelancer_health_insurance'] as num?)?.toDouble() ?? 0.0;
-      if (savedHealthIns > 0 && _freelancerHealthInsController.text.isEmpty) {
-        _freelancerHealthInsController.text = savedHealthIns.toInt().toString();
+      // 자녀 수는 적립·환급 계산에도 쓰이므로 프로필 값으로 미리 채운다.
+      final savedChildren8Plus = (profile['children_count_8plus'] as int?) ?? 0;
+      if (savedChildren8Plus > 0 && _childrenCount8PlusController.text == '0') {
+        _childrenCount8PlusController.text = savedChildren8Plus.toString();
       }
       final profileOccCode = profile['occupation_code'] as String?;
       if (profileOccCode != null) profileOccupation = OccupationData.occupations[profileOccCode];
@@ -338,7 +334,6 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     _newbornCountController.dispose();
     _pensionSavingsSimController.dispose();
     _irpSimController.dispose();
-    _freelancerHealthInsController.dispose();
     _mortgageSimController.dispose();
     _hometownDonationSimController.dispose();
     _priorYearIncomeController.dispose();
@@ -476,7 +471,6 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       final income = double.tryParse(_freelancerIncomeController.text) ?? 0.0;
       final months = int.tryParse(_monthsController.text) ?? 12;
       final yellowUmbrella = _hasYellowUmbrella ? (double.tryParse(_yellowUmbrellaController.text) ?? 0.0) : 0.0;
-      final healthIns = double.tryParse(_freelancerHealthInsController.text) ?? 0.0;
       final judgment = _bookkeepingJudgment;
 
       // 추계 시 적용 경비율은 직전연도 수입 기준으로 강제된다(단순경비율 미대상이면
@@ -498,7 +492,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           allowanceCount: _dependentCount,
           occupationCode: _selectedOccupation!.code,
           yellowUmbrellaPayment: yellowUmbrella,
-          freelancerHealthInsurance: healthIns,
+          childrenCount8Plus: int.tryParse(_childrenCount8PlusController.text) ?? 0,
           disabledDependentCount: _disabledDependentCount,
           hasSelfDisability: _hasSelfDisability,
           forceStandardExpenseRate: !simpleRateEligible,
@@ -517,7 +511,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           occupationCode: _selectedOccupation!.code,
           isBookkeeping: false,
           yellowUmbrellaPayment: yellowUmbrella,
-          freelancerHealthInsurance: healthIns,
+          childrenCount8Plus: int.tryParse(_childrenCount8PlusController.text) ?? 0,
           disabledDependentCount: _disabledDependentCount,
           hasSelfDisability: _hasSelfDisability,
           useStandardExpenseRate: !simpleRateEligible,
@@ -661,13 +655,16 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     await dbService.saveProfile(updated);
   }
 
-  /// 건보료(지역가입 연 납부액)를 프로필에 남긴다 — 적립·환급 계산이 같은 값을 쓰도록.
-  /// 이 화면에서만 들고 있으면 가계부 적립액이 이 소득공제를 빼놓고 과대 추정한다.
-  Future<void> _saveHealthInsuranceToProfile() async {
-    final v = double.tryParse(_freelancerHealthInsController.text.replaceAll(',', '')) ?? 0.0;
+  /// 8세 이상 자녀 수를 프로필에 남긴다 — 가계부 적립·환급 계산이 같은 값을 쓰도록.
+  /// 이 화면에서만 들고 있으면 적립액이 자녀세액공제를 빼놓고 과대 추정한다.
+  Future<void> _saveChildren8PlusToProfile() async {
+    final v = int.tryParse(_childrenCount8PlusController.text.trim()) ?? 0;
     final updated = Map<String, dynamic>.from(_profileCache ?? {});
-    if ((updated['freelancer_health_insurance'] as num?)?.toDouble() == v) return;
-    updated['freelancer_health_insurance'] = v;
+    if ((updated['children_count_8plus'] as int?) == v) return;
+    updated['children_count_8plus'] = v;
+    // 총 자녀 수가 8세 이상보다 적으면 앞뒤가 안 맞는다 — 최소한 같은 수로 올린다.
+    final total = (updated['children_count_total'] as int?) ?? 0;
+    if (total < v) updated['children_count_total'] = v;
     _profileCache = updated;
     await dbService.saveProfile(updated);
   }
@@ -1713,13 +1710,13 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                 Text('3.3% 떼기 전 금액을 입력하세요.', style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.4)),
                 const SizedBox(height: 28),
 
-                // 프리랜서 전용: 건강보험 지역가입자 소득공제
+                // 자녀세액공제(소법 §59의2)는 종합소득자 전원 대상이라 프리랜서도 받는다.
                 if (!_isEmployee) ...[
-                  Text('건강보험 지역가입자 보험료 (전액 소득공제)', style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
+                  Text('8세 이상 자녀 수', style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
                   const SizedBox(height: 4),
-                  Text('직장가입자가 아니라면\n납부한 건강보험료 전액이 소득공제돼요.', style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.4)),
+                  Text('1명 25만 원, 2명 55만 원, 셋째부터 1명당 40만 원이\n세금에서 바로 빠져요.', style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.4)),
                   const SizedBox(height: 8),
-                  _underlineInput(_freelancerHealthInsController, hint: '0', suffix: '원'),
+                  _underlineInput(_childrenCount8PlusController, hint: '0', suffix: '명'),
                   const SizedBox(height: 28),
                 ],
 

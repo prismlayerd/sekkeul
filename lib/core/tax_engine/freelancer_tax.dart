@@ -23,7 +23,7 @@ class FreelancerTaxCalculator {
     double yellowUmbrellaPayment = 0.0, // 연간 노란우산공제 납입액
     double monthlyRent = 0.0,          // 월 납부 임차료
     bool isHomeless = false,           // 무주택 세대주 여부
-    double freelancerHealthInsurance = 0.0, // 건강보험 지역가입자 연간 납부액 (전액 소득공제)
+    int childrenCount8Plus = 0,        // 8세 이상 기본공제대상 자녀 수 (자녀세액공제)
     int disabledDependentCount = 0,    // 장애인 부양가족 수 (추가공제 200만/명)
     bool hasSelfDisability = false,    // 본인 장애인 여부
     bool useStandardExpenseRate = false, // true면 단순경비율 대신 기준경비율 적용(적립 범위 산출용)
@@ -100,7 +100,11 @@ class FreelancerTaxCalculator {
     // 실제 공제액 (납입액과 한도 중 작은 값)
     final double yellowUmbrellaDeduction = yellowUmbrellaPayment < yellowUmbrellaLimit ? yellowUmbrellaPayment : yellowUmbrellaLimit;
     
-    final double totalDeduction = basicDeduction + disabilityDeduction + yellowUmbrellaDeduction + freelancerHealthInsurance;
+    // 건강보험료는 소득공제에 넣지 않는다. 지역가입자 본인 건보료는 필요경비 산입
+    // 대상이 아니고(국세청 서면인터넷방문상담1팀-998), 소득세법 §52 특별소득공제는
+    // "근로소득금액 범위 내"에서만 공제된다(같은 팀-476). 근로소득이 없는 프리랜서는
+    // 어느 쪽으로도 공제받지 못한다. 확인일 2026-07-25.
+    final double totalDeduction = basicDeduction + disabilityDeduction + yellowUmbrellaDeduction;
 
     // 기타소득 분리과세 선택 (소득세법 §14③8): 기타소득금액 300만원 이하(원천징수분)는
     // 종합과세와 분리과세(원천징수 8.8%로 종결) 중 유리한 쪽을 선택할 수 있다.
@@ -129,12 +133,18 @@ class FreelancerTaxCalculator {
     // 6. 종합소득세 산출세액 (국세)
     final double estimatedCalculatedTax = TaxRates.calculateTax(taxBase);
 
-    // 7. 세액공제 적용 — 표준세액공제 7만 원.
+    // 7. 세액공제 적용 — 표준세액공제(소득세법 §59의4⑨).
+    // 근로소득이 없는 종합소득자는 연 7만 원, 성실사업자는 연 12만 원.
     // 기장세액공제(산출세액 20%, 한도 100만)는 간편장부대상자가 "복식부기"로
     // 자발적 기장했을 때만 적용되는 별도 공제(소득세법 §56의2)로, 이 앱이 지원하는
     // 간편장부 기장과는 무관하다. 간편장부·추계 모두 표준세액공제로 동일 적용.
-    double taxCredit = 70000.0;
-    
+    double taxCredit = isQualifiedFaithfulTaxpayer ? 120000.0 : 70000.0;
+
+    // 자녀세액공제(소득세법 §59의2) — "종합소득이 있는 거주자"가 대상이라
+    // 근로소득자 전용이 아니다. 8세 이상 기본공제대상 자녀만 센다.
+    // 1명 25만 / 2명 55만 / 3명부터 1명당 +40만. 확인일 2026-07-25.
+    final double childTaxCredit = TaxRates.calculateChildTaxCredit(childrenCount8Plus);
+
     // 월세 세액공제 (조특법 §95의2·§122의3, 2024 귀속~): 종합소득금액 7,000만 이하 + 무주택.
     // 근로소득 없는 사업소득자는 "성실사업자" 요건을 충족해야만 대상(일반 프리랜서 제외) —
     // isQualifiedFaithfulTaxpayer가 참일 때만 적용. 공제율 17%(종합소득금액 4,500만 이하)/15%,
@@ -148,7 +158,7 @@ class FreelancerTaxCalculator {
     }
 
     // 결정세액 (산출세액 - 세액공제, 0원 미만 절사)
-    double estimatedIncomeTax = estimatedCalculatedTax - taxCredit - rentTaxCredit;
+    double estimatedIncomeTax = estimatedCalculatedTax - taxCredit - childTaxCredit - rentTaxCredit;
     if (estimatedIncomeTax < 0) {
       estimatedIncomeTax = 0;
     }
@@ -237,7 +247,7 @@ class FreelancerTaxCalculator {
       yellowUmbrellaDeduction: yellowUmbrellaDeduction,
       yellowUmbrellaLimit: yellowUmbrellaLimit,
       rentTaxCredit: rentTaxCredit,
-      healthInsuranceDeduction: freelancerHealthInsurance,
+      childTaxCredit: childTaxCredit,
     );
   }
 
@@ -253,7 +263,7 @@ class FreelancerTaxCalculator {
     double yellowUmbrellaPayment = 0.0,
     double monthlyRent = 0.0,
     bool isHomeless = false,
-    double freelancerHealthInsurance = 0.0,
+    int childrenCount8Plus = 0,
     int disabledDependentCount = 0,
     bool hasSelfDisability = false,
   }) {
@@ -267,7 +277,7 @@ class FreelancerTaxCalculator {
       yellowUmbrellaPayment: yellowUmbrellaPayment,
       monthlyRent: monthlyRent,
       isHomeless: isHomeless,
-      freelancerHealthInsurance: freelancerHealthInsurance,
+      childrenCount8Plus: childrenCount8Plus,
       disabledDependentCount: disabledDependentCount,
       hasSelfDisability: hasSelfDisability,
       useStandardExpenseRate: false,
@@ -282,7 +292,7 @@ class FreelancerTaxCalculator {
       yellowUmbrellaPayment: yellowUmbrellaPayment,
       monthlyRent: monthlyRent,
       isHomeless: isHomeless,
-      freelancerHealthInsurance: freelancerHealthInsurance,
+      childrenCount8Plus: childrenCount8Plus,
       disabledDependentCount: disabledDependentCount,
       hasSelfDisability: hasSelfDisability,
       useStandardExpenseRate: true,
@@ -307,7 +317,7 @@ class FreelancerTaxCalculator {
     double yellowUmbrellaPayment = 0.0,
     double monthlyRent = 0.0,
     bool isHomeless = false,
-    double freelancerHealthInsurance = 0.0,
+    int childrenCount8Plus = 0,
     int disabledDependentCount = 0,
     bool hasSelfDisability = false,
     // 단순경비율 적용 대상이 아니면(직전연도 수입 ≥ 업종별 임계 등) 추계는 기준경비율이
@@ -330,7 +340,7 @@ class FreelancerTaxCalculator {
       yellowUmbrellaPayment: yellowUmbrellaPayment,
       monthlyRent: monthlyRent,
       isHomeless: isHomeless,
-      freelancerHealthInsurance: freelancerHealthInsurance,
+      childrenCount8Plus: childrenCount8Plus,
       disabledDependentCount: disabledDependentCount,
       hasSelfDisability: hasSelfDisability,
     );
@@ -347,7 +357,7 @@ class FreelancerTaxCalculator {
       yellowUmbrellaPayment: yellowUmbrellaPayment,
       monthlyRent: monthlyRent,
       isHomeless: isHomeless,
-      freelancerHealthInsurance: freelancerHealthInsurance,
+      childrenCount8Plus: childrenCount8Plus,
       disabledDependentCount: disabledDependentCount,
       hasSelfDisability: hasSelfDisability,
       useStandardExpenseRate: forceStandardExpenseRate,
@@ -386,7 +396,7 @@ class FreelancerTaxResult {
   final double yellowUmbrellaDeduction;     // 적용된 노란우산공제액
   final double yellowUmbrellaLimit;         // 산출된 노란우산공제 한도
   final double rentTaxCredit;               // 월세 세액공제액
-  final double healthInsuranceDeduction;    // 건강보험 지역가입자 소득공제액
+  final double childTaxCredit;              // 자녀세액공제액 (8세 이상)
 
   FreelancerTaxResult({
     required this.annualEstimatedIncome,
@@ -412,6 +422,6 @@ class FreelancerTaxResult {
     required this.yellowUmbrellaDeduction,
     required this.yellowUmbrellaLimit,
     required this.rentTaxCredit,
-    required this.healthInsuranceDeduction,
+    required this.childTaxCredit,
   });
 }

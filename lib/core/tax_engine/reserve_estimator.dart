@@ -148,10 +148,6 @@ class ReserveEstimator {
     final profileGrossIncome = (profile?['gross_income'] as num?)?.toDouble() ?? 0.0;
     // ── 프로필의 공제 항목 — 세액 계산에 반영해야 적립액·환급액이 과대되지 않는다 ──
     final allowance = allowanceCount ?? (profile?['dependents'] as int?) ?? 0;
-    // 건강보험 지역가입자 연 납부액 — 전액 소득공제(소득세법 §52①). 세무 시뮬레이터에서
-    // 입력하면 프로필에 저장된다(v38). 미입력이면 0이라 세액이 그만큼 과대(보수적).
-    final freelancerHealthIns =
-        (profile?['freelancer_health_insurance'] as num?)?.toDouble() ?? 0.0;
     final disabledDeps = (profile?['disabled_dependent_count'] as int?) ?? 0;
     final selfDisability = profile?['has_self_disability'] == true;
     final yellowUmbrella = (profile?['yellow_umbrella'] as num?)?.toDouble() ?? 0.0;
@@ -284,7 +280,7 @@ class ReserveEstimator {
           allowanceCount: allowance,
           occupationCode: occupationCode,
           yellowUmbrellaPayment: yellowUmbrella,
-          freelancerHealthInsurance: freelancerHealthIns,
+          childrenCount8Plus: childrenCount8Plus,
           disabledDependentCount: disabledDeps,
           hasSelfDisability: selfDisability,
           useStandardExpenseRate: pinnedStandardRate,
@@ -303,7 +299,7 @@ class ReserveEstimator {
           allowanceCount: allowance,
           occupationCode: occupationCode,
           yellowUmbrellaPayment: yellowUmbrella,
-          freelancerHealthInsurance: freelancerHealthIns,
+          childrenCount8Plus: childrenCount8Plus,
           disabledDependentCount: disabledDeps,
           hasSelfDisability: selfDisability,
         );
@@ -495,7 +491,7 @@ class ReserveEstimator {
           allowanceCount: allowance,
           occupationCode: occupationCode,
           yellowUmbrellaPayment: yellowUmbrella,
-          freelancerHealthInsurance: freelancerHealthIns,
+          childrenCount8Plus: childrenCount8Plus,
           disabledDependentCount: disabledDeps,
           hasSelfDisability: selfDisability,
           forceStandardExpenseRate: pinnedStandardRate,
