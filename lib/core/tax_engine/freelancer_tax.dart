@@ -228,6 +228,7 @@ class FreelancerTaxCalculator {
       estimatedExpense: estimatedExpense,
       estimatedBusinessIncome: estimatedBusinessIncome,
       taxBase: taxBase,
+      calculatedTax: estimatedCalculatedTax,
       annualIncomeTax: finalAnnualIncomeTax,
       annualLocalTax: finalAnnualLocalTax,
       annualTotalTax: finalAnnualTotalTax,
@@ -377,6 +378,8 @@ class FreelancerTaxResult {
   final double estimatedExpense;            // 단순경비율 적용 추정 필요경비
   final double estimatedBusinessIncome;     // 추정 사업소득금액
   final double taxBase;                     // 추정 과세표준
+  /// 종합소득산출세액(국세, 세액공제 차감 전) — 무기장가산세 산식의 기준값.
+  final double calculatedTax;
   final double annualIncomeTax;             // 연간 추정 종합소득세 (국세)
   final double annualLocalTax;              // 연간 추정 지방소득세 (지방세)
   final double annualTotalTax;              // 연간 추정 세액 합계
@@ -403,6 +406,7 @@ class FreelancerTaxResult {
     required this.estimatedExpense,
     required this.estimatedBusinessIncome,
     required this.taxBase,
+    required this.calculatedTax,
     required this.annualIncomeTax,
     required this.annualLocalTax,
     required this.annualTotalTax,

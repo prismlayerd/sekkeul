@@ -391,6 +391,12 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
     _smeExemption = (_isSmeEmployee && _smeStartYear > 0)
         ? EmployeeTaxCalculator.calculateSmeExemption(calculatedTax: _calculatedTax, smeStartYear: _smeStartYear)
         : 0.0;
+    // 감면을 받는 해에는 근로소득세액공제가 (1 - 감면급여비율)만큼만 남는다(조특령 §27⑨) —
+    // 둘 다 온전히 빼면 이중 혜택이라 결정세액이 실제보다 낮게 나온다.
+    _laborTaxCredit = EmployeeTaxCalculator.laborTaxCreditAfterSmeExemption(
+      laborTaxCredit: _laborTaxCredit,
+      smeExemption: _smeExemption,
+    );
     _decidedTax = _calculatedTax - _smeExemption - _laborTaxCredit - _rentRefund;
     if (_decidedTax < 0) _decidedTax = 0;
     _decidedTax = TaxRates.truncateWon(_decidedTax);

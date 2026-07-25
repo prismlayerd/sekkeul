@@ -256,13 +256,13 @@ class ReserveEstimator {
         bookkeepingJudgment?.isSmallBusinessExemptFromPenalty ?? true;
 
     /// 추계 결과에 무기장가산세를 얹는다. 사업소득금액·종합소득금액 비율로 안분.
-    double withPenalty(double annualTotalTax, double bizIncomeAmount, double otherAmount) {
+    /// 가산세 기준은 지방세 포함 결정세액이 아니라 국세 **산출세액**이다
+    /// (소득세법 §81의5 — `종합소득산출세액 × 무기장 소득금액/종합소득금액 × 20%`).
+    double withPenalty(double annualTotalTax, double calculatedTax,
+        double bizIncomeAmount, double otherAmount) {
       if (penaltyExempt || annualTotalTax <= 0) return annualTotalTax;
-      // annualTotalTax는 지방세 포함 결정세액이라, 가산세 기준인 산출세액과는 다르다.
-      // 국세 산출세액을 따로 들고 있지 않아 결정세액을 근사 기준으로 쓴다(과소 방향).
-      // ponytail: 결정세액 근사 — 산출세액을 결과에 노출하게 되면 그때 정확히 바꾼다.
       final penalty = calculateNoBookkeepingPenalty(
-        calculatedTax: annualTotalTax,
+        calculatedTax: calculatedTax,
         businessIncomeAmount: bizIncomeAmount,
         globalIncomeAmount: bizIncomeAmount + otherAmount,
       );
@@ -287,8 +287,9 @@ class ReserveEstimator {
         );
         // 연간 예상세액을 12로 균등 분배 — "이번 달분"을 직관적으로 보여주기 위함.
         final otherAmt = EmployeeTaxCalculator.calculateOtherIncomeAmount(annualOtherIncome);
-        minMonthlyTaxReserve =
-            withPenalty(result.annualTotalTax, result.estimatedBusinessIncome, otherAmt) / 12;
+        minMonthlyTaxReserve = withPenalty(result.annualTotalTax, result.calculatedTax,
+                result.estimatedBusinessIncome, otherAmt) /
+            12;
         maxMonthlyTaxReserve = minMonthlyTaxReserve;
         incomeAmountForInsurance = result.estimatedBusinessIncome + otherAmt;
       } else {
@@ -305,10 +306,12 @@ class ReserveEstimator {
         );
         // 연간 예상세액을 12로 균등 분배 — "이번 달분"을 직관적으로 보여주기 위함.
         final otherAmt = EmployeeTaxCalculator.calculateOtherIncomeAmount(annualOtherIncome);
-        minMonthlyTaxReserve =
-            withPenalty(range.min.annualTotalTax, range.min.estimatedBusinessIncome, otherAmt) / 12;
-        maxMonthlyTaxReserve =
-            withPenalty(range.max.annualTotalTax, range.max.estimatedBusinessIncome, otherAmt) / 12;
+        minMonthlyTaxReserve = withPenalty(range.min.annualTotalTax, range.min.calculatedTax,
+                range.min.estimatedBusinessIncome, otherAmt) /
+            12;
+        maxMonthlyTaxReserve = withPenalty(range.max.annualTotalTax, range.max.calculatedTax,
+                range.max.estimatedBusinessIncome, otherAmt) /
+            12;
         // 보험료는 단일 값만 표시하므로 소득금액이 큰 쪽(기준경비율)으로 보수적으로 잡는다.
         incomeAmountForInsurance = range.max.estimatedBusinessIncome + otherAmt;
       }
@@ -391,7 +394,7 @@ class ReserveEstimator {
         final penalty = penaltyExempt
             ? 0.0
             : calculateNoBookkeepingPenalty(
-                calculatedTax: result.annualTotalTax,
+                calculatedTax: result.calculatedTax,
                 businessIncomeAmount: result.estimatedFreelancerBusinessIncome,
                 globalIncomeAmount: result.totalGlobalIncome,
               );
@@ -428,7 +431,7 @@ class ReserveEstimator {
         double pen(CombinedTaxResult x) => penaltyExempt
             ? 0.0
             : calculateNoBookkeepingPenalty(
-                calculatedTax: x.annualTotalTax,
+                calculatedTax: x.calculatedTax,
                 businessIncomeAmount: x.estimatedFreelancerBusinessIncome,
                 globalIncomeAmount: x.totalGlobalIncome,
               );

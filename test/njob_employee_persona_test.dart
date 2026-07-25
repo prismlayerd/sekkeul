@@ -5,6 +5,8 @@ import 'package:secul/core/data/income_entry.dart';
 import 'package:secul/core/data/ledger_profile.dart';
 import 'package:secul/core/tax_engine/employee_tax.dart';
 import 'package:secul/core/tax_engine/reserve_estimator.dart';
+import 'package:secul/core/tax_engine/combined_tax.dart';
+import 'package:secul/core/tax_engine/simple_ledger_builder.dart';
 
 /// N잡러·직장인 페르소나 회귀.
 ///
@@ -321,6 +323,38 @@ void main() {
       // ignore: avoid_print
       print(' [환급블록]   ${r.refundProgress == null ? "없음(N잡러는 대상 아님)" : "있음 ← 예상과 다름!"}');
 
+      // ── 세무도구: 가계부 → 간편장부 (bookkeeping_guide_screen과 같은 경로) ──
+      final ledgerIncomes = <IncomeEntry>[];
+      for (int m = 1; m <= 12; m++) {
+        ledgerIncomes.addAll(
+            await dbService.getIncomeEntriesForMonth(now.year, m, userType: p.userType));
+      }
+      final ledger = SimpleLedgerBuilder.build(
+        year: now.year,
+        incomes: ledgerIncomes,
+        expenses: await dbService.getExpenses(userType: p.userType),
+      );
+      final usableIncomes = p.incomes.where((e) => e.$1 <= now.month).toList();
+      final usableExpenses = p.expenses.where((e) => e.$1 <= now.month).toList();
+      final salaryRows = usableIncomes.where((e) => e.$3 == '급여').length;
+      final bizExpenseRows = usableExpenses.where((e) => e.$4).length;
+      // ignore: avoid_print
+      print(' [세무도구]   장부 ${ledger.rows.length}줄  수입계=${won(ledger.totalIncome)}'
+          '  비용계=${won(ledger.totalExpense)}'
+          '   (급여 $salaryRows건은 근로소득이라 제외)');
+
+      // N잡러 전용 불변식 — 급여가 사업 장부에 실리면 사업소득이 부풀어
+      // 무기장가산세·경비율 판정이 전부 어긋난다.
+      expect(ledger.rows.length,
+          usableIncomes.length - salaryRows + bizExpenseRows,
+          reason: '${p.name}: 장부 줄 수 = (수입 - 급여) + 사업경비');
+      expect(ledger.totalExpense,
+          usableExpenses.where((e) => e.$4).fold<int>(0, (s2, e) => s2 + e.$2),
+          reason: '${p.name}: 장부 비용계 = isBusiness 지출만');
+      for (final row in ledger.rows) {
+        expect(row.account, isNot('급여'), reason: '${p.name}: 장부에 급여 줄이 있으면 안 된다');
+      }
+
       // ── 유형 경계 불변식 ──
       expect(lp.tracksBusinessExpense, isTrue, reason: '${p.name}: N잡러는 사업경비 추적');
       expect(lp.showsCardThreshold, isTrue, reason: '${p.name}: N잡러는 카드공제 대상');
@@ -424,6 +458,84 @@ void main() {
         '  →  자녀2 공제=${won(twoKids.deduction)} 환급=${won(twoKids.taxSaving)}');
     expect(twoKids.deduction, greaterThan(noKids.deduction));
     expect(twoKids.taxSaving, greaterThan(noKids.taxSaving));
+  });
+
+  // ── 2026-07-25 N잡러 세법 대조에서 나온 확정 오류 3건의 회귀 고정 ──
+
+  test('중소기업 감면은 근로소득분 산출세액에만 걸린다 (조특령 §27⑧)', () {
+    // 감면세액 = 종합소득산출세액 × (근로소득금액/종합소득금액) × 감면급여비율.
+    // 종합 산출세액 전체에 걸면 부업 사업소득분까지 감면돼 세금이 과소해진다.
+    // 총급여 3,000만 — 감면액이 연 200만 한도에 걸리지 않는 구간이라야 산식이 드러난다.
+    CombinedTaxResult run(double bizIncome) => CombinedTaxCalculator.calculateCombinedTax(
+          grossIncome: 30000000,
+          accumulatedFreelancerIncome: bizIncome,
+          inputMonths: 12,
+          occupationCode: '940306',
+          creditCard: 0, debitCardAndCash: 0, traditionalMarket: 0,
+          publicTransport: 0, cultureExpense: 0,
+          allowanceCount: 0, decidedTax: 0, monthlyRent: 0,
+          isSmeEmployee: true, smeStartYear: DateTime.now().year, isYouthSme: true,
+        );
+
+    final withBiz = run(20000000);
+    final laborShare = withBiz.laborIncomeAmount / withBiz.totalGlobalIncome;
+    final byLaw = withBiz.calculatedTax * laborShare * 0.90;
+    final ifWholeTax = withBiz.calculatedTax * 0.90; // 고쳤던 버그가 내던 값
+    // ignore: avoid_print
+    print('\n[중소기업 감면] 산출세액=${won(withBiz.calculatedTax)}'
+        '  근로비중=${(laborShare * 100).toStringAsFixed(1)}%'
+        '  →  감면=${won(withBiz.smeExemption)}  (조문식 ${won(byLaw)} / 전체산출세액 기준이면 ${won(ifWholeTax)})');
+
+    expect(withBiz.smeExemption, lessThan(2000000),
+        reason: '한도에 걸리면 산식 검증이 안 되므로 한도 아래 구간이어야 한다');
+    expect(withBiz.smeExemption, closeTo(byLaw, 10),
+        reason: '감면 = 종합소득산출세액 × 근로소득금액/종합소득금액 × 90%');
+    expect(withBiz.smeExemption, lessThan(ifWholeTax),
+        reason: '부업이 있으면 전체 산출세액 기준보다 작아야 한다');
+  });
+
+  test('중소기업 감면을 받으면 근로소득세액공제가 사라진다 (조특령 §27⑨)', () {
+    // 세액공제액 = 근로세액공제 × (1 - 감면급여비율). 근무처가 하나면 비율 1 → 0.
+    // 둘 다 온전히 빼면 이중 혜택이라 결정세액이 실제보다 낮게 나온다.
+    expect(
+      EmployeeTaxCalculator.laborTaxCreditAfterSmeExemption(
+          laborTaxCredit: 660000, smeExemption: 500000),
+      0,
+      reason: '감면을 받는 해에는 근로세액공제가 남지 않는다',
+    );
+    expect(
+      EmployeeTaxCalculator.laborTaxCreditAfterSmeExemption(
+          laborTaxCredit: 660000, smeExemption: 0),
+      660000,
+      reason: '감면기간이 끝나면 근로세액공제는 온전히 살아난다',
+    );
+  });
+
+  test('월세 17%는 종합소득금액 4,500만 이하일 때만 (조특법 §95의2)', () {
+    // 총급여만 보면 5,500만 이하라 17%지만, 부업 때문에 종합소득금액이 4,500만을
+    // 넘으면 15%다. N잡러는 이 경계에 걸리기 쉬워 환급이 과대해진다.
+    CombinedTaxResult run(double bizIncome) => CombinedTaxCalculator.calculateCombinedTax(
+          grossIncome: 50000000,
+          accumulatedFreelancerIncome: bizIncome,
+          inputMonths: 12,
+          occupationCode: '940306',
+          creditCard: 0, debitCardAndCash: 0, traditionalMarket: 0,
+          publicTransport: 0, cultureExpense: 0,
+          allowanceCount: 0, decidedTax: 0,
+          monthlyRent: 800000, isHomeless: true,
+        );
+
+    // 부업 없음: 근로소득금액 = 5,000만 - 근로소득공제 ≈ 3,725만 → 4,500만 이하 → 17%
+    final low = run(0);
+    // 부업 3,000만: 종합소득금액이 4,500만을 넘어 15%
+    final high = run(30000000);
+    // ignore: avoid_print
+    print('\n[월세 공제율] 종합소득금액 ${won(low.totalGlobalIncome)} → 공제 ${won(low.rentTaxCredit)}'
+        '   |   ${won(high.totalGlobalIncome)} → ${won(high.rentTaxCredit)}');
+    expect(low.totalGlobalIncome, lessThanOrEqualTo(45000000));
+    expect(high.totalGlobalIncome, greaterThan(45000000));
+    expect(low.rentTaxCredit, closeTo(9600000 * 0.17, 1), reason: '17% 구간');
+    expect(high.rentTaxCredit, closeTo(9600000 * 0.15, 1), reason: '15% 구간');
   });
 
   test('N잡러 카드 절세액은 종합 과세표준 기준 — 부업이 구간을 밀어올리면 커진다', () async {

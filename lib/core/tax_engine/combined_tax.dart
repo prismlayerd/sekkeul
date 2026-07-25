@@ -188,9 +188,23 @@ class CombinedTaxCalculator {
     if (totalGlobalIncome > 0) {
       laborCalculatedTaxShare = estimatedCalculatedTax * (laborIncomeAmount / totalGlobalIncome);
     }
-    final double laborTaxCredit = EmployeeTaxCalculator.calculateLaborTaxCredit(
-      grossIncome: grossIncome,
-      calculatedTaxShare: laborCalculatedTaxShare,
+    // 중소기업취업자 감면(조특법 §30, 조특령 §27⑧)은 근로소득분 산출세액에만 걸린다 —
+    // 감면세액 = 종합소득산출세액 × (근로소득금액/종합소득금액) × 감면급여비율.
+    // 종합 산출세액 전체를 넘기면 부업 사업소득분까지 감면돼 세금이 과소해진다.
+    // (감면대상 근무처가 하나라고 보고 감면급여비율은 1.) 확인일 2026-07-25.
+    final double smeExemptionAmt = (isSmeEmployee && smeStartYear > 0)
+        ? EmployeeTaxCalculator.calculateSmeExemption(
+            calculatedTax: laborCalculatedTaxShare,
+            smeStartYear: smeStartYear,
+            isYouth: isYouthSme)
+        : 0.0;
+    // 감면을 받는 해에는 근로소득세액공제가 (1 - 감면급여비율)만큼만 남는다(조특령 §27⑨).
+    final double laborTaxCredit = EmployeeTaxCalculator.laborTaxCreditAfterSmeExemption(
+      laborTaxCredit: EmployeeTaxCalculator.calculateLaborTaxCredit(
+        grossIncome: grossIncome,
+        calculatedTaxShare: laborCalculatedTaxShare,
+      ),
+      smeExemption: smeExemptionAmt,
     );
 
     // 월세 세액공제 (조특법 §95의2, 2024 귀속~): 총급여 8천만·종합소득금액 7천만 이하·무주택 세대주
@@ -202,7 +216,12 @@ class CombinedTaxCalculator {
     )) {
       final double annualRent = monthlyRent * 12;
       final double rentLimit = annualRent > 10000000.0 ? 10000000.0 : annualRent;
-      final double rentCreditRate = grossIncome <= 55000000.0 ? 0.17 : 0.15;
+      // 17% 구간은 총급여 5,500만 이하 **그리고** 종합소득금액 4,500만 이하일 때만이다
+      // (조특법 §95의2 — "종합소득금액이 4천5백만원을 초과하는 사람은 제외").
+      // N잡러는 부업 소득 때문에 총급여가 낮아도 종합소득금액이 4,500만을 넘기 쉬워,
+      // 총급여만 보면 15%여야 할 사람에게 17%를 줘 환급이 과대해진다. 확인일 2026-07-25.
+      final double rentCreditRate =
+          (grossIncome <= 55000000.0 && totalGlobalIncome <= 45000000.0) ? 0.17 : 0.15;
       rawRentTaxCredit = rentLimit * rentCreditRate;
     }
 
@@ -219,12 +238,6 @@ class CombinedTaxCalculator {
       retirementPensionPayment: irpPayment,
       grossIncome: grossIncome,
     );
-    final double smeExemptionAmt = (isSmeEmployee && smeStartYear > 0)
-        ? EmployeeTaxCalculator.calculateSmeExemption(
-            calculatedTax: estimatedCalculatedTax,
-            smeStartYear: smeStartYear,
-            isYouth: isYouthSme)
-        : 0.0;
     final double medicalTaxCreditAmt = EmployeeTaxCalculator.calculateMedicalTaxCredit(
       grossIncome: grossIncome,
       infertilityExpense: infertilityMedical,
@@ -309,6 +322,7 @@ class CombinedTaxCalculator {
       otherIncomeAmount: otherIncomeAmount,
       totalGlobalIncome: totalGlobalIncome,
       taxBase: taxBase,
+      calculatedTax: estimatedCalculatedTax,
       annualIncomeTax: finalIncomeTax,
       annualLocalTax: finalLocalTax,
       annualTotalTax: finalTotalTax,
@@ -320,6 +334,7 @@ class CombinedTaxCalculator {
       monthlyReserve: monthlyReserve,
       reserveNudgeMessage: reserveNudgeMessage,
       cardResult: cardResult,
+      rentTaxCredit: rawRentTaxCredit,
       yellowUmbrellaDeduction: yellowUmbrellaDeduction,
       yellowUmbrellaLimit: yellowUmbrellaLimit,
       insuranceDeduction: insDeduction.total,
@@ -557,6 +572,8 @@ class CombinedTaxResult {
   final double otherIncomeAmount;
   final double totalGlobalIncome;
   final double taxBase;
+  /// 종합소득산출세액(국세, 세액공제 차감 전) — 무기장가산세 산식의 기준값.
+  final double calculatedTax;
   final double annualIncomeTax;
   final double annualLocalTax;
   final double annualTotalTax;
@@ -568,6 +585,8 @@ class CombinedTaxResult {
   final double monthlyReserve;
   final String reserveNudgeMessage;
   final CreditCardDeductionResult cardResult;
+  /// 적용된 월세 세액공제액 (조특법 §95의2).
+  final double rentTaxCredit;
   final double yellowUmbrellaDeduction;
   final double yellowUmbrellaLimit;
   final double insuranceDeduction;
@@ -591,6 +610,7 @@ class CombinedTaxResult {
     required this.otherIncomeAmount,
     required this.totalGlobalIncome,
     required this.taxBase,
+    required this.calculatedTax,
     required this.annualIncomeTax,
     required this.annualLocalTax,
     required this.annualTotalTax,
@@ -602,6 +622,7 @@ class CombinedTaxResult {
     required this.monthlyReserve,
     required this.reserveNudgeMessage,
     required this.cardResult,
+    required this.rentTaxCredit,
     required this.yellowUmbrellaDeduction,
     required this.yellowUmbrellaLimit,
     required this.insuranceDeduction,
