@@ -279,7 +279,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     // 기존 평문 DB가 있고 아직 암호화 전이면: 먼저 평문 상태로 최신 스키마까지 정규화한 뒤
     // SQLCipher 암호화 DB로 1회 이전한다(S-2). 신규 설치는 곧장 암호화 DB로 생성된다.
     if (await File(path).exists() && !await _isAlreadyEncrypted(path, key)) {
-      final normalizeDb = await openDatabase(path, version: 38, onCreate: _onCreate, onUpgrade: _onUpgrade);
+      final normalizeDb = await openDatabase(path, version: 39, onCreate: _onCreate, onUpgrade: _onUpgrade);
       await normalizeDb.close();
       await _encryptExistingPlaintextDb(path, key);
     }
@@ -287,7 +287,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     _db = await openDatabase(
       path,
       password: key,
-      version: 38,
+      version: 39,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -328,7 +328,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     }
     await plainDb.close();
 
-    final encDb = await openDatabase(tempEncPath, password: key, version: 38, onCreate: _onCreate);
+    final encDb = await openDatabase(tempEncPath, password: key, version: 39, onCreate: _onCreate);
     var insertedRows = 0;
     await encDb.transaction((txn) async {
       for (final entry in dump.entries) {
@@ -380,6 +380,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
             is_single_parent INTEGER,
             wedding_year INTEGER,
             children_count_8plus INTEGER,
+            children_count_total INTEGER,
             newborn_count INTEGER,
             is_sme_employee INTEGER,
             sme_start_year INTEGER,
@@ -812,6 +813,15 @@ class SqfliteDatabaseHelper implements DatabaseService {
                 'ALTER TABLE user_profile ADD COLUMN freelancer_health_insurance REAL');
           } catch (e) {}
         }
+        // 자녀 수 (v39) — 카드공제 기본한도가 2025 개정으로 자녀 수에 따라
+        // 300→350·400만으로 올라가는데(조특법 §126의2⑩) 그 입력이 없었다.
+        // children_count_8plus는 컬럼만 있고 입력 UI가 없어 늘 0이었다.
+        if (oldVersion < 39) {
+          try {
+            await db.execute(
+                'ALTER TABLE user_profile ADD COLUMN children_count_total INTEGER');
+          } catch (e) {}
+        }
   }
 
   @override
@@ -846,6 +856,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'is_single_parent': profile['is_single_parent'] == true ? 1 : 0,
         'wedding_year': profile['wedding_year'],
         'children_count_8plus': profile['children_count_8plus'] ?? 0,
+        'children_count_total': profile['children_count_total'] ?? 0,
         'newborn_count': profile['newborn_count'] ?? 0,
         'is_sme_employee': profile['is_sme_employee'] == true ? 1 : 0,
         'sme_start_year': profile['sme_start_year'],
@@ -901,6 +912,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
       'is_single_parent': map['is_single_parent'] == 1,
       'wedding_year': map['wedding_year'] as int?,
       'children_count_8plus': map['children_count_8plus'] as int? ?? 0,
+      'children_count_total': map['children_count_total'] as int? ?? 0,
       'newborn_count': map['newborn_count'] as int? ?? 0,
       'is_sme_employee': map['is_sme_employee'] == 1,
       'sme_start_year': map['sme_start_year'] as int?,

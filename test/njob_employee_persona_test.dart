@@ -397,6 +397,35 @@ void main() {
     }
   });
 
+  test('카드공제 기본한도는 자녀 수에 따라 오른다 (조특법 §126의2⑩, 2025 개정)', () {
+    // | 총급여 | 무자녀 | 자녀 1명 | 자녀 2명 이상 |
+    // | 7천만 이하 | 300만 | 350만 | 400만 |
+    // | 7천만 초과 | 250만 | 275만 | 300만 |
+    double limit(double gross, int kids) =>
+        EmployeeTaxCalculator.creditCardBaseLimit(grossIncome: gross, childrenCount: kids);
+
+    expect(limit(50000000, 0), 3000000);
+    expect(limit(50000000, 1), 3500000);
+    expect(limit(50000000, 2), 4000000);
+    expect(limit(50000000, 5), 4000000, reason: '2명 이상은 더 늘지 않는다');
+    expect(limit(90000000, 0), 2500000);
+    expect(limit(90000000, 1), 2750000);
+    expect(limit(90000000, 2), 3000000);
+    expect(limit(90000000, 5), 3000000);
+
+    // 실제 공제액에도 반영되는지 — 한도까지 쓴 사람이면 자녀 수만큼 더 공제된다.
+    final noKids = EmployeeTaxCalculator.estimateCreditCardRefund(
+      grossAnnual: 50000000, creditCardYtd: 30000000, debitCashYtd: 30000000);
+    final twoKids = EmployeeTaxCalculator.estimateCreditCardRefund(
+      grossAnnual: 50000000, creditCardYtd: 30000000, debitCashYtd: 30000000,
+      childrenCount: 2);
+    // ignore: avoid_print
+    print('\n[카드 한도] 무자녀 공제=${won(noKids.deduction)} 환급=${won(noKids.taxSaving)}'
+        '  →  자녀2 공제=${won(twoKids.deduction)} 환급=${won(twoKids.taxSaving)}');
+    expect(twoKids.deduction, greaterThan(noKids.deduction));
+    expect(twoKids.taxSaving, greaterThan(noKids.taxSaving));
+  });
+
   test('N잡러 카드 절세액은 종합 과세표준 기준 — 부업이 구간을 밀어올리면 커진다', () async {
     // 조특법 §126의2는 "근로소득금액에서 공제"라 공제액·한도는 총급여 기준이지만,
     // 줄어든 과세표준은 종합소득 구간에서 세율이 매겨진다. 근로소득만으로 절세액을

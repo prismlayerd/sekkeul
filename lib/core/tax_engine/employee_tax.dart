@@ -570,6 +570,26 @@ class EmployeeTaxCalculator {
   }
 
   /// 신용카드 소득공제 연산
+  /// 카드공제 기본한도 — 조특법 §126의2⑩ (2025 귀속 개정, 2028.12.31까지).
+  /// 자녀등(자녀·손자녀 등 기본공제대상 부양가족) 1명당 50만원씩, 최대 100만원 상향.
+  ///
+  /// | 총급여 | 무자녀 | 자녀등 1명 | 자녀등 2명 이상 |
+  /// |---|---|---|---|
+  /// | 7천만 이하 | 300만 | 350만 | 400만 |
+  /// | 7천만 초과 | 250만 | 275만 | 300만 |
+  ///
+  /// 7천만 초과 구간은 1명당 25만원(최대 50만원) 상향이다 — 이하 구간과 폭이 다르다.
+  static double creditCardBaseLimit({
+    required double grossIncome,
+    int childrenCount = 0,
+  }) {
+    final int kids = childrenCount < 0 ? 0 : (childrenCount > 2 ? 2 : childrenCount);
+    if (grossIncome <= 70000000) {
+      return 3000000.0 + kids * 500000.0;
+    }
+    return 2500000.0 + kids * 250000.0;
+  }
+
   static CreditCardDeductionResult calculateCreditCardDeduction({
     required double grossIncome,
     required double creditCard,
@@ -577,6 +597,8 @@ class EmployeeTaxCalculator {
     required double traditionalMarket,
     required double publicTransport,
     required double cultureExpense,
+    /// 자녀등 수 — 기본한도 상향(2025 개정)에 쓰인다.
+    int childrenCount = 0,
   }) {
     final double threshold = grossIncome * 0.25;
     final double totalSpend = creditCard + debitCardAndCash + traditionalMarket + publicTransport + cultureExpense;
@@ -607,7 +629,8 @@ class EmployeeTaxCalculator {
     final double debitDeduction = allocatedDebit * 0.30;
     final double creditDeduction = allocatedCredit * 0.15;
 
-    final double baseLimit = grossIncome <= 70000000 ? 3000000.0 : 2500000.0;
+    final double baseLimit =
+        creditCardBaseLimit(grossIncome: grossIncome, childrenCount: childrenCount);
     final double rawBaseDeduction = creditDeduction + debitDeduction;
     final double baseDeduction = rawBaseDeduction > baseLimit ? baseLimit : rawBaseDeduction;
 
@@ -641,6 +664,8 @@ class EmployeeTaxCalculator {
     int dependentsIncludingSelf = 1,
     required double creditCardYtd,
     required double debitCashYtd,
+    /// 자녀등 수 — 기본한도 상향(조특법 §126의2⑩, 2025 개정).
+    int childrenCount = 0,
   }) {
     final double threshold = grossAnnual * 0.25;
     final double totalEligible = creditCardYtd + debitCashYtd;
@@ -654,6 +679,7 @@ class EmployeeTaxCalculator {
       creditCard: creditCardYtd,
       debitCardAndCash: debitCashYtd,
       traditionalMarket: 0, publicTransport: 0, cultureExpense: 0,
+      childrenCount: childrenCount,
     );
     final double deduction = cc.finalDeduction;
 
@@ -676,8 +702,9 @@ class EmployeeTaxCalculator {
     }
 
     final double saving = decidedTaxOf(baseBeforeCard) - decidedTaxOf(baseAfterCard);
-    // 카드공제만 쓰면 기본한도(300/250만)가 실질 상한 — 추가한도(전통시장 등)는 미반영.
-    final double baseLimit = grossAnnual <= 70000000 ? 3000000.0 : 2500000.0;
+    // 카드공제만 쓰면 기본한도가 실질 상한 — 추가한도(전통시장 등)는 미반영.
+    final double baseLimit =
+        creditCardBaseLimit(grossIncome: grossAnnual, childrenCount: childrenCount);
 
     return CreditCardRefundEstimate(
       deduction: deduction,

@@ -58,6 +58,8 @@ class CombinedTaxCalculator {
     double insurancePremium = 0.0,
     double disabledInsurancePremium = 0.0,
     int childrenCount8Plus = 0,
+    /// 자녀등 총 수 — 카드공제 기본한도 상향용(8세 미만 자녀·손자녀 포함).
+    int childrenCountTotal = 0,
     int newbornCount = 0,
     double pensionSavings = 0.0,
     double irpPayment = 0.0,
@@ -133,6 +135,8 @@ class CombinedTaxCalculator {
       traditionalMarket: traditionalMarket,
       publicTransport: publicTransport,
       cultureExpense: cultureExpense,
+      // 카드공제 기본한도는 자녀등 수에 따라 올라간다(조특법 §126의2⑩, 2025 개정).
+      childrenCount: childrenCountTotal,
     );
     final double cardDeduction = cardResult.finalDeduction;
 
@@ -355,6 +359,7 @@ class CombinedTaxCalculator {
     double insurancePremium = 0.0,
     double disabledInsurancePremium = 0.0,
     int childrenCount8Plus = 0,
+    int childrenCountTotal = 0,
     int newbornCount = 0,
     double pensionSavings = 0.0,
     double irpPayment = 0.0,
@@ -396,6 +401,7 @@ class CombinedTaxCalculator {
           insurancePremium: insurancePremium,
           disabledInsurancePremium: disabledInsurancePremium,
           childrenCount8Plus: childrenCount8Plus,
+          childrenCountTotal: childrenCountTotal,
           newbornCount: newbornCount,
           pensionSavings: pensionSavings,
           irpPayment: irpPayment,

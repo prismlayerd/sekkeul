@@ -160,6 +160,8 @@ class ReserveEstimator {
     final monthlyRent =
         isMonthlyRent ? ((profile?['monthly_rent'] as num?)?.toDouble() ?? 0.0) : 0.0;
     final childrenCount8Plus = (profile?['children_count_8plus'] as int?) ?? 0;
+    // 카드공제 기본한도 상향용 — 8세 미만 자녀도 자녀등에 포함된다(조특법 §126의2⑩).
+    final childrenCountTotal = (profile?['children_count_total'] as int?) ?? 0;
     final newbornCount = (profile?['newborn_count'] as int?) ?? 0;
     final hasElderly70Plus = profile?['has_elderly_70plus'] == true;
     final isSingleParent = profile?['is_single_parent'] == true;
@@ -355,6 +357,7 @@ class ReserveEstimator {
             isHomeless: isMonthlyRent && !ownsHouse,
             yellowUmbrellaPayment: yellowUmbrella,
             childrenCount8Plus: childrenCount8Plus,
+            childrenCountTotal: childrenCountTotal,
             newbornCount: newbornCount,
             hasElderly70Plus: hasElderly70Plus,
             isSingleParent: isSingleParent,
@@ -416,6 +419,7 @@ class ReserveEstimator {
           isHomeless: isMonthlyRent && !ownsHouse,
           yellowUmbrellaPayment: yellowUmbrella,
           childrenCount8Plus: childrenCount8Plus,
+          childrenCountTotal: childrenCountTotal,
           newbornCount: newbornCount,
           hasElderly70Plus: hasElderly70Plus,
           isSingleParent: isSingleParent,

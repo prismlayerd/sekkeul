@@ -73,6 +73,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   // 부양가족 기본값은 0(본인만) — my_info·프로필 마법사와 같은 규칙. 1로 두면
   // 프로필 미설정 직장인의 간이세액(세후·환급)이 2인 가족 가정으로 계산된다.
   int _dependentCount = 0;
+  // 자녀등 수 — 카드공제 기본한도 상향(조특법 §126의2⑩)에 쓰인다.
+  int _childrenCount = 0;
   bool _isMonthlyRent = false;
   bool _isTypeIdentified = false;   // 유형 파악 완료 여부 (온보딩 1단계)
   bool _isProfileCompleted = false; // 프로필 완성 여부 (온보딩 2단계)
@@ -174,6 +176,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           }
           
           _dependentCount = profile['dependents'] as int? ?? 0;
+          _childrenCount = profile['children_count_total'] as int? ?? 0;
           _isMonthlyRent = profile['is_monthly_rent'] == true;
           
           final monthlyRent = profile['monthly_rent'] as double? ?? 0.0;
@@ -891,6 +894,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 0.0,
             grossIncome: _grossIncome,
             dependentCount: _dependentCount,
+            childrenCount: _childrenCount,
             laborIncome: _laborIncome,
             otherIncome: _otherIncome,
             otherIncomeGrossEstimate: _otherIncomeGrossEstimate,

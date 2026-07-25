@@ -18,6 +18,9 @@ class HomeStatusSection extends StatefulWidget {
   final double monthlyIncome; // 활성 소득 컨트롤러(급여/프리랜서 수입)에서 파싱된 값
   final double grossIncome;
   final int dependentCount;
+
+  /// 자녀등 수 — 카드공제 기본한도 상향(조특법 §126의2⑩, 2025 개정).
+  final int childrenCount;
   final double laborIncome;
   final double otherIncome;
   final double otherIncomeGrossEstimate;
@@ -50,6 +53,7 @@ class HomeStatusSection extends StatefulWidget {
     required this.monthlyIncome,
     required this.grossIncome,
     required this.dependentCount,
+    this.childrenCount = 0,
     required this.laborIncome,
     required this.otherIncome,
     required this.otherIncomeGrossEstimate,
@@ -469,6 +473,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     final r = EmployeeTaxCalculator.estimateCreditCardRefund(
       grossAnnual: annualSalary,
       dependentsIncludingSelf: 1 + widget.dependentCount,
+      childrenCount: widget.childrenCount,
       creditCardYtd: widget.creditCardYtdTotal,
       debitCashYtd: widget.debitCashYtdTotal,
     );

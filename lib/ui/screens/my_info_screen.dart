@@ -45,6 +45,14 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   String _residenceEditValue = '전세';
   int _payDayEditValue = 0;
   final TextEditingController _healthInsEditCtrl = TextEditingController();
+  int _childrenTotalEditValue = 0;
+  int _children8PlusEditValue = 0;
+
+  /// 자녀등 총 수 — 카드공제 기본한도 상향(조특법 §126의2⑩, 2025 개정)에 쓰인다.
+  int get _childrenTotal => (_profile?['children_count_total'] as int?) ?? 0;
+
+  /// 8세 이상 자녀 수 — 자녀세액공제(소법 §59의2)에 쓰인다.
+  int get _children8Plus => (_profile?['children_count_8plus'] as int?) ?? 0;
 
   /// 건강보험 지역가입자 연 납부액(전액 소득공제) — 프리랜서만.
   double get _healthInsPaid =>
@@ -94,6 +102,8 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       (label: '예상 연봉', filled: d('gross_income') > 0),
       (label: '나이', filled: i('age') > 0),
       (label: '부양가족', filled: p.containsKey('dependents')),
+      // 자녀 수는 카드공제 한도(자녀 1명당 +50만)와 자녀세액공제 양쪽에 쓰인다.
+      (label: '자녀', filled: p.containsKey('children_count_total')),
       (label: '거주 형태', filled: p.containsKey('is_monthly_rent')),
       (label: '급여일', filled: i('pay_day') > 0),
     ];
@@ -140,6 +150,9 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
         case 'health_ins':
           final v = (p['freelancer_health_insurance'] as num?)?.toDouble() ?? 0.0;
           _healthInsEditCtrl.text = v > 0 ? _fmt.format(v.toInt()) : '';
+        case 'children':
+          _childrenTotalEditValue = (p['children_count_total'] as int?) ?? 0;
+          _children8PlusEditValue = (p['children_count_8plus'] as int?) ?? 0;
       }
     });
   }
@@ -149,6 +162,18 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     final v = double.tryParse(_grossEditCtrl.text.replaceAll(',', '')) ?? 0.0;
     await _updateProfileFields({'gross_income': v});
     await dbService.setProfileTypeValues(widget.userType, grossIncome: v);
+    if (mounted) setState(() => _editingKey = null);
+  }
+
+  Future<void> _saveChildrenInline() async {
+    // 8세 이상이 총 자녀 수를 넘을 수 없다 — 넘기면 총 수에 맞춰 깎는다.
+    final eight = _children8PlusEditValue > _childrenTotalEditValue
+        ? _childrenTotalEditValue
+        : _children8PlusEditValue;
+    await _updateProfileFields({
+      'children_count_total': _childrenTotalEditValue,
+      'children_count_8plus': eight,
+    });
     if (mounted) setState(() => _editingKey = null);
   }
 
@@ -408,6 +433,26 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
         accent: accent,
         editor: _dependentsEditor(ink),
       ),
+      // 자녀는 부양가족과 별도로 받는다 — 카드공제 한도가 자녀 수에만 반응하고
+      // (조특법 §126의2⑩), 자녀세액공제는 그중 8세 이상만 대상이라 수가 따로 필요하다.
+      if (!_isFreelancer)
+        _infoRow(
+          icon: Icons.child_care_outlined,
+          label: '자녀',
+          value: _profile?.containsKey('children_count_total') == true
+              ? '$_childrenTotal명${_children8Plus > 0 ? ' (8세 이상 $_children8Plus명)' : ''}'
+              : null,
+          valueExtra: _childrenTotal > 0
+              ? '카드공제 한도 +${_fmt.format((_childrenTotal > 2 ? 2 : _childrenTotal) * 500000)}원'
+              : null,
+          placeholder: '설정되지 않았어요 — 카드공제 한도가 올라가요',
+          isSet: _profile?.containsKey('children_count_total') == true,
+          editKey: 'children',
+          ink: ink,
+          sub: sub,
+          accent: accent,
+          editor: _childrenEditor(ink, sub),
+        ),
       _infoRow(
         icon: Icons.home_outlined,
         label: '거주 형태',
@@ -506,6 +551,60 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       AmountField(controller: _grossEditCtrl, expand: true, autofocus: true),
       const SizedBox(height: 10),
       _editActions(onCancel: () => setState(() => _editingKey = null), onSave: _saveGrossIncomeInline),
+    ]);
+  }
+
+  /// 자녀 수 — 두 세제가 서로 다른 기준을 쓴다.
+  /// 카드공제 한도는 자녀등 전체, 자녀세액공제는 8세 이상만이라 둘 다 받는다.
+  Widget _childrenEditor(Color ink, Color sub) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _stepperRow('자녀 수', _childrenTotalEditValue, ink,
+          onMinus: _childrenTotalEditValue > 0
+              ? () => setState(() {
+                    _childrenTotalEditValue--;
+                    if (_children8PlusEditValue > _childrenTotalEditValue) {
+                      _children8PlusEditValue = _childrenTotalEditValue;
+                    }
+                  })
+              : null,
+          onPlus: () => setState(() => _childrenTotalEditValue++)),
+      const SizedBox(height: 8),
+      _stepperRow('그중 8세 이상', _children8PlusEditValue, ink,
+          onMinus: _children8PlusEditValue > 0
+              ? () => setState(() => _children8PlusEditValue--)
+              : null,
+          onPlus: _children8PlusEditValue < _childrenTotalEditValue
+              ? () => setState(() => _children8PlusEditValue++)
+              : null),
+      const SizedBox(height: 6),
+      Text('자녀 수는 카드공제 한도(1명 +50만·2명 이상 +100만), '
+          '8세 이상은 자녀세액공제에 쓰여요.',
+          style: AppTheme.sans(11.5, AppTheme.inkTertiary(context), height: 1.4)),
+      const SizedBox(height: 10),
+      _editActions(onCancel: () => setState(() => _editingKey = null), onSave: _saveChildrenInline),
+    ]);
+  }
+
+  Widget _stepperRow(String label, int value, Color ink,
+      {VoidCallback? onMinus, VoidCallback? onPlus}) {
+    return Row(children: [
+      Expanded(child: Text(label, style: AppTheme.sans(13, AppTheme.inkSecondary(context)))),
+      IconButton(
+        onPressed: onMinus,
+        icon: const Icon(Icons.remove_circle_outline_rounded, size: 22),
+        visualDensity: VisualDensity.compact,
+      ),
+      SizedBox(
+        width: 52,
+        child: Text('$value명',
+            textAlign: TextAlign.center,
+            style: AppTheme.sans(15, ink, weight: FontWeight.w700)),
+      ),
+      IconButton(
+        onPressed: onPlus,
+        icon: const Icon(Icons.add_circle_outline_rounded, size: 22),
+        visualDensity: VisualDensity.compact,
+      ),
     ]);
   }
 
