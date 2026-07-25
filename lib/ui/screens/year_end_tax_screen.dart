@@ -391,11 +391,14 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
     _smeExemption = (_isSmeEmployee && _smeStartYear > 0)
         ? EmployeeTaxCalculator.calculateSmeExemption(calculatedTax: _calculatedTax, smeStartYear: _smeStartYear)
         : 0.0;
-    // 감면을 받는 해에는 근로소득세액공제가 (1 - 감면급여비율)만큼만 남는다(조특령 §27⑨) —
-    // 둘 다 온전히 빼면 이중 혜택이라 결정세액이 실제보다 낮게 나온다.
+    // 감면을 받는 해에는 근로소득세액공제가 감면세액 비율만큼 깎인다
+    // (국세청: 근로세액공제 × [1 - 감면세액/근로소득 산출세액]) — 둘 다 온전히
+    // 빼면 이중 혜택이라 결정세액이 실제보다 낮게 나온다. 직장인은 근로소득뿐이라
+    // 근로소득 산출세액이 곧 종합소득 산출세액이다.
     _laborTaxCredit = EmployeeTaxCalculator.laborTaxCreditAfterSmeExemption(
       laborTaxCredit: _laborTaxCredit,
       smeExemption: _smeExemption,
+      laborCalculatedTax: _calculatedTax,
     );
     _decidedTax = _calculatedTax - _smeExemption - _laborTaxCredit - _rentRefund;
     if (_decidedTax < 0) _decidedTax = 0;

@@ -198,13 +198,15 @@ class CombinedTaxCalculator {
             smeStartYear: smeStartYear,
             isYouth: isYouthSme)
         : 0.0;
-    // 감면을 받는 해에는 근로소득세액공제가 (1 - 감면급여비율)만큼만 남는다(조특령 §27⑨).
+    // 감면을 받는 해에는 근로소득세액공제가 감면세액 비율만큼 깎인다
+    // (국세청: 근로세액공제 × [1 - 감면세액/근로소득 산출세액]).
     final double laborTaxCredit = EmployeeTaxCalculator.laborTaxCreditAfterSmeExemption(
       laborTaxCredit: EmployeeTaxCalculator.calculateLaborTaxCredit(
         grossIncome: grossIncome,
         calculatedTaxShare: laborCalculatedTaxShare,
       ),
       smeExemption: smeExemptionAmt,
+      laborCalculatedTax: laborCalculatedTaxShare,
     );
 
     // 월세 세액공제 (조특법 §95의2, 2024 귀속~): 총급여 8천만·종합소득금액 7천만 이하·무주택 세대주

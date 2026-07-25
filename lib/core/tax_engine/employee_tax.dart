@@ -226,18 +226,24 @@ class EmployeeTaxCalculator {
     return credit > 2000000.0 ? 2000000.0 : credit;
   }
 
-  /// 중소기업 감면을 받는 동안 깎이는 근로소득세액공제 (조특령 §27⑨).
+  /// 중소기업 감면을 받는 동안 깎이는 근로소득세액공제.
   ///
-  /// 조문: `세액공제액 = 소득세법 §59①에 따라 계산한 근로소득세액공제액 × (1 - 감면급여비율)`.
-  /// 감면급여비율 = 감면대상 중소기업체 총급여 ÷ 해당 근로자 총급여액.
-  /// 이 앱은 근무처를 하나로 보므로 감면이 실제로 적용되는 해에는 비율이 1 → 공제 0이다.
-  /// 감면과 근로세액공제를 둘 다 온전히 빼면 이중 혜택이 되어 세액이 과소해진다.
-  /// 확인일 2026-07-25.
+  /// 국세청 「근로소득세액공제」 산식:
+  /// `근로소득세액공제액 × [1 - (중소기업 취업자 소득세 감면세액 ÷ 근로소득에 대한 산출세액)]`.
+  /// 감면과 근로세액공제를 둘 다 온전히 빼면 이중 혜택이라 세액이 과소해진다.
+  ///
+  /// 깎이는 폭은 감면세액에 비례한다 — 감면이 연 200만 한도에 걸려 잘리면 그만큼
+  /// 근로세액공제가 더 남는다. "감면을 받으면 공제가 0"이 아니다.
+  /// 확인일 2026-07-26.
   static double laborTaxCreditAfterSmeExemption({
     required double laborTaxCredit,
     required double smeExemption,
-  }) =>
-      smeExemption > 0 ? 0.0 : laborTaxCredit;
+    required double laborCalculatedTax,
+  }) {
+    if (smeExemption <= 0 || laborCalculatedTax <= 0) return laborTaxCredit;
+    final double ratio = (smeExemption / laborCalculatedTax).clamp(0.0, 1.0);
+    return laborTaxCredit * (1 - ratio);
+  }
 
   /// 중소기업취업자 청년 감면 적격 판정 (조특법 §30).
   /// 만 34세 이하면 청년. 군 복무기간(최대 6년)만큼 나이 상한을 늘려준다

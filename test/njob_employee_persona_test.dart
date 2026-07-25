@@ -494,21 +494,50 @@ void main() {
         reason: '부업이 있으면 전체 산출세액 기준보다 작아야 한다');
   });
 
-  test('중소기업 감면을 받으면 근로소득세액공제가 사라진다 (조특령 §27⑨)', () {
-    // 세액공제액 = 근로세액공제 × (1 - 감면급여비율). 근무처가 하나면 비율 1 → 0.
-    // 둘 다 온전히 빼면 이중 혜택이라 결정세액이 실제보다 낮게 나온다.
-    expect(
-      EmployeeTaxCalculator.laborTaxCreditAfterSmeExemption(
-          laborTaxCredit: 660000, smeExemption: 500000),
-      0,
-      reason: '감면을 받는 해에는 근로세액공제가 남지 않는다',
-    );
-    expect(
-      EmployeeTaxCalculator.laborTaxCreditAfterSmeExemption(
-          laborTaxCredit: 660000, smeExemption: 0),
-      660000,
-      reason: '감면기간이 끝나면 근로세액공제는 온전히 살아난다',
-    );
+  test('중소기업 감면을 받으면 근로세액공제가 감면세액 비율만큼 깎인다', () {
+    // 국세청 산식: 근로세액공제 × [1 - (감면세액 / 근로소득에 대한 산출세액)].
+    // "감면을 받으면 0"이 아니다 — 감면이 연 200만 한도에 걸려 잘리면 그만큼 더 남는다.
+    double f({required double credit, required double sme, required double calc}) =>
+        EmployeeTaxCalculator.laborTaxCreditAfterSmeExemption(
+            laborTaxCredit: credit, smeExemption: sme, laborCalculatedTax: calc);
+
+    // 한도에 안 걸린 청년(90% 감면) → 산출세액의 90%가 감면 → 공제는 10%만 남는다.
+    expect(f(credit: 660000, sme: 1800000, calc: 2000000), closeTo(66000, 1),
+        reason: '1 - 1,800,000/2,000,000 = 0.1');
+    // 한도(200만)에 걸린 고소득 청년 → 감면 비율이 낮아져 공제가 더 남는다.
+    expect(f(credit: 660000, sme: 2000000, calc: 8000000), closeTo(495000, 1),
+        reason: '1 - 2,000,000/8,000,000 = 0.75');
+    // 감면기간이 끝나면 온전히 살아난다.
+    expect(f(credit: 660000, sme: 0, calc: 2000000), 660000);
+    // 산출세액이 0이면 나눗셈이 성립하지 않는다 — 그대로 둔다.
+    expect(f(credit: 660000, sme: 0, calc: 0), 660000);
+  });
+
+  test('감면 적용 시 결정세액이 감면·근로공제 이중차감보다 커야 한다', () {
+    CombinedTaxResult run({required bool sme}) => CombinedTaxCalculator.calculateCombinedTax(
+          grossIncome: 30000000,
+          accumulatedFreelancerIncome: 20000000,
+          inputMonths: 12,
+          occupationCode: '940306',
+          creditCard: 0, debitCardAndCash: 0, traditionalMarket: 0,
+          publicTransport: 0, cultureExpense: 0,
+          allowanceCount: 0, decidedTax: 0, monthlyRent: 0,
+          isSmeEmployee: sme, smeStartYear: sme ? DateTime.now().year : 0,
+          isYouthSme: sme,
+        );
+
+    final withSme = run(sme: true);
+    final noSme = run(sme: false);
+    // ignore: avoid_print
+    print('\n[감면×근로공제] 감면 없음 결정세액=${won(noSme.annualIncomeTax)}'
+        '  →  감면 적용=${won(withSme.annualIncomeTax)} (감면 ${won(withSme.smeExemption)})');
+    // 감면은 세금을 줄여야 하지만, 근로세액공제가 함께 깎이므로
+    // 감면액 전부가 그대로 절세로 이어지지는 않는다.
+    expect(withSme.annualIncomeTax, lessThan(noSme.annualIncomeTax),
+        reason: '감면을 받으면 세금이 줄긴 해야 한다');
+    expect(noSme.annualIncomeTax - withSme.annualIncomeTax,
+        lessThan(withSme.smeExemption),
+        reason: '근로세액공제가 함께 깎이므로 절세액이 감면액보다 작아야 한다');
   });
 
   test('월세 17%는 종합소득금액 4,500만 이하일 때만 (조특법 §95의2)', () {
