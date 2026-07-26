@@ -746,4 +746,69 @@ void main() {
       expect(TaxRates.calculateChildTaxCredit(0), 0);
     });
   });
+
+  // 4대보험 요율·상하한 — 전부 법령/고시 원문 대조(2026-07-27).
+  //   국민연금법 §88③④ + 부칙 <법률 제20903호> §4
+  //   국민건강보험법 시행령 §44 / 보건복지부고시 제2025-222호
+  //   노인장기요양보험법 §9① + 시행령 §4
+  //   보험료징수법 시행령 §12①2 · §56의7④
+  group('4대보험 요율·상하한 (법령 원문)', () {
+    test('요율 상수가 조문값과 일치한다', () {
+      expect(InsuranceEngine.empNationalPensionRate, 0.0475);   // 1만분의 475 (2026년)
+      expect(InsuranceEngine.freeNationalPensionRate, 0.095);   // 1천분의 95 (2026년)
+      expect(InsuranceEngine.healthInsuranceRate, 0.0719);      // 1만분의 719
+      expect(InsuranceEngine.empHealthInsuranceRate, 0.03595);  // 노사 각 1/2
+      expect(InsuranceEngine.njobHealthInsuranceRate, 0.0719);  // 전액 부과
+      expect(InsuranceEngine.healthScoreUnitAmount, 211.5);     // 재산보험료부과점수당 금액
+      expect(InsuranceEngine.longTermCareInsuranceRate, 0.009448); // 100만분의 9,448
+      expect(InsuranceEngine.empEmploymentInsuranceRate, 0.0090);  // 1천분의 18 ÷ 2
+      expect(InsuranceEngine.specialWorkerEmploymentRate, 0.008);  // 1천분의 16 ÷ 2
+    });
+
+    test('장기요양은 건강보험료 대비 비율 — 법 §9①', () {
+      // 상수를 나눗셈으로 두면 두 요율 중 하나만 개정돼도 비율이 따라간다.
+      expect(InsuranceEngine.longTermCareRate, closeTo(0.009448 / 0.0719, 1e-12));
+      expect(InsuranceEngine.longTermCareRate, closeTo(0.131405, 1e-6));
+    });
+
+    test('직장 건강보험료는 보험료액에 상·하한 — 소득이 아니다', () {
+      // 하한 20,160원의 본인부담 절반
+      final low = InsuranceEngine.calculateEmployeeInsurance(100000);
+      expect(low.healthInsurance, 10080);
+      // 상한 9,183,480원의 본인부담 절반
+      final high = InsuranceEngine.calculateEmployeeInsurance(200000000);
+      expect(high.healthInsurance, 4591740);
+      // 종전 구현은 소득에 캡을 걸어 하한이 10,089원으로 어긋났다.
+    });
+
+    test('국민연금은 기준소득월액(소득)에 상·하한', () {
+      final high = InsuranceEngine.calculateEmployeeInsurance(200000000);
+      expect(high.nationalPension,
+          TaxRates.truncateWon(TaxRates.nationalPensionBaseUpperLimit * 0.0475));
+      final low = InsuranceEngine.calculateEmployeeInsurance(100000);
+      expect(low.nationalPension,
+          TaxRates.truncateWon(TaxRates.nationalPensionBaseLowerLimit * 0.0475));
+    });
+
+    test('N잡러 소득월액보험료 상한은 4,591,740원 (하한 없음)', () {
+      // 보수외소득 연 100억 → 상한에 걸려야 한다.
+      final r = InsuranceEngine.calculateNJobExtraInsurance(10000000000);
+      expect(r.extraHealthInsurance, 4591740);
+      // 2천만원 이하는 부과 자체가 없다.
+      expect(InsuranceEngine.calculateNJobExtraInsurance(20000000).extraHealthInsurance, 0);
+    });
+
+    test('지역가입자는 소득분+재산분 합계에 상·하한', () {
+      final high = InsuranceEngine.calculateFreelancerInsurance(
+          annualIncome: 10000000000, propertyValue: 0);
+      expect(high.healthInsurance, 4591740);
+      final low = InsuranceEngine.calculateFreelancerInsurance(
+          annualIncome: 120000, propertyValue: 0);
+      expect(low.healthInsurance, 20160);
+      // 소득·재산이 모두 없으면 부과하지 않는다.
+      final none = InsuranceEngine.calculateFreelancerInsurance(
+          annualIncome: 0, propertyValue: 0);
+      expect(none.healthInsurance, 0);
+    });
+  });
 }
