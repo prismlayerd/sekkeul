@@ -46,13 +46,13 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   String _residenceEditValue = '전세';
   int _payDayEditValue = 0;
   int _childrenTotalEditValue = 0;
-  int _children8PlusEditValue = 0;
+  int _childrenForCreditEditValue = 0;
 
   /// 자녀등 총 수 — 카드공제 기본한도 상향(조특법 §126의2⑩, 2025 개정)에 쓰인다.
   int get _childrenTotal => (_profile?['children_count_total'] as int?) ?? 0;
 
-  /// 8세 이상 자녀 수 — 자녀세액공제(소법 §59의2)에 쓰인다.
-  int get _children8Plus => (_profile?['children_count_8plus'] as int?) ?? 0;
+  /// 자녀세액공제 대상 연령 자녀 수 — 소법 §59의2. 기준 출생연도는 귀속연도마다 다르다.
+  int get _childrenForCredit => (_profile?['children_count_credit'] as int?) ?? 0;
 
   @override
   void initState() {
@@ -146,7 +146,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
           _payDayEditValue = (p['pay_day'] as int?) ?? 0;
         case 'children':
           _childrenTotalEditValue = (p['children_count_total'] as int?) ?? 0;
-          _children8PlusEditValue = (p['children_count_8plus'] as int?) ?? 0;
+          _childrenForCreditEditValue = (p['children_count_credit'] as int?) ?? 0;
       }
     });
   }
@@ -160,13 +160,13 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   }
 
   Future<void> _saveChildrenInline() async {
-    // 8세 이상이 총 자녀 수를 넘을 수 없다 — 넘기면 총 수에 맞춰 깎는다.
-    final eight = _children8PlusEditValue > _childrenTotalEditValue
+    // 공제대상 수가 총 자녀 수를 넘을 수 없다 — 넘기면 총 수에 맞춰 깎는다.
+    final eight = _childrenForCreditEditValue > _childrenTotalEditValue
         ? _childrenTotalEditValue
-        : _children8PlusEditValue;
+        : _childrenForCreditEditValue;
     await _updateProfileFields({
       'children_count_total': _childrenTotalEditValue,
-      'children_count_8plus': eight,
+      'children_count_credit': eight,
     });
     if (mounted) setState(() => _editingKey = null);
   }
@@ -422,23 +422,23 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
         editor: _dependentsEditor(ink),
       ),
       // 자녀는 부양가족과 별도로 받는다 — 카드공제 한도가 자녀 수에만 반응하고
-      // (조특법 §126의2⑩), 자녀세액공제는 그중 8세 이상만 대상이라 수가 따로 필요하다.
+      // (조특법 §126의2⑩), 자녀세액공제는 그중 일정 연령 이상만 대상이라 수가 따로 필요하다.
       // 카드공제는 근로소득자 전용이라 프리랜서에겐 자녀세액공제(소법 §59의2)만 걸린다.
       _infoRow(
         icon: Icons.child_care_outlined,
         label: '자녀',
         value: _profile?.containsKey('children_count_total') == true
-            ? '$_childrenTotal명${_children8Plus > 0 ? ' (8세 이상 $_children8Plus명)' : ''}'
+            ? '$_childrenTotal명${_childrenForCredit > 0 ? ' (공제대상 $_childrenForCredit명)' : ''}'
             : null,
         valueExtra: _isFreelancer
-            ? (_children8Plus > 0
-                ? '자녀세액공제 ${_fmt.format(TaxRates.calculateChildTaxCredit(_children8Plus).toInt())}원'
+            ? (_childrenForCredit > 0
+                ? '자녀세액공제 ${_fmt.format(TaxRates.calculateChildTaxCredit(_childrenForCredit).toInt())}원'
                 : null)
             : (_childrenTotal > 0
                 ? '카드공제 한도 +${_fmt.format((_childrenTotal > 2 ? 2 : _childrenTotal) * 500000)}원'
                 : null),
         placeholder: _isFreelancer
-            ? '설정되지 않았어요 — 8세 이상 자녀는 세금에서 바로 빠져요'
+            ? '설정되지 않았어요 — 공제대상 자녀는 세금에서 바로 빠져요'
             : '설정되지 않았어요 — 카드공제 한도가 올라가요',
         isSet: _profile?.containsKey('children_count_total') == true,
         editKey: 'children',
@@ -549,34 +549,34 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   }
 
   /// 자녀 수 — 두 세제가 서로 다른 기준을 쓴다.
-  /// 카드공제 한도는 자녀등 전체, 자녀세액공제는 8세 이상만이라 둘 다 받는다.
+  /// 카드공제 한도는 자녀등 전체, 자녀세액공제는 대상 연령만이라 둘 다 받는다.
   Widget _childrenEditor(Color ink, Color sub) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _stepperRow('자녀 수', _childrenTotalEditValue, ink,
           onMinus: _childrenTotalEditValue > 0
               ? () => setState(() {
                     _childrenTotalEditValue--;
-                    if (_children8PlusEditValue > _childrenTotalEditValue) {
-                      _children8PlusEditValue = _childrenTotalEditValue;
+                    if (_childrenForCreditEditValue > _childrenTotalEditValue) {
+                      _childrenForCreditEditValue = _childrenTotalEditValue;
                     }
                   })
               : null,
           onPlus: () => setState(() => _childrenTotalEditValue++)),
       const SizedBox(height: 8),
-      _stepperRow('그중 8세 이상', _children8PlusEditValue, ink,
-          onMinus: _children8PlusEditValue > 0
-              ? () => setState(() => _children8PlusEditValue--)
+      _stepperRow('그중 ${TaxRates.childTaxCreditEligibilityLabel()}', _childrenForCreditEditValue, ink,
+          onMinus: _childrenForCreditEditValue > 0
+              ? () => setState(() => _childrenForCreditEditValue--)
               : null,
-          onPlus: _children8PlusEditValue < _childrenTotalEditValue
-              ? () => setState(() => _children8PlusEditValue++)
+          onPlus: _childrenForCreditEditValue < _childrenTotalEditValue
+              ? () => setState(() => _childrenForCreditEditValue++)
               : null),
       const SizedBox(height: 6),
       // 카드공제는 근로소득자 전용(조특법 §126의2)이라 프리랜서에게 안내하면 안 된다.
       Text(
           _isFreelancer
-              ? '8세 이상 자녀만 자녀세액공제에 쓰여요. 1명 25만·2명 55만·셋째부터 40만씩.'
+              ? '${TaxRates.childTaxCreditEligibilityLabel()} 자녀만 자녀세액공제에 쓰여요. 1명 25만·2명 55만·셋째부터 40만씩.'
               : '자녀 수는 카드공제 한도(1명 +50만·2명 이상 +100만), '
-                  '8세 이상은 자녀세액공제에 쓰여요.',
+                  '${TaxRates.childTaxCreditEligibilityLabel()}는 자녀세액공제에 쓰여요.',
           style: AppTheme.sans(11.5, AppTheme.inkTertiary(context), height: 1.4)),
       const SizedBox(height: 10),
       _editActions(onCancel: () => setState(() => _editingKey = null), onSave: _saveChildrenInline),

@@ -1,3 +1,5 @@
+import 'tax_year.dart';
+
 /// 종합소득세 및 각종 세제 혜택 산정에 필요한 세율 구간 및 요율 정의 클래스
 class TaxRates {
   /// 종합소득세 세율 구간 정의 정보 (2024~2026년 귀속 기준 동일)
@@ -27,25 +29,57 @@ class TaxRates {
   /// 혼인세액공제 (2024~2026 혼인신고, 생애 1회)
   static const double marriageTaxCredit = 500000.0;
 
-  /// 자녀세액공제 (소법 §59의2, 2025 개정 — 2026 개정 없음)
-  /// 8세 이상 기본공제대상 자녀·손자녀: 첫째 25만, 둘째 30만(누적55), 셋째부터 1명당 40만
-  static double calculateChildTaxCredit(int childrenCount8OrOlder) {
-    if (childrenCount8OrOlder <= 0) return 0.0;
-    if (childrenCount8OrOlder == 1) return 250000.0;
-    if (childrenCount8OrOlder == 2) return 550000.0;
-    return 550000.0 + (childrenCount8OrOlder - 2) * 400000.0;
+  /// 자녀세액공제 금액 (소득세법 §59의2①)
+  /// 첫째 25만, 둘째 30만(누적 55), 셋째부터 1명당 40만. 금액은 2025~2026 동일.
+  ///
+  /// **대상 자녀의 연령 요건은 [childTaxCreditMinAge]로 따로 판정한다** — 2026.4.21.
+  /// 개정으로 연도마다 달라졌다.
+  static double calculateChildTaxCredit(int eligibleChildrenCount) {
+    if (eligibleChildrenCount <= 0) return 0.0;
+    if (eligibleChildrenCount == 1) return 250000.0;
+    if (eligibleChildrenCount == 2) return 550000.0;
+    return 550000.0 + (eligibleChildrenCount - 2) * 400000.0;
   }
 
-  /// 출산·입양 세액공제: 첫째 30만, 둘째 50만, 셋째 이상 70만 (해당 과세기간 출산·입양아 순서 기준)
-  static double calculateBirthAdoptionTaxCredit({
-    required int firstChild,  // 첫째 출산·입양 수(0 또는 1)
-    required int secondChild, // 둘째
-    required int thirdOrMore, // 셋째 이상 인원
-  }) {
-    return firstChild.clamp(0, 1) * 300000.0 +
-        secondChild.clamp(0, 1) * 500000.0 +
-        (thirdOrMore < 0 ? 0 : thirdOrMore) * 700000.0;
+  /// 자녀세액공제 대상 최소 연령 (소득세법 §59의2①).
+  ///
+  /// 아동수당 지급 연령이 8세 미만 → 13세 미만으로 2030년까지 매년 한 살씩 상향되면서,
+  /// 중복 수혜를 막으려고 자녀세액공제 연령도 같이 올라간다
+  /// (법률 제21548호, 2026.4.21. 개정·공포한 날 시행).
+  ///
+  /// 부칙 §2② — 2026년 9세, 2027년 10세, 2028년 11세, 2029년 12세.
+  /// 본칙(§59의2①)은 13세이며 2030년 귀속부터 그대로 적용된다.
+  ///
+  /// ⚠ 이 개정은 2026.4.21.자라 「2026년 개정세법 해설」(2026.4.15. 발간)에 없다.
+  ///   연 1회 발간물만 보면 발간 이후 개정을 놓친다.
+  static int childTaxCreditMinAge(int taxYear) {
+    if (taxYear <= 2025) return 8;
+    if (taxYear >= 2030) return 13;
+    return taxYear - 2017; // 2026:9 · 2027:10 · 2028:11 · 2029:12
   }
+
+  /// 자녀세액공제 대상 자녀의 출생연도 상한 — 이 해 12월 31일 이전 출생이면 대상.
+  ///
+  /// 소득세법의 연령 환산은 **나이 = 귀속연도 − 출생연도**다. 국세청 연말정산 안내가
+  /// 2025 귀속 기준으로 "60세 이상=1965.12.31. 이전, 20세 이하=2005.1.1. 이후,
+  /// 70세 이상=1955.12.31. 이전"으로 안내하는 것과 같은 방식이다
+  /// (`지식_변환/JSON/2025_연말정산_공제율_정답지.json`).
+  ///
+  /// 부칙 §2③이 **2017년생을 §2②(경과 연령)에서 배제**한다. 그래서 2026~2029 귀속
+  /// 동안 상한이 2016년생에 고정되고, 본칙이 적용되는 2030 귀속에 2017년생이 들어온다.
+  static int childTaxCreditBirthYearCutoff(int taxYear) {
+    final int cutoff = taxYear - childTaxCreditMinAge(taxYear);
+    // 부칙 §2③ — 2017.1.1.~2017.12.31. 출생자는 경과규정 대상이 아니다.
+    if (taxYear >= 2026 && taxYear <= 2029 && cutoff == 2017) return 2016;
+    return cutoff;
+  }
+
+  /// 화면에 쓰는 자녀세액공제 대상 안내 — "2016년생 이하".
+  ///
+  /// 나이("9세 이상")로 안내하면 사용자가 만 나이인지 연 나이인지 헷갈리고,
+  /// 2017년생 예외(부칙 §2③)를 표현할 수도 없다. 출생연도로 못박는다.
+  static String childTaxCreditEligibilityLabel([int? taxYear]) =>
+      '${childTaxCreditBirthYearCutoff(taxYear ?? kReferenceTaxYear)}년생 이하';
 
   /// 금융소득 분리과세 세율 (소득세법 §129①, 이자·배당 원천징수 14%)
   static const double financialIncomeSeparateTaxRate = 0.14;

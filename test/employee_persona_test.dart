@@ -22,7 +22,7 @@ class P {
   final double grossIncome;
   final int dependents;
   final int childrenTotal;
-  final int children8Plus;
+  final int childrenForCredit;
   final bool isHomeless;
 
   /// (월, 급여액)
@@ -41,7 +41,7 @@ class P {
     required this.grossIncome,
     this.dependents = 0,
     this.childrenTotal = 0,
-    this.children8Plus = 0,
+    this.childrenForCredit = 0,
     this.isHomeless = true,
     required this.salaries,
     required this.expenses,
@@ -116,7 +116,7 @@ void main() {
       expenses: [(2, 20000000, '신용카드'), (4, 20000000, '체크+현금'), (7, 10000000, '체크+현금')]),
 
     P('④ 자녀2 — 한도 상향', grossIncome: 50000000, dependents: 2,
-      childrenTotal: 2, children8Plus: 2,
+      childrenTotal: 2, childrenForCredit: 2,
       salaries: pay(3500000),
       expenses: [(2, 20000000, '신용카드'), (4, 20000000, '체크+현금'), (7, 10000000, '체크+현금')]),
 
@@ -125,7 +125,7 @@ void main() {
       expenses: [(2, 20000000, '신용카드'), (4, 20000000, '체크+현금'), (7, 15000000, '체크+현금')]),
 
     P('⑥ 고소득+자녀1', grossIncome: 90000000, dependents: 1,
-      childrenTotal: 1, children8Plus: 0,
+      childrenTotal: 1, childrenForCredit: 0,
       salaries: pay(6000000),
       expenses: [(2, 20000000, '신용카드'), (4, 20000000, '체크+현금'), (7, 15000000, '체크+현금')]),
 
@@ -168,7 +168,7 @@ void main() {
         'gross_income': p.grossIncome,
         'dependents': p.dependents,
         'children_count_total': p.childrenTotal,
-        'children_count_8plus': p.children8Plus,
+        'children_count_credit': p.childrenForCredit,
         'is_monthly_rent': p.isHomeless,
         'owns_house': !p.isHomeless,
       });
@@ -224,7 +224,7 @@ void main() {
       print('\n═══ ${p.name} ═══');
       // ignore: avoid_print
       print(' [내 정보]  예상연봉=${won(p.grossIncome)}  부양=${p.dependents}명'
-          '  자녀=${p.childrenTotal}명(8세+ ${p.children8Plus})  무주택=${p.isHomeless}');
+          '  자녀=${p.childrenTotal}명(8세+ ${p.childrenForCredit})  무주택=${p.isHomeless}');
       // ignore: avoid_print
       print(' [수익지출카드] 이번 달 수령액 ${won(thisMonthSalary)}   지출 ${won(thisMonthExp)}');
       // ignore: avoid_print

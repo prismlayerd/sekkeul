@@ -3,6 +3,7 @@ import 'package:secul/core/tax_engine/employee_tax.dart';
 import 'package:secul/core/tax_engine/combined_tax.dart';
 import 'package:secul/core/tax_engine/freelancer_tax.dart';
 import 'package:secul/core/tax_engine/tax_rates.dart';
+import 'package:secul/core/tax_engine/tax_year.dart';
 import 'package:secul/core/tax_engine/insurance_engine.dart';
 
 /// 세끌 세금 엔진 검산 회귀테스트
@@ -701,6 +702,48 @@ void main() {
     test('0 이하는 0', () {
       expect(credit(0), 0);
       expect(credit(-1), 0);
+    });
+  });
+
+  // 소득세법 §59의2① 개정(법률 제21548호, 2026.4.21. 공포·시행) — 아동수당 연령
+  // 상향에 맞춰 자녀세액공제 대상 연령이 2030년까지 매년 한 살씩 올라간다.
+  // 부칙 §2②는 2026~2029 경과 연령을, §2③은 2017년생 배제를 정한다.
+  group('자녀세액공제 대상 연령 (소득세법 §59의2① + 부칙 §2)', () {
+    test('경과 연령 — 2026년 9세부터 2029년 12세, 2030년부터 본칙 13세', () {
+      expect(TaxRates.childTaxCreditMinAge(2025), 8);
+      expect(TaxRates.childTaxCreditMinAge(2026), 9);
+      expect(TaxRates.childTaxCreditMinAge(2027), 10);
+      expect(TaxRates.childTaxCreditMinAge(2028), 11);
+      expect(TaxRates.childTaxCreditMinAge(2029), 12);
+      expect(TaxRates.childTaxCreditMinAge(2030), 13);
+      expect(TaxRates.childTaxCreditMinAge(2031), 13);
+    });
+
+    test('출생연도 상한 — 2017년생 배제(부칙 §2③)로 2026~2029는 2016년생에 고정', () {
+      // 나이 = 귀속연도 − 출생연도 (국세청 연말정산 안내의 인적공제 연령 환산과 동일)
+      expect(TaxRates.childTaxCreditBirthYearCutoff(2025), 2017);
+      expect(TaxRates.childTaxCreditBirthYearCutoff(2026), 2016);
+      expect(TaxRates.childTaxCreditBirthYearCutoff(2027), 2016);
+      expect(TaxRates.childTaxCreditBirthYearCutoff(2028), 2016);
+      expect(TaxRates.childTaxCreditBirthYearCutoff(2029), 2016);
+      // 본칙(13세)이 적용되는 2030 귀속에 2017년생이 들어온다.
+      expect(TaxRates.childTaxCreditBirthYearCutoff(2030), 2017);
+      expect(TaxRates.childTaxCreditBirthYearCutoff(2031), 2018);
+    });
+
+    test('화면 문구는 출생연도로 못박는다 — 만/연 나이 혼동 방지', () {
+      expect(TaxRates.childTaxCreditEligibilityLabel(2026), '2016년생 이하');
+      expect(TaxRates.childTaxCreditEligibilityLabel(2025), '2017년생 이하');
+      // 인자를 안 주면 앱 기준 귀속연도
+      expect(TaxRates.childTaxCreditEligibilityLabel(),
+          TaxRates.childTaxCreditEligibilityLabel(kReferenceTaxYear));
+    });
+
+    test('금액 산식은 그대로 — 첫째 25만·둘째 55만·셋째부터 +40만', () {
+      expect(TaxRates.calculateChildTaxCredit(1), 250000);
+      expect(TaxRates.calculateChildTaxCredit(2), 550000);
+      expect(TaxRates.calculateChildTaxCredit(3), 950000);
+      expect(TaxRates.calculateChildTaxCredit(0), 0);
     });
   });
 }

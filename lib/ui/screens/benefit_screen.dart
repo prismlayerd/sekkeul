@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/tax_engine/tax_rates.dart';
 import '../theme/app_theme.dart';
 import '../components/search_field.dart';
 import 'pension_calculator_screen.dart';
@@ -461,9 +462,11 @@ final _categories = <_BenefitCategory>[
     _Benefit(
       name: '아동수당',
       amount: '월 10만원',
-      desc: '만 8세 미만 모든 아동에게 소득·재산 무관 매월 지급하는 현금 수당.\n\n'
+      desc: '모든 아동에게 소득·재산 무관 매월 지급하는 현금 수당. 대상 연령이 2030년까지 '
+          '매년 한 살씩 올라간다(아동수당법 개정, 법률 제21489호).\n\n'
           '지급 내용\n'
-          '· 대상: 만 8세 미만(0~95개월) 아동\n'
+          '· 대상: 2026년 9세 미만 (2027년 10세·2028년 11세·2029년 12세·2030년부터 13세 미만)\n'
+          '· 2017년생은 2026~2029년 나이와 관계없이 매월 지급 (같은 법 부칙 §2②)\n'
           '· 금액: 매월 10만원\n'
           '· 지급일: 매월 25일\n\n'
           '중복 수급\n'
@@ -478,11 +481,13 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '자녀세액공제·자녀장려금',
-      amount: '세액공제 15~40만원 / 장려금 최대 100만원',
-      desc: '8세 이상 자녀는 자녀세액공제(연말정산), 18세 미만 자녀를 둔 소득 7,000만원 미만 가구는 자녀장려금(5월 신청)이 별도 적용됨.\n\n'
+      amount: '세액공제 25~55만원 / 장려금 최대 100만원',
+      desc: '일정 연령 이상 자녀는 자녀세액공제(연말정산), 18세 미만 자녀를 둔 소득 7,000만원 미만 가구는 자녀장려금(5월 신청)이 별도 적용됨.\n\n'
           '자녀세액공제 기준\n'
-          '· 자녀 1명: 연 15만원\n'
-          '· 자녀 2명: 연 35만원, 3명 이상: 1명 추가당 30만원\n'
+          '· 대상: ${TaxRates.childTaxCreditEligibilityLabel()} '
+          '(아동수당과 중복되지 않도록 2030년까지 매년 한 살씩 상향)\n'
+          '· 자녀 1명: 연 25만원\n'
+          '· 자녀 2명: 연 55만원, 3명 이상: 1명 추가당 40만원\n'
           '· 출산·입양 첫째 30만원, 둘째 50만원, 셋째 이상 70만원\n\n'
           '자녀장려금 자격\n'
           '· 18세 미만(2008.1.1. 이후 출생) 부양자녀 1명 이상\n'

@@ -88,7 +88,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
 
   // N잡러 세액공제 컨트롤러
   final TextEditingController _insurancePremiumController = TextEditingController();
-  final TextEditingController _childrenCount8PlusController = TextEditingController(text: '0');
+  final TextEditingController _childrenForCreditController = TextEditingController(text: '0');
   final TextEditingController _newbornCountController = TextEditingController(text: '0');
   final TextEditingController _pensionSavingsSimController = TextEditingController();
   final TextEditingController _irpSimController = TextEditingController();
@@ -139,11 +139,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     _collegeEduController.addListener(_calculateTax);
     _collegeCountController.addListener(_calculateTax);
     _insurancePremiumController.addListener(_calculateTax);
-    _childrenCount8PlusController.addListener(_calculateTax);
+    _childrenForCreditController.addListener(_calculateTax);
     _newbornCountController.addListener(_calculateTax);
     _pensionSavingsSimController.addListener(_calculateTax);
     _irpSimController.addListener(_calculateTax);
-    _childrenCount8PlusController.addListener(_saveChildren8PlusToProfile);
+    _childrenForCreditController.addListener(_saveChildrenForCreditToProfile);
     _mortgageSimController.addListener(_calculateTax);
     _hometownDonationSimController.addListener(_calculateTax);
     _priorYearIncomeController.addListener(_onBookkeepingInputChanged);
@@ -201,9 +201,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       isNewBusiness = profile['is_new_business'] == true;
       hasMultipleBusinesses = profile['has_multiple_businesses'] == true;
       // 자녀 수는 적립·환급 계산에도 쓰이므로 프로필 값으로 미리 채운다.
-      final savedChildren8Plus = (profile['children_count_8plus'] as int?) ?? 0;
-      if (savedChildren8Plus > 0 && _childrenCount8PlusController.text == '0') {
-        _childrenCount8PlusController.text = savedChildren8Plus.toString();
+      final savedChildrenForCredit = (profile['children_count_credit'] as int?) ?? 0;
+      if (savedChildrenForCredit > 0 && _childrenForCreditController.text == '0') {
+        _childrenForCreditController.text = savedChildrenForCredit.toString();
       }
       final profileOccCode = profile['occupation_code'] as String?;
       if (profileOccCode != null) profileOccupation = OccupationData.occupations[profileOccCode];
@@ -330,7 +330,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     _collegeEduController.dispose();
     _collegeCountController.dispose();
     _insurancePremiumController.dispose();
-    _childrenCount8PlusController.dispose();
+    _childrenForCreditController.dispose();
     _newbornCountController.dispose();
     _pensionSavingsSimController.dispose();
     _irpSimController.dispose();
@@ -398,10 +398,10 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       // 자녀세액공제·연금계좌세액공제·보장성보험료세액공제 — N잡러 계산(_isEmployee &&
       // _isFreelancer 분기)과 동일한 컨트롤러를 공유하는데, 과거엔 그 분기에서만 계산돼
       // 순수 직장인은 입력해도 예상환급액에 전혀 반영되지 않았다.
-      final children8Plus = int.tryParse(_childrenCount8PlusController.text) ?? 0;
+      final childrenForCredit = int.tryParse(_childrenForCreditController.text) ?? 0;
       final newborns = int.tryParse(_newbornCountController.text) ?? 0;
       final childCredit = EmployeeTaxCalculator.calculateChildTaxCredit(
-        childrenCount: children8Plus,
+        childrenCount: childrenForCredit,
         newbornCount: newborns,
       );
       final pensionSav = double.tryParse(_pensionSavingsSimController.text) ?? 0.0;
@@ -492,7 +492,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           allowanceCount: _dependentCount,
           occupationCode: _selectedOccupation!.code,
           yellowUmbrellaPayment: yellowUmbrella,
-          childrenCount8Plus: int.tryParse(_childrenCount8PlusController.text) ?? 0,
+          childrenCountForCredit: int.tryParse(_childrenForCreditController.text) ?? 0,
           disabledDependentCount: _disabledDependentCount,
           hasSelfDisability: _hasSelfDisability,
           forceStandardExpenseRate: !simpleRateEligible,
@@ -511,7 +511,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           occupationCode: _selectedOccupation!.code,
           isBookkeeping: false,
           yellowUmbrellaPayment: yellowUmbrella,
-          childrenCount8Plus: int.tryParse(_childrenCount8PlusController.text) ?? 0,
+          childrenCountForCredit: int.tryParse(_childrenForCreditController.text) ?? 0,
           disabledDependentCount: _disabledDependentCount,
           hasSelfDisability: _hasSelfDisability,
           useStandardExpenseRate: !simpleRateEligible,
@@ -545,7 +545,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       final otherIncome = double.tryParse(_otherIncomeController.text) ?? 0.0;
 
       final insurancePrem = double.tryParse(_insurancePremiumController.text) ?? 0.0;
-      final children8Plus = int.tryParse(_childrenCount8PlusController.text) ?? 0;
+      final childrenForCredit = int.tryParse(_childrenForCreditController.text) ?? 0;
       final newborns = int.tryParse(_newbornCountController.text) ?? 0;
       final pensionSav = double.tryParse(_pensionSavingsSimController.text) ?? 0.0;
       final irpPay = double.tryParse(_irpSimController.text) ?? 0.0;
@@ -587,7 +587,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         pensionIncome: pensionIncome,
         otherIncome: otherIncome,
         insurancePremium: insurancePrem,
-        childrenCount8Plus: children8Plus,
+        childrenCountForCredit: childrenForCredit,
         newbornCount: newborns,
         pensionSavings: pensionSav,
         irpPayment: irpPay,
@@ -655,14 +655,14 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     await dbService.saveProfile(updated);
   }
 
-  /// 8세 이상 자녀 수를 프로필에 남긴다 — 가계부 적립·환급 계산이 같은 값을 쓰도록.
+  /// 자녀세액공제 대상 자녀 수를 프로필에 남긴다 — 가계부 적립·환급 계산이 같은 값을 쓰도록.
   /// 이 화면에서만 들고 있으면 적립액이 자녀세액공제를 빼놓고 과대 추정한다.
-  Future<void> _saveChildren8PlusToProfile() async {
-    final v = int.tryParse(_childrenCount8PlusController.text.trim()) ?? 0;
+  Future<void> _saveChildrenForCreditToProfile() async {
+    final v = int.tryParse(_childrenForCreditController.text.trim()) ?? 0;
     final updated = Map<String, dynamic>.from(_profileCache ?? {});
-    if ((updated['children_count_8plus'] as int?) == v) return;
-    updated['children_count_8plus'] = v;
-    // 총 자녀 수가 8세 이상보다 적으면 앞뒤가 안 맞는다 — 최소한 같은 수로 올린다.
+    if ((updated['children_count_credit'] as int?) == v) return;
+    updated['children_count_credit'] = v;
+    // 총 자녀 수가 공제대상 수보다 적으면 앞뒤가 안 맞는다 — 최소한 같은 수로 올린다.
     final total = (updated['children_count_total'] as int?) ?? 0;
     if (total < v) updated['children_count_total'] = v;
     _profileCache = updated;
@@ -1712,11 +1712,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
 
                 // 자녀세액공제(소법 §59의2)는 종합소득자 전원 대상이라 프리랜서도 받는다.
                 if (!_isEmployee) ...[
-                  Text('8세 이상 자녀 수', style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
+                  Text('${TaxRates.childTaxCreditEligibilityLabel()} 자녀 수', style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
                   const SizedBox(height: 4),
                   Text('1명 25만 원, 2명 55만 원, 셋째부터 1명당 40만 원이\n세금에서 바로 빠져요.', style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.4)),
                   const SizedBox(height: 8),
-                  _underlineInput(_childrenCount8PlusController, hint: '0', suffix: '명'),
+                  _underlineInput(_childrenForCreditController, hint: '0', suffix: '명'),
                   const SizedBox(height: 28),
                 ],
 
@@ -1876,13 +1876,13 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         const SizedBox(height: 6),
                         _buildSensitiveTextField(_insurancePremiumController, '예: 1,000,000'),
                         const SizedBox(height: 16),
-                        Text('8세이상 자녀수 (자녀세액공제)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
+                        Text('${TaxRates.childTaxCreditEligibilityLabel()} 자녀수 (자녀세액공제)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 4),
                         Text('첫째 25만 · 둘째 55만 · 셋째이상 1명당 40만', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5), fontSize: 11)),
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            SizedBox(width: 100, child: _buildCountTextField(_childrenCount8PlusController)),
+                            SizedBox(width: 100, child: _buildCountTextField(_childrenForCreditController)),
                             const SizedBox(width: 16),
                             Expanded(child: Text('출산·입양 자녀', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600))),
                             SizedBox(width: 100, child: _buildCountTextField(_newbornCountController)),

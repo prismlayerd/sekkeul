@@ -7,36 +7,6 @@ import 'tax_rates.dart';
 /// N잡러(근로소득 + 프리랜서/투잡) 전용 통합 세액 계산 및 시뮬레이션 엔진
 class CombinedTaxCalculator {
   
-  /// 금융소득 (이자·배당) 건보료 산정용 소득금액 도출식
-  /// 연 1,000만 원 초과 시 전액 100% 소득금액으로 잡힘.
-  static double calculateFinancialIncomeAmount(double annualFinancialIncome) {
-    if (annualFinancialIncome > 10000000) {
-      return annualFinancialIncome;
-    }
-    return 0.0;
-  }
-
-  /// 주택임대소득 분리과세(연 2,000만 원 이하) 건보료/세금 산정용 소득금액 도출식
-  static double calculateRentalIncomeAmount({
-    required double annualRentalIncome,
-    required bool isRegisteredLandlord, // 등록 임대사업자 여부
-    required bool isOtherIncomeUnder20M, // 임대소득 외 종합소득이 2,000만 원 이하인지 여부
-  }) {
-    final double basicDeduction = isRegisteredLandlord ? 4000000.0 : 2000000.0;
-    final double taxablePortion = isRegisteredLandlord
-        ? annualRentalIncome * 0.40
-        : annualRentalIncome * 0.50;
-    
-    double incomeAmount = taxablePortion;
-    
-    // 타 소득 2천만원 이하일 때만 기본공제 적용
-    if (isOtherIncomeUnder20M) {
-      incomeAmount -= basicDeduction;
-    }
-    
-    return incomeAmount < 0 ? 0.0 : incomeAmount;
-  }
-
   /// N잡러 (본업 직장인 + 부업 프리랜서) 종합소득세 시뮬레이션
   static CombinedTaxResult calculateCombinedTax({
     required double grossIncome,
@@ -57,7 +27,7 @@ class CombinedTaxCalculator {
     double otherIncome = 0.0,
     double insurancePremium = 0.0,
     double disabledInsurancePremium = 0.0,
-    int childrenCount8Plus = 0,
+    int childrenCountForCredit = 0,
     /// 자녀등 총 수 — 카드공제 기본한도 상향용(8세 미만 자녀·손자녀 포함).
     int childrenCountTotal = 0,
     int newbornCount = 0,
@@ -233,7 +203,7 @@ class CombinedTaxCalculator {
       disabledInsurancePremium: disabledInsurancePremium,
     );
     final double childTaxCreditAmt = EmployeeTaxCalculator.calculateChildTaxCredit(
-      childrenCount: childrenCount8Plus,
+      childrenCount: childrenCountForCredit,
       newbornCount: newbornCount,
     );
     final double pensionTaxCreditAmt = EmployeeTaxCalculator.calculatePensionAccountTaxCredit(
@@ -379,7 +349,7 @@ class CombinedTaxCalculator {
     double otherIncome = 0.0,
     double insurancePremium = 0.0,
     double disabledInsurancePremium = 0.0,
-    int childrenCount8Plus = 0,
+    int childrenCountForCredit = 0,
     int childrenCountTotal = 0,
     int newbornCount = 0,
     double pensionSavings = 0.0,
@@ -421,7 +391,7 @@ class CombinedTaxCalculator {
           otherIncome: otherIncome,
           insurancePremium: insurancePremium,
           disabledInsurancePremium: disabledInsurancePremium,
-          childrenCount8Plus: childrenCount8Plus,
+          childrenCountForCredit: childrenCountForCredit,
           childrenCountTotal: childrenCountTotal,
           newbornCount: newbornCount,
           pensionSavings: pensionSavings,

@@ -238,10 +238,10 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
             const SizedBox(height: 16),
 
             // 자녀세액공제
-            _sectionTitle('자녀세액공제 (8세 이상)', textColor),
+            _sectionTitle('자녀세액공제 (${TaxRates.childTaxCreditEligibilityLabel()})', textColor),
             const SizedBox(height: 12),
             _buildCard([
-              _stepperRow('8세 이상 자녀 수', _childrenCount,
+              _stepperRow('${TaxRates.childTaxCreditEligibilityLabel()} 자녀 수', _childrenCount,
                   (v) => setState(() => _childrenCount = v), subColor, textColor),
               _stepperRow('출산·입양 자녀 수', _newbornCount,
                   (v) => setState(() => _newbornCount = v), subColor, textColor),

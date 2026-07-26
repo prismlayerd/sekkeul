@@ -161,9 +161,9 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         _isSmeEmployee = profile['is_sme_employee'] == true;
         _smeStartYear = profile['sme_start_year'] as int? ?? 0;
         // 프로필에서 자녀수·혼인연도 자동 로드 (wizard 초기값)
-        final childrenCount8Plus = profile['children_count_8plus'] as int? ?? 0;
-        if (childrenCount8Plus > 0) {
-          _wizardChildrenCountController.text = childrenCount8Plus.toString();
+        final childrenCountForCredit = profile['children_count_credit'] as int? ?? 0;
+        if (childrenCountForCredit > 0) {
+          _wizardChildrenCountController.text = childrenCountForCredit.toString();
         }
         final weddingYear = profile['wedding_year'] as int?;
         if (weddingYear != null && weddingYear >= 2024 && weddingYear <= 2026) {
@@ -1082,7 +1082,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         const SizedBox(height: 24),
 
         // 자녀세액공제
-        Text('8세 이상 기본공제 대상 자녀 수', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
+        Text('${TaxRates.childTaxCreditEligibilityLabel()} 기본공제 대상 자녀 수', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
         Text('첫째 25만 · 둘째 55만 · 셋째 이상 1명당 40만원 추가', style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
         const SizedBox(height: 10),
@@ -1407,7 +1407,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       }
     }
 
-    // 자녀세액공제 (소법 §59의2, 2025 귀속: 8세이상 첫째25만/둘째55만/셋째+40만)
+    // 자녀세액공제 (소법 §59의2) — 대상 연령은 TaxRates.childTaxCreditMinAge
     final int wizardChildren = int.tryParse(_wizardChildrenCountController.text) ?? 0;
     _wizardChildTaxCredit = TaxRates.calculateChildTaxCredit(wizardChildren);
 

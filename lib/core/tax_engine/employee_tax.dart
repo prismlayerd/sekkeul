@@ -135,19 +135,20 @@ class EmployeeTaxCalculator {
     );
   }
 
-  /// 자녀세액공제 (소법 §59의2, 2025 개정 — 2026 개정 없음)
-  /// - 8세 이상 자녀·손자녀: 첫째 25만/둘째 30만(누적55)/셋째이상 1명당 40만
+  /// 자녀세액공제 (소법 §59의2)
+  /// - 공제대상 자녀·손자녀: 첫째 25만/둘째 30만(누적55)/셋째이상 1명당 40만
+  ///   연령 요건은 [TaxRates.childTaxCreditMinAge] — 2026.4.21. 개정으로 연도마다 다르다.
   /// - 출산·입양 자녀: 첫째 30만/둘째 50만/셋째이상 70만
   /// 참고: 2024귀속까지는 15/20/30이었으나 2025 개정으로 상향
   static double calculateChildTaxCredit({
-    required int childrenCount,         // 8세 이상 자녀 수
+    required int childrenCount,         // 공제대상 연령 자녀 수(TaxRates.childTaxCreditBirthYearCutoff)
     required int newbornCount,          // 출산·입양 자녀 수
   }) {
     if (childrenCount <= 0 && newbornCount <= 0) return 0.0;
 
     double credit = 0.0;
 
-    // 기본 자녀(8세 이상)
+    // 기본 자녀(공제대상 연령)
     if (childrenCount > 0) {
       for (int i = 0; i < childrenCount; i++) {
         if (i == 0) credit += 250000.0;        // 첫째: 25만

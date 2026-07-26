@@ -155,7 +155,7 @@ class ReserveEstimator {
     final ownsHouse = profile?['owns_house'] == true;
     final monthlyRent =
         isMonthlyRent ? ((profile?['monthly_rent'] as num?)?.toDouble() ?? 0.0) : 0.0;
-    final childrenCount8Plus = (profile?['children_count_8plus'] as int?) ?? 0;
+    final childrenCountForCredit = (profile?['children_count_credit'] as int?) ?? 0;
     // 카드공제 기본한도 상향용 — 8세 미만 자녀도 자녀등에 포함된다(조특법 §126의2⑩).
     final childrenCountTotal = (profile?['children_count_total'] as int?) ?? 0;
     final newbornCount = (profile?['newborn_count'] as int?) ?? 0;
@@ -280,7 +280,7 @@ class ReserveEstimator {
           allowanceCount: allowance,
           occupationCode: occupationCode,
           yellowUmbrellaPayment: yellowUmbrella,
-          childrenCount8Plus: childrenCount8Plus,
+          childrenCountForCredit: childrenCountForCredit,
           disabledDependentCount: disabledDeps,
           hasSelfDisability: selfDisability,
           useStandardExpenseRate: pinnedStandardRate,
@@ -300,7 +300,7 @@ class ReserveEstimator {
           allowanceCount: allowance,
           occupationCode: occupationCode,
           yellowUmbrellaPayment: yellowUmbrella,
-          childrenCount8Plus: childrenCount8Plus,
+          childrenCountForCredit: childrenCountForCredit,
           disabledDependentCount: disabledDeps,
           hasSelfDisability: selfDisability,
         );
@@ -355,7 +355,7 @@ class ReserveEstimator {
             monthlyRent: monthlyRent,
             isHomeless: isMonthlyRent && !ownsHouse,
             yellowUmbrellaPayment: yellowUmbrella,
-            childrenCount8Plus: childrenCount8Plus,
+            childrenCountForCredit: childrenCountForCredit,
             childrenCountTotal: childrenCountTotal,
             newbornCount: newbornCount,
             hasElderly70Plus: hasElderly70Plus,
@@ -417,7 +417,7 @@ class ReserveEstimator {
           monthlyRent: monthlyRent,
           isHomeless: isMonthlyRent && !ownsHouse,
           yellowUmbrellaPayment: yellowUmbrella,
-          childrenCount8Plus: childrenCount8Plus,
+          childrenCountForCredit: childrenCountForCredit,
           childrenCountTotal: childrenCountTotal,
           newbornCount: newbornCount,
           hasElderly70Plus: hasElderly70Plus,
@@ -494,7 +494,7 @@ class ReserveEstimator {
           allowanceCount: allowance,
           occupationCode: occupationCode,
           yellowUmbrellaPayment: yellowUmbrella,
-          childrenCount8Plus: childrenCount8Plus,
+          childrenCountForCredit: childrenCountForCredit,
           disabledDependentCount: disabledDeps,
           hasSelfDisability: selfDisability,
           forceStandardExpenseRate: pinnedStandardRate,

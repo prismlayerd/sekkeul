@@ -279,7 +279,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     // 기존 평문 DB가 있고 아직 암호화 전이면: 먼저 평문 상태로 최신 스키마까지 정규화한 뒤
     // SQLCipher 암호화 DB로 1회 이전한다(S-2). 신규 설치는 곧장 암호화 DB로 생성된다.
     if (await File(path).exists() && !await _isAlreadyEncrypted(path, key)) {
-      final normalizeDb = await openDatabase(path, version: 39, onCreate: _onCreate, onUpgrade: _onUpgrade);
+      final normalizeDb = await openDatabase(path, version: 40, onCreate: _onCreate, onUpgrade: _onUpgrade);
       await normalizeDb.close();
       await _encryptExistingPlaintextDb(path, key);
     }
@@ -287,7 +287,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     _db = await openDatabase(
       path,
       password: key,
-      version: 39,
+      version: 40,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -328,7 +328,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     }
     await plainDb.close();
 
-    final encDb = await openDatabase(tempEncPath, password: key, version: 39, onCreate: _onCreate);
+    final encDb = await openDatabase(tempEncPath, password: key, version: 40, onCreate: _onCreate);
     var insertedRows = 0;
     await encDb.transaction((txn) async {
       for (final entry in dump.entries) {
@@ -379,7 +379,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
             is_female_head INTEGER,
             is_single_parent INTEGER,
             wedding_year INTEGER,
-            children_count_8plus INTEGER,
+            children_count_credit INTEGER,
             children_count_total INTEGER,
             newborn_count INTEGER,
             is_sme_employee INTEGER,
@@ -822,6 +822,18 @@ class SqfliteDatabaseHelper implements DatabaseService {
                 'ALTER TABLE user_profile ADD COLUMN children_count_total INTEGER');
           } catch (e) {}
         }
+
+        // 자녀세액공제 연령기준 개정 (v40) — 소득세법 §59의2① 개정(법률 제21548호,
+        // 2026.4.21.)으로 대상 연령이 8세 이상에서 연도별로 올라간다(2026 귀속 9세).
+        // 종전 children_count_8plus는 "8세 이상" 정의로 입력된 값이라 그대로 쓸 수
+        // 없다 — 출생연도를 모르면 새 정의로 환산할 수 없으므로 값을 넘기지 않고
+        // 새 컬럼에서 다시 받는다.
+        if (oldVersion < 40) {
+          try {
+            await db.execute(
+                'ALTER TABLE user_profile ADD COLUMN children_count_credit INTEGER');
+          } catch (e) {}
+        }
   }
 
   @override
@@ -855,7 +867,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'is_female_head': profile['is_female_head'] == true ? 1 : 0,
         'is_single_parent': profile['is_single_parent'] == true ? 1 : 0,
         'wedding_year': profile['wedding_year'],
-        'children_count_8plus': profile['children_count_8plus'] ?? 0,
+        'children_count_credit': profile['children_count_credit'] ?? 0,
         'children_count_total': profile['children_count_total'] ?? 0,
         'newborn_count': profile['newborn_count'] ?? 0,
         'is_sme_employee': profile['is_sme_employee'] == true ? 1 : 0,
@@ -911,7 +923,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
       'is_female_head': map['is_female_head'] == 1,
       'is_single_parent': map['is_single_parent'] == 1,
       'wedding_year': map['wedding_year'] as int?,
-      'children_count_8plus': map['children_count_8plus'] as int? ?? 0,
+      'children_count_credit': map['children_count_credit'] as int? ?? 0,
       'children_count_total': map['children_count_total'] as int? ?? 0,
       'newborn_count': map['newborn_count'] as int? ?? 0,
       'is_sme_employee': map['is_sme_employee'] == 1,

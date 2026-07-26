@@ -361,14 +361,14 @@ void main() {
   // 자녀세액공제(소법 §59의2)는 "종합소득이 있는 거주자"가 대상이라 프리랜서도 받는다.
   // 과거엔 엔진에 파라미터 자체가 없어 늘 0이었다.
   test('8세 이상 자녀가 세금을 낮추는가 — 자녀세액공제 배선', () async {
-    Future<double> reserveWith(int children8Plus) async {
+    Future<double> reserveWith(int childrenForCredit) async {
       dbService = InMemoryDatabaseHelper();
       await dbService.initDatabase();
       await dbService.saveProfile({
         'user_type': '프리랜서', 'occupation_code': '940306',
         'prior_year_income': 30000000.0,
-        'children_count_total': children8Plus,
-        'children_count_8plus': children8Plus,
+        'children_count_total': childrenForCredit,
+        'children_count_credit': childrenForCredit,
       });
       for (int m = 1; m <= now.month; m++) {
         await dbService.insertIncomeEntry(IncomeEntry(
