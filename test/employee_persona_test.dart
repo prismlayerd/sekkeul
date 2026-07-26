@@ -8,6 +8,7 @@ import 'package:secul/core/parsing/simplified_data_parser.dart';
 import 'package:secul/core/parsing/withholding_parser.dart';
 import 'package:secul/core/tax_engine/employee_tax.dart';
 import 'package:secul/core/tax_engine/tax_rates.dart';
+import 'package:secul/core/tax_engine/tax_year.dart';
 
 /// 직장인 12인 페르소나 — 내 정보 → 수익지출카드 → 가계부 → 세무도구 전 구간.
 ///
@@ -65,6 +66,7 @@ WithholdingReceipt receiptFor(double gross, {
       EmployeeTaxCalculator.calculateLaborTaxCredit(grossIncome: gross, calculatedTaxShare: raw);
   final calc = (raw - credit).clamp(0, double.infinity).toDouble();
   return WithholdingReceipt(
+    accrualYear: TaxYear.reference,
     grossSalary: gross.round(),
     taxableBase: base.round(),
     calculatedTax: calc.round(),
@@ -285,7 +287,8 @@ void main() {
   test('총급여를 못 읽으면 빈 결과 — 의료비 3% 문턱이 0이 되어 과대 계산되던 것', () {
     const ganso = GansoDeductions(medical: 5000000, medicalReimbursed: 500000);
     // 총급여 0인 영수증(파싱 실패). 예전엔 문턱 0이라 450만 전액에 15%가 붙었다.
-    final broken = buildCorrectionReport(ganso, const WithholdingReceipt(decidedTax: 3000000));
+    final broken = buildCorrectionReport(
+        ganso, const WithholdingReceipt(accrualYear: 2025, decidedTax: 3000000));
     final ok = buildCorrectionReport(ganso, receiptFor(50000000));
     // ignore: avoid_print
     print('\n[총급여 미상] 빈 결과=${won(broken.additionalRefund)} (${broken.lines.length}건)'

@@ -7,6 +7,8 @@ import 'simplified_data_parser.dart';
 /// - 총급여(16/21), 75 기납부세액(첫 숫자), 73 결정세액, 77 차감징수세액
 /// - 공제대상금액: 62 의료비 · 63 교육비 · 70 월세액 · 61 보장성 · 60 연금저축
 class WithholdingReceipt {
+  /// 귀속연도(⑪ 근무기간의 시작연도). 못 읽으면 0 — 경정청구는 계산하지 않는다.
+  final int accrualYear;
   final int grossSalary; // 총급여
   final int laborDeduction; // 근로소득공제
   final int taxableBase; // 종합소득 과세표준
@@ -23,6 +25,7 @@ class WithholdingReceipt {
   final int claimedDonation;
 
   const WithholdingReceipt({
+    this.accrualYear = 0,
     this.grossSalary = 0,
     this.laborDeduction = 0,
     this.taxableBase = 0,
@@ -42,12 +45,26 @@ class WithholdingReceipt {
   int get settlementAbs => finalSettlement.abs();
 
   @override
-  String toString() => 'WithholdingReceipt(총급여:$grossSalary, 기납부:$paidTax, 결정:$decidedTax, '
+  String toString() => 'WithholdingReceipt($accrualYear귀속, 총급여:$grossSalary, 기납부:$paidTax, 결정:$decidedTax, '
       '차감징수:$finalSettlement, 신고[의료:$claimedMedical, 교육:$claimedEducation, '
       '월세:$claimedRent, 보장성:$claimedLifeInsurance, 연금저축:$claimedPensionSavings])';
 }
 
 final _numRe = RegExp(r'-?\d{1,3}(?:,\d{3})+|-?\d+');
+final _yearRe = RegExp(r'(19|20)\d{2}');
+
+/// 귀속연도 = ⑪근무기간의 시작연도. 발급일(예: '2026년06월20일')이나 서식 개정
+/// 이력 연도를 잘못 집지 않도록 근무기간 라인에서만 찾는다.
+int _accrualYear(List<String> lines) {
+  for (final ln in lines) {
+    if (!_has(ln, '근무기간')) continue;
+    final m = _yearRe.firstMatch(_sp(ln));
+    if (m == null) continue;
+    final y = int.parse(m.group(0)!);
+    if (y >= 2000 && y <= 2100) return y;
+  }
+  return 0;
+}
 
 List<int> _nums(String line) =>
     _numRe.allMatches(line).map((m) => int.parse(m.group(0)!.replaceAll(',', ''))).toList();
@@ -103,6 +120,7 @@ int? _claimedNear(List<String> lines, String keyword) {
 WithholdingReceipt parseWithholdingText(String text) {
   final lines = text.split(RegExp(r'\r?\n'));
   return WithholdingReceipt(
+    accrualYear: _accrualYear(lines),
     // ⑯ 계 라인의 최댓값 = 총급여 (라인에 '16' 같은 잡숫자가 섞임).
     grossSalary: _maxNumWith(lines, '16계') ?? 0,
     laborDeduction: _absMaxNumWith(lines, '근로소득공제') ?? 0,

@@ -176,12 +176,15 @@ class EmployeeTaxCalculator {
     required double retirementPensionPayment, // 퇴직연금(DC/IRP) 납입액
     required double grossIncome,              // 총급여(직장인) 또는 종합소득금액
     bool isSalariedIncome = true,             // true=근로(5,500만 기준), false=종합(4,500만 기준)
+    // 경정청구용 — 2022 귀속 이하는 연금저축 400만·합산 700만
+    double savingsLimit = 6000000.0,
+    double accountLimit = 9000000.0,
   }) {
     if (pensionSavingsPayment <= 0 && retirementPensionPayment <= 0) return 0.0;
     final double eligibleSavings =
-        pensionSavingsPayment > 6000000.0 ? 6000000.0 : pensionSavingsPayment;
+        pensionSavingsPayment > savingsLimit ? savingsLimit : pensionSavingsPayment;
     double eligibleTotal = eligibleSavings + retirementPensionPayment;
-    if (eligibleTotal > 9000000.0) eligibleTotal = 9000000.0;
+    if (eligibleTotal > accountLimit) eligibleTotal = accountLimit;
     final double threshold = isSalariedIncome ? 55000000.0 : 45000000.0;
     final double rate = grossIncome <= threshold ? 0.15 : 0.12;
     return TaxRates.truncateWon(eligibleTotal * rate);
@@ -313,12 +316,15 @@ class EmployeeTaxCalculator {
     required double grossIncome,
     required double globalIncomeAmount, // 종합소득금액 (직장인은 근로소득금액)
     required bool isHomeless,
+    // 경정청구용 — 2023 귀속 이하는 총급여 7,000만·종합소득금액 6,000만
+    double grossIncomeLimit = 80000000.0,
+    double globalIncomeLimit = 70000000.0,
   }) {
     // 조특법 §95의2 (2024 귀속~): 총급여 8,000만 이하 + 종합소득금액 7,000만 이하 + 무주택.
     // 출처: 국세청 "월세액 세액공제" 안내 — 확인일 2026-07-19 (종전 6,000만에서 상향).
     if (!isHomeless) return false;
-    if (grossIncome > 80000000.0) return false;
-    if (globalIncomeAmount > 70000000.0) return false;
+    if (grossIncome > grossIncomeLimit) return false;
+    if (globalIncomeAmount > globalIncomeLimit) return false;
     return true;
   }
 
@@ -422,6 +428,7 @@ class EmployeeTaxCalculator {
     required double selfAndSeniorAndDisabledExpense, // 본인·65세이상·장애인·건강보험산정특례자 (15%, 한도 없음)
     required double otherDependentExpense,           // 일반 부양가족 (15%, 700만원 한도)
     double prematureBabyExpense = 0.0,               // 미숙아·선천성이상아 (20%, 한도 없음)
+    double infertilityRate = 0.30,                   // 경정청구용 — 2021 귀속은 20%
   }) {
     final double threshold = grossIncome * 0.03;
     final double total = infertilityExpense + prematureBabyExpense +
@@ -446,7 +453,7 @@ class EmployeeTaxCalculator {
     final double cappedOther = otherAllowable > 7000000.0 ? 7000000.0 : otherAllowable;
 
     return TaxRates.truncateWon(
-      infertilityAllowable * 0.30 +
+      infertilityAllowable * infertilityRate +
           prematureAllowable * 0.20 +
           (selfAllowable + cappedOther) * 0.15,
     );
@@ -498,15 +505,26 @@ class EmployeeTaxCalculator {
   static double calculateDonationTaxCredit({
     required double generalDonation,      // 일반 지정기부금
     required double politicalDonation,    // 정치자금기부금
+    // 경정청구용 — 2021·2022 귀속은 한시 상향(20/35%), 2024 귀속은 3천만 초과 40%
+    double rateLow = 0.15,
+    double rateHigh = 0.30,
+    double rateTop = 0.30,
   }) {
     double credit = 0.0;
 
-    // 일반/지정 기부금: 1천만 이하 15%, 초과 30%
+    // 일반/지정 기부금: 1천만 이하 rateLow, 1천만~3천만 rateHigh, 3천만 초과 rateTop
     if (generalDonation > 0) {
-      if (generalDonation <= 10000000.0) {
-        credit += generalDonation * 0.15;
-      } else {
-        credit += (10000000.0 * 0.15) + ((generalDonation - 10000000.0) * 0.30);
+      const double tier1 = 10000000.0;
+      const double tier2 = 30000000.0;
+      final double low = generalDonation < tier1 ? generalDonation : tier1;
+      credit += low * rateLow;
+      if (generalDonation > tier1) {
+        final double mid =
+            (generalDonation < tier2 ? generalDonation : tier2) - tier1;
+        credit += mid * rateHigh;
+      }
+      if (generalDonation > tier2) {
+        credit += (generalDonation - tier2) * rateTop;
       }
     }
 

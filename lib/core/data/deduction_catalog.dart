@@ -77,8 +77,13 @@ GansoDeductions gansoFromAmounts(Map<String, int> amounts) => GansoDeductions(
     );
 
 /// 잊은 항목은 '신고액 0' — 총급여·결정세액만 채운 `WithholdingReceipt`.
-WithholdingReceipt forgottenReceipt({required int grossSalary, required int decidedTax}) =>
-    WithholdingReceipt(grossSalary: grossSalary, decidedTax: decidedTax);
+WithholdingReceipt forgottenReceipt({
+  required int accrualYear,
+  required int grossSalary,
+  required int decidedTax,
+}) =>
+    WithholdingReceipt(
+        accrualYear: accrualYear, grossSalary: grossSalary, decidedTax: decidedTax);
 
 /// `getAnnualRecord` 맵에서 카탈로그 id별 가능액을 뽑아낸다(PDF 보조 프리필).
 Map<String, int> amountsFromAnnualRecord(Map<String, dynamic> record) {

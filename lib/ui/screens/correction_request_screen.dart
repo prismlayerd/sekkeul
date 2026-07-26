@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/data/deduction_catalog.dart';
 import '../../core/parsing/correction_report.dart';
+import '../../core/tax_engine/tax_year_rules.dart';
 
 /// 경정청구 준비 — 입력 대신 '잊은 공제 선택 + 홈택스 신고 가이드' 중심.
 /// 빠뜨린 공제를 골라 실제 지출액만 적으면(이미 신고액은 0으로 간주) 추가 환급을
@@ -27,8 +28,17 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
   Map<String, int> _amounts = {};       // 체크리스트에서 고른 항목별 지출액
   Map<String, int> _initialAmounts = {}; // PDF 간소화 프리필(보조)
 
-  late int _selectedYear = DateTime.now().year - 1;
-  List<int> get _claimableYears => List.generate(5, (i) => DateTime.now().year - 1 - i);
+  late int _selectedYear = _claimableYears.first;
+
+  /// 아직 청구 기한이 남았고(국세기본법 §45의2 ⑤ — 귀속연도 다음 해 3.10.+5년),
+  /// 앱이 그 해 공제율을 원문으로 확인해 둔 연도만 고르게 한다.
+  List<int> get _claimableYears {
+    final now = DateTime.now();
+    return [
+      for (var y = now.year - 1; y >= kOldestCorrectionYear; y--)
+        if (rulesForYear(y) != null && isCorrectionOpen(y, now)) y,
+    ];
+  }
 
   @override
   void initState() {
@@ -62,7 +72,8 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
 
   CorrectionReport _report() => buildCorrectionReport(
         gansoFromAmounts(_amounts),
-        forgottenReceipt(grossSalary: _gross, decidedTax: _decided),
+        forgottenReceipt(
+            accrualYear: _selectedYear, grossSalary: _gross, decidedTax: _decided),
       );
 
   List<Map<String, dynamic>> _draftItems(CorrectionReport c) => [
@@ -138,7 +149,9 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
 
             // ── 예상 추가 환급액 ──
             const SizedBox(height: 16),
-            if (c.hasMissed) ...[
+            if (c.isBlocked)
+              _blockedNotice(c.blockedReason!)
+            else if (c.hasMissed) ...[
               _refundHeadline(c.additionalRefund),
               const SizedBox(height: 8),
               ...c.lines.map(_correctionRow),
@@ -198,6 +211,21 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
       Expanded(child: Text(label, style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700))),
       AmountField(controller: ctrl, width: 150, onChanged: (_) => setState(() {})),
     ]);
+  }
+
+  /// 계산 근거가 없을 때 — 금액 대신 이유를 보여준다.
+  /// 경정청구는 이 숫자를 그대로 세무서에 내는 기능이라, 틀린 금액이 빈 결과보다 나쁘다.
+  Widget _blockedNotice(String reason) {
+    return Container(
+      decoration: BoxDecoration(border: Border.all(color: AppTheme.line(context), width: 1), borderRadius: BorderRadius.circular(3)),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(Icons.info_outline_rounded, size: 20, color: AppTheme.inkTertiary(context)),
+        const SizedBox(width: 12),
+        Expanded(child: Text(reason,
+            style: AppTheme.sans(13.5, AppTheme.ink(context), height: 1.5))),
+      ]),
+    );
   }
 
   Widget _emptyMissed() {
