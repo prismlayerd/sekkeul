@@ -499,77 +499,7 @@ class CombinedTaxCalculator {
     );
   }
 
-  /// N잡러 (투잡 직장인 - A회사 + B회사) 합산 신고 시뮬레이션
-  static TwoJobsTaxResult calculateTwoJobsTax({
-    required double primaryGrossIncome,       // 주 직장 세전 연봉
-    required double secondaryGrossIncome,     // 부 직장 세전 연봉
-    required double primaryDecidedTax,        // 주 직장 기납부세액(결정세액)
-    required double secondaryDecidedTax,      // 부 직장 기납부세액(결정세액)
-    required int allowanceCount,              // 부양가족 수
-  }) {
-    final double totalGrossIncome = primaryGrossIncome + secondaryGrossIncome;
-    final double laborDeduction = EmployeeTaxCalculator.calculateLaborDeduction(totalGrossIncome);
-    final double totalLaborIncomeAmount = totalGrossIncome - laborDeduction;
-    
-    final double personalDeduction = (allowanceCount < 0 ? 1 : allowanceCount + 1) * TaxRates.basicDeductionPerPerson;
-    
-    double taxBase = totalLaborIncomeAmount - personalDeduction;
-    if (taxBase < 0) taxBase = 0;
-
-    final double calculatedTax = TaxRates.calculateTax(taxBase);
-    
-    final double laborTaxCredit = EmployeeTaxCalculator.calculateLaborTaxCredit(
-      grossIncome: totalGrossIncome,
-      calculatedTaxShare: calculatedTax,
-    );
-
-    double finalIncomeTax = calculatedTax - laborTaxCredit;
-    if (finalIncomeTax < 0) finalIncomeTax = 0;
-    
-    final double finalLocalTax = TaxRates.truncateWon(finalIncomeTax * 0.1);
-    final double finalTotalTax = finalIncomeTax + finalLocalTax;
-
-    final double totalWithholding = primaryDecidedTax + secondaryDecidedTax;
-    final double expectedRefundOrPayment = totalWithholding - finalTotalTax;
-
-    return TwoJobsTaxResult(
-      totalGrossIncome: totalGrossIncome,
-      totalLaborIncomeAmount: totalLaborIncomeAmount,
-      taxBase: taxBase,
-      calculatedTax: calculatedTax,
-      finalIncomeTax: finalIncomeTax,
-      finalLocalTax: finalLocalTax,
-      finalTotalTax: finalTotalTax,
-      totalWithholding: totalWithholding,
-      expectedRefundOrPayment: expectedRefundOrPayment,
-    );
-  }
 }
-
-class TwoJobsTaxResult {
-  final double totalGrossIncome;
-  final double totalLaborIncomeAmount;
-  final double taxBase;
-  final double calculatedTax;
-  final double finalIncomeTax;
-  final double finalLocalTax;
-  final double finalTotalTax;
-  final double totalWithholding;
-  final double expectedRefundOrPayment;
-
-  TwoJobsTaxResult({
-    required this.totalGrossIncome,
-    required this.totalLaborIncomeAmount,
-    required this.taxBase,
-    required this.calculatedTax,
-    required this.finalIncomeTax,
-    required this.finalLocalTax,
-    required this.finalTotalTax,
-    required this.totalWithholding,
-    required this.expectedRefundOrPayment,
-  });
-}
-
 class CombinedTaxResult {
   final double annualEstimatedIncome;
   final double laborIncomeAmount;
