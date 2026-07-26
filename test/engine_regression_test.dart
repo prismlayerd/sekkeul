@@ -798,6 +798,14 @@ void main() {
       expect(InsuranceEngine.calculateNJobExtraInsurance(20000000).extraHealthInsurance, 0);
     });
 
+    test('노무제공자 산재보험료율 — 고시 요율의 1/2이 본인부담', () {
+      // 고용노동부고시 제2025-92호 (단위 ‰) ÷ 2 (징수법 §48의6⑥·시행령 §56의10)
+      expect(specialWorkerIndustrialRates['940918'], 0.017 / 2); // 늘찬배달원 17‰
+      expect(specialWorkerIndustrialRates['940906'], 0.005 / 2); // 보험설계사 5‰
+      expect(specialWorkerIndustrialRates['940913'], 0.018 / 2); // 대리운전 18‰
+      expect(specialWorkerIndustrialRates['940903'], 0.007 / 2); // 방문강사 7‰
+    });
+
     test('지역가입자는 소득분+재산분 합계에 상·하한', () {
       final high = InsuranceEngine.calculateFreelancerInsurance(
           annualIncome: 10000000000, propertyValue: 0);
