@@ -279,7 +279,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     // 기존 평문 DB가 있고 아직 암호화 전이면: 먼저 평문 상태로 최신 스키마까지 정규화한 뒤
     // SQLCipher 암호화 DB로 1회 이전한다(S-2). 신규 설치는 곧장 암호화 DB로 생성된다.
     if (await File(path).exists() && !await _isAlreadyEncrypted(path, key)) {
-      final normalizeDb = await openDatabase(path, version: 40, onCreate: _onCreate, onUpgrade: _onUpgrade);
+      final normalizeDb = await openDatabase(path, version: 41, onCreate: _onCreate, onUpgrade: _onUpgrade);
       await normalizeDb.close();
       await _encryptExistingPlaintextDb(path, key);
     }
@@ -287,7 +287,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     _db = await openDatabase(
       path,
       password: key,
-      version: 40,
+      version: 41,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -328,7 +328,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     }
     await plainDb.close();
 
-    final encDb = await openDatabase(tempEncPath, password: key, version: 40, onCreate: _onCreate);
+    final encDb = await openDatabase(tempEncPath, password: key, version: 41, onCreate: _onCreate);
     var insertedRows = 0;
     await encDb.transaction((txn) async {
       for (final entry in dump.entries) {
@@ -389,6 +389,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
             owns_car INTEGER,
             owns_house INTEGER,
             occupation_code TEXT,
+            deduction_picks TEXT,
             property_value REAL,
             pension_enrolled INTEGER DEFAULT 0,
             health_enrolled INTEGER DEFAULT 0,
@@ -834,6 +835,15 @@ class SqfliteDatabaseHelper implements DatabaseService {
                 'ALTER TABLE user_profile ADD COLUMN children_count_credit INTEGER');
           } catch (e) {}
         }
+
+        // 공제 고르기 결과 (v41) — 쉼표로 이은 항목 id.
+        // 저장해 두면 계산기에 바로 들어와도 자기와 무관한 입력이 접힌 채로 열리고,
+        // 안 고른 항목을 되물을 수 있다. 게이트를 매번 통과시키지 않아도 된다.
+        if (oldVersion < 41) {
+          try {
+            await db.execute('ALTER TABLE user_profile ADD COLUMN deduction_picks TEXT');
+          } catch (e) {}
+        }
   }
 
   @override
@@ -867,6 +877,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'is_female_head': profile['is_female_head'] == true ? 1 : 0,
         'is_single_parent': profile['is_single_parent'] == true ? 1 : 0,
         'wedding_year': profile['wedding_year'],
+        'deduction_picks': profile['deduction_picks'],
         'children_count_credit': profile['children_count_credit'] ?? 0,
         'children_count_total': profile['children_count_total'] ?? 0,
         'newborn_count': profile['newborn_count'] ?? 0,
@@ -923,6 +934,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
       'is_female_head': map['is_female_head'] == 1,
       'is_single_parent': map['is_single_parent'] == 1,
       'wedding_year': map['wedding_year'] as int?,
+      'deduction_picks': map['deduction_picks'] as String?,
       'children_count_credit': map['children_count_credit'] as int? ?? 0,
       'children_count_total': map['children_count_total'] as int? ?? 0,
       'newborn_count': map['newborn_count'] as int? ?? 0,

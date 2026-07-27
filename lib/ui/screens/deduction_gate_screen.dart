@@ -38,8 +38,11 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
   Future<void> _load() async {
     final p = await dbService.getProfile();
     if (!mounted) return;
+    final saved = (p?['deduction_picks'] as String?) ?? '';
     setState(() {
       _gross = (p?['gross_income'] as num?)?.toDouble() ?? 0;
+      // 지난번에 고른 것을 미리 체크해 둔다 — 매번 처음부터 고르게 하지 않는다.
+      _picked.addAll(saved.split(',').where((e) => e.isNotEmpty));
       _loaded = true;
     });
   }
@@ -54,6 +57,19 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
       .fold(0.0, (s, e) => s + e.maxCredit);
 
   String _won(num v) => '${_fmt.format(v.round())}원';
+
+  Future<void> _goToCalculator() async {
+    final profile = await dbService.getProfile() ?? {};
+    profile['deduction_picks'] = _picked.join(',');
+    await dbService.saveProfile(profile);
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+          builder: (_) =>
+              TaxSimulatorScreen(userType: widget.userType, preOpened: Set.of(_picked))),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -237,11 +253,7 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
           const SizedBox(height: 14),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => TaxSimulatorScreen(
-                        userType: widget.userType, preOpened: Set.of(_picked)))),
+            onTap: _goToCalculator,
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 15),

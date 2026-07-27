@@ -164,6 +164,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     // 소득: 프로필 연소득 우선, 없으면 달력 월별 합산
     final profile = await dbService.getProfile();
     _profileCache = profile ?? {};
+    _applySavedPicks(profile);
     double annualIncome = 0.0;
     double priorYearIncome = 0.0;
     bool isNewBusiness = false;
@@ -673,6 +674,16 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     _openCardsFor(_gatePicks!);
   }
 
+  /// 게이트를 안 거치고 바로 들어왔어도, 지난번에 고른 게 있으면 그대로 쓴다.
+  /// 저장된 적이 없으면 건드리지 않는다 — 고른 적이 없으면 놓친 것도 없다.
+  void _applySavedPicks(Map<String, dynamic>? profile) {
+    if (_gatePicks != null) return;
+    final saved = (profile?['deduction_picks'] as String?) ?? '';
+    if (saved.isEmpty) return;
+    _gatePicks = saved.split(',').where((e) => e.isNotEmpty).toSet();
+    _openCardsFor(_gatePicks!);
+  }
+
   /// 고른 항목이 든 카드를 펼친다. 카드 구성이 바뀌면 여기만 고치면 된다.
   void _openCardsFor(Set<String> ids) {
     bool any(List<String> k) => k.any(ids.contains);
@@ -680,6 +691,40 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     if (any(['hometown', 'mortgage'])) _showExtraDeduction = true;
     if (any(['insurance', 'pension', 'newborn'])) _showExtraCredit = true;
   }
+
+  /// 입력칸의 금액. 되묻기 판단에 쓴다.
+  double _amountOf(TextEditingController c) =>
+      double.tryParse(c.text.replaceAll(',', '')) ?? 0;
+
+  /// 한도를 넘거나 고율 항목이 섞일 때만 세부 입력을 연다.
+  ///
+  /// 측정(2026-07-27): 총액이 한도 아래면 어떻게 쪼개든 결과가 **0원** 달라진다.
+  /// 넘을 때만 갈리므로(교육비 90만·연금 45만·의료비 24.75만) 그때만 묻는다.
+  Widget _followUp(String note, {String? label, TextEditingController? controller}) =>
+      Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+              decoration: BoxDecoration(
+                border: Border(
+                    left: BorderSide(color: AppTheme.accentColor(context), width: 2)),
+              ),
+              child: Text(note,
+                  style: AppTheme.sans(12, AppTheme.ink(context), height: 1.45)),
+            ),
+            if (label != null && controller != null) ...[
+              const SizedBox(height: 12),
+              Text(label,
+                  style: AppTheme.sans(13, AppTheme.ink(context), weight: FontWeight.w600)),
+              const SizedBox(height: 6),
+              _buildSensitiveTextField(controller, '0'),
+            ],
+          ],
+        ),
+      );
 
   /// 게이트에서 고르지 않은 항목 — 숨긴 대가로 손해가 나면 안 된다.
   List<DeductionOption> get _missedOptions {
@@ -1177,7 +1222,8 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     );
   }
 
-  Widget _buildSensitiveTextField(TextEditingController controller, String hint) {
+  Widget _buildSensitiveTextField(TextEditingController controller, String hint,
+      {Key? fieldKey}) {
     final ink = AppTheme.ink(context);
     final sub = AppTheme.inkSecondary(context);
     return Container(
@@ -1186,6 +1232,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       child: Row(children: [
         Expanded(
           child: TextField(
+            key: fieldKey,
             controller: controller,
             keyboardType: TextInputType.number,
             style: AppTheme.sans(15, ink, weight: FontWeight.w700),
@@ -1651,13 +1698,17 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         const SizedBox(height: 6),
                         _buildSensitiveTextField(_infertilityMedicalController, '예: 500,000'),
                         const SizedBox(height: 12),
-                        Text('본인·65세이상·장애인 의료비 (공제율 15%)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600)),
+                        Text('그 밖의 의료비 (공제율 15%)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),
-                        _buildSensitiveTextField(_selfSeniorDisabledMedicalController, '예: 1,000,000'),
-                        const SizedBox(height: 12),
-                        Text('일반 부양가족 의료비 (공제율 15%, 700만원 한도)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                        _buildSensitiveTextField(_otherDependentMedicalController, '예: 2,000,000'),
+                        _buildSensitiveTextField(_otherDependentMedicalController, '0',
+                            fieldKey: const Key('medicalOtherField')),
+                        // 700만 한도에 걸릴 때만 물어본다 — 그 아래에선 나눠도 결과가 같다.
+                        if (_amountOf(_otherDependentMedicalController) > 7000000)
+                          _followUp(
+                              '700만원이 넘었어요. 본인·65세 이상·장애인 의료비는 한도가 없으니, '
+                              '그만큼을 따로 적으면 더 돌려받아요.',
+                              label: '그중 본인·65세 이상·장애인 의료비',
+                              controller: _selfSeniorDisabledMedicalController),
 
                         Divider(height: 32, color: Theme.of(context).scaffoldBackgroundColor),
 
@@ -1704,7 +1755,14 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        // 초중고 한도(1인당 300만)에 걸릴 때만 대학 칸을 연다 —
+                        // 그 아래에선 어느 칸에 넣든 공제액이 같다(측정 결과 0원 차이).
+                        if (_amountOf(_childrenEduController) >
+                            3000000 * (int.tryParse(_childrenCountController.text) ?? 1)
+                                .clamp(1, 99)) ...[
+                          _followUp(
+                              '초·중·고 교육비는 1인당 300만원이 한도예요. 대학생 학비가 섞여 있다면 '
+                              '따로 적어주세요 — 대학은 1인당 900만원까지 돼요.'),
                         Row(
                           children: [
                             Expanded(
@@ -1736,6 +1794,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                             ),
                           ],
                         ),
+                        ],
                       ],
                     ),
                   ),
@@ -1998,11 +2057,16 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         const SizedBox(height: 16),
                         Text('연금저축 납입액 (15% 공제, 연 600만 한도)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),
-                        _buildSensitiveTextField(_pensionSavingsSimController, '예: 6,000,000'),
-                        const SizedBox(height: 12),
-                        Text('IRP / 퇴직연금 추가납입 (합산 900만 한도)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                        _buildSensitiveTextField(_irpSimController, '예: 3,000,000'),
+                        _buildSensitiveTextField(_pensionSavingsSimController, '0',
+                            fieldKey: const Key('pensionSavingsField')),
+                        // 연금저축 한도(600만)를 넘길 때만 IRP를 묻는다 — 그 아래에선
+                        // 어디에 넣었든 공제액이 같다.
+                        if (_amountOf(_pensionSavingsSimController) > 6000000)
+                          _followUp(
+                              '연금저축은 600만원이 한도예요. 넘는 금액을 IRP·퇴직연금으로 넣으면 '
+                              '합쳐서 900만원까지 공제돼요.',
+                              label: 'IRP·퇴직연금(DC) 납입액',
+                              controller: _irpSimController),
                         ],
                       ],
                     ),
