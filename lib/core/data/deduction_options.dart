@@ -59,7 +59,7 @@ List<DeductionOption> deductionOptions({
           '15년 이상이면 800만원부터, 고정금리·비거치식이면 2,000만원까지 과세표준에서 빼요',
           20000000 * marginal),
     DeductionOption('donation', '기부했어요', '1,000만원까지 15%, 넘으면 30%', 10000000 * 0.15),
-    DeductionOption('hometown', '고향사랑기부를 했어요', '10만원까지는 전액 돌려받아요',
+    DeductionOption('hometown', '고향사랑기부를 했어요', '10만원 내면 소득세에서 9만 909원 (지방소득세까지 합치면 10만원)',
         EmployeeTaxCalculator.calculateHometownDonationTaxCredit(100000)),
 
     // ── 나와 가족 ──

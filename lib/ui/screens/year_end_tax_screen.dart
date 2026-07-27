@@ -1326,7 +1326,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                 nonDeferredRepayment: _mortgageNonDeferred),
           ),
         const SizedBox(height: 20),
-        _buildWizardAmountField('고향사랑기부금', '10만원까지 전액 환급 · 초과분 세액공제 (연 2,000만원 한도)', _hometownDonationController),
+        _buildWizardAmountField('고향사랑기부금', '10만원까지 110분의 100 (소득세 9만 909원) · 초과분 세액공제 (연 2,000만원 한도)', _hometownDonationController),
       ],
     );
   }

@@ -569,7 +569,10 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           controllers: [_donationCtrl, _politicalDonationCtrl],
           labels: ['일반·지정기부금 합계', '정치자금기부금'],
           hints: ['예: 500,000', '예: 100,000'],
-          note: '일반기부금: 1천만 이하 15% / 초과 30%\n정치자금: 10만원까지 전액 환급 (세액=기부액) / 초과분 15%\n⚠ 고향사랑기부금은 별도 신고 항목',
+          // 정치자금 10만원 이하는 소득세 세액공제 110분의 100(=90,909원)이다.
+          // "전액 환급"은 지방소득세 9,091원까지 합쳤을 때 얘기 — 이 화면은 소득세만
+          // 다루므로 그렇게 쓰면 엔진이 내는 값과 어긋난다.
+          note: '일반기부금: 1천만 이하 15% / 초과 30%\n정치자금: 10만원까지 110분의 100 (소득세 90,909원, 지방소득세까지 합치면 10만원) / 초과분 15%\n⚠ 고향사랑기부금은 별도 신고 항목',
           homeTaxPath: '세금신고 > 종합소득세 신고 > 기부금명세서 작성\n> 기부유형 선택 후 금액 입력',
           documents: ['기부금영수증 (기부처에서 직접 발급)', '정치자금 영수증 (정당·선관위 발급)'],
           primary: primary, textColor: textColor, subColor: subColor, cardColor: cardColor,

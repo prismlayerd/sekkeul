@@ -2109,7 +2109,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                                 nonDeferredRepayment: _mortgageNonDeferred),
                           ),
                         const SizedBox(height: 16),
-                        Text('고향사랑기부금 (10만원까지 전액 환급, 초과분 세액공제)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
+                        Text('고향사랑기부금 (10만원까지 110분의 100, 초과분 세액공제)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),
                         _buildSensitiveTextField(_hometownDonationSimController),
                         ],
