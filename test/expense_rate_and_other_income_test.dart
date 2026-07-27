@@ -155,28 +155,18 @@ void main() {
           isFalse);
     });
 
-    test('일반 프리랜서는 월세 공제 제외, 성실사업자만 적용', () {
-      final normal = FreelancerTaxCalculator.calculateTaxSimulation(
+    test('프리랜서 계산에는 월세 세액공제 자체가 없다', () {
+      // 조특법 §95의2는 근로소득자 전용이고, 사업소득자는 §122의3의 성실사업자만
+      // 대상이다. 성실사업자는 사업자등록·가맹점·사업용계좌를 갖춘 사업자라
+      // 이 앱의 대상(개인 프리랜서)이 아니다 — 발화하지 않는 분기를 지웠다.
+      final r = FreelancerTaxCalculator.calculateTaxSimulation(
         accumulatedIncome: 30000000,
         inputMonths: 12,
         allowanceCount: 0,
         occupationCode: '940100',
-        monthlyRent: 500000,
-        isHomeless: true,
       );
-      expect(normal.rentTaxCredit, 0);
-
-      final faithful = FreelancerTaxCalculator.calculateTaxSimulation(
-        accumulatedIncome: 30000000,
-        inputMonths: 12,
-        allowanceCount: 0,
-        occupationCode: '940100',
-        monthlyRent: 500000,
-        isHomeless: true,
-        isQualifiedFaithfulTaxpayer: true,
-      );
-      // 종합소득금액 4,500만 이하 → 17%: 연 600만 × 0.17 = 1,020,000.
-      expect(faithful.rentTaxCredit, 1020000);
+      // 표준세액공제는 언제나 7만원 (성실사업자 12만원 분기 없음).
+      expect(r.taxCredit, 70000);
     });
   });
 }

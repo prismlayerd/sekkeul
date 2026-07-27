@@ -17,13 +17,15 @@ class _DidimdolLoanScreenState extends State<DidimdolLoanScreen> {
   final _yearsCtrl = TextEditingController(text: '30');
   final _fmt = NumberFormat('#,###');
 
-  static const _rates = [
-    ('연 소득 2천만원 이하', '1.85%'),
-    ('연 소득 4천만원 이하', '2.25%'),
-    ('연 소득 6천만원 이하', '2.55%'),
-    ('연 소득 7천만원 이하', '2.80%'),
-    ('연 소득 8.5천만원 이하', '3.00%'),
-  ];
+  /// 주택도시기금이 공시하는 금리 **범위**만 적는다.
+  ///
+  /// 소득·만기별 세부 표는 기금 공지로 수시(때로는 월 단위) 바뀐다. 앱에 박아
+  /// 두면 반드시 낡는데(종전 표는 2024년 값이라 1%p 가까이 낮았다), 정작 이
+  /// 화면의 계산은 사용자가 넣은 금리로 한다. 그래서 범위 + 출처만 남긴다.
+  ///
+  /// 출처: 주택도시기금 「내집마련 디딤돌대출」 상품 안내 — 확인일 2026-07-28.
+  static const _rateRange = '연 2.85% ~ 연 4.15%';
+  static const _rateSource = '주택도시기금 공시 (2026-07-28 확인)';
 
   @override
   void dispose() {
@@ -169,26 +171,22 @@ class _DidimdolLoanScreenState extends State<DidimdolLoanScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-            child: Text('2024년 기준 금리 (소득 구간)'.keepWords,
+            child: Text('금리 범위'.keepWords,
                 style: AppTheme.sans(AppTheme.tsSM, sub, weight: FontWeight.w600)),
           ),
           Divider(height: 1, thickness: 1, color: line),
-          ..._rates.asMap().entries.map((e) => Column(children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(e.value.$1, style: AppTheme.sans(AppTheme.tsSM, sub)),
-                      Text(e.value.$2,
-                          style: AppTheme.sans(AppTheme.tsSM, ink,
-                              weight: FontWeight.w600)),
-                    ],
-                  ),
-                ),
-                if (e.key < _rates.length - 1)
-                  Divider(height: 1, thickness: 1, color: line, indent: 12),
-              ])),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(_rateRange,
+                  style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700)),
+              const SizedBox(height: 4),
+              Text('소득·만기·우대 조건에 따라 이 안에서 정해져요. 내 금리는 기금e든든에서 확인하고 위에 넣어주세요.'.keepWords,
+                  style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
+              const SizedBox(height: 6),
+              Text(_rateSource, style: AppTheme.sans(AppTheme.tsXS, sub)),
+            ]),
+          ),
         ],
       ),
     );

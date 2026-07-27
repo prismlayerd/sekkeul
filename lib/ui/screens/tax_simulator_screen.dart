@@ -18,6 +18,7 @@ import '../../core/tax_engine/freelancer_tax.dart';
 import '../../core/tax_engine/combined_tax.dart';
 import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/tax_rates.dart';
+import '../../core/tax_engine/tax_year.dart';
 import '../../core/tax_engine/bookkeeping_duty.dart';
 import 'expense_calendar_screen.dart';
 import 'tax_report_form_screen.dart';
@@ -162,6 +163,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     _pensionSavingsSimController.addListener(_calculateTax);
     _irpSimController.addListener(_calculateTax);
     _childrenForCreditController.addListener(_saveChildrenForCreditToProfile);
+    _newbornCountController.addListener(_saveNewbornToProfile);
     _mortgageSimController.addListener(_calculateTax);
     _hometownDonationSimController.addListener(_calculateTax);
     _priorYearIncomeController.addListener(_onBookkeepingInputChanged);
@@ -235,6 +237,14 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       final savedChildrenForCredit = (profile['children_count_credit'] as int?) ?? 0;
       if (savedChildrenForCredit > 0 && _childrenForCreditController.text == '0') {
         _childrenForCreditController.text = savedChildrenForCredit.toString();
+      }
+      // 출산·입양은 그 해에만 받는 공제라, 저장된 귀속연도가 지금과 같을 때만 되살린다.
+      final savedNewborn = (profile['newborn_count'] as int?) ?? 0;
+      final savedNewbornYear = (profile['newborn_year'] as int?) ?? 0;
+      if (savedNewborn > 0 &&
+          savedNewbornYear == kReferenceTaxYear &&
+          _newbornCountController.text == '0') {
+        _newbornCountController.text = savedNewborn.toString();
       }
       final profileOccCode = profile['occupation_code'] as String?;
       if (profileOccCode != null) profileOccupation = OccupationData.occupations[profileOccCode];
@@ -861,6 +871,23 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     await dbService.saveProfile(updated);
   }
 
+  /// 올해 출산·입양한 자녀 수를 프로필에 남긴다.
+  ///
+  /// **연도를 같이 적는다.** 출산·입양 세액공제(소법 §59의2③)는 그 해에만 받는
+  /// 일회성 공제라, 수만 저장하면 내년에도 남아 없는 공제를 계속 넣게 된다.
+  Future<void> _saveNewbornToProfile() async {
+    final v = int.tryParse(_newbornCountController.text.trim()) ?? 0;
+    final updated = Map<String, dynamic>.from(_profileCache ?? {});
+    if ((updated['newborn_count'] as int?) == v &&
+        (updated['newborn_year'] as int?) == kReferenceTaxYear) {
+      return;
+    }
+    updated['newborn_count'] = v;
+    updated['newborn_year'] = v > 0 ? kReferenceTaxYear : 0;
+    _profileCache = updated;
+    await dbService.saveProfile(updated);
+  }
+
   /// 업종 선택 직후 노출되는 기장의무 판정 입력(직전연도 수입·신규·겸업) + 판정 배너.
   /// 업종 미선택 시 빈 리스트(아직 판정 불가).
   List<Widget> _buildBookkeepingJudgmentSection() {
@@ -1125,7 +1152,8 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
 
   /// `_field`의 밑줄 입력부만 떼어낸 것 — 라벨/레이아웃을 직접 짜는 곳(2열 배치 등)에서
   /// 필드 시각 언어를 통일하기 위해 재사용한다(도면 스타일 헤어라인 밑줄).
-  Widget _underlineInput(TextEditingController controller, {required String hint, String suffix = '원'}) {
+  Widget _underlineInput(TextEditingController controller,
+      {required String hint, String suffix = '원', Key? fieldKey}) {
     final ink = AppTheme.ink(context);
     final sub = AppTheme.inkSecondary(context);
     return Container(
@@ -1134,6 +1162,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       child: Row(children: [
         Expanded(
           child: TextField(
+            key: fieldKey,
             controller: controller,
             keyboardType: TextInputType.number,
             inputFormatters: [
@@ -1312,7 +1341,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     );
   }
 
-  Widget _buildCountTextField(TextEditingController controller) {
+  Widget _buildCountTextField(TextEditingController controller, {Key? fieldKey}) {
     final ink = AppTheme.ink(context);
     final sub = AppTheme.inkSecondary(context);
     return Container(
@@ -1321,6 +1350,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       child: Row(children: [
         Expanded(
           child: TextField(
+            key: fieldKey,
             controller: controller,
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
@@ -1389,6 +1419,40 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// 순수 직장인에게만 뜨는 한 줄 — 강사료·원고료·연금이 있으면 계산이 달라진다.
+  ///
+  /// 이 화면의 직장인 계산은 "연말정산에서 놓친 공제를 5월에 더 받는" 모델이라
+  /// 소득을 더하는 항목을 넣을 자리가 없다. 그런 소득이 있는 사람은 유형상
+  /// N잡러이고, 그쪽 엔진이 합산·분리과세까지 계산한다. 그런데 스스로를 N잡러라고
+  /// 생각하지 않는 사람이 많아, 안내가 없으면 조용히 빠뜨린다.
+  Widget _buildOtherIncomeNudge() {
+    if (!_isEmployee || _isFreelancer) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        decoration: BoxDecoration(
+          border: Border(
+              left: BorderSide(color: AppTheme.accentColor(context), width: 2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('강사료·원고료를 받았거나 연금을 받고 있나요?'.keepWords,
+                style: AppTheme.sans(13, AppTheme.ink(context), weight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Text(
+              '월급 말고 다른 소득이 있으면 5월에 합쳐서 신고해야 해요. '
+                      '홈 위쪽에서 유형을 N잡러로 바꾸면 합산과 분리과세까지 계산해드려요.'
+                  .keepWords,
+              style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.45),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1996,7 +2060,8 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                   const SizedBox(height: 4),
                   Text('첫째 30만 원, 둘째 50만 원, 셋째부터 70만 원이 위 금액에\n더해져요. 출산·입양한 해에만 받을 수 있어요.'.keepWords, style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.4)),
                   const SizedBox(height: 8),
-                  _underlineInput(_newbornCountController, hint: '0', suffix: '명'),
+                  _underlineInput(_newbornCountController,
+                      hint: '0', suffix: '명', fieldKey: const Key('newbornField')),
                   const SizedBox(height: 28),
                 ],
 
@@ -2183,7 +2248,10 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                             SizedBox(width: 100, child: _buildCountTextField(_childrenForCreditController)),
                             const SizedBox(width: 16),
                             Expanded(child: Text('출산·입양 자녀', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600))),
-                            SizedBox(width: 100, child: _buildCountTextField(_newbornCountController)),
+                            SizedBox(
+                                width: 100,
+                                child: _buildCountTextField(_newbornCountController,
+                                    fieldKey: const Key('newbornField'))),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -2207,6 +2275,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
               ],
 
               _buildBookkeepingComparisonCard(),
+              _buildOtherIncomeNudge(),
               _buildResultBanner(),
 
               // 안 고른 항목은 **주 CTA 앞**에 둔다. 버튼 뒤에 두면 누르고 나가버려

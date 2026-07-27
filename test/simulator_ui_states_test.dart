@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/ui/screens/tax_simulator_screen.dart';
+import 'package:secul/core/tax_engine/tax_year.dart';
 import 'support/ko_finder.dart';
 
 /// 계산기 화면의 상태별 표시 — 값이 아니라 "그 상황에서 무엇이 보이는가"를 고정한다.
@@ -66,5 +67,41 @@ void main() {
     await t.tap(findKo('처음부터 원금도 같이 갚아요'));
     await t.pumpAndSettle();
     expect(findKo('지금 한도: 연 2000만원'), findsOneWidget);
+  });
+
+  testWidgets('직장인 — 다른 소득이 있으면 N잡러로 가라고 알려준다', (t) async {
+    await open(t, profile: {'gross_income': 45000000.0});
+    // 이 화면의 직장인 계산은 소득을 더하는 항목을 넣을 자리가 없다.
+    expect(findKo('강사료·원고료를 받았거나 연금을 받고 있나요?'), findsOneWidget);
+    expect(findKo('N잡러로 바꾸면'), findsOneWidget);
+  });
+
+  testWidgets('출산·입양 수는 귀속연도와 함께 저장된다', (t) async {
+    await open(t, profile: {'gross_income': 45000000.0});
+    // 출산·입양 칸은 '세액공제 (선택)' 카드 안이라 기본이 접힘이다.
+    await t.tap(findKo('세액공제 (선택)').first);
+    await t.pumpAndSettle();
+    await t.enterText(find.byKey(const Key('newbornField')), '1');
+    await t.pumpAndSettle();
+
+    final saved = await dbService.getProfile();
+    expect(saved?['newborn_count'], 1);
+    expect(saved?['newborn_year'], kReferenceTaxYear,
+        reason: '연도가 없으면 내년에도 남아 없는 공제를 넣게 된다');
+
+    // 지난 해에 저장된 값은 되살리지 않는다.
+    await dbService.saveProfile({
+      ...?saved,
+      'newborn_count': 2,
+      'newborn_year': kReferenceTaxYear - 1,
+    });
+    await t.pumpWidget(MaterialApp(
+        home: TaxSimulatorScreen(key: const ValueKey('again'), userType: '직장인')));
+    await t.pumpAndSettle();
+    final fields = t
+        .widgetList<EditableText>(find.byType(EditableText))
+        .map((e) => e.controller.text)
+        .toList();
+    expect(fields.contains('2'), isFalse, reason: '작년 출산은 올해 공제 대상이 아니다');
   });
 }

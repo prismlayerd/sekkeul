@@ -279,7 +279,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     // 기존 평문 DB가 있고 아직 암호화 전이면: 먼저 평문 상태로 최신 스키마까지 정규화한 뒤
     // SQLCipher 암호화 DB로 1회 이전한다(S-2). 신규 설치는 곧장 암호화 DB로 생성된다.
     if (await File(path).exists() && !await _isAlreadyEncrypted(path, key)) {
-      final normalizeDb = await openDatabase(path, version: 41, onCreate: _onCreate, onUpgrade: _onUpgrade);
+      final normalizeDb = await openDatabase(path, version: 42, onCreate: _onCreate, onUpgrade: _onUpgrade);
       await normalizeDb.close();
       await _encryptExistingPlaintextDb(path, key);
     }
@@ -287,7 +287,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     _db = await openDatabase(
       path,
       password: key,
-      version: 41,
+      version: 42,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -328,7 +328,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     }
     await plainDb.close();
 
-    final encDb = await openDatabase(tempEncPath, password: key, version: 41, onCreate: _onCreate);
+    final encDb = await openDatabase(tempEncPath, password: key, version: 42, onCreate: _onCreate);
     var insertedRows = 0;
     await encDb.transaction((txn) async {
       for (final entry in dump.entries) {
@@ -382,6 +382,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
             children_count_credit INTEGER,
             children_count_total INTEGER,
             newborn_count INTEGER,
+            newborn_year INTEGER,
             is_sme_employee INTEGER,
             sme_start_year INTEGER,
             pay_day INTEGER DEFAULT 25,
@@ -844,6 +845,13 @@ class SqfliteDatabaseHelper implements DatabaseService {
             await db.execute('ALTER TABLE user_profile ADD COLUMN deduction_picks TEXT');
           } catch (e) {}
         }
+        // v42 — 출산·입양 세액공제는 그 해에만 받는다. 수만 저장하면 내년에도
+        // 남아 없는 공제를 계속 넣는다. 어느 해 일인지 같이 적는다.
+        if (oldVersion < 42) {
+          try {
+            await db.execute('ALTER TABLE user_profile ADD COLUMN newborn_year INTEGER');
+          } catch (e) {}
+        }
   }
 
   @override
@@ -881,6 +889,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'children_count_credit': profile['children_count_credit'] ?? 0,
         'children_count_total': profile['children_count_total'] ?? 0,
         'newborn_count': profile['newborn_count'] ?? 0,
+        'newborn_year': profile['newborn_year'] ?? 0,
         'is_sme_employee': profile['is_sme_employee'] == true ? 1 : 0,
         'sme_start_year': profile['sme_start_year'],
         'pay_day': profile['pay_day'] ?? 25,
@@ -938,6 +947,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
       'children_count_credit': map['children_count_credit'] as int? ?? 0,
       'children_count_total': map['children_count_total'] as int? ?? 0,
       'newborn_count': map['newborn_count'] as int? ?? 0,
+      'newborn_year': map['newborn_year'] as int? ?? 0,
       'is_sme_employee': map['is_sme_employee'] == 1,
       'sme_start_year': map['sme_start_year'] as int?,
       'pay_day': map['pay_day'] as int? ?? 25,
