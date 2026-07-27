@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/occupation_data.dart';
 import '../../core/data/db_helper.dart';
+import '../../core/data/deduction_options.dart';
 import 'occupation_search_screen.dart';
 import 'tax_tools_screen.dart';
 import '../components/tax_pipeline_rail.dart';
@@ -58,6 +59,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
   RentRefundResult? _employeeRentResult;
   SpecialDeductionResult? _specialDeductionResult;
   double _employeeTotalRefund = 0.0;
+  /// 게이트에서 고른 항목. null이면 게이트를 거치지 않고 바로 들어온 것 —
+  /// 그때는 '안 고른 항목' 안내를 띄우지 않는다(고른 적이 없으니 놓친 것도 없다).
+  Set<String>? _gatePicks;
   bool _showSensitiveSection = false;
   // '(선택)' 카드 3개 — 기본 접힘(스크롤 압박 완화). 필요한 사람만 펼쳐 입력.
   bool _showOtherIncome = false;
@@ -664,11 +668,92 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
   /// 게이트에서 고른 항목이 든 카드만 펼친다.
   void _applyGatePicks() {
     final picks = widget.preOpened;
-    if (picks == null || picks.isEmpty) return;
-    bool any(List<String> ids) => ids.any(picks.contains);
-    _showSensitiveSection = any(['medical', 'education', 'donation']);
-    _showExtraDeduction = any(['hometown', 'mortgage']);
-    _showExtraCredit = any(['insurance', 'pension', 'newborn']);
+    if (picks == null) return;
+    _gatePicks = Set.of(picks);
+    _openCardsFor(_gatePicks!);
+  }
+
+  /// 고른 항목이 든 카드를 펼친다. 카드 구성이 바뀌면 여기만 고치면 된다.
+  void _openCardsFor(Set<String> ids) {
+    bool any(List<String> k) => k.any(ids.contains);
+    if (any(['medical', 'education', 'donation'])) _showSensitiveSection = true;
+    if (any(['hometown', 'mortgage'])) _showExtraDeduction = true;
+    if (any(['insurance', 'pension', 'newborn'])) _showExtraCredit = true;
+  }
+
+  /// 게이트에서 고르지 않은 항목 — 숨긴 대가로 손해가 나면 안 된다.
+  List<DeductionOption> get _missedOptions {
+    final picks = _gatePicks;
+    if (picks == null) return const [];
+    final gross = double.tryParse(_salaryController.text.replaceAll(',', '')) ?? 0;
+    final rest = deductionOptions(userType: widget.userType, grossIncome: gross)
+        .where((e) => !picks.contains(e.id))
+        .toList();
+    rest.sort((a, b) => b.maxCredit.compareTo(a.maxCredit));
+    return rest;
+  }
+
+  /// 안 고른 항목을 결과 아래에 놓는다. 목록이 아니라 질문으로 쓴다 —
+  /// "월세로 살아요"는 훑고 지나가도 걸리지만 "월세액"은 안 걸린다.
+  Widget _missedDeductionsBlock() {
+    final missed = _missedOptions;
+    if (missed.isEmpty) return const SizedBox.shrink();
+    final top = missed.take(3).toList();
+    final ink = AppTheme.ink(context);
+    final accent = AppTheme.accentColor(context);
+    final fmt = NumberFormat('#,###');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 36),
+        Text('혹시 이건 어떠세요'.toUpperCase(), style: AppTheme.label(context)),
+        const SizedBox(height: 8),
+        Text('고르지 않은 항목이에요. 해당되면 눌러서 입력하세요.',
+            style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.5)),
+        const SizedBox(height: 14),
+        for (final o in top)
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() {
+              _gatePicks!.add(o.id);
+              _openCardsFor({o.id});
+            }),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: AppTheme.line(context), width: 1)),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(o.label,
+                            style: AppTheme.sans(14, ink, weight: FontWeight.w600, spacing: -0.2)),
+                        const SizedBox(height: 2),
+                        Text(o.basis,
+                            style: AppTheme.sans(11.5, AppTheme.inkTertiary(context))),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text('+${fmt.format(o.maxCredit.round())}원',
+                      style: AppTheme.sans(13, accent, weight: FontWeight.w700)),
+                  const SizedBox(width: 6),
+                  Icon(Icons.add_rounded, size: 16, color: accent),
+                ],
+              ),
+            ),
+          ),
+        if (missed.length > top.length) ...[
+          const SizedBox(height: 10),
+          Text('이 밖에 ${missed.length - top.length}개가 더 있어요.',
+              style: AppTheme.sans(12, AppTheme.inkTertiary(context))),
+        ],
+      ],
+    );
   }
 
   /// 자녀세액공제 대상 자녀 수를 프로필에 남긴다 — 가계부 적립·환급 계산이 같은 값을 쓰도록.
@@ -1927,7 +2012,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
 
               _buildBookkeepingComparisonCard(),
               _buildResultBanner(),
-              
+
+              // 안 고른 항목은 **주 CTA 앞**에 둔다. 버튼 뒤에 두면 누르고 나가버려
+              // 숨긴 대가로 손해가 난다.
+              _missedDeductionsBlock(),
+
               const SizedBox(height: 16),
               // 주 CTA — 파이프라인 ②가상신고서로. 계산 결과가 있어야 의미가 있어 게이트.
               // 주 CTA — 파이프라인 다음 단계(②가상신고서). 계산 결과가 아직 없어도 항상

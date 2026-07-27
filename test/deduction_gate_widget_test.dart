@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/ui/screens/deduction_gate_screen.dart';
+import 'package:secul/ui/screens/tax_simulator_screen.dart';
 
 /// 게이트는 "고르면 얼마"가 보여야 고를 이유가 생긴다.
 /// 금액이 사라지거나 0으로 표시되는 회귀를 여기서 잡는다.
@@ -47,5 +48,35 @@ void main() {
     expect(find.textContaining('주택담보대출'), findsNothing);
     // 월세는 성실사업자만 대상이라는 조건을 문구에 밝힌다
     expect(find.textContaining('성실사업자만'), findsOneWidget);
+  });
+
+  // 숨긴 대가로 손해가 나면 안 된다 — 안 고른 항목은 결과 아래에서 다시 묻는다.
+  testWidgets('계산기 — 안 고른 항목을 금액과 함께 되묻는다', (t) async {
+    await dbService.saveProfile({'user_type': '직장인', 'gross_income': 45000000.0});
+    t.view.physicalSize = const Size(1200, 8000);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    await t.pumpWidget(const MaterialApp(
+        home: TaxSimulatorScreen(userType: '직장인', preOpened: {'medical'})));
+    await t.pumpAndSettle();
+
+    expect(find.textContaining('혹시 이건'), findsWidgets);
+    // 고른 것(병원비)은 되묻지 않는다
+    expect(find.textContaining('병원비를 많이 썼어요'), findsNothing);
+  });
+
+  testWidgets('게이트를 안 거치면 되묻지 않는다', (t) async {
+    await dbService.saveProfile({'user_type': '직장인', 'gross_income': 45000000.0});
+    t.view.physicalSize = const Size(1200, 8000);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    await t.pumpWidget(const MaterialApp(home: TaxSimulatorScreen(userType: '직장인')));
+    await t.pumpAndSettle();
+
+    expect(find.textContaining('혹시 이건'), findsNothing);
   });
 }

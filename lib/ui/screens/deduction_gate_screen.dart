@@ -4,8 +4,7 @@ import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import 'tax_simulator_screen.dart';
 import '../../core/data/db_helper.dart';
-import '../../core/tax_engine/employee_tax.dart';
-import '../../core/tax_engine/tax_rates.dart';
+import '../../core/data/deduction_options.dart';
 
 /// 공제 고르기 — 계산기에 들어가기 전, 해당되는 항목만 남기는 관문.
 ///
@@ -24,21 +23,11 @@ class DeductionGateScreen extends StatefulWidget {
   State<DeductionGateScreen> createState() => _DeductionGateScreenState();
 }
 
-class _GateItem {
-  final String id;
-  final String label; // 사용자 말
-  final String basis; // 왜 이 금액인지 한 줄
-  final double maxCredit; // 이 사람 기준 최대 환급액
-  const _GateItem(this.id, this.label, this.basis, this.maxCredit);
-}
-
 class _DeductionGateScreenState extends State<DeductionGateScreen> {
   final _fmt = NumberFormat('#,###');
   final Set<String> _picked = {};
   double _gross = 0;
   bool _loaded = false;
-
-  bool get _isEmployee => widget.userType != '프리랜서';
 
   @override
   void initState() {
@@ -55,60 +44,12 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
     });
   }
 
-  /// 총급여를 모르면 중앙값 근처로 잡아 금액을 보여준다(0원 표시는 아무 도움이 안 됨).
-  double get _basis => _gross > 0 ? _gross : 45000000;
+  List<DeductionOption> get _all =>
+      deductionOptions(userType: widget.userType, grossIncome: _gross);
+  List<DeductionOption> get _spending => _all.where((e) => e.isSpending).toList();
+  List<DeductionOption> get _situation => _all.where((e) => !e.isSpending).toList();
 
-  /// 소득공제 1원이 환급으로 바뀌는 비율 — 이 사람의 한계세율.
-  double get _marginal {
-    final labor = _basis - EmployeeTaxCalculator.calculateLaborDeduction(_basis);
-    final ins = EmployeeTaxCalculator.calculateAnnualInsuranceDeduction(_basis / 12);
-    final base = (labor - 1500000 - ins.total).clamp(0.0, double.infinity);
-    return (TaxRates.calculateTax(base + 1000000) - TaxRates.calculateTax(base)) / 1000000;
-  }
-
-  /// 돈을 쓴 곳 — 고르면 금액 입력이 따라온다.
-  List<_GateItem> get _spending {
-    final g = _basis;
-    final rentRate = g <= 55000000 ? 0.17 : 0.15;
-    final pensionRate = g <= 55000000 ? 0.15 : 0.12;
-    return [
-      _GateItem(
-          'rent',
-          '월세로 살아요',
-          _isEmployee
-              ? '연 1,000만원까지 ${(rentRate * 100).round()}%'
-              : '성실사업자만 · 연 1,000만원까지 ${(rentRate * 100).round()}%',
-          10000000 * rentRate),
-      _GateItem('pension', '연금저축이나 IRP에 넣어요', '연 900만원까지 ${(pensionRate * 100).round()}%',
-          9000000 * pensionRate),
-      _GateItem('medical', '병원비를 많이 썼어요', '총급여 3% 넘는 금액부터 15%', 7000000 * 0.15),
-      _GateItem('education', '학비를 냈어요', '대학 900만·초중고 300만까지 15%', 9000000 * 0.15),
-      _GateItem('insurance', '보장성보험료를 내요', '연 100만원까지 12%', 1000000 * 0.12),
-      if (_isEmployee)
-        _GateItem('mortgage', '주택담보대출 이자를 내요',
-            '15년 이상 고정금리면 최대 2,000만원까지 과세표준에서 빼요',
-            20000000 * _marginal),
-      _GateItem('donation', '기부했어요', '1,000만원까지 15%, 넘으면 30%', 10000000 * 0.15),
-      _GateItem('hometown', '고향사랑기부를 했어요', '10만원까지는 전액 돌려받아요',
-          EmployeeTaxCalculator.calculateHometownDonationTaxCredit(100000)),
-    ];
-  }
-
-  /// 나와 가족 — 고르면 사람 수만 세면 끝난다.
-  List<_GateItem> get _situation => [
-        _GateItem('newborn', '올해 아이가 태어났어요', '첫째 30만·둘째 50만·셋째부터 70만',
-            EmployeeTaxCalculator.calculateChildTaxCredit(childrenCount: 0, newbornCount: 1)),
-        _GateItem('disabled', '장애가 있는 가족이 있어요', '1명당 200만원을 과세표준에서 빼요',
-            2000000 * _marginal),
-        _GateItem('elderly', '70세 이상 가족을 부양해요', '1명당 100만원을 과세표준에서 빼요',
-            1000000 * _marginal),
-        _GateItem('singleParent', '혼자 아이를 키워요', '100만원을 과세표준에서 빼요',
-            1000000 * _marginal),
-        if (_isEmployee)
-          _GateItem('sme', '중소기업에 다녀요', '청년은 5년간 소득세 90%를 깎아줘요', 2000000),
-      ];
-
-  double get _total => [..._spending, ..._situation]
+  double get _total => _all
       .where((e) => _picked.contains(e.id))
       .fold(0.0, (s, e) => s + e.maxCredit);
 
@@ -190,7 +131,7 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
       );
 
   /// 선택 상태는 **선 두께**로 말한다 — Blueprint는 그림자를 쓰지 않는다.
-  Widget _row(_GateItem item) {
+  Widget _row(DeductionOption item) {
     final on = _picked.contains(item.id);
     final accent = AppTheme.accentColor(context);
     return Semantics(
