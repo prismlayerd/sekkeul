@@ -400,7 +400,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     );
   }
 
-  /// 국세청 「종합소득세 전자신고 매뉴얼」 홈택스 화면 흐름(검증됨: 지식_변환/JSON/금융소득_종합과세_및_종소세신고.json).
+  /// 국세청 「종합소득세 전자신고 매뉴얼」 홈택스 화면 흐름(검증됨: ../sekkeul-지식/JSON/금융소득_종합과세_및_종소세신고.json).
   Widget _buildBusinessHomeTaxGuide(Color primary, Color textColor, Color subColor) {
     return Container(
       padding: const EdgeInsets.all(18),

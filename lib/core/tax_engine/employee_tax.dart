@@ -105,7 +105,7 @@ class SpecialDeductionResult {
   });
 }
 
-/// 직장인 4대보험 월 공제액 내역 (지식_변환/JSON/직장인_4대보험_가이드.json 기준)
+/// 직장인 4대보험 월 공제액 내역 (../sekkeul-지식/JSON/직장인_4대보험_가이드.json 기준)
 class InsuranceBreakdown {
   final double nationalPension;    // 국민연금 4.75%
   final double healthInsurance;    // 건강보험 3.595%
