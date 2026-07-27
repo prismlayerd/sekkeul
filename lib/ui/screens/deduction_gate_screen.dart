@@ -1,0 +1,323 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../theme/app_theme.dart';
+import 'tax_simulator_screen.dart';
+import '../../core/data/db_helper.dart';
+import '../../core/tax_engine/employee_tax.dart';
+import '../../core/tax_engine/tax_rates.dart';
+
+/// 공제 고르기 — 계산기에 들어가기 전, 해당되는 항목만 남기는 관문.
+///
+/// 세법 용어로 묻지 않는다. "월세 살아요"처럼 자기 생활로 알아볼 수 있게 쓰고,
+/// 오른쪽에 **그 사람의 총급여로 계산한 금액**을 붙인다. 체크리스트가 아니라
+/// 가격표다 — 고를 이유가 숫자에 있어야 한다.
+///
+/// 측정 근거(2026-07-27): 공제 항목 중 가장 작은 것도 환급 7.5만원이라
+/// "금액이 작으니 접자"는 성립하지 않았다. 접을 축은 금액이 아니라 **해당자 비율**이다.
+class DeductionGateScreen extends StatefulWidget {
+  final String userType;
+
+  const DeductionGateScreen({super.key, required this.userType});
+
+  @override
+  State<DeductionGateScreen> createState() => _DeductionGateScreenState();
+}
+
+class _GateItem {
+  final String id;
+  final String label; // 사용자 말
+  final String basis; // 왜 이 금액인지 한 줄
+  final double maxCredit; // 이 사람 기준 최대 환급액
+  const _GateItem(this.id, this.label, this.basis, this.maxCredit);
+}
+
+class _DeductionGateScreenState extends State<DeductionGateScreen> {
+  final _fmt = NumberFormat('#,###');
+  final Set<String> _picked = {};
+  double _gross = 0;
+  bool _loaded = false;
+
+  bool get _isEmployee => widget.userType != '프리랜서';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final p = await dbService.getProfile();
+    if (!mounted) return;
+    setState(() {
+      _gross = (p?['gross_income'] as num?)?.toDouble() ?? 0;
+      _loaded = true;
+    });
+  }
+
+  /// 총급여를 모르면 중앙값 근처로 잡아 금액을 보여준다(0원 표시는 아무 도움이 안 됨).
+  double get _basis => _gross > 0 ? _gross : 45000000;
+
+  /// 소득공제 1원이 환급으로 바뀌는 비율 — 이 사람의 한계세율.
+  double get _marginal {
+    final labor = _basis - EmployeeTaxCalculator.calculateLaborDeduction(_basis);
+    final ins = EmployeeTaxCalculator.calculateAnnualInsuranceDeduction(_basis / 12);
+    final base = (labor - 1500000 - ins.total).clamp(0.0, double.infinity);
+    return (TaxRates.calculateTax(base + 1000000) - TaxRates.calculateTax(base)) / 1000000;
+  }
+
+  /// 돈을 쓴 곳 — 고르면 금액 입력이 따라온다.
+  List<_GateItem> get _spending {
+    final g = _basis;
+    final rentRate = g <= 55000000 ? 0.17 : 0.15;
+    final pensionRate = g <= 55000000 ? 0.15 : 0.12;
+    return [
+      _GateItem(
+          'rent',
+          '월세로 살아요',
+          _isEmployee
+              ? '연 1,000만원까지 ${(rentRate * 100).round()}%'
+              : '성실사업자만 · 연 1,000만원까지 ${(rentRate * 100).round()}%',
+          10000000 * rentRate),
+      _GateItem('pension', '연금저축이나 IRP에 넣어요', '연 900만원까지 ${(pensionRate * 100).round()}%',
+          9000000 * pensionRate),
+      _GateItem('medical', '병원비를 많이 썼어요', '총급여 3% 넘는 금액부터 15%', 7000000 * 0.15),
+      _GateItem('education', '학비를 냈어요', '대학 900만·초중고 300만까지 15%', 9000000 * 0.15),
+      _GateItem('insurance', '보장성보험료를 내요', '연 100만원까지 12%', 1000000 * 0.12),
+      if (_isEmployee)
+        _GateItem('mortgage', '주택담보대출 이자를 내요',
+            '15년 이상 고정금리면 최대 2,000만원까지 과세표준에서 빼요',
+            20000000 * _marginal),
+      _GateItem('donation', '기부했어요', '1,000만원까지 15%, 넘으면 30%', 10000000 * 0.15),
+      _GateItem('hometown', '고향사랑기부를 했어요', '10만원까지는 전액 돌려받아요',
+          EmployeeTaxCalculator.calculateHometownDonationTaxCredit(100000)),
+    ];
+  }
+
+  /// 나와 가족 — 고르면 사람 수만 세면 끝난다.
+  List<_GateItem> get _situation => [
+        _GateItem('newborn', '올해 아이가 태어났어요', '첫째 30만·둘째 50만·셋째부터 70만',
+            EmployeeTaxCalculator.calculateChildTaxCredit(childrenCount: 0, newbornCount: 1)),
+        _GateItem('disabled', '장애가 있는 가족이 있어요', '1명당 200만원을 과세표준에서 빼요',
+            2000000 * _marginal),
+        _GateItem('elderly', '70세 이상 가족을 부양해요', '1명당 100만원을 과세표준에서 빼요',
+            1000000 * _marginal),
+        _GateItem('singleParent', '혼자 아이를 키워요', '100만원을 과세표준에서 빼요',
+            1000000 * _marginal),
+        if (_isEmployee)
+          _GateItem('sme', '중소기업에 다녀요', '청년은 5년간 소득세 90%를 깎아줘요', 2000000),
+      ];
+
+  double get _total => [..._spending, ..._situation]
+      .where((e) => _picked.contains(e.id))
+      .fold(0.0, (s, e) => s + e.maxCredit);
+
+  String _won(num v) => '${_fmt.format(v.round())}원';
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = AppTheme.ink(context);
+    final sub = AppTheme.inkSecondary(context);
+
+    if (!_loaded) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: const SizedBox.shrink(),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+                children: [
+                  Text('공제 고르기'.toUpperCase(), style: AppTheme.label(context)),
+                  const SizedBox(height: 12),
+                  Text('해당되는 것만\n골라주세요', style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
+                  const SizedBox(height: 10),
+                  Text(
+                    _gross > 0
+                        ? '고른 것만 입력창이 열려요. 금액은 총급여 ${_won(_gross)} 기준이에요.'
+                        : '고른 것만 입력창이 열려요. 금액은 총급여 4,500만원 기준 예시예요.',
+                    style: AppTheme.sans(14, sub, height: 1.55),
+                  ),
+                  const SizedBox(height: 28),
+                  _sectionTitle('돈을 쓴 곳', '고르면 금액을 물어봐요'),
+                  ..._spending.map(_row),
+                  const SizedBox(height: 28),
+                  _sectionTitle('나와 가족', '고르면 사람 수만 세면 돼요'),
+                  ..._situation.map(_row),
+                  const SizedBox(height: 24),
+                  Text(
+                    '고르지 않아도 나중에 계산기에서 직접 열 수 있어요.',
+                    style: AppTheme.sans(12, AppTheme.inkTertiary(context), height: 1.5),
+                  ),
+                ],
+              ),
+            ),
+            _summaryBar(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String title, String hint) => Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(title, style: AppTheme.sans(15, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
+            const SizedBox(width: 8),
+            Expanded(child: Text(hint, style: AppTheme.sans(12, AppTheme.inkTertiary(context)))),
+          ],
+        ),
+      );
+
+  /// 선택 상태는 **선 두께**로 말한다 — Blueprint는 그림자를 쓰지 않는다.
+  Widget _row(_GateItem item) {
+    final on = _picked.contains(item.id);
+    final accent = AppTheme.accentColor(context);
+    return Semantics(
+      button: true,
+      selected: on,
+      label: '${item.label}, 최대 ${_won(item.maxCredit)}',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => setState(() => on ? _picked.remove(item.id) : _picked.add(item.id)),
+        child: Container(
+          decoration: BoxDecoration(
+            color: on ? accent.withValues(alpha: 0.05) : Colors.transparent,
+            border: Border(bottom: BorderSide(color: AppTheme.line(context), width: 1)),
+          ),
+          padding: const EdgeInsets.fromLTRB(2, 15, 4, 15),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 누를 수 있다는 표식. 그림자를 못 쓰는 체계라 표식이 없으면 행이 정적으로 보인다.
+              Container(
+                width: 17,
+                height: 17,
+                margin: const EdgeInsets.only(top: 1, right: 12),
+                decoration: BoxDecoration(
+                  color: on ? accent : Colors.transparent,
+                  border: Border.all(
+                      color: on ? accent : AppTheme.lineStrong(context), width: 1.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                child: on
+                    ? const Icon(Icons.check_rounded, size: 12, color: Colors.white)
+                    : null,
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.label,
+                        style: AppTheme.sans(14.5, AppTheme.ink(context),
+                            weight: FontWeight.w700, spacing: -0.2)),
+                    const SizedBox(height: 3),
+                    Text(item.basis,
+                        style: AppTheme.sans(12, AppTheme.inkTertiary(context), height: 1.4)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text('최대 ',
+                        style: AppTheme.sans(11, AppTheme.inkTertiary(context))),
+                    Text(_won(item.maxCredit),
+                        style: AppTheme.sans(13,
+                            on ? accent : AppTheme.inkSecondary(context),
+                            weight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _summaryBar() {
+    final ink = AppTheme.ink(context);
+    final accent = AppTheme.accentColor(context);
+    final n = _picked.length;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface(context),
+        border: Border(top: BorderSide(color: AppTheme.lineStrong(context), width: 1.4)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Expanded(
+                child: Text(n == 0 ? '아직 고른 항목이 없어요' : '고른 $n개를 한도까지 채우면',
+                    style: AppTheme.sans(12, AppTheme.inkSecondary(context))),
+              ),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: _total, end: _total),
+                duration: Duration(milliseconds: reduceMotion ? 0 : 260),
+                curve: Curves.easeOutCubic,
+                builder: (_, v, __) => Text(_won(v),
+                    style: AppTheme.serif(34, n == 0 ? AppTheme.inkTertiary(context) : ink,
+                        spacing: -1)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => TaxSimulatorScreen(
+                        userType: widget.userType, preOpened: Set.of(_picked)))),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              decoration: BoxDecoration(
+                color: n == 0 ? Colors.transparent : accent,
+                border: Border.all(color: n == 0 ? AppTheme.lineStrong(context) : accent, width: 1.2),
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: Center(
+                child: Text(n == 0 ? '건너뛰고 계산기 열기' : '$n개 입력하러 가기',
+                    style: AppTheme.sans(15, n == 0 ? ink : Colors.white,
+                        weight: FontWeight.w700, spacing: -0.2)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

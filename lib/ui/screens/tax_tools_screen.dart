@@ -5,7 +5,7 @@ import 'forms_screen.dart';
 import 'document_checklist_screen.dart';
 import 'tax_record_import_screen.dart';
 import 'correction_request_screen.dart';
-import 'tax_simulator_screen.dart';
+import 'deduction_gate_screen.dart';
 import 'missed_deduction_diagnosis_screen.dart';
 import 'tax_annual_report_screen.dart';
 import 'tax_report_form_screen.dart';
@@ -411,7 +411,8 @@ List<TaxItem> taxQuickCalcsFor(String userType) {
 // const 참조용 top-level 빌더.
 // ① 기록(입력): 직장인만. 프리랜서·N잡러는 ①진단에 흡수됨.
 Widget _record(String u) => TaxRecordImportScreen(userType: u);
-Widget _simulator(String u) => TaxSimulatorScreen(userType: u);
+// 계산기는 '공제 고르기'를 거쳐 연다 — 해당되는 입력만 펼친 채로 시작하게.
+Widget _simulator(String u) => DeductionGateScreen(userType: u);
 Widget _missedDiagnosis(String u) => MissedDeductionDiagnosisScreen(userType: u);
 Widget _amended(String u) => CorrectionRequestScreen(userType: u);
 // ③ 가상 신고서: 저장된 ②진단 결과가 있으면 자동기입, 없으면 빈 상태로 안내.

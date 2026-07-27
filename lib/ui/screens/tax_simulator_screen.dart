@@ -21,12 +21,15 @@ import 'expense_calendar_screen.dart';
 import 'tax_report_form_screen.dart';
 
 class TaxSimulatorScreen extends StatefulWidget {
+  /// 공제 고르기(DeductionGateScreen)에서 고른 항목 id. 해당 입력 카드를 미리 펼친다.
+  /// 고르지 않은 카드는 접힌 채로 두어, 자기와 무관한 입력을 훑지 않아도 되게 한다.
+  final Set<String>? preOpened;
+
   final String userType;
 
   const TaxSimulatorScreen({
     super.key,
-    required this.userType,
-  });
+    required this.userType, this.preOpened,});
 
   @override
   State<TaxSimulatorScreen> createState() => _TaxSimulatorScreenState();
@@ -121,6 +124,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
   @override
   void initState() {
     super.initState();
+    _applyGatePicks();
     _salaryController.addListener(_calculateTax);
     _freelancerIncomeController.addListener(_calculateTax);
     _monthsController.addListener(_calculateTax);
@@ -655,6 +659,16 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     updated['has_multiple_businesses'] = _hasMultipleBusinesses;
     _profileCache = updated;
     await dbService.saveProfile(updated);
+  }
+
+  /// 게이트에서 고른 항목이 든 카드만 펼친다.
+  void _applyGatePicks() {
+    final picks = widget.preOpened;
+    if (picks == null || picks.isEmpty) return;
+    bool any(List<String> ids) => ids.any(picks.contains);
+    _showSensitiveSection = any(['medical', 'education', 'donation']);
+    _showExtraDeduction = any(['hometown', 'mortgage']);
+    _showExtraCredit = any(['insurance', 'pension', 'newborn']);
   }
 
   /// 자녀세액공제 대상 자녀 수를 프로필에 남긴다 — 가계부 적립·환급 계산이 같은 값을 쓰도록.
