@@ -94,15 +94,18 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('청년 할인 (HF)', style: AppTheme.sans(AppTheme.tsBase, ink)),
-                      const SizedBox(height: 2),
-                      Text('만 34세 이하 · HF 요율 0.02% 적용'.keepWords,
-                          style: AppTheme.sans(AppTheme.tsSM, sub)),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('청년 할인 (HF)', style: AppTheme.sans(AppTheme.tsBase, ink)),
+                        const SizedBox(height: 2),
+                        Text('만 34세 이하 · HF 요율 0.02% 적용'.keepWords,
+                            style: AppTheme.sans(AppTheme.tsSM, sub)),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 12),
                   GestureDetector(
                     onTap: () => setState(() => _isYouth = !_isYouth),
                     child: Container(

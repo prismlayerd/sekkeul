@@ -230,12 +230,20 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   /// 알림 켜짐 상태면 시즌·월간 리마인더를 (재)예약. 웹은 미지원.
+  ///
+  /// 홈 진입 때 await 없이 부르는 자리라 여기서 새어 나간 예외는 아무도 못 잡는다.
+  /// 예약은 부가 기능이고 기기·권한 상태에 따라 실패할 수 있으니, 실패해도 홈은
+  /// 그대로 떠야 한다.
   Future<void> _refreshReminders() async {
     if (kIsWeb) return;
-    if (_notificationsEnabled) {
-      await ReminderScheduler.scheduleAll(payDay: _payDay, userType: _userType);
-    } else {
-      await ReminderScheduler.cancelAll();
+    try {
+      if (_notificationsEnabled) {
+        await ReminderScheduler.scheduleAll(payDay: _payDay, userType: _userType);
+      } else {
+        await ReminderScheduler.cancelAll();
+      }
+    } catch (e) {
+      debugPrint('리마인더 예약 실패: $e');
     }
   }
 

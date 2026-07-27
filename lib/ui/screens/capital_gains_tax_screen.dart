@@ -229,17 +229,19 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('1세대 1주택',
-                              style:
-                                  TextStyle(color: textColor, fontSize: 14)),
-                          Text('보유+거주 3년↑, 공제율 연 8% (최대 80%)'.keepWords,
-                              style: TextStyle(
-                                  color: subColor.withValues(alpha: 0.8),
-                                  fontSize: 11)),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('1세대 1주택',
+                                style:
+                                    TextStyle(color: textColor, fontSize: 14)),
+                            Text('보유+거주 3년↑, 공제율 연 8% (최대 80%)'.keepWords,
+                                style: TextStyle(
+                                    color: subColor.withValues(alpha: 0.8),
+                                    fontSize: 11)),
+                          ],
+                        ),
                       ),
                       Switch(
                         value: _oneHousehold,

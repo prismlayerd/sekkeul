@@ -53,6 +53,44 @@ class RentRefundResult {
   });
 }
 
+/// 「5월에 더 돌려받을 수 있는 금액」 한 줄.
+class RefundLine {
+  final String label;
+  final double amount;
+  const RefundLine(this.label, this.amount);
+}
+
+/// 직장인이 연말정산에서 놓친 공제를 5월에 더 청구할 때의 예상 환급액.
+///
+/// [lines]의 합이 [totalCredit]이고, 화면은 이 목록을 그대로 그린다 —
+/// 화면이 일부 항목만 행으로 그리고 합계에는 전부 넣던 불일치를 막는다.
+class EmployeeRefundEstimate {
+  /// 화면에 그릴 공제 내역 (0원 항목은 들어 있지 않다).
+  final List<RefundLine> lines;
+
+  /// 공제 합계 — 상한 적용 전.
+  final double totalCredit;
+
+  /// 돌려받을 수 있는 상한 = 이미 낸 세금.
+  final double cap;
+
+  /// 상한의 근거 — 화면 안내 문구용.
+  final String capBasis;
+
+  /// 실제 예상 환급액 = min(totalCredit, cap).
+  final double refund;
+
+  bool get isCapped => totalCredit > cap;
+
+  const EmployeeRefundEstimate({
+    required this.lines,
+    required this.totalCredit,
+    required this.cap,
+    required this.capBasis,
+    required this.refund,
+  });
+}
+
 class SpecialDeductionResult {
   final double medicalTaxCredit;
   final double educationTaxCredit;
@@ -298,6 +336,9 @@ class EmployeeTaxCalculator {
     required bool hasElderly70Plus,      // 70세이상 부양가족 (경로우대)
     required bool isSingleFemaleHead,    // 여성 세대주 (부녀자)
     required bool isSingleParent,        // 배우자없고 부양가족있음 (한부모)
+    /// 부녀자공제 소득요건 판정용 종합소득금액 (§51①3 괄호 — 3천만원 이하만 대상).
+    /// 0을 넘기면 요건을 충족한 것으로 본다.
+    double globalIncomeAmount = 0.0,
   }) {
     double deduction = 0.0;
 
@@ -305,13 +346,14 @@ class EmployeeTaxCalculator {
       deduction += 1000000.0; // 경로우대 100만
     }
 
-    // 부녀자 vs 한부모 중복 불가 (큰 것 선택)
-    if (isSingleFemaleHead && isSingleParent) {
-      deduction += 1000000.0; // 한부모 100만 > 부녀자 50만
-    } else if (isSingleFemaleHead) {
-      deduction += 500000.0; // 부녀자 50만
-    } else if (isSingleParent) {
+    // 부녀자는 "종합소득금액이 3천만원 이하인 거주자"로 한정된다(§51①3 괄호).
+    final bool femaleEligible = isSingleFemaleHead && globalIncomeAmount <= 30000000.0;
+
+    // 3호(부녀자)와 6호(한부모)에 모두 해당하면 6호를 적용한다 — §51① 단서.
+    if (isSingleParent) {
       deduction += 1000000.0; // 한부모 100만
+    } else if (femaleEligible) {
+      deduction += 500000.0; // 부녀자 50만
     }
 
     return deduction;
@@ -536,15 +578,24 @@ class EmployeeTaxCalculator {
       }
     }
 
-    // 정치자금기부금: 10만원까지 환급(100%), 초과는 15%(3천만초과 25%)
+    // 정치자금기부금 (조특법 §76①) — 10만원까지 **110분의 100**, 10만원 초과분 15%,
+    // 그 초과분이 3천만원을 넘으면 넘는 부분만 25%.
+    //
+    // 흔히 "10만원은 전액 돌려받는다"고 하지만, 그건 소득세 90,909원 +
+    // 지방소득세 9,091원을 합쳤을 때 얘기다. 여기서 내는 값은 소득세 세액공제라
+    // 100%로 두면 9,091원이 부풀려진다.
     if (politicalDonation > 0) {
-      if (politicalDonation <= 100000.0) {
-        credit += politicalDonation;  // 100% 환급
-      } else {
-        credit += 100000.0;  // 10만원 환급
-        final double excess = politicalDonation - 100000.0;
-        // 단순화: 3천만 초과 확인은 총급여 기준으로 별도 구현 (여기선 15%만)
-        credit += excess * 0.15;
+      const double firstTier = 100000.0;
+      const double highRateFrom = 30000000.0; // 10만원 초과분 기준 3천만원
+      final double low = politicalDonation < firstTier ? politicalDonation : firstTier;
+      credit += low * 100 / 110;
+      if (politicalDonation > firstTier) {
+        final double excess = politicalDonation - firstTier;
+        final double mid = excess < highRateFrom ? excess : highRateFrom;
+        credit += mid * 0.15;
+        if (excess > highRateFrom) {
+          credit += (excess - highRateFrom) * 0.25;
+        }
       }
     }
 
@@ -584,9 +635,43 @@ class EmployeeTaxCalculator {
     return TaxRates.truncateWon(credit);
   }
 
-  /// 주택담보대출 이자상환액 소득공제 (15년 이상 고정+비거치 기준 최대 2000만원 한도 소득공제)
-  static double calculateMortgageIncomeDeduction(double mortgageInterestExpense) {
-    double limit = 20000000.0; // 최고 한도만 단순화 적용
+  /// 장기주택저당차입금 이자상환액 소득공제 한도 (소득세법 §52⑤·⑥).
+  ///
+  /// | 상환기간 | 고정금리 | 비거치식 | 한도 |
+  /// |---|---|---|---|
+  /// | 15년 이상 | ○ | ○ | 2,000만원 |
+  /// | 15년 이상 | ○ 또는 ○ 중 하나 | | 1,800만원 |
+  /// | 15년 이상 | — | — | 800만원 (⑤ 본문) |
+  /// | 10년 이상 15년 미만 | ○ 또는 ○ 중 하나 | | 600만원 |
+  /// | 10년 미만 | | | 대상 아님 |
+  ///
+  /// **기본값은 800만원이다.** 종전에는 조건과 무관하게 늘 2,000만원을 적용해,
+  /// 흔한 15년 변동금리 대출자에게 한도를 2.5배로 부풀렸다.
+  static double mortgageDeductionLimit({
+    bool fixedRate = false,
+    bool nonDeferredRepayment = false,
+    bool over15Years = true,
+  }) {
+    final int conditions = (fixedRate ? 1 : 0) + (nonDeferredRepayment ? 1 : 0);
+    if (!over15Years) return conditions >= 1 ? 6000000.0 : 0.0;
+    if (conditions == 2) return 20000000.0;
+    if (conditions == 1) return 18000000.0;
+    return 8000000.0;
+  }
+
+  /// 주택담보대출 이자상환액 소득공제액.
+  static double calculateMortgageIncomeDeduction(
+    double mortgageInterestExpense, {
+    bool fixedRate = false,
+    bool nonDeferredRepayment = false,
+    bool over15Years = true,
+  }) {
+    if (mortgageInterestExpense <= 0) return 0.0;
+    final double limit = mortgageDeductionLimit(
+      fixedRate: fixedRate,
+      nonDeferredRepayment: nonDeferredRepayment,
+      over15Years: over15Years,
+    );
     return mortgageInterestExpense > limit ? limit : mortgageInterestExpense;
   }
 
@@ -704,11 +789,14 @@ class EmployeeTaxCalculator {
     final double rawBaseDeduction = creditDeduction + debitDeduction;
     final double baseDeduction = rawBaseDeduction > baseLimit ? baseLimit : rawBaseDeduction;
 
+    // 추가공제 한도는 전통시장·대중교통·도서공연등을 **통합해** 총급여 7천만원
+    // 이하 300만원 / 초과 200만원이다 (조특법 §126의2, 개정세법 해설 2026 p.216).
+    // 구간을 나누지 않고 300만원으로 두면 7천만원 초과자에게 100만원을 더 준다.
+    final double extraLimit = grossIncome <= 70000000 ? 3000000.0 : 2000000.0;
     final double rawExtraDeduction = transportDeduction + marketDeduction + cultureDeduction;
-    final double extraDeduction = rawExtraDeduction > 3000000.0 ? 3000000.0 : rawExtraDeduction;
+    final double extraDeduction = rawExtraDeduction > extraLimit ? extraLimit : rawExtraDeduction;
 
-    final double totalDeductionRaw = baseDeduction + extraDeduction;
-    final double finalDeduction = totalDeductionRaw > 7000000.0 ? 7000000.0 : totalDeductionRaw;
+    final double finalDeduction = baseDeduction + extraDeduction;
 
     final bool passedThreshold = totalSpend > 0 && totalSpend >= threshold;
 
@@ -828,6 +916,134 @@ class EmployeeTaxCalculator {
       totalAnnualRent: annualRent,
       expectedRefund: TaxRates.truncateWon(actualRefund),
       isRefundCapped: isCapped,
+    );
+  }
+
+  /// 총급여만으로 근로소득 과세표준을 근사한다.
+  /// 근로소득공제 → 인적공제 → 4대보험 소득공제까지, 누구에게나 걸리는 것만 뺀다.
+  static double estimateSalaryTaxBase({
+    required double grossIncome,
+    int dependentsIncludingSelf = 1,
+    double additionalPersonalDeduction = 0.0,
+    double otherIncomeDeduction = 0.0,
+  }) {
+    if (grossIncome <= 0) return 0.0;
+    final double laborIncome = grossIncome - calculateLaborDeduction(grossIncome);
+    final int heads = dependentsIncludingSelf < 1 ? 1 : dependentsIncludingSelf;
+    final double insurance = calculateAnnualInsuranceDeduction(grossIncome / 12).total;
+    return (laborIncome -
+            TaxRates.basicDeductionPerPerson * heads -
+            additionalPersonalDeduction -
+            insurance -
+            otherIncomeDeduction)
+        .clamp(0.0, double.infinity);
+  }
+
+  /// 이미 낸 세금(결정세액) 추정 — 세액공제를 하나도 반영하지 않은 상태.
+  ///
+  /// 근로세액공제까지만 뺀 값이다. 여기서 더 뺄 세금이 없으면 아무리 공제를
+  /// 찾아내도 돌려받을 게 없다. 회사가 연말정산에서 이미 적용했을 인적공제는
+  /// 넣어 상한을 실제에 가깝게 만든다.
+  static double estimateDecidedTaxBeforeCredits({
+    required double grossIncome,
+    int dependentsIncludingSelf = 1,
+    double additionalPersonalDeduction = 0.0,
+    double otherIncomeDeduction = 0.0,
+  }) {
+    if (grossIncome <= 0) return 0.0;
+    final double base = estimateSalaryTaxBase(
+      grossIncome: grossIncome,
+      dependentsIncludingSelf: dependentsIncludingSelf,
+      additionalPersonalDeduction: additionalPersonalDeduction,
+      otherIncomeDeduction: otherIncomeDeduction,
+    );
+    final double calculated = TaxRates.calculateTax(base);
+    final double laborCredit =
+        calculateLaborTaxCredit(grossIncome: grossIncome, calculatedTaxShare: calculated);
+    final double decided = calculated - laborCredit;
+    return decided < 0 ? 0.0 : decided;
+  }
+
+  /// 직장인이 5월에 더 돌려받을 수 있는 금액.
+  ///
+  /// 세액공제는 낸 세금에서 빼는 것이라 낸 것보다 더 돌려받을 수 없다
+  /// (경정청구 리포트가 이미 지키는 「결정세액 0원 법칙」과 같은 규칙).
+  /// 기납부세액을 아는 사람은 거의 없어서, 모르면 총급여로 결정세액을 추정해
+  /// 상한으로 쓴다. 상한이 없으면 총급여 2,520만원인 사람에게 실제로 받을 수
+  /// 있는 33만원 대신 350만원을 약속하게 된다.
+  static EmployeeRefundEstimate estimateEmployeeRefund({
+    required double grossIncome,
+    int dependentsIncludingSelf = 1,
+    double additionalPersonalDeduction = 0.0,
+    /// 알고 있다면 원천징수영수증의 기납부세액. 0이면 총급여로 추정한다.
+    double paidTax = 0.0,
+    double cardDeduction = 0.0,
+    double rentCredit = 0.0,
+    double medicalCredit = 0.0,
+    double educationCredit = 0.0,
+    double donationCredit = 0.0,
+    double childCredit = 0.0,
+    double pensionAccountCredit = 0.0,
+    double insurancePremiumCredit = 0.0,
+    double hometownDonationCredit = 0.0,
+    double mortgageInterest = 0.0,
+    bool mortgageFixedRate = false,
+    bool mortgageNonDeferred = false,
+  }) {
+    // 주택담보대출 이자는 과세표준을 낮추는 소득공제라, 줄어드는 세액으로 환산한다.
+    final double mortgageDeduction = calculateMortgageIncomeDeduction(
+      mortgageInterest,
+      fixedRate: mortgageFixedRate,
+      nonDeferredRepayment: mortgageNonDeferred,
+    );
+    double mortgageSaving = 0.0;
+    if (mortgageDeduction > 0) {
+      final double before = estimateDecidedTaxBeforeCredits(
+        grossIncome: grossIncome,
+        dependentsIncludingSelf: dependentsIncludingSelf,
+        additionalPersonalDeduction: additionalPersonalDeduction,
+        otherIncomeDeduction: cardDeduction,
+      );
+      final double after = estimateDecidedTaxBeforeCredits(
+        grossIncome: grossIncome,
+        dependentsIncludingSelf: dependentsIncludingSelf,
+        additionalPersonalDeduction: additionalPersonalDeduction,
+        otherIncomeDeduction: cardDeduction + mortgageDeduction,
+      );
+      mortgageSaving = TaxRates.truncateWon(before - after);
+      if (mortgageSaving < 0) mortgageSaving = 0;
+    }
+
+    final lines = <RefundLine>[
+      RefundLine('월세 세액공제', rentCredit),
+      RefundLine('의료비 세액공제', medicalCredit),
+      RefundLine('교육비 세액공제', educationCredit),
+      RefundLine('기부금 세액공제', donationCredit),
+      RefundLine('자녀 세액공제', childCredit),
+      RefundLine('연금계좌 세액공제', pensionAccountCredit),
+      RefundLine('보장성보험료 세액공제', insurancePremiumCredit),
+      RefundLine('고향사랑기부금 세액공제', hometownDonationCredit),
+      RefundLine('주택담보대출 이자 소득공제', mortgageSaving),
+    ].where((l) => l.amount > 0).toList();
+
+    final double totalCredit = lines.fold(0.0, (a, l) => a + l.amount);
+
+    final bool knowsPaidTax = paidTax > 0;
+    final double cap = knowsPaidTax
+        ? paidTax
+        : estimateDecidedTaxBeforeCredits(
+            grossIncome: grossIncome,
+            dependentsIncludingSelf: dependentsIncludingSelf,
+            additionalPersonalDeduction: additionalPersonalDeduction,
+            otherIncomeDeduction: cardDeduction,
+          );
+
+    return EmployeeRefundEstimate(
+      lines: lines,
+      totalCredit: TaxRates.truncateWon(totalCredit),
+      cap: TaxRates.truncateWon(cap),
+      capBasis: knowsPaidTax ? '기납부세액' : '올해 낸 소득세(추정)',
+      refund: TaxRates.truncateWon(totalCredit > cap ? cap : totalCredit),
     );
   }
 }

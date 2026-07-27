@@ -308,20 +308,23 @@ class _HousingSubscriptionScreenState
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold)),
-                    Text(subtitle,
-                        style: TextStyle(
-                            color: subColor.withValues(alpha: 0.8),
-                            fontSize: 11)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: TextStyle(
+                              color: textColor,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold)),
+                      Text(subtitle,
+                          style: TextStyle(
+                              color: subColor.withValues(alpha: 0.8),
+                              fontSize: 11)),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Text('$pts / $maxPts점',
                     style: TextStyle(
                         color: primary,

@@ -224,8 +224,13 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(_toWon(totalSpent),
-                  style: AppTheme.serif(34, ink, weight: FontWeight.w700, spacing: -1.0, height: 1.0)),
+              // 수입 쪽이 '기록 없음'인데 지출만 '0원'이면, 같은 빈 상태를 두 가지 말로
+              // 표현하게 된다. 아직 아무것도 안 적은 사람에게 '0원'은 "안 썼다"로 읽힌다.
+              totalSpent > 0
+                  ? Text(_toWon(totalSpent),
+                      style: AppTheme.serif(34, ink, weight: FontWeight.w700, spacing: -1.0, height: 1.0))
+                  : Text('기록 없음',
+                      style: AppTheme.serif(28, tert, spacing: -0.5, height: 1.0)),
               const SizedBox(height: 4),
               Text('이번 달 지출', style: AppTheme.sans(12, tert)),
             ],

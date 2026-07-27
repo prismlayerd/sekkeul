@@ -1,0 +1,186 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:secul/core/data/db_helper.dart';
+import 'package:secul/ui/screens/acquisition_tax_screen.dart';
+import 'package:secul/ui/screens/basic_pension_screen.dart';
+import 'package:secul/ui/screens/beotimmok_loan_screen.dart';
+import 'package:secul/ui/screens/bogeumjari_loan_screen.dart';
+import 'package:secul/ui/screens/calculator_screen.dart';
+import 'package:secul/ui/screens/capital_gains_tax_screen.dart';
+import 'package:secul/ui/screens/car_lease_buy_rent_screen.dart';
+import 'package:secul/ui/screens/car_tax_annual_screen.dart';
+import 'package:secul/ui/screens/carbon_neutral_points_screen.dart';
+import 'package:secul/ui/screens/compound_interest_screen.dart';
+import 'package:secul/ui/screens/daycare_fee_screen.dart';
+import 'package:secul/ui/screens/dependent_deduction_screen.dart';
+import 'package:secul/ui/screens/didimdol_loan_screen.dart';
+import 'package:secul/ui/screens/disability_pension_screen.dart';
+import 'package:secul/ui/screens/driver_license_renewal_screen.dart';
+import 'package:secul/ui/screens/earned_income_tax_credit_screen.dart';
+import 'package:secul/ui/screens/employment_support_program_screen.dart';
+import 'package:secul/ui/screens/energy_voucher_screen.dart';
+import 'package:secul/ui/screens/ev_vs_gas_screen.dart';
+import 'package:secul/ui/screens/expense_calendar_screen.dart';
+import 'package:secul/ui/screens/financial_income_screen.dart';
+import 'package:secul/ui/screens/four_insurance_screen.dart';
+import 'package:secul/ui/screens/fresh_start_fund_screen.dart';
+import 'package:secul/ui/screens/home_screen.dart';
+import 'package:secul/ui/screens/hourly_rate_converter_screen.dart';
+import 'package:secul/ui/screens/household_separation_screen.dart';
+import 'package:secul/ui/screens/housing_pension_screen.dart';
+import 'package:secul/ui/screens/housing_subscription_screen.dart';
+import 'package:secul/ui/screens/inheritance_gift_tax_screen.dart';
+import 'package:secul/ui/screens/insurance_premium_screen.dart';
+import 'package:secul/ui/screens/isa_tax_benefits_screen.dart';
+import 'package:secul/ui/screens/jeonse_insurance_screen.dart';
+import 'package:secul/ui/screens/jeonse_vs_wolse_screen.dart';
+import 'package:secul/ui/screens/kpass_climate_card_screen.dart';
+import 'package:secul/ui/screens/light_car_fuel_refund_screen.dart';
+import 'package:secul/ui/screens/loan_interest_screen.dart';
+import 'package:secul/ui/screens/loan_schedule_screen.dart';
+import 'package:secul/ui/screens/minimum_wage_impact_screen.dart';
+import 'package:secul/ui/screens/monthly_rent_tax_credit_screen.dart';
+import 'package:secul/ui/screens/naeil_chaeum_screen.dart';
+import 'package:secul/ui/screens/national_pension_timing_screen.dart';
+import 'package:secul/ui/screens/newborn_special_loan_screen.dart';
+import 'package:secul/ui/screens/newlywed_special_supply_screen.dart';
+import 'package:secul/ui/screens/notification_inbox_screen.dart';
+import 'package:secul/ui/screens/occupation_search_screen.dart';
+import 'package:secul/ui/screens/onboarding_screen.dart';
+import 'package:secul/ui/screens/out_of_pocket_cap_screen.dart';
+import 'package:secul/ui/screens/parental_leave_6plus6_screen.dart';
+import 'package:secul/ui/screens/passport_fee_screen.dart';
+import 'package:secul/ui/screens/pension_calculator_screen.dart';
+import 'package:secul/ui/screens/property_tax_screen.dart';
+import 'package:secul/ui/screens/recurring_templates_screen.dart';
+import 'package:secul/ui/screens/reminder_form_screen.dart';
+import 'package:secul/ui/screens/retirement_pension_screen.dart';
+import 'package:secul/ui/screens/salary_net_screen.dart';
+import 'package:secul/ui/screens/savings_calculator_screen.dart';
+import 'package:secul/ui/screens/senior_dental_screen.dart';
+import 'package:secul/ui/screens/severance_pay_screen.dart';
+import 'package:secul/ui/screens/severe_disease_copayment_screen.dart';
+import 'package:secul/ui/screens/unemployment_benefit_screen.dart';
+import 'package:secul/ui/screens/weekly_holiday_pay_screen.dart';
+import 'package:secul/ui/screens/withholding_calc_screen.dart';
+import 'package:secul/ui/screens/youth_housing_dream_screen.dart';
+import 'package:secul/ui/screens/youth_leap_account_screen.dart';
+
+/// 작은 화면(360×800 — 갤럭시 S/아이폰 SE급)에서 화면이 넘치는 곳을 전수로 찾는다.
+///
+/// 오버플로는 실기기에서 노란·검정 줄무늬로 보이고, 잘린 쪽 글자는 아예 읽을 수 없다.
+/// 개발용 큰 화면에서는 절대 드러나지 않아 눈으로는 못 잡는다.
+void main() {
+  final screens = <(String, Widget Function())>[
+    ('AcquisitionTaxScreen', () => const AcquisitionTaxScreen()),
+    ('BasicPensionScreen', () => const BasicPensionScreen()),
+    ('BeotimmokLoanScreen', () => const BeotimmokLoanScreen()),
+    ('BogeumjariLoanScreen', () => const BogeumjariLoanScreen()),
+    ('CalculatorScreen', () => const CalculatorScreen()),
+    ('CapitalGainsTaxScreen', () => const CapitalGainsTaxScreen()),
+    ('CarLeaseBuyRentScreen', () => const CarLeaseBuyRentScreen()),
+    ('CarTaxAnnualScreen', () => const CarTaxAnnualScreen()),
+    ('CarbonNeutralPointsScreen', () => const CarbonNeutralPointsScreen()),
+    ('CompoundInterestScreen', () => const CompoundInterestScreen()),
+    ('DaycareFeeScreen', () => const DaycareFeeScreen()),
+    ('DependentDeductionScreen', () => const DependentDeductionScreen()),
+    ('DidimdolLoanScreen', () => const DidimdolLoanScreen()),
+    ('DisabilityPensionScreen', () => const DisabilityPensionScreen()),
+    ('DriverLicenseRenewalScreen', () => const DriverLicenseRenewalScreen()),
+    ('EarnedIncomeTaxCreditScreen', () => const EarnedIncomeTaxCreditScreen()),
+    ('EmploymentSupportProgramScreen', () => const EmploymentSupportProgramScreen()),
+    ('EnergyVoucherScreen', () => const EnergyVoucherScreen()),
+    ('EvVsGasScreen', () => const EvVsGasScreen()),
+    ('ExpenseCalendarScreen', () => const ExpenseCalendarScreen()),
+    ('FinancialIncomeScreen', () => const FinancialIncomeScreen()),
+    ('FourInsuranceScreen', () => const FourInsuranceScreen()),
+    ('FreshStartFundScreen', () => const FreshStartFundScreen()),
+    ('HomeScreen', () => const HomeScreen()),
+    ('HourlyRateConverterScreen', () => const HourlyRateConverterScreen()),
+    ('HouseholdSeparationScreen', () => const HouseholdSeparationScreen()),
+    ('HousingPensionScreen', () => const HousingPensionScreen()),
+    ('HousingSubscriptionScreen', () => const HousingSubscriptionScreen()),
+    ('InheritanceGiftTaxScreen', () => const InheritanceGiftTaxScreen()),
+    ('InsurancePremiumScreen', () => const InsurancePremiumScreen()),
+    ('IsaTaxBenefitsScreen', () => const IsaTaxBenefitsScreen()),
+    ('JeonseInsuranceScreen', () => const JeonseInsuranceScreen()),
+    ('JeonseVsWolseScreen', () => const JeonseVsWolseScreen()),
+    ('KpassClimateCardScreen', () => const KpassClimateCardScreen()),
+    ('LightCarFuelRefundScreen', () => const LightCarFuelRefundScreen()),
+    ('LoanInterestScreen', () => const LoanInterestScreen()),
+    ('LoanScheduleScreen', () => const LoanScheduleScreen()),
+    ('MinimumWageImpactScreen', () => const MinimumWageImpactScreen()),
+    ('MonthlyRentTaxCreditScreen', () => const MonthlyRentTaxCreditScreen()),
+    ('NaeilChaeumScreen', () => const NaeilChaeumScreen()),
+    ('NationalPensionTimingScreen', () => const NationalPensionTimingScreen()),
+    ('NewbornSpecialLoanScreen', () => const NewbornSpecialLoanScreen()),
+    ('NewlywedSpecialSupplyScreen', () => const NewlywedSpecialSupplyScreen()),
+    ('NotificationInboxScreen', () => const NotificationInboxScreen()),
+    ('OccupationSearchScreen', () => const OccupationSearchScreen()),
+    ('OnboardingScreen', () => const OnboardingScreen()),
+    ('OutOfPocketCapScreen', () => const OutOfPocketCapScreen()),
+    ('ParentalLeave6Plus6Screen', () => const ParentalLeave6Plus6Screen()),
+    ('PassportFeeScreen', () => const PassportFeeScreen()),
+    ('PensionCalculatorScreen', () => const PensionCalculatorScreen()),
+    ('PropertyTaxScreen', () => const PropertyTaxScreen()),
+    ('RecurringTemplatesScreen', () => const RecurringTemplatesScreen()),
+    ('ReminderFormScreen', () => const ReminderFormScreen()),
+    ('RetirementPensionScreen', () => const RetirementPensionScreen()),
+    ('SalaryNetScreen', () => const SalaryNetScreen()),
+    ('SavingsCalculatorScreen', () => const SavingsCalculatorScreen()),
+    ('SeniorDentalScreen', () => const SeniorDentalScreen()),
+    ('SeverancePayScreen', () => const SeverancePayScreen()),
+    ('SevereDiseaseCopaymentScreen', () => const SevereDiseaseCopaymentScreen()),
+    ('UnemploymentBenefitScreen', () => const UnemploymentBenefitScreen()),
+    ('WeeklyHolidayPayScreen', () => const WeeklyHolidayPayScreen()),
+    ('WithholdingCalcScreen', () => const WithholdingCalcScreen()),
+    ('YouthHousingDreamScreen', () => const YouthHousingDreamScreen()),
+    ('YouthLeapAccountScreen', () => const YouthLeapAccountScreen()),
+  ];
+
+  testWidgets('360×800에서 넘치는 화면이 없다', (t) async {
+    t.view.physicalSize = const Size(360, 800);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    final problems = <String>[];
+    String current = '';
+    // 오버플로만 걷어 담고 나머지는 삼킨다. 테스트 환경에는 알림 플러그인 같은
+    // 네이티브 채널이 없어서 화면마다 무관한 비동기 예외가 딸려 나온다.
+    final old = FlutterError.onError;
+    FlutterError.onError = (d) {
+      final s = d.exception.toString();
+      if (!s.contains('overflowed')) return;
+      final where =
+          RegExp(r'(\w+_screen\.dart|\w+\.dart):(\d+)').firstMatch(d.toString());
+      final line = '$current — ${s.split('.').first} @ ${where?.group(0) ?? '?'}';
+      if (!problems.contains(line)) problems.add(line);
+    };
+    addTearDown(() => FlutterError.onError = old);
+
+    for (final (name, build) in screens) {
+      current = name;
+      dbService = InMemoryDatabaseHelper();
+      await dbService.initDatabase();
+      try {
+        await t.pumpWidget(MaterialApp(home: build()));
+        await t.pump(const Duration(milliseconds: 400));
+        await t.pump(const Duration(milliseconds: 400));
+      } catch (_) {
+        // 화면 자체가 못 뜨는 건 이 테스트의 관심사가 아니다.
+      }
+      t.takeException();
+    }
+    FlutterError.onError = old;
+
+    for (final p in problems) {
+      // ignore: avoid_print
+      print('넘침: $p');
+    }
+    // ignore: avoid_print
+    print('검사한 화면 ${screens.length}개 · 넘친 곳 ${problems.length}건');
+    expect(problems, isEmpty, reason: '작은 화면에서 잘리는 곳이 있다');
+  });
+}

@@ -1713,7 +1713,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         // OverflowBox가 세로로 붕괴하지 않도록. OverflowBox는 가로 줌 패닝 전용.
         final sectionHeight = rows.length * ch;
         final g = Container(
-          width: totalW,
+          // 왼쪽 테두리 1px은 Container 폭 **안쪽**에 그려진다. totalW로 두면
+          // 7칸(각 w/7)이 들어갈 자리가 1px 모자라 매번 오버플로가 난다.
+          width: totalW + 1,
           height: sectionHeight,
           decoration: BoxDecoration(
             color: AppTheme.surface(context),

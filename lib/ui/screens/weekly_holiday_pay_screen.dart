@@ -114,11 +114,13 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
               child: Row(children: [
                 Icon(Icons.info_outline_rounded, color: primary, size: 18),
                 const SizedBox(width: 10),
-                Text('2026년 최저임금 시급 10,320원'.keepWords,
-                    style: TextStyle(
-                        color: primary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600)),
+                Expanded(
+                  child: Text('2026년 최저임금 시급 10,320원'.keepWords,
+                      style: TextStyle(
+                          color: primary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600)),
+                ),
               ]),
             ),
             const SizedBox(height: 20),

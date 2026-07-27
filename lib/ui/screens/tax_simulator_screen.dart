@@ -61,7 +61,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
   CreditCardDeductionResult? _employeeCardResult;
   RentRefundResult? _employeeRentResult;
   SpecialDeductionResult? _specialDeductionResult;
+  EmployeeRefundEstimate? _employeeRefund;
   double _employeeTotalRefund = 0.0;
+  // 장기주택저당차입금 한도 분기 (소법 §52⑥) — 금액을 넣은 사람에게만 물어본다.
+  bool _mortgageFixedRate = false;
+  bool _mortgageNonDeferred = false;
   /// 게이트에서 고른 항목. null이면 게이트를 거치지 않고 바로 들어온 것 —
   /// 그때는 '안 고른 항목' 안내를 띄우지 않는다(고른 적이 없으니 놓친 것도 없다).
   Set<String>? _gatePicks;
@@ -429,47 +433,48 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         disabledInsurancePremium: 0,
       );
 
-      // 주담대이자는 과세표준을 낮추는 소득공제라, 간이 과세표준을 근사 산출해
-      // 절세액(세율 적용분 차이)으로 환산한다. 고향사랑기부금은 세액공제(조특법 §58)라
-      // 공제액이 곧 절세액이다. (year_end_tax_screen.dart의 wizard와 동일한 방식.)
       final mortgage = double.tryParse(_mortgageSimController.text.replaceAll(',', '')) ?? 0.0;
       final hometown = double.tryParse(_hometownDonationSimController.text.replaceAll(',', '')) ?? 0.0;
-      double incomeDedSaving =
-          EmployeeTaxCalculator.calculateHometownDonationTaxCredit(hometown);
-      if (mortgage > 0) {
-        final laborDeduction = EmployeeTaxCalculator.calculateLaborDeduction(salary);
-        final personalExemption = (1 + _dependentCount) * TaxRates.basicDeductionPerPerson;
-        final insDeduction =
-            EmployeeTaxCalculator.calculateAnnualInsuranceDeduction(salary / 12).total;
-        final baseTaxable = (salary -
-                laborDeduction -
-                personalExemption -
-                cResult.finalDeduction -
-                insDeduction)
-            .clamp(0.0, double.infinity);
-        final mortgageDeduction = EmployeeTaxCalculator.calculateMortgageIncomeDeduction(mortgage);
-        final newBase =
-            (baseTaxable - mortgageDeduction).clamp(0.0, double.infinity);
-        incomeDedSaving += TaxRates.truncateWon(
-          TaxRates.calculateTax(baseTaxable) - TaxRates.calculateTax(newBase),
-        );
-      }
 
-      final double totalCredit = rResult.expectedRefund
-          + specialResult.medicalTaxCredit
-          + specialResult.donationTaxCredit
-          + specialResult.educationTaxCredit
-          + childCredit
-          + pensionCredit
-          + insuranceCredit
-          + incomeDedSaving;
-      final double netRefund = paidTax > 0 ? (totalCredit > paidTax ? paidTax : totalCredit) : totalCredit;
+      // 회사가 연말정산에서 이미 적용한 추가 인적공제 — 상한(결정세액) 추정에만 쓴다.
+      // 여기 넣지 않으면 상한이 실제보다 높게 잡혀 환급을 과대 표시한다.
+      final additionalPersonal =
+          EmployeeTaxCalculator.calculateAdditionalPersonalDeduction(
+                hasElderly70Plus: _hasElderly70Plus,
+                isSingleFemaleHead: _isSingleFemaleHead,
+                isSingleParent: _isSingleParent,
+                globalIncomeAmount:
+                    salary - EmployeeTaxCalculator.calculateLaborDeduction(salary),
+              ) +
+              (_disabledDependentCount + (_hasSelfDisability ? 1 : 0)) *
+                  TaxRates.additionalDeductionDisabled;
+
+      final estimate = EmployeeTaxCalculator.estimateEmployeeRefund(
+        grossIncome: salary,
+        dependentsIncludingSelf: 1 + _dependentCount,
+        additionalPersonalDeduction: additionalPersonal,
+        paidTax: paidTax,
+        cardDeduction: cResult.finalDeduction,
+        rentCredit: rResult.expectedRefund,
+        medicalCredit: specialResult.medicalTaxCredit,
+        educationCredit: specialResult.educationTaxCredit,
+        donationCredit: specialResult.donationTaxCredit,
+        childCredit: childCredit,
+        pensionAccountCredit: pensionCredit,
+        insurancePremiumCredit: insuranceCredit,
+        hometownDonationCredit:
+            EmployeeTaxCalculator.calculateHometownDonationTaxCredit(hometown),
+        mortgageInterest: mortgage,
+        mortgageFixedRate: _mortgageFixedRate,
+        mortgageNonDeferred: _mortgageNonDeferred,
+      );
 
       setState(() {
         _employeeCardResult = cResult;
         _employeeRentResult = rResult;
         _specialDeductionResult = specialResult;
-        _employeeTotalRefund = netRefund;
+        _employeeRefund = estimate;
+        _employeeTotalRefund = estimate.refund;
       });
     }
     else if (_isFreelancer && !_isEmployee) {
@@ -609,6 +614,8 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         isSingleParent: _isSingleParent,
         isSingleFemaleHead: _isSingleFemaleHead,
         mortgageInterest: mortgage,
+        mortgageFixedRate: _mortgageFixedRate,
+        mortgageNonDeferred: _mortgageNonDeferred,
         hometownDonation: hometown,
         infertilityMedical: infertilityMed,
         selfSeniorDisabledMedical: selfSeniorMed,
@@ -723,7 +730,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
               Text(label.keepWords,
                   style: AppTheme.sans(13, AppTheme.ink(context), weight: FontWeight.w600)),
               const SizedBox(height: 6),
-              _buildSensitiveTextField(controller, '0'),
+              _buildSensitiveTextField(controller),
             ],
           ],
         ),
@@ -1234,8 +1241,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     );
   }
 
-  Widget _buildSensitiveTextField(TextEditingController controller, String hint,
-      {Key? fieldKey}) {
+  /// 금액 입력 한 줄. 힌트는 늘 '0'이고 단위는 오른쪽 접미사로 보여준다 —
+  /// 예시 문구를 인자로 받던 시절이 있었으나 실제로 그려지지 않아 지웠다.
+  Widget _buildSensitiveTextField(TextEditingController controller, {Key? fieldKey}) {
     final ink = AppTheme.ink(context);
     final sub = AppTheme.inkSecondary(context);
     return Container(
@@ -1369,8 +1377,10 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     }
 
     if (_isEmployee && !_isFreelancer) {
-      if (_employeeTotalRefund <= 0 && (_employeeRentResult == null || _monthlyRentController.text.isEmpty || _monthlyRentController.text == '0')) {
-        return const SizedBox.shrink();
+      // 결과 영역이 통째로 사라지면 사용자는 앱이 고장난 줄 안다.
+      // 아직 넣을 게 남았다는 것과, 무엇을 넣어야 하는지를 대신 보여준다.
+      if (_employeeRefund == null || _employeeRefund!.lines.isEmpty) {
+        return _buildEmptyRefundHint();
       }
       return Column(children: [_buildEmployeeRefundBreakdown(), const CalcDisclaimer()]);
     }
@@ -1419,14 +1429,66 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     );
   }
 
+  /// 고르면 체크가 켜지는 한 줄. 그림자 없이 테두리와 체크만으로 상태를 보인다.
+  Widget _mortgageCheck(String label, bool selected, VoidCallback onTap) {
+    final accent = AppTheme.accentColor(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+        decoration: BoxDecoration(
+          border: Border.all(
+              color: selected ? accent : AppTheme.line(context),
+              width: selected ? 1.4 : 1),
+          borderRadius: BorderRadius.circular(3),
+        ),
+        child: Row(
+          children: [
+            Icon(selected ? Icons.check_box_outlined : Icons.check_box_outline_blank,
+                size: 18, color: selected ? accent : AppTheme.inkTertiary(context)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(label.keepWords,
+                  style: AppTheme.sans(13, AppTheme.ink(context),
+                      weight: selected ? FontWeight.w700 : FontWeight.w500)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 아직 아무 공제도 안 잡혔을 때 — 빈칸 대신 다음에 할 일을 보여준다.
+  Widget _buildEmptyRefundHint() {
+    final salary = double.tryParse(_salaryController.text.replaceAll(',', '')) ?? 0.0;
+    final String message = salary <= 0
+        ? '세전 총급여를 먼저 넣어주세요. 그래야 얼마까지 돌려받을 수 있는지 계산할 수 있어요.'
+        : '아직 잡힌 공제가 없어요. 월세·의료비·교육비·기부금·연금저축 중 해당하는 것을 넣으면 '
+            '여기에 돌려받을 금액이 나와요.';
+    return Container(
+      margin: const EdgeInsets.only(top: 24, bottom: 24),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.line(context), width: 1),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('5월 종합소득세 추가 환급 예상'.keepWords, style: AppTheme.label(context)),
+          const SizedBox(height: 10),
+          Text(message.keepWords,
+              style: AppTheme.sans(13, AppTheme.inkSecondary(context), height: 1.5)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildEmployeeRefundBreakdown() {
-    final rentCredit = _employeeRentResult?.expectedRefund ?? 0.0;
-    final medCredit = _specialDeductionResult?.medicalTaxCredit ?? 0.0;
-    final donCredit = _specialDeductionResult?.donationTaxCredit ?? 0.0;
-    final eduCredit = _specialDeductionResult?.educationTaxCredit ?? 0.0;
-    final total = _employeeTotalRefund;
-    final paidTax = double.tryParse(_paidTaxController.text.replaceAll(',', '')) ?? 0.0;
-    final isCapped = paidTax > 0 && (rentCredit + medCredit + donCredit + eduCredit) > paidTax;
+    final est = _employeeRefund;
+    if (est == null) return const SizedBox.shrink();
+    final total = est.refund;
 
     String fmt(double v) => v.toInt().toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
@@ -1444,14 +1506,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         children: [
           Text('5월 종합소득세 추가 환급 예상'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          if (rentCredit > 0)
-            _buildCreditRow('월세 세액공제', rentCredit),
-          if (medCredit > 0)
-            _buildCreditRow('의료비 세액공제', medCredit),
-          if (donCredit > 0)
-            _buildCreditRow('기부금 세액공제', donCredit),
-          if (eduCredit > 0)
-            _buildCreditRow('교육비 세액공제', eduCredit),
+          for (final l in est.lines) _buildCreditRow(l.label, l.amount),
+          if (est.isCapped) ...[
+            const SizedBox(height: 4),
+            _buildCreditRow('공제 합계', est.totalCredit),
+          ],
           const SizedBox(height: 12),
           Divider(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.2)),
           const SizedBox(height: 12),
@@ -1459,12 +1518,25 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('예상 환급액', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.w700)),
-              Text('${fmt(total)}원', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 22, fontWeight: FontWeight.w800)),
+              const SizedBox(width: 8),
+              // 억 단위까지 들어가도 잘리지 않게 — 좁은 화면에서만 줄어든다.
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text('${fmt(total)}원', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 22, fontWeight: FontWeight.w800)),
+                ),
+              ),
             ],
           ),
-          if (isCapped) ...[
+          if (est.isCapped) ...[
             const SizedBox(height: 8),
-            Text('* 기납부세액(${fmt(paidTax)}원) 초과분은 공제되지 않아요.'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.6), fontSize: 12)),
+            Text(
+              '세금은 낸 만큼만 돌려받아요. ${est.capBasis} ${fmt(est.cap)}원이 상한이라 '
+                      '나머지 ${fmt(est.totalCredit - est.cap)}원은 환급되지 않아요.'
+                  .keepWords,
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.6), fontSize: 12, height: 1.5),
+            ),
           ],
         ],
       ),
@@ -1479,7 +1551,10 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 14)),
+          Expanded(
+            child: Text(label, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 14)),
+          ),
+          const SizedBox(width: 8),
           Text('$fmt원', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.w600)),
         ],
       ),
@@ -1527,16 +1602,17 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       finalAmount = r.expectedRefundOrPayment;
       isRefund = finalAmount >= 0;
     } else if (_isEmployee && !_isFreelancer) {
-      final r = _employeeRentResult;
-      final s = _specialDeductionResult;
-      if (r != null) items.add({'title': '월세 세액공제', 'amount': r.expectedRefund});
-      if (s != null) {
-        if (s.medicalTaxCredit > 0) items.add({'title': '의료비 세액공제', 'amount': s.medicalTaxCredit});
-        if (s.donationTaxCredit > 0) items.add({'title': '기부금 세액공제', 'amount': s.donationTaxCredit});
-        if (s.educationTaxCredit > 0) items.add({'title': '교육비 세액공제', 'amount': s.educationTaxCredit});
+      final est = _employeeRefund;
+      if (est != null) {
+        for (final l in est.lines) {
+          items.add({'title': l.label, 'amount': l.amount});
+        }
+        if (est.isCapped) {
+          items.add({'title': '(-) 낸 세금을 넘는 분 (환급 불가)', 'amount': est.totalCredit - est.cap});
+        }
+        items.add({'title': '(=) 예상 환급액 합계', 'amount': est.refund, 'isHeader': true, 'highlight': true});
+        finalAmount = est.refund;
       }
-      items.add({'title': '(=) 예상 환급액 합계', 'amount': _employeeTotalRefund, 'isHeader': true, 'highlight': true});
-      finalAmount = _employeeTotalRefund;
       isRefund = true;
     }
 
@@ -1713,11 +1789,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         const SizedBox(height: 16),
                         Text('난임시술비 (공제율 30%)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),
-                        _buildSensitiveTextField(_infertilityMedicalController, '예: 500,000'),
+                        _buildSensitiveTextField(_infertilityMedicalController),
                         const SizedBox(height: 12),
                         Text('그 밖의 의료비 (공제율 15%)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),
-                        _buildSensitiveTextField(_otherDependentMedicalController, '0',
+                        _buildSensitiveTextField(_otherDependentMedicalController,
                             fieldKey: const Key('medicalOtherField')),
                         // 700만 한도에 걸릴 때만 물어본다 — 그 아래에선 나눠도 결과가 같다.
                         if (_amountOf(_otherDependentMedicalController) > 7000000)
@@ -1734,7 +1810,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         const SizedBox(height: 4),
                         Text('1,000만원 이하 15%, 초과분 30%'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.6), fontSize: 12)),
                         const SizedBox(height: 6),
-                        _buildSensitiveTextField(_donationController, '예: 500,000'),
+                        _buildSensitiveTextField(_donationController),
 
                         Divider(height: 32, color: Theme.of(context).scaffoldBackgroundColor),
 
@@ -1752,7 +1828,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                                   const SizedBox(height: 4),
                                   Text('1인당 300만원 한도', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5), fontSize: 11)),
                                   const SizedBox(height: 6),
-                                  _buildSensitiveTextField(_childrenEduController, '합산 금액'),
+                                  _buildSensitiveTextField(_childrenEduController),
                                 ],
                               ),
                             ),
@@ -1791,7 +1867,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                                   const SizedBox(height: 4),
                                   Text('1인당 900만원 한도', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5), fontSize: 11)),
                                   const SizedBox(height: 6),
-                                  _buildSensitiveTextField(_collegeEduController, '합산 금액'),
+                                  _buildSensitiveTextField(_collegeEduController),
                                 ],
                               ),
                             ),
@@ -1911,13 +1987,15 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('노란우산공제 가입', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 4),
-                              Text('사업소득 4천만 이하 최대 600만원 공제'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.w500)),
-                            ],
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('노란우산공제 가입', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 4),
+                                Text('사업소득 4천만 이하 최대 600만원 공제'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.w500)),
+                              ],
+                            ),
                           ),
                           Switch(
                             value: _hasYellowUmbrella,
@@ -2000,13 +2078,13 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         const SizedBox(height: 4),
                         Text('연금소득공제 적용 후 종합소득에 합산됩니다. 원천징수영수증 PDF를 올리면 자동 입력돼요.'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5), fontSize: 11)),
                         const SizedBox(height: 6),
-                        _buildSensitiveTextField(_pensionIncomeController, '예: 12,000,000'),
+                        _buildSensitiveTextField(_pensionIncomeController),
                         const SizedBox(height: 16),
                         Text('기타소득 총수입금액 (강사료·원고료·상금 등)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 4),
                         Text('필요경비 60% 공제 후 종합소득에 합산됩니다.'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5), fontSize: 11)),
                         const SizedBox(height: 6),
-                        _buildSensitiveTextField(_otherIncomeController, '예: 5,000,000'),
+                        _buildSensitiveTextField(_otherIncomeController),
                         ],
                       ],
                     ),
@@ -2028,15 +2106,32 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         _optionalCardHeader('소득공제 추가항목 (선택)', '과세표준을 낮춰 세금을 줄여줍니다. 없으면 비워두세요.', _showExtraDeduction, () => setState(() => _showExtraDeduction = !_showExtraDeduction)),
                         if (_showExtraDeduction) ...[
                         const SizedBox(height: 20),
-                        Text('주택담보대출 이자상환액 (연 최대 2,000만원 공제)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
+                        Text('주택담보대출 이자상환액'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 4),
-                        Text('15년 이상 고정금리·비거치식 기준'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5), fontSize: 11)),
+                        Text('상환기간 15년 이상 대출 기준이에요.'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5), fontSize: 11)),
                         const SizedBox(height: 6),
-                        _buildSensitiveTextField(_mortgageSimController, '예: 8,000,000'),
+                        _buildSensitiveTextField(_mortgageSimController,
+                            fieldKey: const Key('mortgageField')),
+                        // 한도가 800만 → 1,800만 → 2,000만으로 갈리는 두 조건.
+                        // 금액을 넣은 사람에게만 묻는다 — 답에 따라 공제가 2.5배까지 달라진다.
+                        if ((double.tryParse(_mortgageSimController.text.replaceAll(',', '')) ?? 0) > 0) ...[
+                          const SizedBox(height: 12),
+                          Text('대출 조건에 따라 한도가 달라져요 — 해당하는 것을 골라주세요.'.keepWords,
+                              style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.45)),
+                          const SizedBox(height: 8),
+                          _mortgageCheck('금리가 고정이에요', _mortgageFixedRate,
+                              () => setState(() { _mortgageFixedRate = !_mortgageFixedRate; _calculateTax(); })),
+                          const SizedBox(height: 6),
+                          _mortgageCheck('처음부터 원금도 같이 갚아요 (비거치식)', _mortgageNonDeferred,
+                              () => setState(() { _mortgageNonDeferred = !_mortgageNonDeferred; _calculateTax(); })),
+                          const SizedBox(height: 6),
+                          Text('지금 한도: 연 ${(EmployeeTaxCalculator.mortgageDeductionLimit(fixedRate: _mortgageFixedRate, nonDeferredRepayment: _mortgageNonDeferred) / 10000).round()}만원'.keepWords,
+                              style: AppTheme.sans(12, AppTheme.accentColor(context), weight: FontWeight.w700)),
+                        ],
                         const SizedBox(height: 16),
                         Text('고향사랑기부금 (10만원까지 전액 환급, 초과분 세액공제)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),
-                        _buildSensitiveTextField(_hometownDonationSimController, '예: 500,000'),
+                        _buildSensitiveTextField(_hometownDonationSimController),
                         ],
                       ],
                     ),
@@ -2059,7 +2154,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         const SizedBox(height: 20),
                         Text('보장성보험료 (12% 공제, 연 100만원 한도)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),
-                        _buildSensitiveTextField(_insurancePremiumController, '예: 1,000,000'),
+                        _buildSensitiveTextField(_insurancePremiumController),
                         const SizedBox(height: 16),
                         Text('${TaxRates.childTaxCreditEligibilityLabel()} 자녀수 (자녀세액공제)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 4),
@@ -2076,7 +2171,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         const SizedBox(height: 16),
                         Text('연금저축 납입액 (15% 공제, 연 600만 한도)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),
-                        _buildSensitiveTextField(_pensionSavingsSimController, '0',
+                        _buildSensitiveTextField(_pensionSavingsSimController,
                             fieldKey: const Key('pensionSavingsField')),
                         // 연금저축 한도(600만)를 넘길 때만 IRP를 묻는다 — 그 아래에선
                         // 어디에 넣었든 공제액이 같다.

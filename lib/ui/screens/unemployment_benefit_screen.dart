@@ -311,8 +311,10 @@ class _UnemploymentBenefitScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        // 칩 8개는 360px 화면에 한 줄로 못 들어간다 — 넘치면 다음 줄로 접는다.
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
           children: labels.asMap().entries.map((e) {
             final selected = idx == e.key;
             return GestureDetector(

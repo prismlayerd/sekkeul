@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/tax_engine/combined_tax.dart';
+import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/tax_rates.dart';
 import '../theme/text_wrap.dart';
 
@@ -38,9 +39,15 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
     if (profile != null && mounted) {
       final gross = (profile['gross_income'] as num?)?.toDouble() ?? 0.0;
       if (gross > 0) {
-        // 연봉을 근사 과세표준으로 자동 채움 (참고용)
+        // 비교과세는 '과세표준'에 세율을 매긴다. 연봉을 그대로 넣으면 세율구간이
+        // 한두 칸 위로 올라가 세부담이 크게 부풀려진다 — 근로소득공제·인적공제·
+        // 4대보험까지 뺀 근사 과세표준으로 바꿔 채운다.
+        final base = EmployeeTaxCalculator.estimateSalaryTaxBase(
+          grossIncome: gross,
+          dependentsIncludingSelf: 1 + ((profile['dependents'] as int?) ?? 0),
+        );
         setState(() {
-          _otherIncomeController.text = _numberFormat.format(gross.toInt());
+          _otherIncomeController.text = _numberFormat.format(base.toInt());
         });
       }
     }
@@ -118,7 +125,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
             Text('이자·배당이 많다면\n세금이 더 붙을 수 있어요'.keepWords,
                 style: TextStyle(color: textColor, fontSize: 22, fontWeight: FontWeight.bold, height: 1.4)),
             const SizedBox(height: 8),
-            Text('연간 금융소득이 2,000만원을 넘으면 종합소득에 합산되어 더 높은 세율이 적용됩니다.'.keepWords,
+            Text('연간 금융소득이 2,000만원을 넘으면 넘는 금액이 다른 소득과 합쳐져 더 높은 세율이 붙습니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -174,9 +181,10 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
               padding: const EdgeInsets.all(20),
               decoration: AppTheme.getCardDecoration(context, borderRadius: 20),
               child: _buildInputField(
-                '기타 종합소득 (근로·사업 등)',
+                '이자·배당을 뺀 다른 소득',
                 _otherIncomeController,
-                hint: '비교과세 계산에 사용됩니다. 연봉을 입력하면 대략적으로 계산돼요.',
+                hint: '내 정보의 연봉에서 근로소득공제·인적공제·4대보험을 빼 과세표준으로 채워 뒀어요. '
+                    '신고서에 적힌 과세표준을 알면 그 값으로 바꿔 주세요.',
               ),
             ),
             const SizedBox(height: 24),
@@ -237,8 +245,9 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
                   const SizedBox(height: 8),
                   Text(
                     '• 이자·배당 합산이 연 2,000만원 이하면 14% 원천징수로 완납됩니다.\n'
-                    '• 2,000만원 초과 시 전액 종합소득에 합산되며 5월에 신고해야 합니다.\n'
-                    '• 비교과세: 분리과세 세액과 종합합산 세액 중 큰 금액이 결정세액입니다.\n'
+                    '• 2,000만원을 넘으면 5월에 신고해야 합니다. 다만 2,000만원까지는 그대로 14%가 붙고, '
+                    '넘는 금액만 다른 소득과 합쳐 누진세율이 붙습니다.\n'
+                    '• 비교과세: 그렇게 계산한 세액과 전액 14%로 계산한 세액 중 큰 쪽이 산출세액입니다.\n'
                     '• 배당 Gross-up(귀속법인세 가산) 효과는 이 계산기에 미반영됩니다.',
                     style: TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),
@@ -291,17 +300,17 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
                 style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 12),
-          Text('추가 세부담 ${_toManwon(r.additionalTaxBurden)}'.keepWords,
+          Text('5월에 더 낼 세금 ${_toManwon(r.additionalTaxBurden)}'.keepWords,
               style: TextStyle(color: Colors.redAccent, fontSize: 28, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
-          Text('(종합과세 기준)',
+          Text('(지방소득세 10% 별도)',
               style: TextStyle(color: subColor, fontSize: 12)),
           const SizedBox(height: 16),
-          _resultRow('분리과세 세액 (14%)', _toManwon(r.separateTaxAmount), subColor, textColor),
+          _resultRow('이미 원천징수된 세금 (14%)', _toManwon(r.separateTaxAmount), subColor, textColor),
           const SizedBox(height: 6),
-          _resultRow('종합과세 결정세액', _toManwon(r.comprehensiveTaxAmount), subColor, textColor),
+          _resultRow('비교과세로 매겨진 세금', _toManwon(r.comprehensiveTaxAmount), subColor, textColor),
           const SizedBox(height: 6),
-          _resultRow('추가 세부담', _toManwon(r.additionalTaxBurden), subColor, Colors.redAccent),
+          _resultRow('차액 — 5월에 더 낼 세금', _toManwon(r.additionalTaxBurden), subColor, Colors.redAccent),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

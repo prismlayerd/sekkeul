@@ -155,12 +155,24 @@ class FreelancerTaxCalculator {
     // 근로소득 없는 사업소득자는 "성실사업자" 요건을 충족해야만 대상(일반 프리랜서 제외) —
     // isQualifiedFaithfulTaxpayer가 참일 때만 적용. 공제율 17%(종합소득금액 4,500만 이하)/15%,
     // 월세액 한도 연 1,000만. 출처: 국세청 "월세액 세액공제" — 확인일 2026-07-19.
+    // 아래 §59의4⑨ 비교에서 한쪽을 0으로 지우므로 final이 아니다.
     double rentTaxCredit = 0.0;
     if (monthlyRent > 0 && isHomeless && isQualifiedFaithfulTaxpayer && estimatedGlobalIncome <= 70000000.0) {
       final double annualRent = monthlyRent * 12;
       final double rentLimit = annualRent > 10000000.0 ? 10000000.0 : annualRent;
       final double rentCreditRate = estimatedGlobalIncome <= 45000000.0 ? 0.17 : 0.15;
       rentTaxCredit = TaxRates.truncateWon(rentLimit * rentCreditRate);
+    }
+
+    // 표준세액공제와 월세세액공제는 함께 받을 수 없다 — 소득세법 §59의4⑨ 본문이
+    // "제1항부터 제7항까지 및 「조세특례제한법」 제95조의2에 따른 공제를 신청하지
+    // 아니한 사람"에게만 표준세액공제를 준다. 유리한 쪽 하나만 남긴다.
+    if (rentTaxCredit > 0) {
+      if (rentTaxCredit >= taxCredit) {
+        taxCredit = 0.0;
+      } else {
+        rentTaxCredit = 0.0;
+      }
     }
 
     // 결정세액 (산출세액 - 세액공제, 0원 미만 절사)

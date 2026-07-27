@@ -25,9 +25,7 @@ const double kFallbackGrossIncome = 45000000;
 /// 소득공제 1원이 환급으로 바뀌는 비율 — 이 사람의 한계세율.
 double marginalRateFor(double grossIncome) {
   final g = grossIncome > 0 ? grossIncome : kFallbackGrossIncome;
-  final labor = g - EmployeeTaxCalculator.calculateLaborDeduction(g);
-  final ins = EmployeeTaxCalculator.calculateAnnualInsuranceDeduction(g / 12);
-  final base = (labor - 1500000 - ins.total).clamp(0.0, double.infinity);
+  final base = EmployeeTaxCalculator.estimateSalaryTaxBase(grossIncome: g);
   return (TaxRates.calculateTax(base + 1000000) - TaxRates.calculateTax(base)) / 1000000;
 }
 
@@ -58,7 +56,8 @@ List<DeductionOption> deductionOptions({
     DeductionOption('insurance', '보장성보험료를 내요', '연 100만원까지 12%', 1000000 * 0.12),
     if (isEmployee)
       DeductionOption('mortgage', '주택담보대출 이자를 내요',
-          '15년 이상 고정금리면 최대 2,000만원까지 과세표준에서 빼요', 20000000 * marginal),
+          '15년 이상이면 800만원부터, 고정금리·비거치식이면 2,000만원까지 과세표준에서 빼요',
+          20000000 * marginal),
     DeductionOption('donation', '기부했어요', '1,000만원까지 15%, 넘으면 30%', 10000000 * 0.15),
     DeductionOption('hometown', '고향사랑기부를 했어요', '10만원까지는 전액 돌려받아요',
         EmployeeTaxCalculator.calculateHometownDonationTaxCredit(100000)),

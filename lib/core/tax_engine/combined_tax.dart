@@ -4,6 +4,28 @@ import '../data/occupation_data.dart';
 import 'employee_tax.dart';
 import 'tax_rates.dart';
 
+/// 특별공제를 쓴 경우와 표준세액공제를 쓴 경우 — 같은 계산을 두 번 돌려 비교한다.
+typedef Pass = ({
+  bool otherIncomeComprehensive,
+  double totalGlobalIncome,
+  double taxBase,
+  double calculatedTax,
+  double smeExemption,
+  double rentTaxCredit,
+  double insuranceTaxCredit,
+  double childTaxCredit,
+  double pensionTaxCredit,
+  double medicalTaxCredit,
+  double educationTaxCredit,
+  double donationTaxCredit,
+  double weddingTaxCredit,
+  double hometownTaxCredit,
+  double standardTaxCredit,
+  double finalIncomeTax,
+  double finalLocalTax,
+  double finalTotalTax,
+});
+
 /// N잡러(근로소득 + 프리랜서/투잡) 전용 통합 세액 계산 및 시뮬레이션 엔진
 class CombinedTaxCalculator {
   
@@ -39,6 +61,9 @@ class CombinedTaxCalculator {
     bool isSingleFemaleHead = false,
     // 소득공제 추가항목
     double mortgageInterest = 0.0,
+    /// 장기주택저당차입금 한도 분기 (소법 §52⑥) — 둘 다면 2,000만, 하나면 1,800만, 없으면 800만.
+    bool mortgageFixedRate = false,
+    bool mortgageNonDeferred = false,
     double hometownDonation = 0.0,
     // 민감항목 세액공제
     double infertilityMedical = 0.0,
@@ -96,6 +121,8 @@ class CombinedTaxCalculator {
       hasElderly70Plus: hasElderly70Plus,
       isSingleFemaleHead: isSingleFemaleHead,
       isSingleParent: isSingleParent,
+      // 부녀자공제 소득요건 — 소득공제 전 종합소득금액으로 판정한다.
+      globalIncomeAmount: globalIncomeWithoutOther + otherIncomeAmount,
     );
 
     final cardResult = EmployeeTaxCalculator.calculateCreditCardDeduction(
@@ -127,123 +154,198 @@ class CombinedTaxCalculator {
 
     // 4대보험 소득공제 (연금보험료공제 §51의3 + 특별소득공제 보험료 §52①)
     final InsuranceDeduction insDeduction = EmployeeTaxCalculator.calculateAnnualInsuranceDeduction(grossIncome / 12);
-    final double mortgageDeduction = EmployeeTaxCalculator.calculateMortgageIncomeDeduction(mortgageInterest);
-    // 고향사랑기부금은 소득공제가 아니라 세액공제(조특법 §58)라 여기서 빼지 않는다.
-    final double deductionTotal = personalDeduction + additionalPersonalDed + cardDeduction
-        + yellowUmbrellaDeduction + insDeduction.total + mortgageDeduction;
+    final double mortgageDeduction = EmployeeTaxCalculator.calculateMortgageIncomeDeduction(
+      mortgageInterest,
+      fixedRate: mortgageFixedRate,
+      nonDeferredRepayment: mortgageNonDeferred,
+    );
+    // 특별소득공제(보험료 §52① + 주택자금)와 특별세액공제·월세세액공제를 신청하지
+    // 않으면 표준세액공제 13만원을 받는다(소득세법 §59의4⑨). 둘은 함께 받을 수 없어,
+    // 연말정산 프로그램처럼 **양쪽을 다 계산해 세금이 적은 쪽을 쓴다**.
+    // 저소득 구간에서는 보험료 소득공제(과세표준 × 6%)가 13만원에 못 미쳐 표준이 유리하다.
+    //
+    // 국민연금 보험료공제(§51의3)·자녀(§59의2)·연금계좌(§59의3)·혼인(§59의5)·
+    // 고향사랑(조특 §58)·중소기업 감면(조특 §30)은 §59의4 밖이라 어느 쪽이든 살아남는다.
+    final double specialIncomeDeduction =
+        insDeduction.specialInsuranceDeduction + mortgageDeduction;
 
-    // 기타소득 분리과세 선택 (소득세법 §14③8): 기타소득금액 300만원 이하(원천징수분)는
-    // 종합과세와 분리과세(원천징수 8.8%로 종결) 중 유리한 쪽 선택 가능 — 합산 시
-    // 한계세액(지방세 포함)이 원천징수액보다 크면 분리과세를 택한다.
-    double taxBaseWithoutOther = globalIncomeWithoutOther - deductionTotal;
-    if (taxBaseWithoutOther < 0) taxBaseWithoutOther = 0;
-    double taxBaseWithOther = globalIncomeWithoutOther + otherIncomeAmount - deductionTotal;
-    if (taxBaseWithOther < 0) taxBaseWithOther = 0;
+    Pass runPass(bool useStandardCredit) {
+      // 고향사랑기부금은 소득공제가 아니라 세액공제(조특법 §58)라 여기서 빼지 않는다.
+      final double deductionTotal = personalDeduction +
+          additionalPersonalDed +
+          cardDeduction +
+          yellowUmbrellaDeduction +
+          insDeduction.pensionDeduction +
+          (useStandardCredit ? 0.0 : specialIncomeDeduction);
 
-    bool otherIncomeComprehensive = true;
-    if (otherIncomeAmount > 0 && !EmployeeTaxCalculator.isOtherIncomeComprehensive(otherIncomeAmount)) {
-      final double marginalComprehensiveTax =
-          (TaxRates.calculateTax(taxBaseWithOther) - TaxRates.calculateTax(taxBaseWithoutOther)) * 1.1;
-      final double separateFinalTax = otherIncome *
-          (TaxRates.otherIncomeWithholdingRate + TaxRates.otherIncomeLocalWithholdingRate);
-      if (marginalComprehensiveTax > separateFinalTax) otherIncomeComprehensive = false;
-    }
+      // 기타소득 분리과세 선택 (소득세법 §14③8): 기타소득금액 300만원 이하(원천징수분)는
+      // 종합과세와 분리과세(원천징수 8.8%로 종결) 중 유리한 쪽 선택 가능 — 합산 시
+      // 한계세액(지방세 포함)이 원천징수액보다 크면 분리과세를 택한다.
+      double taxBaseWithoutOther = globalIncomeWithoutOther - deductionTotal;
+      if (taxBaseWithoutOther < 0) taxBaseWithoutOther = 0;
+      double taxBaseWithOther = globalIncomeWithoutOther + otherIncomeAmount - deductionTotal;
+      if (taxBaseWithOther < 0) taxBaseWithOther = 0;
 
-    final double totalGlobalIncome =
-        globalIncomeWithoutOther + (otherIncomeComprehensive ? otherIncomeAmount : 0.0);
-    final double taxBase = otherIncomeComprehensive ? taxBaseWithOther : taxBaseWithoutOther;
+      bool otherIncomeComprehensive = true;
+      if (otherIncomeAmount > 0 && !EmployeeTaxCalculator.isOtherIncomeComprehensive(otherIncomeAmount)) {
+        final double marginalComprehensiveTax =
+            (TaxRates.calculateTax(taxBaseWithOther) - TaxRates.calculateTax(taxBaseWithoutOther)) * 1.1;
+        final double separateFinalTax = otherIncome *
+            (TaxRates.otherIncomeWithholdingRate + TaxRates.otherIncomeLocalWithholdingRate);
+        if (marginalComprehensiveTax > separateFinalTax) otherIncomeComprehensive = false;
+      }
 
-    final double estimatedCalculatedTax = TaxRates.calculateTax(taxBase);
+      final double totalGlobalIncome =
+          globalIncomeWithoutOther + (otherIncomeComprehensive ? otherIncomeAmount : 0.0);
+      final double taxBase = otherIncomeComprehensive ? taxBaseWithOther : taxBaseWithoutOther;
 
-    double laborCalculatedTaxShare = 0.0;
-    if (totalGlobalIncome > 0) {
-      laborCalculatedTaxShare = estimatedCalculatedTax * (laborIncomeAmount / totalGlobalIncome);
-    }
-    // 중소기업취업자 감면(조특법 §30, 조특령 §27⑧)은 근로소득분 산출세액에만 걸린다 —
-    // 감면세액 = 종합소득산출세액 × (근로소득금액/종합소득금액) × 감면급여비율.
-    // 종합 산출세액 전체를 넘기면 부업 사업소득분까지 감면돼 세금이 과소해진다.
-    // (감면대상 근무처가 하나라고 보고 감면급여비율은 1.) 확인일 2026-07-25.
-    final double smeExemptionAmt = (isSmeEmployee && smeStartYear > 0)
-        ? EmployeeTaxCalculator.calculateSmeExemption(
-            calculatedTax: laborCalculatedTaxShare,
-            smeStartYear: smeStartYear,
-            isYouth: isYouthSme)
-        : 0.0;
-    // 감면을 받는 해에는 근로소득세액공제가 감면세액 비율만큼 깎인다
-    // (국세청: 근로세액공제 × [1 - 감면세액/근로소득 산출세액]).
-    final double laborTaxCredit = EmployeeTaxCalculator.laborTaxCreditAfterSmeExemption(
-      laborTaxCredit: EmployeeTaxCalculator.calculateLaborTaxCredit(
+      final double estimatedCalculatedTax = TaxRates.calculateTax(taxBase);
+
+      double laborCalculatedTaxShare = 0.0;
+      if (totalGlobalIncome > 0) {
+        laborCalculatedTaxShare = estimatedCalculatedTax * (laborIncomeAmount / totalGlobalIncome);
+      }
+      // 중소기업취업자 감면(조특법 §30, 조특령 §27⑧)은 근로소득분 산출세액에만 걸린다 —
+      // 감면세액 = 종합소득산출세액 × (근로소득금액/종합소득금액) × 감면급여비율.
+      // 종합 산출세액 전체를 넘기면 부업 사업소득분까지 감면돼 세금이 과소해진다.
+      // (감면대상 근무처가 하나라고 보고 감면급여비율은 1.) 확인일 2026-07-25.
+      final double smeExemptionAmt = (isSmeEmployee && smeStartYear > 0)
+          ? EmployeeTaxCalculator.calculateSmeExemption(
+              calculatedTax: laborCalculatedTaxShare,
+              smeStartYear: smeStartYear,
+              isYouth: isYouthSme)
+          : 0.0;
+      // 감면을 받는 해에는 근로소득세액공제가 감면세액 비율만큼 깎인다
+      // (국세청: 근로세액공제 × [1 - 감면세액/근로소득 산출세액]).
+      final double laborTaxCredit = EmployeeTaxCalculator.laborTaxCreditAfterSmeExemption(
+        laborTaxCredit: EmployeeTaxCalculator.calculateLaborTaxCredit(
+          grossIncome: grossIncome,
+          calculatedTaxShare: laborCalculatedTaxShare,
+        ),
+        smeExemption: smeExemptionAmt,
+        laborCalculatedTax: laborCalculatedTaxShare,
+      );
+
+      // 월세 세액공제 (조특법 §95의2, 2024 귀속~): 총급여 8천만·종합소득금액 7천만 이하·무주택 세대주
+      double rawRentTaxCredit = 0.0;
+      if (!useStandardCredit && monthlyRent > 0 && EmployeeTaxCalculator.isRentCreditEligible(
         grossIncome: grossIncome,
-        calculatedTaxShare: laborCalculatedTaxShare,
-      ),
-      smeExemption: smeExemptionAmt,
-      laborCalculatedTax: laborCalculatedTaxShare,
-    );
+        globalIncomeAmount: totalGlobalIncome,
+        isHomeless: isHomeless,
+      )) {
+        final double annualRent = monthlyRent * 12;
+        final double rentLimit = annualRent > 10000000.0 ? 10000000.0 : annualRent;
+        // 17% 구간은 총급여 5,500만 이하 **그리고** 종합소득금액 4,500만 이하일 때만이다
+        // (조특법 §95의2 — "종합소득금액이 4천5백만원을 초과하는 사람은 제외").
+        // N잡러는 부업 소득 때문에 총급여가 낮아도 종합소득금액이 4,500만을 넘기 쉬워,
+        // 총급여만 보면 15%여야 할 사람에게 17%를 줘 환급이 과대해진다. 확인일 2026-07-25.
+        final double rentCreditRate =
+            (grossIncome <= 55000000.0 && totalGlobalIncome <= 45000000.0) ? 0.17 : 0.15;
+        rawRentTaxCredit = rentLimit * rentCreditRate;
+      }
 
-    // 월세 세액공제 (조특법 §95의2, 2024 귀속~): 총급여 8천만·종합소득금액 7천만 이하·무주택 세대주
-    double rawRentTaxCredit = 0.0;
-    if (monthlyRent > 0 && EmployeeTaxCalculator.isRentCreditEligible(
-      grossIncome: grossIncome,
-      globalIncomeAmount: totalGlobalIncome,
-      isHomeless: isHomeless,
-    )) {
-      final double annualRent = monthlyRent * 12;
-      final double rentLimit = annualRent > 10000000.0 ? 10000000.0 : annualRent;
-      // 17% 구간은 총급여 5,500만 이하 **그리고** 종합소득금액 4,500만 이하일 때만이다
-      // (조특법 §95의2 — "종합소득금액이 4천5백만원을 초과하는 사람은 제외").
-      // N잡러는 부업 소득 때문에 총급여가 낮아도 종합소득금액이 4,500만을 넘기 쉬워,
-      // 총급여만 보면 15%여야 할 사람에게 17%를 줘 환급이 과대해진다. 확인일 2026-07-25.
-      final double rentCreditRate =
-          (grossIncome <= 55000000.0 && totalGlobalIncome <= 45000000.0) ? 0.17 : 0.15;
-      rawRentTaxCredit = rentLimit * rentCreditRate;
+      // ── 특별세액공제(§59의4) — 표준세액공제를 택하면 전부 포기한다 ──
+      final double insuranceTaxCreditAmt = useStandardCredit
+          ? 0.0
+          : EmployeeTaxCalculator.calculateInsurancePremiumTaxCredit(
+              generalInsurancePremium: insurancePremium,
+              disabledInsurancePremium: disabledInsurancePremium,
+            );
+      final double medicalTaxCreditAmt = useStandardCredit
+          ? 0.0
+          : EmployeeTaxCalculator.calculateMedicalTaxCredit(
+              grossIncome: grossIncome,
+              infertilityExpense: infertilityMedical,
+              selfAndSeniorAndDisabledExpense: selfSeniorDisabledMedical,
+              otherDependentExpense: otherDependentMedical,
+            );
+      final double educationTaxCreditAmt = useStandardCredit
+          ? 0.0
+          : EmployeeTaxCalculator.calculateEducationTaxCredit(
+              preschoolExpense: 0,
+              preschoolCount: 0,
+              childrenExpense: childrenEdu,
+              childrenCount: childrenEduCount,
+              collegeExpense: collegeEdu,
+              collegeCount: collegeEduCount,
+              selfExpense: 0,
+              disabledSpecialExpense: 0,
+            );
+      final double donationTaxCreditAmt = useStandardCredit
+          ? 0.0
+          : EmployeeTaxCalculator.calculateDonationTaxCredit(
+              generalDonation: generalDonation,
+              politicalDonation: 0,
+            );
+      final double standardTaxCreditAmt = useStandardCredit ? TaxRates.standardTaxCredit : 0.0;
+
+      // ── §59의4 밖 — 어느 쪽이든 그대로 받는다 ──
+      final double childTaxCreditAmt = EmployeeTaxCalculator.calculateChildTaxCredit(
+        childrenCount: childrenCountForCredit,
+        newbornCount: newbornCount,
+      );
+      final double pensionTaxCreditAmt = EmployeeTaxCalculator.calculatePensionAccountTaxCredit(
+        pensionSavingsPayment: pensionSavings,
+        retirementPensionPayment: irpPayment,
+        grossIncome: grossIncome,
+      );
+      final double weddingTaxCreditAmt = weddingCredit2426 ? TaxRates.marriageTaxCredit : 0.0;
+      final double hometownTaxCreditAmt =
+          EmployeeTaxCalculator.calculateHometownDonationTaxCredit(hometownDonation);
+
+      double estimatedIncomeTax = estimatedCalculatedTax - smeExemptionAmt - laborTaxCredit - rawRentTaxCredit
+          - insuranceTaxCreditAmt - childTaxCreditAmt - pensionTaxCreditAmt
+          - medicalTaxCreditAmt - educationTaxCreditAmt - donationTaxCreditAmt - weddingTaxCreditAmt
+          - hometownTaxCreditAmt - standardTaxCreditAmt;
+      if (estimatedIncomeTax < 0) estimatedIncomeTax = 0;
+
+      final double finalIncomeTax = TaxRates.truncateWon(estimatedIncomeTax);
+      final double finalLocalTax = TaxRates.truncateWon(finalIncomeTax * 0.1);
+
+      return (
+        otherIncomeComprehensive: otherIncomeComprehensive,
+        totalGlobalIncome: totalGlobalIncome,
+        taxBase: taxBase,
+        calculatedTax: estimatedCalculatedTax,
+        smeExemption: smeExemptionAmt,
+        rentTaxCredit: rawRentTaxCredit,
+        insuranceTaxCredit: insuranceTaxCreditAmt,
+        childTaxCredit: childTaxCreditAmt,
+        pensionTaxCredit: pensionTaxCreditAmt,
+        medicalTaxCredit: medicalTaxCreditAmt,
+        educationTaxCredit: educationTaxCreditAmt,
+        donationTaxCredit: donationTaxCreditAmt,
+        weddingTaxCredit: weddingTaxCreditAmt,
+        hometownTaxCredit: hometownTaxCreditAmt,
+        standardTaxCredit: standardTaxCreditAmt,
+        finalIncomeTax: finalIncomeTax,
+        finalLocalTax: finalLocalTax,
+        finalTotalTax: finalIncomeTax + finalLocalTax,
+      );
     }
 
-    final double insuranceTaxCreditAmt = EmployeeTaxCalculator.calculateInsurancePremiumTaxCredit(
-      generalInsurancePremium: insurancePremium,
-      disabledInsurancePremium: disabledInsurancePremium,
-    );
-    final double childTaxCreditAmt = EmployeeTaxCalculator.calculateChildTaxCredit(
-      childrenCount: childrenCountForCredit,
-      newbornCount: newbornCount,
-    );
-    final double pensionTaxCreditAmt = EmployeeTaxCalculator.calculatePensionAccountTaxCredit(
-      pensionSavingsPayment: pensionSavings,
-      retirementPensionPayment: irpPayment,
-      grossIncome: grossIncome,
-    );
-    final double medicalTaxCreditAmt = EmployeeTaxCalculator.calculateMedicalTaxCredit(
-      grossIncome: grossIncome,
-      infertilityExpense: infertilityMedical,
-      selfAndSeniorAndDisabledExpense: selfSeniorDisabledMedical,
-      otherDependentExpense: otherDependentMedical,
-    );
-    final double educationTaxCreditAmt = EmployeeTaxCalculator.calculateEducationTaxCredit(
-      preschoolExpense: 0,
-      preschoolCount: 0,
-      childrenExpense: childrenEdu,
-      childrenCount: childrenEduCount,
-      collegeExpense: collegeEdu,
-      collegeCount: collegeEduCount,
-      selfExpense: 0,
-      disabledSpecialExpense: 0,
-    );
-    final double donationTaxCreditAmt = EmployeeTaxCalculator.calculateDonationTaxCredit(
-      generalDonation: generalDonation,
-      politicalDonation: 0,
-    );
-    final double weddingTaxCreditAmt = weddingCredit2426 ? TaxRates.marriageTaxCredit : 0.0;
-    final double hometownTaxCreditAmt =
-        EmployeeTaxCalculator.calculateHometownDonationTaxCredit(hometownDonation);
+    final Pass special = runPass(false);
+    final Pass standard = runPass(true);
+    final Pass pass =
+        standard.finalTotalTax < special.finalTotalTax ? standard : special;
 
-    double estimatedIncomeTax = estimatedCalculatedTax - smeExemptionAmt - laborTaxCredit - rawRentTaxCredit
-        - insuranceTaxCreditAmt - childTaxCreditAmt - pensionTaxCreditAmt
-        - medicalTaxCreditAmt - educationTaxCreditAmt - donationTaxCreditAmt - weddingTaxCreditAmt
-        - hometownTaxCreditAmt;
-    if (estimatedIncomeTax < 0) estimatedIncomeTax = 0;
-    
-    final double finalIncomeTax = TaxRates.truncateWon(estimatedIncomeTax);
-    final double finalLocalTax = TaxRates.truncateWon(finalIncomeTax * 0.1);
-    final double finalTotalTax = finalIncomeTax + finalLocalTax;
+    final bool otherIncomeComprehensive = pass.otherIncomeComprehensive;
+    final double totalGlobalIncome = pass.totalGlobalIncome;
+    final double taxBase = pass.taxBase;
+    final double estimatedCalculatedTax = pass.calculatedTax;
+    final double smeExemptionAmt = pass.smeExemption;
+    final double rawRentTaxCredit = pass.rentTaxCredit;
+    final double insuranceTaxCreditAmt = pass.insuranceTaxCredit;
+    final double childTaxCreditAmt = pass.childTaxCredit;
+    final double pensionTaxCreditAmt = pass.pensionTaxCredit;
+    final double medicalTaxCreditAmt = pass.medicalTaxCredit;
+    final double educationTaxCreditAmt = pass.educationTaxCredit;
+    final double donationTaxCreditAmt = pass.donationTaxCredit;
+    final double weddingTaxCreditAmt = pass.weddingTaxCredit;
+    final double hometownTaxCreditAmt = pass.hometownTaxCredit;
+    final double finalIncomeTax = pass.finalIncomeTax;
+    final double finalLocalTax = pass.finalLocalTax;
+    final double finalTotalTax = pass.finalTotalTax;
 
     final double freelancerPaidIncomeTax = TaxRates.truncateWon(freelancerIncome * TaxRates.freelancerWithholdingRate);
     final double freelancerPaidLocalTax = TaxRates.truncateWon(freelancerIncome * TaxRates.freelancerLocalWithholdingRate);
@@ -318,7 +420,9 @@ class CombinedTaxCalculator {
       childTaxCredit: childTaxCreditAmt,
       pensionTaxCredit: pensionTaxCreditAmt,
       additionalPersonalDeduction: additionalPersonalDed,
-      mortgageDeduction: mortgageDeduction,
+      // 표준세액공제를 택한 경우 특별소득공제는 포기한 것이라 0으로 보여야 한다.
+      mortgageDeduction: pass.standardTaxCredit > 0 ? 0.0 : mortgageDeduction,
+      standardTaxCredit: pass.standardTaxCredit,
       hometownTaxCredit: hometownTaxCreditAmt,
       smeExemption: smeExemptionAmt,
       medicalTaxCredit: medicalTaxCreditAmt,
@@ -422,23 +526,29 @@ class CombinedTaxCalculator {
     return (min: lower, max: higher);
   }
 
-  /// 금융소득 비교과세 시뮬레이션 (소득세법 §62, 2025~2026 귀속 동일)
+  /// 금융소득 비교과세 (소득세법 §62).
   ///
-  /// • 2,000만원 이하 → 분리과세 14% 원천징수 완납, 종합과세 불필요
-  /// • 2,000만원 초과 → 비교과세:
-  ///   ① 분리과세세액 = 금융소득 전액 × 14%
-  ///   ② 종합과세세액 = (otherTaxableIncome + financialIncome) 누진세율
-  ///   결정세액 = Max(①, ②)
+  /// 조문 그대로: 이자·배당이 2,000만원을 넘으면 종합소득 산출세액은 아래 둘 중
+  /// **큰 금액**이다.
+  ///   1호 = (2,000만원 초과분 + 다른 종합소득) 누진세액 + 2,000만원 × 14%
+  ///   2호 = 금융소득 전액 × 14% + 다른 종합소득 누진세액
   ///
-  /// 배당 Gross-up은 단순화하여 미적용 (시뮬레이터 용도).
+  /// 2,000만원까지는 어느 쪽이든 14%로 끊긴다 — 전액을 누진세율에 넣으면 안 된다.
+  /// 다른 종합소득의 산출세액도 양쪽에 다 들어간다 — 빼먹으면 2호가 늘 작아져
+  /// 1호가 이기고, 세부담이 크게 부풀려진다.
+  ///
+  /// [otherTaxableIncome]은 이자·배당을 뺀 **다른 종합소득의 과세표준**이다.
+  /// 배당 Gross-up(귀속법인세 가산)은 단순화하여 미적용.
   static FinancialIncomeTaxResult calculateFinancialIncomeTax({
     required double annualFinancialIncome,
     required double otherTaxableIncome,
   }) {
-    final bool isSeparateTax = annualFinancialIncome <= TaxRates.financialIncomeThreshold;
+    final double threshold = TaxRates.financialIncomeThreshold;
+    final bool isSeparateTax = annualFinancialIncome <= threshold;
     final bool isHealthImpacted = annualFinancialIncome > TaxRates.financialIncomeHealthThreshold;
 
-    final double separateTax = TaxRates.truncateWon(
+    // 이미 원천징수된 금액 — 2,000만원 이하면 이걸로 과세가 끝난다.
+    final double withheld = TaxRates.truncateWon(
       annualFinancialIncome * TaxRates.financialIncomeSeparateTaxRate,
     );
 
@@ -446,24 +556,36 @@ class CombinedTaxCalculator {
       return FinancialIncomeTaxResult(
         annualFinancialIncome: annualFinancialIncome,
         isSeparateTax: true,
-        separateTaxAmount: separateTax,
-        comprehensiveTaxAmount: separateTax,
+        separateTaxAmount: withheld,
+        comprehensiveTaxAmount: withheld,
         additionalTaxBurden: 0.0,
         isHealthInsuranceImpacted: isHealthImpacted,
       );
     }
 
-    final double totalBase = otherTaxableIncome + annualFinancialIncome;
-    final double comprehensiveTaxOnTotal = TaxRates.truncateWon(TaxRates.calculateTax(totalBase));
-    final double decidedTax = comprehensiveTaxOnTotal > separateTax ? comprehensiveTaxOnTotal : separateTax;
-    final double baseTaxWithoutFinancial = TaxRates.truncateWon(TaxRates.calculateTax(otherTaxableIncome));
-    final double additionalBurden = (decidedTax - baseTaxWithoutFinancial).clamp(0.0, double.infinity);
+    final double other = otherTaxableIncome < 0 ? 0.0 : otherTaxableIncome;
+    final double taxOnOtherOnly = TaxRates.calculateTax(other);
+
+    final double clause1 =
+        TaxRates.calculateTax(other + (annualFinancialIncome - threshold)) +
+            threshold * TaxRates.financialIncomeSeparateTaxRate;
+    final double clause2 =
+        annualFinancialIncome * TaxRates.financialIncomeSeparateTaxRate + taxOnOtherOnly;
+
+    final double calculatedTax = clause1 > clause2 ? clause1 : clause2;
+
+    // 금융소득이 실제로 얹은 세금 — 다른 소득만 있을 때와의 차액.
+    final double financialShare =
+        TaxRates.truncateWon((calculatedTax - taxOnOtherOnly).clamp(0.0, double.infinity));
+    // 원천징수로 이미 낸 것을 빼면 5월에 더 낼 금액이 된다.
+    final double additionalBurden =
+        (financialShare - withheld).clamp(0.0, double.infinity);
 
     return FinancialIncomeTaxResult(
       annualFinancialIncome: annualFinancialIncome,
       isSeparateTax: false,
-      separateTaxAmount: separateTax,
-      comprehensiveTaxAmount: decidedTax,
+      separateTaxAmount: withheld,
+      comprehensiveTaxAmount: financialShare,
       additionalTaxBurden: additionalBurden,
       isHealthInsuranceImpacted: isHealthImpacted,
     );
@@ -501,6 +623,8 @@ class CombinedTaxResult {
   final double pensionTaxCredit;
   final double additionalPersonalDeduction;
   final double mortgageDeduction;
+  /// 표준세액공제액 (소득세법 §59의4⑨). 0보다 크면 특별공제 대신 이쪽을 택한 것.
+  final double standardTaxCredit;
   /// 고향사랑기부금 세액공제액 (조특법 §58).
   final double hometownTaxCredit;
   final double smeExemption;
@@ -538,6 +662,7 @@ class CombinedTaxResult {
     required this.pensionTaxCredit,
     required this.additionalPersonalDeduction,
     required this.mortgageDeduction,
+    required this.standardTaxCredit,
     required this.hometownTaxCredit,
     required this.smeExemption,
     required this.medicalTaxCredit,
@@ -551,9 +676,11 @@ class CombinedTaxResult {
 class FinancialIncomeTaxResult {
   final double annualFinancialIncome;
   final bool isSeparateTax;          // 2,000만원 이하 → 분리과세 완납
-  final double separateTaxAmount;    // 분리과세 세액 (14%)
-  final double comprehensiveTaxAmount; // 종합과세 결정세액 (비교과세 후)
-  final double additionalTaxBurden;  // 종합과세 추가 세부담 (종합 - 분리)
+  final double separateTaxAmount;    // 이미 원천징수된 세액 (금융소득 × 14%)
+  /// 비교과세 결과 금융소득이 실제로 얹은 세액 (§62 산출세액 − 다른 소득만의 산출세액).
+  final double comprehensiveTaxAmount;
+  /// 5월에 더 내야 할 금액 = 위 값 − 이미 원천징수된 세액.
+  final double additionalTaxBurden;
   final bool isHealthInsuranceImpacted; // 건보료 추가 산정 여부 (1,000만 초과)
 
   const FinancialIncomeTaxResult({

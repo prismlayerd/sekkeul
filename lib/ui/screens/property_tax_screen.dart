@@ -279,17 +279,19 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('부부 공동명의',
-                                style:
-                                    TextStyle(color: textColor, fontSize: 14)),
-                            Text('종부세 공제 9억×2인 대신 세액공제 미적용'.keepWords,
-                                style: TextStyle(
-                                    color: subColor.withValues(alpha: 0.8),
-                                    fontSize: 11)),
-                          ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('부부 공동명의',
+                                  style:
+                                      TextStyle(color: textColor, fontSize: 14)),
+                              Text('종부세 공제 9억×2인 대신 세액공제 미적용'.keepWords,
+                                  style: TextStyle(
+                                      color: subColor.withValues(alpha: 0.8),
+                                      fontSize: 11)),
+                            ],
+                          ),
                         ),
                         Switch(
                           value: _jointOwnership,

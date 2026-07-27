@@ -49,6 +49,9 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
 
   bool _asBool(dynamic v) => v == true || v == 1;
 
+  /// 부녀자공제 소득요건 판정용 — 내 정보의 예상 연봉.
+  double _grossIncome = 0.0;
+
   Future<void> _loadProfile() async {
     final profile = await dbService.getProfile();
     if (profile != null && mounted) {
@@ -60,6 +63,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
         _disabledDependentCount = (profile['disabled_dependent_count'] as int?) ?? 0;
         _hasElderly70Plus = _asBool(profile['has_elderly_70plus']);
         _isFemaleHead = _asBool(profile['is_female_head']);
+        _grossIncome = (profile['gross_income'] as num?)?.toDouble() ?? 0.0;
         _isSingleParent = _asBool(profile['is_single_parent']);
         _loaded = true;
       });
@@ -121,6 +125,11 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
       hasElderly70Plus: _hasElderly70Plus,
       isSingleFemaleHead: _isFemaleHead,
       isSingleParent: _isSingleParent,
+      // 부녀자공제는 종합소득금액 3천만원 이하만 대상 (소법 §51①3).
+      // 내 정보에 연봉이 없으면 요건을 충족한 것으로 본다.
+      globalIncomeAmount: _grossIncome > 0
+          ? _grossIncome - EmployeeTaxCalculator.calculateLaborDeduction(_grossIncome)
+          : 0.0,
     );
 
     final totalIncomeDeduction = basicDeduction + disabledDeduction + additionalDeduction;
@@ -231,7 +240,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
             _buildCard([
               _toggleRow('경로우대 (70세 이상 부양가족, +100만)', _hasElderly70Plus,
                   (v) => setState(() => _hasElderly70Plus = v), subColor, textColor),
-              _toggleRow('부녀자 (여성 세대주, +50만)', _isFemaleHead,
+              _toggleRow('부녀자 (여성 세대주, 소득 3천만원 이하, +50만)', _isFemaleHead,
                   (v) => setState(() => _isFemaleHead = v), subColor, textColor),
               _toggleRow('한부모 (+100만, 부녀자와 중복 시 우선)', _isSingleParent,
                   (v) => setState(() => _isSingleParent = v), subColor, textColor),

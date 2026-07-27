@@ -96,9 +96,12 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('어린이집 이용 (보육료 지원)'.keepWords,
-                          style: AppTheme.sans(13, ink,
-                              weight: FontWeight.w600)),
+                      Expanded(
+                        child: Text('어린이집 이용 (보육료 지원)'.keepWords,
+                            style: AppTheme.sans(13, ink,
+                                weight: FontWeight.w600)),
+                      ),
+                      const SizedBox(width: 8),
                       Text(_won(_daycare),
                           style: AppTheme.sans(14, accent,
                               weight: FontWeight.w700)),

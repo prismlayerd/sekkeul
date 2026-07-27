@@ -41,7 +41,15 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
         _templates = list;
       });
     }
-    if (!kIsWeb) await ReminderScheduler.scheduleRecurringExpenses(list);
+    // initState에서 await 없이 부르는 자리라 여기서 새어 나간 예외는 아무도 못 잡는다.
+    // 알림 예약은 부가 기능이니 실패해도 목록은 그대로 보여야 한다.
+    if (!kIsWeb) {
+      try {
+        await ReminderScheduler.scheduleRecurringExpenses(list);
+      } catch (e) {
+        debugPrint('반복지출 알림 예약 실패: $e');
+      }
+    }
   }
 
   Color _pmColor(String pm) {

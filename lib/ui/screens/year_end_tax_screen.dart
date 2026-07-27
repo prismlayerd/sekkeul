@@ -39,6 +39,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
   int _disabledDependentCount = 0;
   bool _isHomeless = false;         // 무주택 세대주 여부 (is_monthly_rent 기반 proxy)
   double _insuranceDeduction = 0.0; // 4대보험 소득공제 (연금보험료 + 특별소득공제)
+  double _specialInsuranceDeduction = 0.0; // 그중 특별소득공제분 (건강+장기요양+고용)
   bool _hasElderly70Plus = false;   // 경로우대 (70세 이상 부양가족)
   bool _isFemaleHead = false;       // 부녀자 추가공제
   bool _isSingleParent = false;     // 한부모 추가공제
@@ -343,6 +344,8 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       hasElderly70Plus: _hasElderly70Plus,
       isSingleFemaleHead: _isFemaleHead,
       isSingleParent: _isSingleParent,
+      // 부녀자공제는 종합소득금액 3천만원 이하만 대상 (소법 §51①3).
+      globalIncomeAmount: salary - EmployeeTaxCalculator.calculateLaborDeduction(salary),
     );
 
     // 3. 신용카드 소득공제
@@ -359,6 +362,9 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
     // 4. 4대보험 소득공제 (연금보험료공제 §51의3 + 특별소득공제 보험료 §52①)
     final insDeduction = EmployeeTaxCalculator.calculateAnnualInsuranceDeduction(salary / 12);
     _insuranceDeduction = insDeduction.total;
+    // 이 중 건강·장기요양·고용보험분만 '특별소득공제'(§52①)다. 표준세액공제를
+    // 택하면 이쪽만 포기하고 국민연금 보험료공제(§51의3)는 그대로 남는다.
+    _specialInsuranceDeduction = insDeduction.specialInsuranceDeduction;
 
     // 5. 과세표준 산출
     _taxableIncome = salary - _laborDeduction - _personalExemption - _cardDeduction - _insuranceDeduction;
@@ -1295,7 +1301,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
         ),
         const SizedBox(height: 24),
-        _buildWizardAmountField('주택담보대출 이자상환액', '15년 이상 고정금리 기준, 연 최대 2,000만원 소득공제', _mortgageController),
+        _buildWizardAmountField('주택담보대출 이자상환액', '상환기간 15년 이상 기준, 연 800만원까지 소득공제 (고정금리·비거치식이면 최대 2,000만원 — 계산기에서 확인)', _mortgageController),
         const SizedBox(height: 20),
         _buildWizardAmountField('고향사랑기부금', '10만원까지 전액 환급 · 초과분 세액공제 (연 2,000만원 한도)', _hometownDonationController),
       ],
@@ -1429,7 +1435,11 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
     // 소득공제로 처리해 저소득자에겐 과소·고소득자에겐 과대 계산됐다.
     final double mortgage = double.tryParse(_mortgageController.text.replaceAll(',', '')) ?? 0.0;
     final double hometown = double.tryParse(_hometownDonationController.text.replaceAll(',', '')) ?? 0.0;
-    final double mortgageDeduction = EmployeeTaxCalculator.calculateMortgageIncomeDeduction(mortgage);
+    // 한도는 대출 조건에 따라 800만~2,000만원으로 갈린다(소법 §52⑥). 이 화면은
+    // 조건을 묻지 않으므로 기본 한도(800만원)로만 잡는다 — 없는 환급을 약속하지 않는다.
+    // 고정금리·비거치식이면 계산기(빠진 공제 찾기)에서 더 큰 한도로 볼 수 있다.
+    final double mortgageDeduction =
+        EmployeeTaxCalculator.calculateMortgageIncomeDeduction(mortgage);
     _wizardIncomeDedSaving =
         EmployeeTaxCalculator.calculateHometownDonationTaxCredit(hometown);
     if (mortgageDeduction > 0 && _taxableIncome > 0) {
@@ -1440,15 +1450,21 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       );
     }
 
-    // 표준세액공제 13만 자동 비교: 특별세액공제(의료비+교육비+기부금) + 월세 합계가 13만보다 적으면 표준공제가 유리
+    // 표준세액공제(13만)와 특별공제는 함께 받을 수 없다 — 소득세법 §59의4⑨.
+    //
+    // 종전에는 특별세액공제 합계가 13만에 못 미치면 모자란 만큼을 그냥 얹어 줬다.
+    // 그러면 특별세액공제가 없는 대부분의 직장인이 13만원을 공짜로 받는데, 실제로는
+    // 보험료 특별소득공제(이미 과세표준에서 빠져 있다)를 포기해야 한다.
+    // 포기해서 늘어나는 세금까지 빼고 나서야 표준이 유리한지 알 수 있다.
     final double specialTotal = (_specialResult?.medicalTaxCredit ?? 0) +
         (_specialResult?.educationTaxCredit ?? 0) +
         (_specialResult?.donationTaxCredit ?? 0) +
         _wizardRentRefund;
-    _wizardStandardTaxCredit = 0.0;
-    if (specialTotal < EmployeeTaxCalculator.getStandardTaxCredit()) {
-      _wizardStandardTaxCredit = EmployeeTaxCalculator.getStandardTaxCredit() - specialTotal;
-    }
+    final double forfeited = TaxRates.calculateTax(_taxableIncome + _specialInsuranceDeduction) -
+        TaxRates.calculateTax(_taxableIncome);
+    final double standardNet = EmployeeTaxCalculator.getStandardTaxCredit() - forfeited;
+    _wizardStandardTaxCredit =
+        standardNet > specialTotal ? TaxRates.truncateWon(standardNet - specialTotal) : 0.0;
 
     double total = specialTotal +
         _wizardStandardTaxCredit +
