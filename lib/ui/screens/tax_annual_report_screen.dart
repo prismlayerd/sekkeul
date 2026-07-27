@@ -640,7 +640,15 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
         Icon(Icons.check_circle_rounded, color: Colors.green, size: 15),
         const SizedBox(width: 8),
         Expanded(child: Text(label, style: TextStyle(color: subColor, fontSize: 13))),
-        Text(value, style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.w600)),
+        const SizedBox(width: 8),
+        // 금액이 길어지면 이 줄이 넘친다 — 좁을 때만 줄어들게.
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Text(value, style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.w600)),
+          ),
+        ),
       ]),
     );
   }

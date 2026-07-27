@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 
 import '../data/occupation_data.dart';
 import 'employee_tax.dart';
+import 'insurance_engine.dart';
 import 'tax_rates.dart';
 
 /// 간편장부(실제경비) vs 추계(경비율) 비교 결과.
@@ -35,6 +36,9 @@ class FreelancerTaxCalculator {
     // 성실사업자(조특법 §122의3) 요건 충족 여부 — 근로소득 없는 사업소득자의 월세
     // 세액공제는 성실사업자만 대상이라, 참일 때만 월세 공제를 적용한다(기본 false).
     bool isQualifiedFaithfulTaxpayer = false,
+    // 국민연금 지역가입자로 보험료를 내는가 (내 정보의 'pension_enrolled').
+    // 참이면 납부 보험료를 연금보험료공제(소법 §51의3)로 전액 뺀다.
+    bool paysNationalPension = false,
   }) {
     // 0. 입력값 방어 코드
     final months = inputMonths < 1 ? 1 : (inputMonths > 12 ? 12 : inputMonths);
@@ -105,7 +109,25 @@ class FreelancerTaxCalculator {
     // 대상이 아니고(국세청 서면인터넷방문상담1팀-998), 소득세법 §52 특별소득공제는
     // "근로소득금액 범위 내"에서만 공제된다(같은 팀-476). 근로소득이 없는 프리랜서는
     // 어느 쪽으로도 공제받지 못한다. 확인일 2026-07-25.
-    final double totalDeduction = basicDeduction + disabilityDeduction + yellowUmbrellaDeduction;
+    //
+    // 반면 **국민연금은 다르다.** 연금보험료공제(소법 §51의3①)는 "종합소득이 있는
+    // 거주자"가 대상이라 근로소득자 전용이 아니다. 지역가입자로 낸 보험료는 전액
+    // 종합소득금액에서 뺀다. 이걸 빼먹으면 세금이 그만큼 과대해진다.
+    //
+    // 납부액은 내 정보에 따로 받지 않으므로 사업소득금액으로 추정한다. 부과 기준은
+    // 매출(총수입)이 아니라 필요경비를 뺀 **소득금액**이다 — 적립 카드가 쓰는 기준과 같다.
+    final double pensionPremiumDeduction = paysNationalPension
+        ? InsuranceEngine.calculateFreelancerInsurance(
+              annualIncome: estimatedBusinessIncome,
+              propertyValue: 0,
+            ).nationalPension *
+            12
+        : 0.0;
+
+    final double totalDeduction = basicDeduction +
+        disabilityDeduction +
+        yellowUmbrellaDeduction +
+        pensionPremiumDeduction;
 
     // 기타소득 분리과세 선택 (소득세법 §14③8): 기타소득금액 300만원 이하(원천징수분)는
     // 종합과세와 분리과세(원천징수 8.8%로 종결) 중 유리한 쪽을 선택할 수 있다.
@@ -267,6 +289,8 @@ class FreelancerTaxCalculator {
       yellowUmbrellaLimit: yellowUmbrellaLimit,
       rentTaxCredit: rentTaxCredit,
       childTaxCredit: childTaxCredit,
+      pensionPremiumDeduction: pensionPremiumDeduction,
+      totalDeduction: totalDeduction,
     );
   }
 
@@ -286,6 +310,7 @@ class FreelancerTaxCalculator {
     int newbornCount = 0,
     int disabledDependentCount = 0,
     bool hasSelfDisability = false,
+    bool paysNationalPension = false,
   }) {
     final simple = calculateTaxSimulation(
       accumulatedIncome: accumulatedIncome,
@@ -301,6 +326,7 @@ class FreelancerTaxCalculator {
       newbornCount: newbornCount,
       disabledDependentCount: disabledDependentCount,
       hasSelfDisability: hasSelfDisability,
+      paysNationalPension: paysNationalPension,
       useStandardExpenseRate: false,
     );
     final standard = calculateTaxSimulation(
@@ -317,6 +343,7 @@ class FreelancerTaxCalculator {
       newbornCount: newbornCount,
       disabledDependentCount: disabledDependentCount,
       hasSelfDisability: hasSelfDisability,
+      paysNationalPension: paysNationalPension,
       useStandardExpenseRate: true,
     );
     final lower = simple.annualTotalTax <= standard.annualTotalTax ? simple : standard;
@@ -347,6 +374,7 @@ class FreelancerTaxCalculator {
     // 법적으로 강제된다 — 세금이 낮은 쪽을 임의 선택할 수 없다. 호출부가
     // isSimpleExpenseRateEligible 판정 결과를 넘겨야 한다.
     bool forceStandardExpenseRate = false,
+    bool paysNationalPension = false,
   }) {
     final months = inputMonths < 1 ? 1 : (inputMonths > 12 ? 12 : inputMonths);
     final rawExpense = accumulatedActualExpense < 0 ? 0.0 : accumulatedActualExpense;
@@ -367,6 +395,7 @@ class FreelancerTaxCalculator {
       newbornCount: newbornCount,
       disabledDependentCount: disabledDependentCount,
       hasSelfDisability: hasSelfDisability,
+      paysNationalPension: paysNationalPension,
     );
 
     // 추계는 적용 대상 경비율 하나로만 계산한다. 과거엔 단순/기준 중 세금이 낮은 쪽
@@ -385,6 +414,7 @@ class FreelancerTaxCalculator {
       newbornCount: newbornCount,
       disabledDependentCount: disabledDependentCount,
       hasSelfDisability: hasSelfDisability,
+      paysNationalPension: paysNationalPension,
       useStandardExpenseRate: forceStandardExpenseRate,
     );
 
@@ -424,6 +454,10 @@ class FreelancerTaxResult {
   final double yellowUmbrellaLimit;         // 산출된 노란우산공제 한도
   final double rentTaxCredit;               // 월세 세액공제액
   final double childTaxCredit;              // 자녀세액공제액
+  /// 국민연금 보험료 소득공제액 (소법 §51의3).
+  final double pensionPremiumDeduction;
+  /// 소득공제 합계 (인적 + 장애인 + 노란우산 + 국민연금).
+  final double totalDeduction;
 
   FreelancerTaxResult({
     required this.annualEstimatedIncome,
@@ -451,5 +485,7 @@ class FreelancerTaxResult {
     required this.yellowUmbrellaLimit,
     required this.rentTaxCredit,
     required this.childTaxCredit,
+    this.pensionPremiumDeduction = 0.0,
+    this.totalDeduction = 0.0,
   });
 }

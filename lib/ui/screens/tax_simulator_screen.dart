@@ -22,6 +22,7 @@ import '../../core/tax_engine/bookkeeping_duty.dart';
 import 'expense_calendar_screen.dart';
 import 'tax_report_form_screen.dart';
 import '../components/amount_field.dart';
+import '../components/check_row.dart';
 import '../theme/text_wrap.dart';
 
 class TaxSimulatorScreen extends StatefulWidget {
@@ -66,6 +67,8 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
   // 장기주택저당차입금 한도 분기 (소법 §52⑥) — 금액을 넣은 사람에게만 물어본다.
   bool _mortgageFixedRate = false;
   bool _mortgageNonDeferred = false;
+  /// 내 정보의 '국민연금' 토글 — 프리랜서 연금보험료공제(소법 §51의3) 판정.
+  bool _paysNationalPension = false;
   /// 게이트에서 고른 항목. null이면 게이트를 거치지 않고 바로 들어온 것 —
   /// 그때는 '안 고른 항목' 안내를 띄우지 않는다(고른 적이 없으니 놓친 것도 없다).
   Set<String>? _gatePicks;
@@ -184,6 +187,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     bool isSingleFemaleHead = false;
     bool weddingCredit2426 = false;
     bool isSmeEmployee = false;
+    bool paysNationalPension = false;
     int smeStartYear = 0;
     bool isYouthSme = false;
     OccupationInfo? profileOccupation;
@@ -208,6 +212,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       final wYear = profile['wedding_year'] as int?;
       weddingCredit2426 = (wYear != null && wYear >= 2024 && wYear <= 2026);
       isSmeEmployee = profile['is_sme_employee'] == true;
+      paysNationalPension = profile['pension_enrolled'] == true;
       smeStartYear = profile['sme_start_year'] as int? ?? 0;
       final age = profile['age'] as int? ?? 0;
       final militaryMonths = profile['military_months'] as int? ?? 0;
@@ -276,6 +281,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       _isSingleFemaleHead = isSingleFemaleHead;
       _weddingCredit2426 = weddingCredit2426;
       _isSmeEmployee = isSmeEmployee;
+      _paysNationalPension = paysNationalPension;
       _smeStartYear = smeStartYear;
       _isYouthSme = isYouthSme;
     });
@@ -514,6 +520,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           disabledDependentCount: _disabledDependentCount,
           hasSelfDisability: _hasSelfDisability,
           forceStandardExpenseRate: !simpleRateEligible,
+          paysNationalPension: _paysNationalPension,
         );
         setState(() {
           _bookkeepingComparison = comparison;
@@ -533,6 +540,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           newbornCount: int.tryParse(_newbornCountController.text.replaceAll(',', '')) ?? 0,
           disabledDependentCount: _disabledDependentCount,
           hasSelfDisability: _hasSelfDisability,
+          paysNationalPension: _paysNationalPension,
           useStandardExpenseRate: !simpleRateEligible,
         );
         setState(() {
@@ -1429,36 +1437,6 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     );
   }
 
-  /// 고르면 체크가 켜지는 한 줄. 그림자 없이 테두리와 체크만으로 상태를 보인다.
-  Widget _mortgageCheck(String label, bool selected, VoidCallback onTap) {
-    final accent = AppTheme.accentColor(context);
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-        decoration: BoxDecoration(
-          border: Border.all(
-              color: selected ? accent : AppTheme.line(context),
-              width: selected ? 1.4 : 1),
-          borderRadius: BorderRadius.circular(3),
-        ),
-        child: Row(
-          children: [
-            Icon(selected ? Icons.check_box_outlined : Icons.check_box_outline_blank,
-                size: 18, color: selected ? accent : AppTheme.inkTertiary(context)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(label.keepWords,
-                  style: AppTheme.sans(13, AppTheme.ink(context),
-                      weight: selected ? FontWeight.w700 : FontWeight.w500)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   /// 아직 아무 공제도 안 잡혔을 때 — 빈칸 대신 다음에 할 일을 보여준다.
   Widget _buildEmptyRefundHint() {
     final salary = double.tryParse(_salaryController.text.replaceAll(',', '')) ?? 0.0;
@@ -1572,7 +1550,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       items = [
         {'title': '총수입금액 (연환산)', 'amount': r.annualEstimatedIncome, 'isHeader': true},
         {'title': '(-) 필요경비 (단순/기준경비율 적용)', 'amount': r.estimatedExpense},
-        {'title': '(-) 소득공제 및 노란우산 등', 'amount': r.yellowUmbrellaDeduction},
+        {'title': '(-) 소득공제 (인적·노란우산·국민연금 등)', 'amount': r.totalDeduction},
         {'title': '(=) 과세표준', 'amount': r.taxBase, 'isHeader': true, 'highlight': true},
         {'title': '(×) 산출세액 (지방세 포함)', 'amount': r.annualIncomeTax + r.annualLocalTax},
         {'title': '(=) 결정세액', 'amount': r.annualTotalTax, 'isHeader': true, 'highlight': true},
@@ -2114,20 +2092,16 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                             fieldKey: const Key('mortgageField')),
                         // 한도가 800만 → 1,800만 → 2,000만으로 갈리는 두 조건.
                         // 금액을 넣은 사람에게만 묻는다 — 답에 따라 공제가 2.5배까지 달라진다.
-                        if ((double.tryParse(_mortgageSimController.text.replaceAll(',', '')) ?? 0) > 0) ...[
-                          const SizedBox(height: 12),
-                          Text('대출 조건에 따라 한도가 달라져요 — 해당하는 것을 골라주세요.'.keepWords,
-                              style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.45)),
-                          const SizedBox(height: 8),
-                          _mortgageCheck('금리가 고정이에요', _mortgageFixedRate,
-                              () => setState(() { _mortgageFixedRate = !_mortgageFixedRate; _calculateTax(); })),
-                          const SizedBox(height: 6),
-                          _mortgageCheck('처음부터 원금도 같이 갚아요 (비거치식)', _mortgageNonDeferred,
-                              () => setState(() { _mortgageNonDeferred = !_mortgageNonDeferred; _calculateTax(); })),
-                          const SizedBox(height: 6),
-                          Text('지금 한도: 연 ${(EmployeeTaxCalculator.mortgageDeductionLimit(fixedRate: _mortgageFixedRate, nonDeferredRepayment: _mortgageNonDeferred) / 10000).round()}만원'.keepWords,
-                              style: AppTheme.sans(12, AppTheme.accentColor(context), weight: FontWeight.w700)),
-                        ],
+                        if ((double.tryParse(_mortgageSimController.text.replaceAll(',', '')) ?? 0) > 0)
+                          MortgageConditionRows(
+                            fixedRate: _mortgageFixedRate,
+                            nonDeferred: _mortgageNonDeferred,
+                            onFixedRate: (v) => setState(() { _mortgageFixedRate = v; _calculateTax(); }),
+                            onNonDeferred: (v) => setState(() { _mortgageNonDeferred = v; _calculateTax(); }),
+                            limit: EmployeeTaxCalculator.mortgageDeductionLimit(
+                                fixedRate: _mortgageFixedRate,
+                                nonDeferredRepayment: _mortgageNonDeferred),
+                          ),
                         const SizedBox(height: 16),
                         Text('고향사랑기부금 (10만원까지 전액 환급, 초과분 세액공제)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),

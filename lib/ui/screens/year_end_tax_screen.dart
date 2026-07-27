@@ -4,6 +4,7 @@ import '../../core/data/db_helper.dart';
 import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/tax_rates.dart';
 import '../components/amount_field.dart';
+import '../components/check_row.dart';
 import 'tax_report_form_screen.dart';
 import '../theme/text_wrap.dart';
 
@@ -40,6 +41,9 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
   bool _isHomeless = false;         // 무주택 세대주 여부 (is_monthly_rent 기반 proxy)
   double _insuranceDeduction = 0.0; // 4대보험 소득공제 (연금보험료 + 특별소득공제)
   double _specialInsuranceDeduction = 0.0; // 그중 특별소득공제분 (건강+장기요양+고용)
+  // 장기주택저당차입금 한도 분기 (소법 §52⑥) — 계산기와 같은 두 조건을 묻는다.
+  bool _mortgageFixedRate = false;
+  bool _mortgageNonDeferred = false;
   bool _hasElderly70Plus = false;   // 경로우대 (70세 이상 부양가족)
   bool _isFemaleHead = false;       // 부녀자 추가공제
   bool _isSingleParent = false;     // 한부모 추가공제
@@ -584,8 +588,10 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.lock_outline_rounded, color: Theme.of(context).textTheme.labelMedium!.color!, size: 14),
-            SizedBox(width: 4),
-            Text('모든 데이터는 서버 전송 없이 기기 내부에만 저장됩니다.'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 11)),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text('모든 데이터는 서버 전송 없이 기기 내부에만 저장됩니다.'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 11)),
+            ),
           ],
         ),
       ],
@@ -1095,7 +1101,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         const SizedBox(height: 10),
         Row(
           children: [
-            SizedBox(width: 100, child: _buildWizardCountField('명', _wizardChildrenCountController)),
+            SizedBox(width: 100, child: _buildWizardCountField(_wizardChildrenCountController)),
             const SizedBox(width: 16),
             if (previewChildCredit > 0)
               Container(
@@ -1235,9 +1241,9 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         const SizedBox(height: 10),
         Row(
           children: [
-            Expanded(child: _buildWizardCountField('자녀 수', _childrenCountController)),
+            Expanded(child: _buildWizardCountField(_childrenCountController)),
             const SizedBox(width: 12),
-            Expanded(flex: 2, child: _buildWizardAmountFieldCompact('교육비 합산', '1인당 300만원 한도', _childrenEduController)),
+            Expanded(flex: 2, child: _buildWizardAmountFieldCompact(_childrenEduController)),
           ],
         ),
         const SizedBox(height: 20),
@@ -1247,9 +1253,9 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         const SizedBox(height: 10),
         Row(
           children: [
-            Expanded(child: _buildWizardCountField('자녀 수', _collegeCountController)),
+            Expanded(child: _buildWizardCountField(_collegeCountController)),
             const SizedBox(width: 12),
-            Expanded(flex: 2, child: _buildWizardAmountFieldCompact('교육비 합산', '1인당 900만원 한도', _collegeEduController)),
+            Expanded(flex: 2, child: _buildWizardAmountFieldCompact(_collegeEduController)),
           ],
         ),
         Padding(padding: const EdgeInsets.symmetric(vertical: 20), child: Divider(color: Theme.of(context).dividerColor)),
@@ -1301,7 +1307,18 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
         ),
         const SizedBox(height: 24),
-        _buildWizardAmountField('주택담보대출 이자상환액', '상환기간 15년 이상 기준, 연 800만원까지 소득공제 (고정금리·비거치식이면 최대 2,000만원 — 계산기에서 확인)', _mortgageController),
+        _buildWizardAmountField('주택담보대출 이자상환액', '상환기간 15년 이상 대출 기준이에요.', _mortgageController),
+        // 답에 따라 한도가 800만 → 2,000만으로 갈린다. 금액을 넣은 사람에게만 묻는다.
+        if ((double.tryParse(_mortgageController.text.replaceAll(',', '')) ?? 0) > 0)
+          MortgageConditionRows(
+            fixedRate: _mortgageFixedRate,
+            nonDeferred: _mortgageNonDeferred,
+            onFixedRate: (v) => setState(() => _mortgageFixedRate = v),
+            onNonDeferred: (v) => setState(() => _mortgageNonDeferred = v),
+            limit: EmployeeTaxCalculator.mortgageDeductionLimit(
+                fixedRate: _mortgageFixedRate,
+                nonDeferredRepayment: _mortgageNonDeferred),
+          ),
         const SizedBox(height: 20),
         _buildWizardAmountField('고향사랑기부금', '10만원까지 전액 환급 · 초과분 세액공제 (연 2,000만원 한도)', _hometownDonationController),
       ],
@@ -1336,16 +1353,19 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           Text(hint, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
         ],
         const SizedBox(height: 8),
-        AmountField(controller: controller, expand: true),
+        // 금액에 따라 뒤따르는 질문이 열리고 닫히므로(주담대 조건 등) 입력마다 다시 그린다.
+        AmountField(controller: controller, expand: true, onChanged: (_) => setState(() {})),
       ],
     );
   }
 
-  Widget _buildWizardAmountFieldCompact(String label, String hint, TextEditingController controller) {
-    return AmountField(controller: controller, expand: true);
-  }
+  /// 라벨·설명이 이미 위에 있는 자리에 쓰는 좁은 금액칸.
+  /// (예전에는 label·hint를 인자로 받았지만 그리지 않아 지웠다.)
+  Widget _buildWizardAmountFieldCompact(TextEditingController controller) =>
+      AmountField(controller: controller, expand: true);
 
-  Widget _buildWizardCountField(String label, TextEditingController controller) {
+  /// 사람 수 칸. 라벨은 호출부 위쪽에 이미 있어 인자로 받지 않는다.
+  Widget _buildWizardCountField(TextEditingController controller) {
     return TextField(
       controller: controller,
       keyboardType: TextInputType.number,
@@ -1435,11 +1455,12 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
     // 소득공제로 처리해 저소득자에겐 과소·고소득자에겐 과대 계산됐다.
     final double mortgage = double.tryParse(_mortgageController.text.replaceAll(',', '')) ?? 0.0;
     final double hometown = double.tryParse(_hometownDonationController.text.replaceAll(',', '')) ?? 0.0;
-    // 한도는 대출 조건에 따라 800만~2,000만원으로 갈린다(소법 §52⑥). 이 화면은
-    // 조건을 묻지 않으므로 기본 한도(800만원)로만 잡는다 — 없는 환급을 약속하지 않는다.
-    // 고정금리·비거치식이면 계산기(빠진 공제 찾기)에서 더 큰 한도로 볼 수 있다.
-    final double mortgageDeduction =
-        EmployeeTaxCalculator.calculateMortgageIncomeDeduction(mortgage);
+    // 한도는 대출 조건에 따라 800만~2,000만원으로 갈린다 (소법 §52⑥).
+    final double mortgageDeduction = EmployeeTaxCalculator.calculateMortgageIncomeDeduction(
+      mortgage,
+      fixedRate: _mortgageFixedRate,
+      nonDeferredRepayment: _mortgageNonDeferred,
+    );
     _wizardIncomeDedSaving =
         EmployeeTaxCalculator.calculateHometownDonationTaxCredit(hometown);
     if (mortgageDeduction > 0 && _taxableIncome > 0) {

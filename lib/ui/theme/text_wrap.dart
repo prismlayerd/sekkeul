@@ -21,8 +21,12 @@ extension KeepWords on String {
       RegExp(r'[^\s]+'),
       onMatch: (m) {
         final w = m[0]!;
-        if (w.length <= 1 || w.length > maxToken) return w;
-        return w.split('').join(joiner);
+        // **코드 유닛이 아니라 코드 포인트(runes)로 쪼갠다.** 이모지 같은 BMP 밖 글자는
+        // UTF-16에서 2코드 유닛(서로게이트 쌍)이라, `split('')`로 나누면 쌍이 갈라져
+        // 잘못된 UTF-16 문자열이 된다 — 그리는 순간 렌더링이 예외로 죽는다.
+        final runes = w.runes.toList();
+        if (runes.length <= 1 || runes.length > maxToken) return w;
+        return runes.map(String.fromCharCode).join(joiner);
       },
       onNonMatch: (s) => s,
     );

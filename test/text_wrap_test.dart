@@ -58,4 +58,29 @@ void main() {
     expect(k.replaceAll('⁠', ''), s);
     expect(k.contains('\n'), isTrue);
   });
+
+  _emojiRegression();
+}
+
+// ── 아래는 이모지가 섞인 문구에서 렌더링이 죽던 회귀 ──
+
+void _emojiRegression() {
+  test('이모지를 쪼개지 않는다 — 서로게이트 쌍이 깨지면 렌더링이 죽는다', () {
+    const src = '🏡 주담대를 확인할게요';
+    final out = src.keepWords;
+    // 잘못된 UTF-16이면 runes를 훑는 순간 터진다.
+    expect(() => out.runes.toList(), returnsNormally);
+    // 이모지 자체는 원래 모양 그대로 남아야 한다.
+    expect(out.contains('🏡'), isTrue);
+    // 워드조이너를 걷어내면 원문과 같아야 한다.
+    expect(out.replaceAll('⁠', ''), src);
+  });
+
+  test('BMP 밖 글자만 있는 어절도 안전하다', () {
+    for (final s in ['🎉', '🎉🎉', '💡 공제 문턱 미달', '✅ 끝']) {
+      final out = s.keepWords;
+      expect(() => out.runes.toList(), returnsNormally, reason: s);
+      expect(out.replaceAll('⁠', ''), s, reason: s);
+    }
+  });
 }

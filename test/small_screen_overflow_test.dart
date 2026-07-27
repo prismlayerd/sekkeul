@@ -2,6 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/db_helper.dart';
+import 'package:secul/ui/screens/annual_backfill_screen.dart';
+import 'package:secul/ui/screens/benefit_screen.dart';
+import 'package:secul/ui/screens/bookkeeping_guide_screen.dart';
+import 'package:secul/ui/screens/correction_request_screen.dart';
+import 'package:secul/ui/screens/deduction_gate_screen.dart';
+import 'package:secul/ui/screens/diagnosis_screen.dart';
+import 'package:secul/ui/screens/document_checklist_screen.dart';
+import 'package:secul/ui/screens/forms_screen.dart';
+import 'package:secul/ui/screens/missed_deduction_diagnosis_screen.dart';
+import 'package:secul/ui/screens/notification_settings_screen.dart';
+import 'package:secul/ui/screens/profile_input_screen.dart';
+import 'package:secul/ui/screens/tax_annual_report_screen.dart';
+import 'package:secul/ui/screens/tax_record_import_screen.dart';
+import 'package:secul/ui/screens/tax_simulator_screen.dart';
+import 'package:secul/ui/screens/tax_tools_screen.dart';
+import 'package:secul/ui/screens/year_end_tax_screen.dart';
 import 'package:secul/ui/screens/acquisition_tax_screen.dart';
 import 'package:secul/ui/screens/basic_pension_screen.dart';
 import 'package:secul/ui/screens/beotimmok_loan_screen.dart';
@@ -182,5 +198,74 @@ void main() {
     // ignore: avoid_print
     print('검사한 화면 ${screens.length}개 · 넘친 곳 ${problems.length}건');
     expect(problems, isEmpty, reason: '작은 화면에서 잘리는 곳이 있다');
+  });
+
+  testWidgets('유형별 화면도 360×800에서 넘치지 않는다', (t) async {
+    t.view.physicalSize = const Size(360, 800);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    // userType 하나만 받는 화면들 — 인자가 있다는 이유로 지금까지 한 번도
+    // 열어 본 적이 없었다. 이모지가 섞인 문구에서 렌더링이 죽던 버그도 여기 있었다.
+    final byType = <(String, Widget Function(String))>[
+      ('AnnualBackfillScreen', (u) => AnnualBackfillScreen(userType: u)),
+      ('BenefitScreen', (u) => BenefitScreen(userType: u)),
+      ('BookkeepingGuideScreen', (u) => BookkeepingGuideScreen(userType: u)),
+      ('CorrectionRequestScreen', (u) => CorrectionRequestScreen(userType: u)),
+      ('DeductionGateScreen', (u) => DeductionGateScreen(userType: u)),
+      ('DiagnosisScreen', (u) => DiagnosisScreen(userType: u)),
+      ('DocumentChecklistScreen', (u) => DocumentChecklistScreen(userType: u)),
+      ('FormsScreen', (u) => FormsScreen(userType: u)),
+      ('MissedDeductionDiagnosisScreen', (u) => MissedDeductionDiagnosisScreen(userType: u)),
+      ('NotificationSettingsScreen', (u) => NotificationSettingsScreen(userType: u)),
+      ('ProfileInputScreen', (u) => ProfileInputScreen(userType: u)),
+      ('TaxAnnualReportScreen', (u) => TaxAnnualReportScreen(userType: u)),
+      ('TaxRecordImportScreen', (u) => TaxRecordImportScreen(userType: u)),
+      ('TaxSimulatorScreen', (u) => TaxSimulatorScreen(userType: u)),
+      ('TaxToolsScreen', (u) => TaxToolsScreen(userType: u)),
+      ('YearEndTaxScreen', (u) => YearEndTaxScreen(userType: u)),
+    ];
+
+    final problems = <String>[];
+    String current = '';
+    final old = FlutterError.onError;
+    FlutterError.onError = (d) {
+      final s = d.exception.toString();
+      final isOverflow = s.contains('overflowed');
+      final isUtf16 = s.contains('not well-formed UTF-16');
+      if (!isOverflow && !isUtf16) return;
+      final where =
+          RegExp(r'(\w+_screen\.dart|\w+\.dart):(\d+)').firstMatch(d.toString());
+      final line = '$current — ${s.split('.').first} @ ${where?.group(0) ?? '?'}';
+      if (!problems.contains(line)) problems.add(line);
+    };
+    addTearDown(() => FlutterError.onError = old);
+
+    for (final userType in ['직장인', '프리랜서', 'N잡러']) {
+      for (final (name, build) in byType) {
+        current = '$name($userType)';
+        dbService = InMemoryDatabaseHelper();
+        await dbService.initDatabase();
+        await dbService.saveProfile({'user_type': userType, 'gross_income': 42000000.0});
+        try {
+          await t.pumpWidget(MaterialApp(home: build(userType)));
+          await t.pump(const Duration(milliseconds: 400));
+          await t.pump(const Duration(milliseconds: 400));
+        } catch (_) {
+          // 화면이 못 뜨는 건 이 테스트의 관심사가 아니다.
+        }
+        t.takeException();
+      }
+    }
+    FlutterError.onError = old;
+
+    for (final p in problems) {
+      // ignore: avoid_print
+      print('넘침: $p');
+    }
+    // ignore: avoid_print
+    print('유형별 화면 ${byType.length}개 × 3유형 · 문제 ${problems.length}건');
+    expect(problems, isEmpty, reason: '작은 화면에서 잘리거나 렌더링이 죽는 곳이 있다');
   });
 }

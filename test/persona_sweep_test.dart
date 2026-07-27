@@ -152,6 +152,35 @@ void main() {
       }
     });
 
+    test('국민연금을 내면 그만큼 과세표준이 줄어든다 (소법 §51의3)', () {
+      FreelancerTaxResult run(bool pays) => FreelancerTaxCalculator.calculateTaxSimulation(
+            accumulatedIncome: 40000000,
+            inputMonths: 12,
+            allowanceCount: 0,
+            occupationCode: occ,
+            paysNationalPension: pays,
+          );
+      final without = run(false);
+      final with_ = run(true);
+      // ignore: avoid_print
+      print('국민연금 미납부 세금 ${won(without.annualTotalTax)}'
+          ' / 납부 ${won(with_.annualTotalTax)}'
+          ' (공제 ${won(with_.pensionPremiumDeduction)})');
+
+      expect(with_.pensionPremiumDeduction, greaterThan(0));
+      expect(without.pensionPremiumDeduction, 0);
+      expect(with_.taxBase, lessThan(without.taxBase),
+          reason: '연금보험료공제만큼 과세표준이 낮아야 한다');
+      expect(without.taxBase - with_.taxBase,
+          closeTo(with_.pensionPremiumDeduction, 1));
+      expect(with_.annualTotalTax, lessThan(without.annualTotalTax));
+      // 부과 기준은 매출이 아니라 소득금액 — 총수입 기준으로 잡으면 과대해진다.
+      final businessIncome = with_.estimatedBusinessIncome;
+      expect(with_.pensionPremiumDeduction,
+          lessThanOrEqualTo(businessIncome * 0.095 + 1),
+          reason: '보험료가 사업소득금액의 9.5%를 넘을 수 없다');
+    });
+
     test('수입이 늘면 세금도 는다 (역전 없음)', () {
       double prev = -1;
       for (double inc = 1000000; inc <= 200000000; inc += 3000000) {
