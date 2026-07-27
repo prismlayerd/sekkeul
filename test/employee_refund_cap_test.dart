@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/tax_engine/employee_tax.dart';
+import 'package:secul/core/tax_engine/tax_rates.dart';
 
 /// 계산기가 약속한 환급액이 그 사람이 실제로 낸 세금을 넘지 않는지 본다.
 ///
@@ -86,6 +87,40 @@ void main() {
     final e = run(0);
     expect(e.cap, 0);
     expect(e.refund, 0);
+  });
+
+  test('상한은 특별공제 길과 표준세액공제 길 중 작은 쪽이다 (소법 §59의4⑨)', () {
+    // 회사가 어느 쪽을 적용했는지 앱은 모르지만, 유리한 쪽을 적용했을 것이다.
+    // 특별공제 길로만 잡으면 저소득자의 상한이 높게 나와 환급이 과대해진다.
+    double cap(double g) =>
+        EmployeeTaxCalculator.estimateDecidedTaxBeforeCredits(grossIncome: g);
+
+    // 총급여 2,400만: 6% 구간이라 보험료 소득공제(약 119만)의 절세액이
+    // 13만원에 못 미친다 → 표준 길이 유리 → 상한이 그만큼 낮아진다.
+    final low = cap(24000000);
+    // ignore: avoid_print
+    print('총급여 2,400만 상한 ${won(low)}');
+    expect(low, lessThan(280000), reason: '표준 길(약 22만)이 특별 길(약 32만)보다 작다');
+
+    // 중간소득은 보험료 소득공제가 13만원보다 커서 특별 길이 그대로 유지된다.
+    final mid = cap(50000000);
+    final midSpecialOnly = () {
+      final base = EmployeeTaxCalculator.estimateSalaryTaxBase(grossIncome: 50000000);
+      final calc = TaxRates.calculateTax(base);
+      return calc -
+          EmployeeTaxCalculator.calculateLaborTaxCredit(
+              grossIncome: 50000000, calculatedTaxShare: calc);
+    }();
+    expect(mid, closeTo(midSpecialOnly, 1), reason: '이 구간에선 특별공제가 유리해 그대로다');
+
+    // 어떤 총급여에서도 상한은 음수가 아니고 소득이 오르면 같이 오른다.
+    double prev = -1;
+    for (double g = 5000000; g <= 200000000; g += 2500000) {
+      final c = cap(g);
+      expect(c, greaterThanOrEqualTo(0));
+      expect(c, greaterThanOrEqualTo(prev - 1), reason: '총급여 $g에서 상한이 줄었다');
+      prev = c;
+    }
   });
 
   test('낼 세금이 없는 저소득자는 환급도 0', () {

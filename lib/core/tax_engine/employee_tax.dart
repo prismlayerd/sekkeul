@@ -955,20 +955,42 @@ class EmployeeTaxCalculator {
     required double grossIncome,
     int dependentsIncludingSelf = 1,
     double additionalPersonalDeduction = 0.0,
+    /// 카드공제처럼 표준세액공제를 택해도 살아남는 소득공제.
     double otherIncomeDeduction = 0.0,
+    /// 주택자금처럼 **특별소득공제(§52)**라서 표준을 택하면 포기해야 하는 소득공제.
+    double specialIncomeDeduction = 0.0,
   }) {
     if (grossIncome <= 0) return 0.0;
-    final double base = estimateSalaryTaxBase(
-      grossIncome: grossIncome,
-      dependentsIncludingSelf: dependentsIncludingSelf,
-      additionalPersonalDeduction: additionalPersonalDeduction,
-      otherIncomeDeduction: otherIncomeDeduction,
-    );
-    final double calculated = TaxRates.calculateTax(base);
-    final double laborCredit =
-        calculateLaborTaxCredit(grossIncome: grossIncome, calculatedTaxShare: calculated);
-    final double decided = calculated - laborCredit;
-    return decided < 0 ? 0.0 : decided;
+    final InsuranceDeduction ins = calculateAnnualInsuranceDeduction(grossIncome / 12);
+
+    // 특별공제 길과 표준세액공제 길은 함께 갈 수 없다 (소법 §59의4⑨).
+    // 회사가 연말정산에서 어느 쪽을 적용했는지 앱은 모르지만, 유리한 쪽을 적용했을
+    // 것이다. 특별공제 길로만 잡으면 저소득자의 상한이 실제보다 높게 나와
+    // 환급을 과대 표시한다(총급여 2,400만 기준 약 9만 8천원).
+    double decidedWhen({required bool useStandardCredit}) {
+      double base = estimateSalaryTaxBase(
+        grossIncome: grossIncome,
+        dependentsIncludingSelf: dependentsIncludingSelf,
+        additionalPersonalDeduction: additionalPersonalDeduction,
+        otherIncomeDeduction:
+            otherIncomeDeduction + (useStandardCredit ? 0.0 : specialIncomeDeduction),
+      );
+      // 표준을 택하면 보험료 특별소득공제(건강·장기요양·고용)를 되돌린다.
+      // 국민연금 보험료공제(§51의3)는 특별소득공제가 아니라 그대로 남는다.
+      if (useStandardCredit) base += ins.specialInsuranceDeduction;
+
+      final double calculated = TaxRates.calculateTax(base);
+      final double laborCredit =
+          calculateLaborTaxCredit(grossIncome: grossIncome, calculatedTaxShare: calculated);
+      final double decided = calculated -
+          laborCredit -
+          (useStandardCredit ? TaxRates.standardTaxCredit : 0.0);
+      return decided < 0 ? 0.0 : decided;
+    }
+
+    final double special = decidedWhen(useStandardCredit: false);
+    final double standard = decidedWhen(useStandardCredit: true);
+    return standard < special ? standard : special;
   }
 
   /// 직장인이 5월에 더 돌려받을 수 있는 금액.
@@ -1015,7 +1037,9 @@ class EmployeeTaxCalculator {
         grossIncome: grossIncome,
         dependentsIncludingSelf: dependentsIncludingSelf,
         additionalPersonalDeduction: additionalPersonalDeduction,
-        otherIncomeDeduction: cardDeduction + mortgageDeduction,
+        otherIncomeDeduction: cardDeduction,
+        // 주택자금은 특별소득공제라, 표준세액공제를 택하면 같이 포기해야 한다.
+        specialIncomeDeduction: mortgageDeduction,
       );
       mortgageSaving = TaxRates.truncateWon(before - after);
       if (mortgageSaving < 0) mortgageSaving = 0;
