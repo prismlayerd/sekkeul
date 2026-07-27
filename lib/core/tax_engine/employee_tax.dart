@@ -378,6 +378,13 @@ class EmployeeTaxCalculator {
     return true;
   }
 
+  /// 월세액 세액공제율 (조특법 §95의2) — 총급여 5,500만원 이하 17%, 초과 15%.
+  ///
+  /// 근로소득만 있는 사람 기준이다. 사업소득이 섞이면 "종합소득금액 4,500만원 초과 제외"
+  /// 조건이 함께 걸려 17%를 못 받을 수 있어, 그쪽은 각 엔진에서 따로 판정한다.
+  static double rentCreditRate(double grossIncome) =>
+      grossIncome <= 55000000.0 ? 0.17 : 0.15;
+
   /// 연금소득공제 계산 (소득세법 §47의2, 2025~2026 귀속 동일)
   /// 총연금액 구간별 차등 공제, 한도 900만원
   static double calculatePensionIncomeDeduction(double totalPension) {
@@ -901,7 +908,7 @@ class EmployeeTaxCalculator {
       );
     }
     final double rentLimit = annualRent > 10000000.0 ? 10000000.0 : annualRent;
-    final double creditRate = grossIncome <= 55000000.0 ? 0.17 : 0.15;
+    final double creditRate = rentCreditRate(grossIncome);
     
     final double calculatedRefund = rentLimit * creditRate;
     bool isCapped = false;

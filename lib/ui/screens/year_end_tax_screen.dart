@@ -563,13 +563,18 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         ),
 
         // 입력 폼
-        _buildInlineFormInputField('총급여 (연봉)', '예: 55,000,000', _salaryController),
+        _buildInlineFormInputField('총급여 (연봉)', _salaryController),
         const SizedBox(height: 16),
-        _buildInlineFormInputField('신용카드 사용총액', '예: 15,000,000', _creditCardController),
+        _buildInlineFormInputField('신용카드 사용총액', _creditCardController),
+        const SizedBox(height: 4),
+        // 2026 귀속부터 학교·어린이집 수업료와 직업훈련 수강료는 카드공제 대상이
+        // 아니다(조특령 §121의2). 카드 합계만으로는 앱이 가려낼 수 없어 알려준다.
+        Text('학교·어린이집 수업료와 직업훈련 수강료는 2026년부터 카드공제 대상이 아니에요. 뺀 금액을 넣어주세요.'.keepWords,
+            style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12, height: 1.4)),
         const SizedBox(height: 16),
-        _buildInlineFormInputField('체크카드·현금영수증', '예: 5,000,000', _debitCardController),
+        _buildInlineFormInputField('체크카드·현금영수증', _debitCardController),
         const SizedBox(height: 16),
-        _buildInlineFormInputField('기납부세액 (원천징수)', '예: 3,960,000', _paidTaxController),
+        _buildInlineFormInputField('기납부세액 (원천징수)', _paidTaxController),
         
         const SizedBox(height: 40),
         
@@ -840,7 +845,8 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
     );
   }
 
-  Widget _buildInlineFormInputField(String label, String hint, TextEditingController controller) {
+  /// 라벨과 금액칸을 한 줄에 놓는 입력. (그리지 않던 hint 인자는 지웠다.)
+  Widget _buildInlineFormInputField(String label, TextEditingController controller) {
     return Row(
       children: [
         Expanded(
@@ -1334,7 +1340,9 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Text('🏠 월세를 확인할게요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
         const SizedBox(height: 6),
         Text(
-          '회사에 알리기 꺼려 연말정산에서 누락한 경우, 5월 경정청구로 되돌려 받을 수 있어요. (총급여 5,500만원 이하 17% / 초과 15%)'.keepWords,
+          '회사에 알리기 꺼려 연말정산에서 누락한 경우, 5월 경정청구로 되돌려 받을 수 있어요. (총급여 5,500만원 이하 17% / 초과 15%)\n\n'
+                  '집은 전용 85㎡ 이하이거나 시가 4억원 이하여야 해요. 2026년부터 기본공제 대상 자녀가 3명 이상이면 100㎡까지 넓어졌어요.'
+              .keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
         ),
         const SizedBox(height: 24),

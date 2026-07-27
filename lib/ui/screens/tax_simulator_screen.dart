@@ -1012,7 +1012,10 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('🏠 월세 세액공제 꿀팁', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontWeight: FontWeight.bold)),
         content: Text(
-          '새 계약서가 없어도 계좌이체 내역과 주민등록등본만 있으면 5월 종합소득세 때 최대 17%까지 똑같이 돌려받을 수 있어요!\n\n걱정 말고 매월 내는 월세 금액을 적어주세요.'.keepWords,
+          '새 계약서가 없어도 계좌이체 내역과 주민등록등본만 있으면 5월 종합소득세 때 최대 17%까지 똑같이 돌려받을 수 있어요!\n\n'
+                  '집은 전용 85㎡ 이하이거나 시가 4억원 이하여야 해요. 2026년부터는 기본공제 대상 자녀가 3명 이상이면 100㎡까지 넓어졌어요.\n\n'
+                  '주소지가 서로 다른 시·군·구인 무주택 주말부부는 2026년부터 각자 받을 수 있어요(합쳐서 연 1,000만원까지).'
+              .keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, height: 1.5),
         ),
         actions: [
@@ -1698,6 +1701,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
 
                 _field(
                   label: '올해 신용카드 총 사용액',
+                  // 2026 귀속부터 학교·어린이집 수업료와 직업훈련 수강료는 카드공제 대상이
+                  // 아니다(조특령 §121의2). 카드 합계만으로는 앱이 가려낼 수 없어 알려준다.
+                  note: '학교·어린이집 수업료와 직업훈련 수강료는 2026년부터 카드공제 대상이 아니에요. 뺀 금액을 넣어주세요.',
                   controller: _creditCardController,
                   hint: '예: 15,000,000',
                   autoFilled: _creditAutoFilled,

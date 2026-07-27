@@ -413,6 +413,18 @@ void main() {
     });
   });
 
+  // ── 월세 공제율 (조특법 §95의2) ────────────────────────────────
+  test('월세 공제율은 5,500만원에서 17% → 15%로 갈린다', () {
+    // 화면마다 따로 적어 두었다가 한 곳이 12%로 잘못 쓰이고 있었다.
+    expect(EmployeeTaxCalculator.rentCreditRate(55000000), 0.17);
+    expect(EmployeeTaxCalculator.rentCreditRate(55000001), 0.15);
+    expect(EmployeeTaxCalculator.rentCreditRate(80000000), 0.15);
+    // 시뮬레이터도 같은 값을 써야 한다.
+    final r = EmployeeTaxCalculator.simulateRentRefund(
+        grossIncome: 60000000, monthlyRent: 1000000, decidedTax: 999999999);
+    expect(r.expectedRefund, TaxRates.truncateWon(10000000 * 0.15));
+  });
+
   // ── 부녀자공제 소득요건 (소득세법 §51①3) ──────────────────────
   group('부녀자공제', () {
     double add({required double income, bool singleParent = false}) =>

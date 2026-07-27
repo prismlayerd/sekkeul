@@ -37,7 +37,7 @@ List<DeductionOption> deductionOptions({
   final bool isEmployee = userType != '프리랜서';
   final double g = grossIncome > 0 ? grossIncome : kFallbackGrossIncome;
   final double marginal = marginalRateFor(g);
-  final double rentRate = g <= 55000000 ? 0.17 : 0.15;
+  final double rentRate = EmployeeTaxCalculator.rentCreditRate(g);
   final double pensionRate = g <= 55000000 ? 0.15 : 0.12;
 
   return [

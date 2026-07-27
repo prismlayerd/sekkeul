@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
+import '../../core/tax_engine/employee_tax.dart';
+import '../../core/tax_engine/tax_year.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../theme/text_wrap.dart';
@@ -40,7 +42,9 @@ class _MonthlyRentTaxCreditScreenState
     if (_salary > 80000000) return (eligible: false, annualRent: 0, cappedRent: 0, rate: 0, credit: 0);
     final annualRent = _rent * 12;
     final cappedRent = annualRent.clamp(0, 10000000);
-    final rate = _salary <= 55000000 ? 0.17 : 0.12;
+    // 공제율은 엔진 단일 출처를 쓴다 — 여기 따로 적어 두었다가 15%를 12%로
+    // 잘못 쓰고 있었다(월세 1,000만원 기준 30만원 과소).
+    final rate = EmployeeTaxCalculator.rentCreditRate(_salary.toDouble());
     final credit = (cappedRent * rate).round();
     return (eligible: true, annualRent: annualRent, cappedRent: cappedRent, rate: rate, credit: credit);
   }
@@ -81,7 +85,7 @@ class _MonthlyRentTaxCreditScreenState
             Text('연 급여와 월세를 입력하면\n공제 가능 금액을 알려드려요.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsLG, ink, height: 1.5)),
             const SizedBox(height: 4),
-            Text('2024 귀속 기준. 무주택 세대주·세대원 대상.'.keepWords,
+            Text('${TaxYear.label}. 무주택 세대주·세대원 대상.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsSM, tert)),
             const SizedBox(height: 24),
             Divider(height: 1, thickness: 1, color: line),
@@ -166,10 +170,10 @@ class _MonthlyRentTaxCreditScreenState
             ],
             const SizedBox(height: 24),
             _notice(sub, ink, const [
-              '무주택 세대주·세대원(배우자 포함)에 한해 적용됩니다.',
-              '국민주택규모(85㎡) 이하 또는 기준시가 4억원 이하 주택에만 해당돼요.',
+              '무주택 세대주·세대원(배우자 포함)에 한해 적용됩니다. 2026년부터는 주소지가 다른 시·군·구인 무주택 주말부부도 각자 받을 수 있어요.',
+              '국민주택규모(85㎡) 이하 또는 기준시가 4억원 이하 주택에만 해당돼요. 2026년부터 기본공제 대상 자녀가 3명 이상이면 100㎡까지 넓어졌어요.',
               '임대차계약서상 주소지와 주민등록 주소지가 동일해야 합니다.',
-              '총급여 5,500만원 이하 → 17%, 초과(~8,000만원) → 12% 공제.',
+              '총급여 5,500만원 이하 → 17%, 초과(~8,000만원) → 15% 공제.',
               '이 계산기는 참고용이며 정확한 공제액은 세무사에게 확인하세요.',
             ]),
             const CalcDisclaimer(),
