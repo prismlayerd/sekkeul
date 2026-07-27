@@ -286,6 +286,14 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       _isYouthSme = isYouthSme;
     });
 
+    // 여기서 반드시 다시 계산해야 한다.
+    //
+    // 위에서 입력칸(연봉·카드·월세)에 값을 넣는 순간 리스너가 _calculateTax를
+    // 부르는데, 그때는 _dependentCount·_hasElderly70Plus 같은 프로필 값이 아직
+    // 0/false다. 그 상태로 계산된 결과가 그대로 화면에 남아 있었다 —
+    // 부양가족 2명인 사람의 환급 상한이 1인 기준으로 잡혀 45만원 과대 표시됐다.
+    _calculateTax();
+
     // 연말정산 기록(수기/PDF)이 있으면 진단 입력을 자동기입(있으면 우선).
     // 기록이 없으면 그대로 비워 두어 사용자가 직접 입력하도록 허용.
     final rec = await dbService.getAnnualRecord(widget.userType);
@@ -1418,7 +1426,14 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           ),
           const SizedBox(height: 10),
           Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-            Text(amountStr, style: AppTheme.serif(34, tone, spacing: -1.2, height: 1.0)),
+            // 34px 세리프라 여덟 자리만 돼도 좁은 화면을 넘는다 — 넘칠 때만 줄인다.
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(amountStr, style: AppTheme.serif(34, tone, spacing: -1.2, height: 1.0)),
+              ),
+            ),
             const SizedBox(width: 5),
             Text('원', style: AppTheme.sans(15, AppTheme.inkSecondary(context), weight: FontWeight.w600)),
           ]),
