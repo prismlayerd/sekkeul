@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 enum _SavingsType { deposit, installment }
 
@@ -45,8 +46,8 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
 
   double get _amount =>
       double.tryParse(_amountController.text.replaceAll(',', '')) ?? 0.0;
-  double get _rate => (double.tryParse(_rateController.text) ?? 0.0) / 100;
-  int get _months => int.tryParse(_monthsController.text) ?? 0;
+  double get _rate => (double.tryParse(_rateController.text.replaceAll(',', '')) ?? 0.0) / 100;
+  int get _months => int.tryParse(_monthsController.text.replaceAll(',', '')) ?? 0;
 
   double get _grossInterest {
     final a = _amount;
@@ -105,14 +106,14 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('이자소득세를 빼고\n실제 수령액을 계산해요',
+            Text('이자소득세를 빼고\n실제 수령액을 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('이자소득세 15.4% (소득세 14% + 지방소득세 1.4%) 적용',
+            Text('이자소득세 15.4% (소득세 14% + 지방소득세 1.4%) 적용'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -208,7 +209,7 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
                     ],
                   ),
                   if (_taxExempt)
-                    Text('농특세 1.4% 외 이자세 면제 (비과세종합저축 등)',
+                    Text('농특세 1.4% 외 이자세 면제 (비과세종합저축 등)'.keepWords,
                         style: TextStyle(
                             color: subColor.withValues(alpha: 0.8),
                             fontSize: 11)),
@@ -255,7 +256,7 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
                     const SizedBox(height: 8),
                     _row('세후 이자', _won(_netInterest), subColor, primary),
                   ] else
-                    Text('금액·이율·기간을 입력해보세요.',
+                    Text('금액·이율·기간을 입력해보세요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 13)),
                 ],
               ),

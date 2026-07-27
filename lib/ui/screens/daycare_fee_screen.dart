@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 class DaycareFeeScreen extends StatefulWidget {
   const DaycareFeeScreen({super.key});
@@ -95,7 +96,7 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('어린이집 이용 (보육료 지원)',
+                      Text('어린이집 이용 (보육료 지원)'.keepWords,
                           style: AppTheme.sans(13, ink,
                               weight: FontWeight.w600)),
                       Text(_won(_daycare),
@@ -104,7 +105,7 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text('어린이집에 직접 지급 (부모 현금 아님)',
+                  Text('어린이집에 직접 지급 (부모 현금 아님)'.keepWords,
                       style: AppTheme.sans(11, sub)),
                   const SizedBox(height: 12),
                   Divider(height: 1, color: line),
@@ -112,7 +113,7 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('가정양육 ($_homeLabel)',
+                      Text('가정양육 ($_homeLabel)'.keepWords,
                           style: AppTheme.sans(13, ink,
                               weight: FontWeight.w600)),
                       Text(_won(_homeCash),
@@ -124,7 +125,7 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
                   Text('보호자에게 현금 지급',
                       style: AppTheme.sans(11, sub)),
                   const SizedBox(height: 12),
-                  Text('* 보육료와 가정양육 현금은 중복 수급 불가, 둘 중 하나만 선택합니다.',
+                  Text('* 보육료와 가정양육 현금은 중복 수급 불가, 둘 중 하나만 선택합니다.'.keepWords,
                       style: AppTheme.sans(11, sub)),
                 ],
               ),

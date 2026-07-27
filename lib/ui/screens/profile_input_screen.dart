@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/tax_engine/employee_tax.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 final NumberFormat _amountFormat = NumberFormat('#,###');
 
@@ -292,6 +295,13 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
                   child: TextField(
                     controller: controller,
                     keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      if (suffix == '원' || suffix == '만원')
+                        const ThousandsFormatter()
+                      else
+                        FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    textAlign: TextAlign.right,
                     autofocus: true,
                     cursorColor: accent,
                     style: AppTheme.serif(40, ink, spacing: -1.0, height: 1.0),
@@ -335,7 +345,7 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
       );
       final netAnnual = gross - (insurance.total + monthlyTax) * 12;
       footer = Text(
-        '예상 세후 연 ${_amountFormat.format(netAnnual.toInt())}원 (4대보험·소득세 반영)',
+        '예상 세후 연 ${_amountFormat.format(netAnnual.toInt())}원 (4대보험·소득세 반영)'.keepWords,
         style: AppTheme.sans(13, accent, weight: FontWeight.w600),
       );
     }

@@ -8,6 +8,7 @@ import '../../core/data/db_helper.dart';
 import '../../core/parsing/pdf_text_extractor.dart';
 import '../../core/parsing/simplified_data_parser.dart';
 import '../../core/parsing/withholding_parser.dart';
+import '../theme/text_wrap.dart';
 
 /// ① 연말정산 기록 — 간소화 자료 + 원천징수영수증 PDF를 온디바이스로 파싱하거나
 /// 총급여·결정세액을 직접 적어 이번 연말정산 결과를 기록한다. 모두 기기 안에서 처리.
@@ -349,7 +350,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
       children: [
         Text('핵심 항목'.toUpperCase(), style: AppTheme.label(context)),
         const SizedBox(height: 8),
-        Text('총급여와 결정세액은 원천징수영수증에서 확인할 수 있어요.',
+        Text('총급여와 결정세액은 원천징수영수증에서 확인할 수 있어요.'.keepWords,
             style: AppTheme.sans(13, sub, height: 1.45)),
         const SizedBox(height: 16),
         _manualRow('총급여', 'salary'),
@@ -378,7 +379,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
       children: [
         Text('추출값 확인·보정'.toUpperCase(), style: AppTheme.label(context)),
         const SizedBox(height: 8),
-        Text('PDF에서 읽은 값이에요. 다르면 고쳐주세요.', style: AppTheme.sans(13, sub, height: 1.45)),
+        Text('PDF에서 읽은 값이에요. 다르면 고쳐주세요.'.keepWords, style: AppTheme.sans(13, sub, height: 1.45)),
         const SizedBox(height: 16),
         Row(children: [
           Expanded(child: Text('총급여', style: AppTheme.sans(14, ink, weight: FontWeight.w700))),

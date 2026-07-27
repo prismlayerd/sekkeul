@@ -6,6 +6,8 @@ import '../../core/data/recurring_template.dart';
 import '../../core/data/expense_item.dart';
 import '../../core/data/expense_category.dart';
 import '../theme/app_theme.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 const _pmCreditColor = Color(0xFF6B8FD4);
 const _pmDebitColor  = Color(0xFFD4A847);
@@ -201,7 +203,7 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         iconTheme: IconThemeData(color: ink),
-        title: Text('$monthLabel 고정 지출', style: AppTheme.serif(22, ink)),
+        title: Text('$monthLabel 고정 지출'.keepWords, style: AppTheme.serif(22, ink)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: AppTheme.hairline(context),
@@ -275,7 +277,7 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
           Text('확인할 항목이 없어요',
               style: AppTheme.sans(15, tert, weight: FontWeight.w600)),
           const SizedBox(height: 6),
-          Text('고정 지출 항목을 먼저 등록해두세요.',
+          Text('고정 지출 항목을 먼저 등록해두세요.'.keepWords,
               style: AppTheme.sans(13, sub)),
         ],
       ),
@@ -387,7 +389,7 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
         child: TextField(
           controller: _amountCtrls[t.id],
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          inputFormatters: const [ThousandsFormatter()],
           textAlign: TextAlign.right,
           cursorColor: accent,
           style: AppTheme.serif(17, isConfirmed ? accent : ink, height: 1.0),

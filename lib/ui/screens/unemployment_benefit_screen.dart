@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 /// 실업급여(구직급여) 계산기
 /// 일액 = 평균임금 × 60%, 하한 66,048원, 상한 68,100원
@@ -109,14 +110,14 @@ class _UnemploymentBenefitScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('실직 후 받을 수 있는\n구직급여를 계산해요',
+            Text('실직 후 받을 수 있는\n구직급여를 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('고용보험 피보험기간 12개월 이상이어야 수급 자격이 있습니다.',
+            Text('고용보험 피보험기간 12개월 이상이어야 수급 자격이 있습니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -134,7 +135,7 @@ class _UnemploymentBenefitScreenState
                           fontSize: 15,
                           fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text('최근 3개월 합계를 3으로 나눈 월 평균',
+                  Text('최근 3개월 합계를 3으로 나눈 월 평균'.keepWords,
                       style: TextStyle(
                           color: subColor.withValues(alpha: 0.7),
                           fontSize: 11)),
@@ -151,7 +152,7 @@ class _UnemploymentBenefitScreenState
                           size: 14, color: subColor),
                       const SizedBox(width: 6),
                       Text(
-                        '일 평균임금 ${_won(dailyWage)}  →  구직급여 일액 ${_won(benefitDaily)}',
+                        '일 평균임금 ${_won(dailyWage)}  →  구직급여 일액 ${_won(benefitDaily)}'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 12),
                       ),
                     ]),
@@ -195,7 +196,7 @@ class _UnemploymentBenefitScreenState
                         const Icon(Icons.warning_amber_rounded,
                             color: Colors.orange, size: 16),
                         const SizedBox(width: 8),
-                        Text('피보험기간 12개월 미만 — 수급 자격 없음',
+                        Text('피보험기간 12개월 미만 — 수급 자격 없음'.keepWords,
                             style: TextStyle(
                                 color: Colors.orange,
                                 fontSize: 12,
@@ -254,7 +255,7 @@ class _UnemploymentBenefitScreenState
                     const SizedBox(height: 12),
                     _row('합계', _won(totalBenefit), subColor, primary),
                   ] else if (!hasInput)
-                    Text('임금과 피보험기간을 입력해보세요.',
+                    Text('임금과 피보험기간을 입력해보세요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 13)),
                 ],
               ),
@@ -335,7 +336,7 @@ class _UnemploymentBenefitScreenState
           }).toList(),
         ),
         const SizedBox(height: 8),
-        Text('선택: $_insuredMonths개월',
+        Text('선택: $_insuredMonths개월'.keepWords,
             style: TextStyle(
                 color: textColor,
                 fontSize: 14,

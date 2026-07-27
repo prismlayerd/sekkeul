@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class OutOfPocketCapScreen extends StatefulWidget {
   const OutOfPocketCapScreen({super.key});
@@ -92,13 +94,14 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Text('연간 건강보험 본인부담금 총합',
+            Text('연간 건강보험 본인부담금 총합'.keepWords,
                 style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _amountCtrl,
               keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              textAlign: TextAlign.right,
+              inputFormatters: const [ThousandsFormatter()],
               style: AppTheme.sans(14, ink),
               decoration: InputDecoration(
                 hintText: '3,000,000',
@@ -160,9 +163,9 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
                   _row('적용 상한액', _won(_cap.toDouble()), ink, sub),
                   const SizedBox(height: 8),
                   if (_hasInput && _refund <= 0)
-                    Text('* 본인부담금이 상한액을 초과하지 않아 환급 대상이 아닙니다.',
+                    Text('* 본인부담금이 상한액을 초과하지 않아 환급 대상이 아닙니다.'.keepWords,
                         style: AppTheme.sans(11, sub)),
-                  Text('* 2025년 기준 상한액. 연도별 상한액은 매년 8월경 재고시됩니다.',
+                  Text('* 2025년 기준 상한액. 연도별 상한액은 매년 8월경 재고시됩니다.'.keepWords,
                       style: AppTheme.sans(11, sub)),
                 ],
               ),

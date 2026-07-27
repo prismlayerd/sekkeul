@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class KpassClimateCardScreen extends StatefulWidget {
   const KpassClimateCardScreen({super.key});
@@ -63,7 +65,7 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         iconTheme: IconThemeData(color: ink),
-        title: Text('K-패스 · 기후동행카드 비교',
+        title: Text('K-패스 · 기후동행카드 비교'.keepWords,
             style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -120,7 +122,7 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
                   onChanged: (v) => setState(() => _ddareungi = v ?? false),
                   activeColor: accent,
                 ),
-                Text('따릉이 옵션 포함(+3,000원)', style: AppTheme.sans(13, ink)),
+                Text('따릉이 옵션 포함(+3,000원)'.keepWords, style: AppTheme.sans(13, ink)),
               ],
             ),
             const SizedBox(height: 32),
@@ -155,7 +157,7 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
                     const SizedBox(height: 8),
                     _row('기후동행카드 월 금액', _won(_climateFee), ink, sub),
                     const SizedBox(height: 12),
-                    Text('* 두 제도는 중복 사용이 불가하며, 하나를 선택해야 합니다.',
+                    Text('* 두 제도는 중복 사용이 불가하며, 하나를 선택해야 합니다.'.keepWords,
                         style: AppTheme.sans(11, sub)),
                   ],
                 ),
@@ -197,7 +199,13 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textAlign: TextAlign.right,
+          inputFormatters: [
+            if (suffix == '원' || suffix == '만원')
+              const ThousandsFormatter()
+            else
+              FilteringTextInputFormatter.digitsOnly,
+          ],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(
             suffixText: suffix,

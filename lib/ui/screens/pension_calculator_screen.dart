@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/tax_engine/employee_tax.dart';
+import '../theme/text_wrap.dart';
 
 /// 연금저축·IRP 절세 계산기
 /// 엔진: EmployeeTaxCalculator.calculatePensionAccountTaxCredit (소법 §59의3)
@@ -119,10 +120,10 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('연금계좌에 넣은 만큼\n세금을 돌려받아요',
+            Text('연금계좌에 넣은 만큼\n세금을 돌려받아요'.keepWords,
                 style: TextStyle(color: textColor, fontSize: 22, fontWeight: FontWeight.bold, height: 1.4)),
             const SizedBox(height: 8),
-            Text('연금저축과 퇴직연금(IRP) 납입액으로 받을 수 있는 세액공제를 계산합니다.',
+            Text('연금저축과 퇴직연금(IRP) 납입액으로 받을 수 있는 세액공제를 계산합니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -189,7 +190,7 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
                       _resultRow('추가 납입 여력', '${_toManwon(remainingRoom)} 더 가능', subColor, primary),
                     ],
                   ] else
-                    Text('연금저축 또는 IRP 납입액을 입력해보세요.',
+                    Text('연금저축 또는 IRP 납입액을 입력해보세요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 13)),
                 ],
               ),

@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class RetirementPensionScreen extends StatefulWidget {
   const RetirementPensionScreen({super.key});
@@ -107,7 +109,7 @@ class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text('* DB형은 퇴직 시점 임금 기준 확정. DC형은 운용 실적에 따라 달라집니다.',
+                    Text('* DB형은 퇴직 시점 임금 기준 확정. DC형은 운용 실적에 따라 달라집니다.'.keepWords,
                         style: AppTheme.sans(11, sub)),
                   ],
                 ),
@@ -154,7 +156,13 @@ class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textAlign: TextAlign.right,
+          inputFormatters: [
+            if (suffix == '원' || suffix == '만원')
+              const ThousandsFormatter()
+            else
+              FilteringTextInputFormatter.digitsOnly,
+          ],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(
             hintText: hint,

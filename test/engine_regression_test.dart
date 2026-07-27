@@ -852,4 +852,36 @@ void main() {
       expect(run(children: 2).childTaxCredit, 550000);
     });
   });
+
+  // 아무것도 입력하지 않은 상태에서 totalSpend와 threshold가 둘 다 0이라
+  // `0 >= 0`으로 "🎉 25% 문턱 돌파!"가 떴다. 빈 화면이 사용자에게 거짓말을 했다.
+  group('카드공제 문턱 안내', () {
+    CreditCardDeductionResult run({double gross = 0, double credit = 0}) =>
+        EmployeeTaxCalculator.calculateCreditCardDeduction(
+          grossIncome: gross,
+          creditCard: credit,
+          debitCardAndCash: 0,
+          traditionalMarket: 0,
+          publicTransport: 0,
+          cultureExpense: 0,
+        );
+
+    test('아무것도 안 넣었으면 돌파가 아니다', () {
+      expect(run().passedThreshold, isFalse);
+      expect(run(gross: 45000000).passedThreshold, isFalse);
+    });
+
+    test('문턱을 못 넘으면 돌파가 아니다', () {
+      // 총급여 4,500만 → 문턱 1,125만
+      expect(run(gross: 45000000, credit: 5000000).passedThreshold, isFalse);
+    });
+
+    test('문턱을 넘으면 돌파다', () {
+      expect(run(gross: 45000000, credit: 20000000).passedThreshold, isTrue);
+    });
+
+    test('쓴 게 없으면 안내 문구가 다음 할 일을 말한다', () {
+      expect(run(gross: 45000000).guideMessage, contains('넣으면'));
+    });
+  });
 }

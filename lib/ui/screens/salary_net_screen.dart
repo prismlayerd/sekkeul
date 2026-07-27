@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../../core/tax_engine/insurance_engine.dart';
 import '../../core/tax_engine/employee_tax.dart';
+import '../theme/text_wrap.dart';
 
 /// 연봉 실수령액 계산기
 /// 세전연봉 → 4대보험 + 소득세 + 지방소득세 공제 후 월/연 실수령액
@@ -85,11 +86,11 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('세전 연봉으로\n실제 수령액을 계산해요',
+            Text('세전 연봉으로\n실제 수령액을 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor, fontSize: 22, fontWeight: FontWeight.bold, height: 1.4)),
             const SizedBox(height: 8),
-            Text('4대보험 + 근로소득세 + 지방소득세를 제외한 금액입니다.',
+            Text('4대보험 + 근로소득세 + 지방소득세를 제외한 금액입니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -109,7 +110,7 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
                   ),
                   if (hasInput) ...[
                     const SizedBox(height: 8),
-                    Text('월 환산: ${_won(monthly)}',
+                    Text('월 환산: ${_won(monthly)}'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 12)),
                   ],
                 ],
@@ -128,7 +129,7 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
                       style: TextStyle(
                           color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text('세액공제 적용 인원 수입니다.',
+                  Text('세액공제 적용 인원 수입니다.'.keepWords,
                       style: TextStyle(
                           color: subColor.withValues(alpha: 0.7), fontSize: 11)),
                   const SizedBox(height: 12),

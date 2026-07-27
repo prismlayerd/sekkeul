@@ -12,6 +12,7 @@ import '../../core/tax_engine/tax_rates.dart';
 import 'occupation_search_screen.dart';
 import '../components/amount_field.dart';
 import 'profile_input_screen.dart';
+import '../theme/text_wrap.dart';
 
 /// 내 정보 — 하단 탭 허브. 정확한 절세 계산의 출발점이라 가장 앞에 둔다.
 /// 프로필 완성도 + 핵심 입력값 요약 + 작성/수정 진입.
@@ -277,7 +278,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                 children: [
                   Text('내 정보', style: AppTheme.serif(28, ink, spacing: -0.5)),
                   const SizedBox(height: 10),
-                  Text('정확한 절세 계산은 여기서 시작해요. 입력할수록 진단과 신고 준비가 정밀해져요.',
+                  Text('정확한 절세 계산은 여기서 시작해요. 입력할수록 진단과 신고 준비가 정밀해져요.'.keepWords,
                       style: AppTheme.sans(14, sub, height: 1.55)),
                   const SizedBox(height: 24),
 
@@ -777,7 +778,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                   Text('재산액(보증금 등)',
                       style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
                   const SizedBox(height: 2),
-                  Text('건강보험료 부과점수 계산에 쓰여요', style: AppTheme.sans(12, sub)),
+                  Text('건강보험료 부과점수 계산에 쓰여요'.keepWords, style: AppTheme.sans(12, sub)),
                 ]),
               ),
               Text(propertyValue > 0 ? '${_fmt.format(propertyValue.toInt())}원' : '설정',
@@ -795,7 +796,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
             children: [
               Text('4대보험 가입여부', style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
               const SizedBox(height: 2),
-              Text('실제로 가입한 것만 켜두세요 — 나중에 언제든 바꿀 수 있어요',
+              Text('실제로 가입한 것만 켜두세요 — 나중에 언제든 바꿀 수 있어요'.keepWords,
                   style: AppTheme.sans(12, sub)),
               const SizedBox(height: 6),
               _insuranceToggle('국민연금', 'pension_enrolled', ink, sub, accent),

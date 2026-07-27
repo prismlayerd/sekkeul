@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class ParentalLeave6Plus6Screen extends StatefulWidget {
   const ParentalLeave6Plus6Screen({super.key});
@@ -88,7 +90,7 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('첫 6개월 급여 합계 (부모 각각)',
+                    Text('첫 6개월 급여 합계 (부모 각각)'.keepWords,
                         style:
                             AppTheme.sans(11, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
@@ -110,7 +112,7 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text('* 통상임금 100%, 월 상한 1→6개월차 200만~450만원 단계 적용. 7개월차부터는 일반 육아휴직급여로 전환.',
+                    Text('* 통상임금 100%, 월 상한 1→6개월차 200만~450만원 단계 적용. 7개월차부터는 일반 육아휴직급여로 전환.'.keepWords,
                         style: AppTheme.sans(11, sub)),
                   ],
                 ),
@@ -160,7 +162,13 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textAlign: TextAlign.right,
+          inputFormatters: [
+            if (suffix == '원' || suffix == '만원')
+              const ThousandsFormatter()
+            else
+              FilteringTextInputFormatter.digitsOnly,
+          ],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(
             hintText: hint,

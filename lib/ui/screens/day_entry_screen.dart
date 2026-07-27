@@ -7,6 +7,7 @@ import '../../core/data/income_entry.dart';
 import '../../core/data/ledger_profile.dart';
 import '../../core/data/quick_entry_preset.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 const _incomeColor = Color(0xFF5CB87A); // 수익 — soft green
 const _catCredit = '신용카드';
@@ -275,7 +276,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         title: Text('즐겨찾기 삭제', style: AppTheme.sans(16, ink, weight: FontWeight.w700)),
-        content: Text('"${p.name}"을(를) 삭제할까요?', style: AppTheme.sans(14, sub)),
+        content: Text('"${p.name}"을(를) 삭제할까요?'.keepWords, style: AppTheme.sans(14, sub)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -657,14 +658,14 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
                   color: _incomeIsWithheld ? _incomeColor : sub,
                 ),
                 const SizedBox(width: 6),
-                Text('$rateLabel 원천징수 (세후 실수령액으로 입력)',
+                Text('$rateLabel 원천징수 (세후 실수령액으로 입력)'.keepWords,
                     style: AppTheme.sans(12, _incomeIsWithheld ? ink : sub, weight: FontWeight.w600)),
               ],
             ),
           ),
           if (_incomeIsWithheld && raw > 0) ...[
             const SizedBox(height: 4),
-            Text('세전 금액(추정) ${_fmt.format(gross)}원',
+            Text('세전 금액(추정) ${_fmt.format(gross)}원'.keepWords,
                 style: AppTheme.sans(12, sub, height: 1.4)),
           ],
         ],
@@ -869,7 +870,7 @@ class _PaymentCategoryRowState extends State<_PaymentCategoryRow> {
           ),
           titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
           contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          title: Text('${widget.label} 카테고리', style: AppTheme.serif(17, ink)),
+          title: Text('${widget.label} 카테고리'.keepWords, style: AppTheme.serif(17, ink)),
           content: Wrap(
             spacing: 6,
             runSpacing: 6,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 class DidimdolLoanScreen extends StatefulWidget {
   const DidimdolLoanScreen({super.key});
@@ -39,8 +40,8 @@ class _DidimdolLoanScreenState extends State<DidimdolLoanScreen> {
       });
 
   int get _principal => int.tryParse(_principalCtrl.text.replaceAll(',', '')) ?? 0;
-  double get _rate => double.tryParse(_rateCtrl.text) ?? 0;
-  int get _years => int.tryParse(_yearsCtrl.text) ?? 0;
+  double get _rate => double.tryParse(_rateCtrl.text.replaceAll(',', '')) ?? 0;
+  int get _years => int.tryParse(_yearsCtrl.text.replaceAll(',', '')) ?? 0;
 
   ({int monthly, int totalInterest, int totalPayment})? get _result {
     if (_principal <= 0 || _rate <= 0 || _years <= 0 || _years > 50) return null;
@@ -90,10 +91,10 @@ class _DidimdolLoanScreenState extends State<DidimdolLoanScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('내 집 마련 구입자금 대출 (디딤돌)의\n월 상환액과 총이자를 계산해드려요.',
+            Text('내 집 마련 구입자금 대출 (디딤돌)의\n월 상환액과 총이자를 계산해드려요.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsLG, ink, height: 1.5)),
             const SizedBox(height: 4),
-            Text('원리금균등 방식. 연 소득에 따라 금리를 직접 입력하세요.',
+            Text('원리금균등 방식. 연 소득에 따라 금리를 직접 입력하세요.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsSM, tert)),
             const SizedBox(height: 16),
             _rateTable(sub, ink, line),
@@ -112,7 +113,7 @@ class _DidimdolLoanScreenState extends State<DidimdolLoanScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                     color: accentSoft, borderRadius: BorderRadius.circular(4)),
-                child: Text('대출금액·금리·기간을 입력하세요.',
+                child: Text('대출금액·금리·기간을 입력하세요.'.keepWords,
                     style: AppTheme.sans(AppTheme.tsMD, sub)),
               )
             else ...[
@@ -168,7 +169,7 @@ class _DidimdolLoanScreenState extends State<DidimdolLoanScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-            child: Text('2024년 기준 금리 (소득 구간)',
+            child: Text('2024년 기준 금리 (소득 구간)'.keepWords,
                 style: AppTheme.sans(AppTheme.tsSM, sub, weight: FontWeight.w600)),
           ),
           Divider(height: 1, thickness: 1, color: line),

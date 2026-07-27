@@ -11,6 +11,7 @@ import 'tax_report_form_screen.dart';
 import 'tax_simulator_screen.dart';
 import 'tax_tools_screen.dart';
 import '../components/tax_pipeline_rail.dart';
+import '../theme/text_wrap.dart';
 
 /// ① 진단 — "연말정산에 안 넣은 공제"를 체크리스트로 고르고 그 항목만 입력한다.
 /// 놓친 환급을 추정해 보여주고, 신고서 단계로 이어가도록 초안을 저장한다.
@@ -119,16 +120,16 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
           children: [
             Text('빠진 공제 찾기'.toUpperCase(), style: AppTheme.label(context)),
             const SizedBox(height: 12),
-            Text('연말정산에 안 넣은\n공제를 골라보세요', style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
+            Text('연말정산에 안 넣은\n공제를 골라보세요'.keepWords, style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
             const SizedBox(height: 10),
-            Text('깜빡해서 빠뜨렸거나, 회사에 알리고 싶지 않아 일부러 뺀 공제를 고르면, 5월 종합소득세 신고로 얼마를 더 돌려받을 수 있는지 계산해드려요.',
+            Text('깜빡해서 빠뜨렸거나, 회사에 알리고 싶지 않아 일부러 뺀 공제를 고르면, 5월 종합소득세 신고로 얼마를 더 돌려받을 수 있는지 계산해드려요.'.keepWords,
                 style: AppTheme.sans(14, sub, height: 1.55)),
 
             // ── 기준 금액 ──
             const SizedBox(height: 24),
             Text('기준 금액'.toUpperCase(), style: AppTheme.label(context)),
             const SizedBox(height: 6),
-            Text('원천징수영수증에서 확인할 수 있어요.', style: AppTheme.sans(12, AppTheme.inkTertiary(context))),
+            Text('원천징수영수증에서 확인할 수 있어요.'.keepWords, style: AppTheme.sans(12, AppTheme.inkTertiary(context))),
             const SizedBox(height: 14),
             _kvRow('총급여', _grossCtrl),
             const SizedBox(height: 12),
@@ -138,7 +139,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
             const SizedBox(height: 26),
             Text('빠뜨린 공제'.toUpperCase(), style: AppTheme.label(context)),
             const SizedBox(height: 6),
-            Text('해당하는 항목을 고르고 실제 지출액을 적어주세요.', style: AppTheme.sans(12, sub)),
+            Text('해당하는 항목을 고르고 실제 지출액을 적어주세요.'.keepWords, style: AppTheme.sans(12, sub)),
             const SizedBox(height: 14),
             DeductionChecklist(
               initialAmounts: _initialAmounts,
@@ -195,7 +196,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Icon(Icons.info_outline_rounded, size: 20, color: AppTheme.inkTertiary(context)),
         const SizedBox(width: 12),
-        Expanded(child: Text(reason,
+        Expanded(child: Text(reason.keepWords,
             style: AppTheme.sans(13.5, AppTheme.ink(context), height: 1.5))),
       ]),
     );
@@ -208,7 +209,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
       child: Row(children: [
         Icon(Icons.checklist_rounded, size: 20, color: AppTheme.inkTertiary(context)),
         const SizedBox(width: 12),
-        Expanded(child: Text('빠뜨린 공제를 골라보세요. 더 돌려받을 금액을 계산해드려요.',
+        Expanded(child: Text('빠뜨린 공제를 골라보세요. 더 돌려받을 금액을 계산해드려요.'.keepWords,
             style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w600, height: 1.4))),
       ]),
     );
@@ -231,7 +232,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
             Text('원', style: AppTheme.sans(15, sub, weight: FontWeight.w600)),
           ]),
           const SizedBox(height: 6),
-          Text('5월 종합소득세 신고로 돌려받을 수 있어요.', style: AppTheme.sans(12, sub, height: 1.45)),
+          Text('5월 종합소득세 신고로 돌려받을 수 있어요.'.keepWords, style: AppTheme.sans(12, sub, height: 1.45)),
         ],
       ),
     );
@@ -257,7 +258,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
                 Text('+${_fmt.format(l.missedCredit)}원', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
               ]),
               const SizedBox(height: 4),
-              Text('지출 ${_fmt.format(l.available)}원 기준', style: AppTheme.sans(12, sub, height: 1.4)),
+              Text('지출 ${_fmt.format(l.available)}원 기준'.keepWords, style: AppTheme.sans(12, sub, height: 1.4)),
             ],
           ),
         ),

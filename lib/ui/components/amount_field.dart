@@ -1,8 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 
 final NumberFormat _amountFormat = NumberFormat('#,###');
+
+/// 금액 입력칸의 천 단위 콤마 — 타이핑하는 동안 바로 붙는다.
+///
+/// `onChanged`에서 컨트롤러를 덮어쓰면 커서가 맨 뒤로 튄다(중간을 고치면 커서를 잃음).
+/// 포매터로 처리하면 Flutter가 커서 위치를 함께 계산해 준다.
+class ThousandsFormatter extends TextInputFormatter {
+  const ThousandsFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue old, TextEditingValue now) {
+    final digits = now.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) return now.copyWith(text: '');
+    final text = _amountFormat.format(int.parse(digits));
+    // 커서 앞의 숫자 개수를 유지한 위치로 되돌린다.
+    final typedBefore =
+        now.text.substring(0, now.selection.end.clamp(0, now.text.length))
+            .replaceAll(RegExp(r'[^0-9]'), '')
+            .length;
+    int offset = 0, seen = 0;
+    while (offset < text.length && seen < typedBefore) {
+      if (RegExp(r'[0-9]').hasMatch(text[offset])) seen++;
+      offset++;
+    }
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: offset),
+    );
+  }
+}
 
 /// 앱 공통 액수 입력칸 — 모든 금액 기입란의 단일 디자인 소스.
 ///
@@ -42,6 +72,7 @@ class AmountField extends StatelessWidget {
       autofocus: autofocus,
       keyboardType: TextInputType.number,
       textAlign: TextAlign.right,
+      inputFormatters: const [ThousandsFormatter()],
       style: AppTheme.sans(16, ink, weight: FontWeight.w700),
       decoration: InputDecoration(
         isDense: true,
@@ -63,15 +94,7 @@ class AmountField extends StatelessWidget {
           borderSide: BorderSide(color: AppTheme.accentColor(context), width: 1.5),
         ),
       ),
-      onChanged: (val) {
-        final digits = val.replaceAll(RegExp(r'[^0-9]'), '');
-        final formatted = digits.isEmpty ? '' : _amountFormat.format(int.parse(digits));
-        controller.value = TextEditingValue(
-          text: formatted,
-          selection: TextSelection.collapsed(offset: formatted.length),
-        );
-        onChanged?.call(formatted);
-      },
+      onChanged: onChanged,
     );
 
     return Row(

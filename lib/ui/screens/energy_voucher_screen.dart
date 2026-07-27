@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 class EnergyVoucherScreen extends StatefulWidget {
   const EnergyVoucherScreen({super.key});
@@ -56,7 +57,7 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
                   activeColor: accent,
                 ),
                 Expanded(
-                    child: Text('생계·의료·주거·교육급여 수급자 또는 차상위계층에 해당',
+                    child: Text('생계·의료·주거·교육급여 수급자 또는 차상위계층에 해당'.keepWords,
                         style: AppTheme.sans(13, ink))),
               ],
             ),
@@ -113,7 +114,7 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                     border: Border.all(color: line), borderRadius: BorderRadius.circular(4)),
-                child: Text('가구원 구성 요건(65세 이상·영유아·임산부·장애인·한부모·희귀난치질환자 등)을 충족하는지 먼저 확인하세요.',
+                child: Text('가구원 구성 요건(65세 이상·영유아·임산부·장애인·한부모·희귀난치질환자 등)을 충족하는지 먼저 확인하세요.'.keepWords,
                     style: AppTheme.sans(13, sub, height: 1.5)),
               ),
               const SizedBox(height: 24),

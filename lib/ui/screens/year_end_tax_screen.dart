@@ -5,6 +5,7 @@ import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/tax_rates.dart';
 import '../components/amount_field.dart';
 import 'tax_report_form_screen.dart';
+import '../theme/text_wrap.dart';
 
 class YearEndTaxScreen extends StatefulWidget {
   final String userType;
@@ -219,7 +220,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '기기 내부 $fileType 파일 선택',
+                      '기기 내부 $fileType 파일 선택'.keepWords,
                       style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     IconButton(
@@ -273,7 +274,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '로컬 온디바이스 엔진에서\n민감 정보 보호 하에 판독하고 있습니다.',
+                    '로컬 온디바이스 엔진에서\n민감 정보 보호 하에 판독하고 있습니다.'.keepWords,
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12, height: 1.4, decoration: TextDecoration.none),
                   ),
@@ -300,7 +301,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('국세청 간소화 파일 ($selectedFile) 로컬 분석 완료!'),
+            content: Text('국세청 간소화 파일 ($selectedFile) 로컬 분석 완료!'.keepWords),
             backgroundColor: Theme.of(context).cardColor,
           ),
         );
@@ -429,7 +430,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('연말정산 기록부에 저장되었습니다. [전체] 탭에서 확인해보세요.'),
+          content: Text('연말정산 기록부에 저장되었습니다. [전체] 탭에서 확인해보세요.'.keepWords),
           backgroundColor: Theme.of(context).primaryColor,
           behavior: SnackBarBehavior.floating,
         ),
@@ -483,7 +484,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    '신혼이시라면 올해 혼인신고 시\n결혼특별세액공제(50만 원)를 받을 수 있는지 꼭 확인해 보세요!',
+                    '신혼이시라면 올해 혼인신고 시\n결혼특별세액공제(50만 원)를 받을 수 있는지 꼭 확인해 보세요!'.keepWords,
                     style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 13, height: 1.4, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -491,7 +492,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
             ),
           ),
         Text(
-          '올해 연말정산 결과를\n미리 확인해 보세요.',
+          '올해 연말정산 결과를\n미리 확인해 보세요.'.keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 22, fontWeight: FontWeight.w800, height: 1.4),
         ),
         const SizedBox(height: 24),
@@ -578,7 +579,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           children: [
             Icon(Icons.lock_outline_rounded, color: Theme.of(context).textTheme.labelMedium!.color!, size: 14),
             SizedBox(width: 4),
-            Text('모든 데이터는 서버 전송 없이 기기 내부에만 저장됩니다.', style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 11)),
+            Text('모든 데이터는 서버 전송 없이 기기 내부에만 저장됩니다.'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 11)),
           ],
         ),
       ],
@@ -776,7 +777,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('💡 환급을 더 늘릴 수 있어요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 16, fontWeight: FontWeight.bold)),
+        Text('💡 환급을 더 늘릴 수 있어요'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         ...missing.map((item) => Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -868,7 +869,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '종합소득세 신고서를 준비해드릴까요?',
+                  '종합소득세 신고서를 준비해드릴까요?'.keepWords,
                   style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -876,7 +877,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            '의료비·교육비·기부금 등 연말정산에서 빠진 공제 항목을 하나씩 확인하고, 5월 경정청구 신고서를 준비해드릴게요.',
+            '의료비·교육비·기부금 등 연말정산에서 빠진 공제 항목을 하나씩 확인하고, 5월 경정청구 신고서를 준비해드릴게요.'.keepWords,
             style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
           ),
           const SizedBox(height: 16),
@@ -980,7 +981,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '누락 공제 확인 ${_wizardStep + 1}/${_totalWizardSteps} — ${stepLabels[_wizardStep]}',
+                  '누락 공제 확인 ${_wizardStep + 1}/${_totalWizardSteps} — ${stepLabels[_wizardStep]}'.keepWords,
                   style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12),
                 ),
                 const SizedBox(height: 6),
@@ -1066,25 +1067,25 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
   // ─── Wizard Step 0: 자녀·혼인·연금 ───
   Widget _buildWizardChildMarriagePension() {
     final salary = double.tryParse(_salaryController.text.replaceAll(',', '')) ?? 0.0;
-    final int childCount = int.tryParse(_wizardChildrenCountController.text) ?? 0;
+    final int childCount = int.tryParse(_wizardChildrenCountController.text.replaceAll(',', '')) ?? 0;
     double previewChildCredit = TaxRates.calculateChildTaxCredit(childCount);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 8),
-        Text('👶 자녀·혼인·연금 공제를 확인할게요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
+        Text('👶 자녀·혼인·연금 공제를 확인할게요'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
         const SizedBox(height: 6),
         Text(
-          '연말정산에서 누락됐다면 5월 경정청구로 모두 돌려받을 수 있어요. 없으면 건너뛰세요.',
+          '연말정산에서 누락됐다면 5월 경정청구로 모두 돌려받을 수 있어요. 없으면 건너뛰세요.'.keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
         ),
         const SizedBox(height: 24),
 
         // 자녀세액공제
-        Text('${TaxRates.childTaxCreditEligibilityLabel()} 기본공제 대상 자녀 수', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
+        Text('${TaxRates.childTaxCreditEligibilityLabel()} 기본공제 대상 자녀 수'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text('첫째 25만 · 둘째 55만 · 셋째 이상 1명당 40만원 추가', style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
+        Text('첫째 25만 · 둘째 55만 · 셋째 이상 1명당 40만원 추가'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -1098,7 +1099,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '→ ${_numberFormat.format(previewChildCredit.toInt())}원 공제',
+                  '→ ${_numberFormat.format(previewChildCredit.toInt())}원 공제'.keepWords,
                   style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 13, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -1108,9 +1109,9 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Padding(padding: const EdgeInsets.symmetric(vertical: 20), child: Divider(color: Theme.of(context).dividerColor)),
 
         // 혼인세액공제
-        Text('2024~2026년 혼인신고를 하셨나요?', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
+        Text('2024~2026년 혼인신고를 하셨나요?'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text('생애 1회 50만원 세액공제 (이미 연말정산 적용 시 건너뛰기)', style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
+        Text('생애 1회 50만원 세액공제 (이미 연말정산 적용 시 건너뛰기)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -1123,7 +1124,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Padding(padding: const EdgeInsets.symmetric(vertical: 20), child: Divider(color: Theme.of(context).dividerColor)),
 
         // 연금계좌 세액공제
-        Text('연금저축·IRP 납입액을 확인할게요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
+        Text('연금저축·IRP 납입액을 확인할게요'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
         Text(
           salary <= 55000000
@@ -1173,7 +1174,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Text('🏥 의료비 지출을 확인할게요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
         const SizedBox(height: 6),
         Text(
-          '총급여의 3%(${_numberFormat.format(threshold)}원)를 초과한 의료비부터 공제됩니다. 없으면 건너뛰세요.',
+          '총급여의 3%(${_numberFormat.format(threshold)}원)를 초과한 의료비부터 공제됩니다. 없으면 건너뛰세요.'.keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
         ),
         const SizedBox(height: 16),
@@ -1191,7 +1192,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '회사에 알리기 꺼려 연말정산에서 제외하셨거나 깜빡하신 항목이 있으신가요?\n해당 항목만 5월에 직접 신고하면 회사로는 전달되지 않습니다.',
+                  '회사에 알리기 꺼려 연말정산에서 제외하셨거나 깜빡하신 항목이 있으신가요?\n해당 항목만 5월에 직접 신고하면 회사로는 전달되지 않습니다.'.keepWords,
                   style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 12, height: 1.5, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -1218,13 +1219,13 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Text('📚 교육비를 확인할게요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
         const SizedBox(height: 6),
         Text(
-          '15% 공제율이 적용돼요. 없으면 건너뛰세요.',
+          '15% 공제율이 적용돼요. 없으면 건너뛰세요.'.keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
         ),
         const SizedBox(height: 24),
         Text('유치원~고등학생', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text('자녀 수 · 교육비 합산 (1인당 300만원 한도)', style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
+        Text('자녀 수 · 교육비 합산 (1인당 300만원 한도)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -1236,7 +1237,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         const SizedBox(height: 20),
         Text('대학생', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text('자녀 수 · 교육비 합산 (1인당 900만원 한도)', style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
+        Text('자녀 수 · 교육비 합산 (1인당 900만원 한도)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -1248,14 +1249,14 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Padding(padding: const EdgeInsets.symmetric(vertical: 20), child: Divider(color: Theme.of(context).dividerColor)),
         Text('본인 교육비', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text('대학원·직업훈련 포함, 한도 없음 · 15% 공제', style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
+        Text('대학원·직업훈련 포함, 한도 없음 · 15% 공제'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
         const SizedBox(height: 10),
         _buildWizardAmountField('본인 교육비 합산', '수강료·등록금 전액', _selfEduController),
         if (hasDisability) ...[
           const SizedBox(height: 20),
           Text('장애인 특수교육비', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text('장애인 재활교육비·특수교육기관 비용, 한도 없음 · 15% 공제', style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
+          Text('장애인 재활교육비·특수교육기관 비용, 한도 없음 · 15% 공제'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
           const SizedBox(height: 10),
           _buildWizardAmountField('장애인 특수교육비 합산', '재활교육비 전액', _disabledSpecialEduController),
         ],
@@ -1272,7 +1273,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Text('❤️ 기부금을 확인할게요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
         const SizedBox(height: 6),
         Text(
-          '1,000만원 이하 15%, 초과분 30% 공제율이 적용돼요. 없으면 건너뛰세요.',
+          '1,000만원 이하 15%, 초과분 30% 공제율이 적용돼요. 없으면 건너뛰세요.'.keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
         ),
         const SizedBox(height: 24),
@@ -1287,10 +1288,10 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 8),
-        Text('🏡 주담대·고향사랑을 확인할게요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
+        Text('🏡 주담대·고향사랑을 확인할게요'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
         const SizedBox(height: 6),
         Text(
-          '소득공제 항목이에요. 과세표준을 낮춰 세금을 줄여줍니다. 없으면 건너뛰세요.',
+          '소득공제 항목이에요. 과세표준을 낮춰 세금을 줄여줍니다. 없으면 건너뛰세요.'.keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
         ),
         const SizedBox(height: 24),
@@ -1310,7 +1311,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Text('🏠 월세를 확인할게요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
         const SizedBox(height: 6),
         Text(
-          '회사에 알리기 꺼려 연말정산에서 누락한 경우, 5월 경정청구로 되돌려 받을 수 있어요. (총급여 5,500만원 이하 17% / 초과 15%)',
+          '회사에 알리기 꺼려 연말정산에서 누락한 경우, 5월 경정청구로 되돌려 받을 수 있어요. (총급여 5,500만원 이하 17% / 초과 15%)'.keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
         ),
         const SizedBox(height: 24),
@@ -1366,9 +1367,9 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
     final selfSenior = double.tryParse(_selfSeniorDisabledController.text.replaceAll(',', '')) ?? 0.0;
     final otherMedical = double.tryParse(_otherDependentMedicalController.text.replaceAll(',', '')) ?? 0.0;
     final childrenEdu = double.tryParse(_childrenEduController.text.replaceAll(',', '')) ?? 0.0;
-    final childrenCount = int.tryParse(_childrenCountController.text) ?? 0;
+    final childrenCount = int.tryParse(_childrenCountController.text.replaceAll(',', '')) ?? 0;
     final collegeEdu = double.tryParse(_collegeEduController.text.replaceAll(',', '')) ?? 0.0;
-    final collegeCount = int.tryParse(_collegeCountController.text) ?? 0;
+    final collegeCount = int.tryParse(_collegeCountController.text.replaceAll(',', '')) ?? 0;
     final selfEdu = double.tryParse(_selfEduController.text.replaceAll(',', '')) ?? 0.0;
     final disabledSpecialEdu = double.tryParse(_disabledSpecialEduController.text.replaceAll(',', '')) ?? 0.0;
     final donation = double.tryParse(_donationController.text.replaceAll(',', '')) ?? 0.0;
@@ -1408,7 +1409,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
     }
 
     // 자녀세액공제 (소법 §59의2) — 대상 연령은 TaxRates.childTaxCreditMinAge
-    final int wizardChildren = int.tryParse(_wizardChildrenCountController.text) ?? 0;
+    final int wizardChildren = int.tryParse(_wizardChildrenCountController.text.replaceAll(',', '')) ?? 0;
     _wizardChildTaxCredit = TaxRates.calculateChildTaxCredit(wizardChildren);
 
     // 혼인세액공제 (2024~2026 혼인신고, 생애 1회 50만)
@@ -1508,7 +1509,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               if (!widget.directWizardMode) ...[
                 const SizedBox(height: 4),
                 Text(
-                  '연말정산 환급(${_numberFormat.format(_expectedRefund.toInt())}원) + 추가 = 총 ${_numberFormat.format(totalRefund.toInt())}원',
+                  '연말정산 환급(${_numberFormat.format(_expectedRefund.toInt())}원) + 추가 = 총 ${_numberFormat.format(totalRefund.toInt())}원'.keepWords,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12, height: 1.4),
                 ),
@@ -1577,7 +1578,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '5월 종합소득세 신고(경정청구)를 통해 연말정산에서 누락된 공제를 추가로 받을 수 있어요. 실제 신고 시 증빙 서류가 필요합니다.',
+                  '5월 종합소득세 신고(경정청구)를 통해 연말정산에서 누락된 공제를 추가로 받을 수 있어요. 실제 신고 시 증빙 서류가 필요합니다.'.keepWords,
                   style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12, height: 1.45),
                 ),
               ),

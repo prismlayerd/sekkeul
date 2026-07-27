@@ -5,6 +5,7 @@ import '../../core/notifications/reminder.dart';
 import '../../core/notifications/custom_reminder_service.dart';
 import '../../core/navigation/app_route_observer.dart';
 import '../screens/reminder_list_screen.dart';
+import '../theme/text_wrap.dart';
 
 /// 홈 — 사용자 맞춤 리마인더 아코디언 카드 (지출 카드와 절세 카드 사이).
 /// 접힌 상태: 다음 알림 요약. 펼친 상태(부드러운 애니메이션): 목록.
@@ -147,7 +148,7 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (_reminders.isEmpty)
-            Text('가계부 기록·월세·건강검진, 알림으로 챙겨보세요.',
+            Text('가계부 기록·월세·건강검진, 알림으로 챙겨보세요.'.keepWords,
                 style: AppTheme.sans(12.5, tert, height: 1.5))
           else
             ..._reminders.take(3).map((r) => _reminderRow(r, ink, sub, tert, accent)),

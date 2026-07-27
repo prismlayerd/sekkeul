@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 /// 주택연금(역모기지) 예상 월지급금 참고 추정기.
 /// HF 공시 종신·정액형 참고 데이터포인트(3억/60세=63만, 3억/70세=90만,
@@ -25,7 +27,7 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
   static const _rateAges = [55, 60, 65, 70, 75];
   static const _rates = [15.0, 21.0, 25.0, 30.0, 38.4];
 
-  int get _age => int.tryParse(_ageCtrl.text) ?? 0;
+  int get _age => int.tryParse(_ageCtrl.text.replaceAll(',', '')) ?? 0;
   double get _priceManwon =>
       double.tryParse(_priceCtrl.text.replaceAll(',', '')) ?? 0;
   bool get _hasInput => _ageCtrl.text.isNotEmpty && _priceCtrl.text.isNotEmpty;
@@ -94,7 +96,8 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
             TextField(
               controller: _priceCtrl,
               keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              textAlign: TextAlign.right,
+              inputFormatters: const [ThousandsFormatter()],
               style: AppTheme.sans(14, ink),
               decoration: InputDecoration(
                 hintText: '50,000',
@@ -136,7 +139,7 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('예상 월지급금 (종신·정액형 기준)',
+                    Text('예상 월지급금 (종신·정액형 기준)'.keepWords,
                         style:
                             AppTheme.sans(11, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
@@ -158,13 +161,13 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
                     if (!_ageEligible)
-                      Text('* 만 55세 이상부터 가입 가능합니다.',
+                      Text('* 만 55세 이상부터 가입 가능합니다.'.keepWords,
                           style: AppTheme.sans(11, sub)),
                     if (!_priceEligible)
-                      Text('* 공시가격 12억원(120,000만원) 이하만 가입 가능합니다(다주택 합산).',
+                      Text('* 공시가격 12억원(120,000만원) 이하만 가입 가능합니다(다주택 합산).'.keepWords,
                           style: AppTheme.sans(11, sub)),
                     if (_ageEligible && _priceEligible)
-                      Text('* HF 공시 월지급금표 기반 선형보간 참고 추정치이며 실제 신청 시 HF 공식 계산기·상담 결과와 다를 수 있습니다.',
+                      Text('* HF 공시 월지급금표 기반 선형보간 참고 추정치이며 실제 신청 시 HF 공식 계산기·상담 결과와 다를 수 있습니다.'.keepWords,
                           style: AppTheme.sans(11, sub)),
                   ],
                 ),
@@ -224,7 +227,13 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textAlign: TextAlign.right,
+          inputFormatters: [
+            if (suffix == '원' || suffix == '만원')
+              const ThousandsFormatter()
+            else
+              FilteringTextInputFormatter.digitsOnly,
+          ],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(
             hintText: hint,

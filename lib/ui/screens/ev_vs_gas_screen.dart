@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class EvVsGasScreen extends StatefulWidget {
   const EvVsGasScreen({super.key});
@@ -129,7 +131,7 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('$_years년 총소유비용(TCO) 비교',
+                    Text('$_years년 총소유비용(TCO) 비교'.keepWords,
                         style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     _row('휘발유차 TCO', _won(_gasTco), ink, sub),
@@ -177,7 +179,13 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
         TextField(
           controller: ctrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+          textAlign: TextAlign.right,
+inputFormatters: [
+            if (suffix == '원' || suffix == '만원')
+              const ThousandsFormatter()
+            else
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+          ],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(
             suffixText: suffix,

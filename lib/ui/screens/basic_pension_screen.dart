@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class BasicPensionScreen extends StatefulWidget {
   const BasicPensionScreen({super.key});
@@ -20,7 +22,7 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
   static const _thresholdManwon = [247, 395]; // 단독/부부 선정기준액(만원)
   static const _baseAmountWon = [349700, 279760]; // 단독 최대 / 부부 1인당(20% 감액)
 
-  int get _age => int.tryParse(_ageCtrl.text) ?? 0;
+  int get _age => int.tryParse(_ageCtrl.text.replaceAll(',', '')) ?? 0;
   double get _income => double.tryParse(_incomeCtrl.text.replaceAll(',', '')) ?? 0;
   bool get _hasInput => _ageCtrl.text.isNotEmpty && _incomeCtrl.text.isNotEmpty;
 
@@ -86,7 +88,8 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
             TextField(
               controller: _incomeCtrl,
               keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              textAlign: TextAlign.right,
+              inputFormatters: const [ThousandsFormatter()],
               style: AppTheme.sans(14, ink),
               decoration: InputDecoration(
                 hintText: '150',
@@ -137,14 +140,14 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
                     if (!_ageEligible)
-                      Text('* 만 65세 이상부터 신청 가능합니다.',
+                      Text('* 만 65세 이상부터 신청 가능합니다.'.keepWords,
                           style: AppTheme.sans(11, sub)),
                     if (_ageEligible && !_incomeEligible)
                       Text(
-                          '* 소득인정액이 선정기준액(${_thresholdManwon[_householdIdx]}만원)을 초과했습니다.',
+                          '* 소득인정액이 선정기준액(${_thresholdManwon[_householdIdx]}만원)을 초과했습니다.'.keepWords,
                           style: AppTheme.sans(11, sub)),
                     if (_eligible)
-                      Text('* 국민연금 연계감액·부부감액·소득역전방지감액 적용 전 기준연금액입니다.',
+                      Text('* 국민연금 연계감액·부부감액·소득역전방지감액 적용 전 기준연금액입니다.'.keepWords,
                           style: AppTheme.sans(11, sub)),
                   ],
                 ),
@@ -224,10 +227,14 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
-          inputFormatters: [
-            isDecimal
-                ? FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
-                : FilteringTextInputFormatter.digitsOnly,
+          textAlign: TextAlign.right,
+inputFormatters: [
+            if (suffix == '원' || suffix == '만원')
+              const ThousandsFormatter()
+            else
+              isDecimal
+                  ? FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+                  : FilteringTextInputFormatter.digitsOnly,
           ],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(

@@ -5,6 +5,7 @@ import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../../core/tax_engine/employee_tax.dart';
+import '../theme/text_wrap.dart';
 
 /// 보험료 세액공제 계산기
 /// 엔진: EmployeeTaxCalculator.calculateInsurancePremiumTaxCredit (소법 §59의4)
@@ -84,10 +85,10 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('낸 보험료만큼\n세금을 돌려받아요',
+            Text('낸 보험료만큼\n세금을 돌려받아요'.keepWords,
                 style: TextStyle(color: textColor, fontSize: 22, fontWeight: FontWeight.bold, height: 1.4)),
             const SizedBox(height: 8),
-            Text('실손·암·종신보험 등 보장성보험 납입액으로 받을 수 있는 세액공제를 계산합니다.',
+            Text('실손·암·종신보험 등 보장성보험 납입액으로 받을 수 있는 세액공제를 계산합니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 

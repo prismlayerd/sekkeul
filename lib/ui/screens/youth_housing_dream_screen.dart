@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class YouthHousingDreamScreen extends StatefulWidget {
   const YouthHousingDreamScreen({super.key});
@@ -126,7 +128,7 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('연 세금 환급 추정 (16.5%)',
+                        Text('연 세금 환급 추정 (16.5%)'.keepWords,
                             style: AppTheme.sans(13, ink,
                                 weight: FontWeight.w700)),
                         Text(_won(_taxRefund),
@@ -136,7 +138,7 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                        '* 소득공제 한도 연 240만원. 세율 16.5%(소득세 15%+지방세 1.5%) 기준.',
+                        '* 소득공제 한도 연 240만원. 세율 16.5%(소득세 15%+지방세 1.5%) 기준.'.keepWords,
                         style: AppTheme.sans(11, sub)),
                   ],
                 ),
@@ -185,7 +187,13 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textAlign: TextAlign.right,
+          inputFormatters: [
+            if (suffix == '원' || suffix == '만원')
+              const ThousandsFormatter()
+            else
+              FilteringTextInputFormatter.digitsOnly,
+          ],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(
             hintText: hint,

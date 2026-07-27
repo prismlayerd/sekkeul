@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 /// 프리랜서 3.3% 원천징수 계산기 — 계약금액(세전) → 원천징수세액·실수령액(세후).
 class WithholdingCalcScreen extends StatefulWidget {
@@ -69,14 +70,14 @@ class _WithholdingCalcScreenState extends State<WithholdingCalcScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('프리랜서 용역대가\n원천징수세액을 계산해요',
+            Text('프리랜서 용역대가\n원천징수세액을 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('사업소득세 3% + 지방소득세 0.3% 원천징수 기준',
+            Text('사업소득세 3% + 지방소득세 0.3% 원천징수 기준'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 

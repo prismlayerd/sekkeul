@@ -23,7 +23,7 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
   static const int _hourlyDiff = _wage2026 - _wage2025;
   static const double _raiseRate = (_hourlyDiff / _wage2025) * 100;
 
-  double get _weeklyHours => double.tryParse(_hoursCtrl.text) ?? 0;
+  double get _weeklyHours => double.tryParse(_hoursCtrl.text.replaceAll(',', '')) ?? 0;
   bool get _hasWeeklyHoliday => _weeklyHours >= 15;
 
   double get _weeklyPaidHours =>
@@ -73,6 +73,7 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
             TextField(
               controller: _hoursCtrl,
               keyboardType: TextInputType.number,
+              textAlign: TextAlign.right,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: AppTheme.sans(14, ink),
               decoration: InputDecoration(

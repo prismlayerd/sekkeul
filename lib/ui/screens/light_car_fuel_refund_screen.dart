@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class LightCarFuelRefundScreen extends StatefulWidget {
   const LightCarFuelRefundScreen({super.key});
@@ -106,7 +108,7 @@ class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
                     _row('월 환급액(리터당 ${_rate.toStringAsFixed(0)}원)', _won(_monthlyRefund), ink, sub),
                     if (_capped) ...[
                       const SizedBox(height: 8),
-                      Text('* 연간 상한 30만원 초과분은 지급되지 않습니다.',
+                      Text('* 연간 상한 30만원 초과분은 지급되지 않습니다.'.keepWords,
                           style: AppTheme.sans(11, sub)),
                     ],
                   ],
@@ -148,7 +150,13 @@ class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textAlign: TextAlign.right,
+          inputFormatters: [
+            if (suffix == '원' || suffix == '만원')
+              const ThousandsFormatter()
+            else
+              FilteringTextInputFormatter.digitsOnly,
+          ],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(
             suffixText: suffix,

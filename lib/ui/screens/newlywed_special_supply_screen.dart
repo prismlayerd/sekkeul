@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import '../components/amount_field.dart';
 
 /// 신혼부부 특별공급 자격 참고 진단.
 /// 2024년 고시 기준 도시근로자 가구원수별 월평균소득(100%) 근사치와
@@ -39,14 +40,14 @@ class _NewlywedSpecialSupplyScreenState
   static const int _realEstateLimit = 21550; // 만원
   static const int _carLimit = 3683; // 만원
 
-  int get _marriageYears => int.tryParse(_marriageYearsCtrl.text) ?? -1;
-  int get _children => int.tryParse(_childrenCtrl.text) ?? 0;
+  int get _marriageYears => int.tryParse(_marriageYearsCtrl.text.replaceAll(',', '')) ?? -1;
+  int get _children => int.tryParse(_childrenCtrl.text.replaceAll(',', '')) ?? 0;
   double get _income =>
       double.tryParse(_incomeCtrl.text.replaceAll(',', '')) ?? 0;
   double get _realEstate =>
       double.tryParse(_realEstateCtrl.text.replaceAll(',', '')) ?? 0;
   double get _car => double.tryParse(_carCtrl.text.replaceAll(',', '')) ?? 0;
-  int get _subscriptionMonths => int.tryParse(_subscriptionMonthsCtrl.text) ?? 0;
+  int get _subscriptionMonths => int.tryParse(_subscriptionMonthsCtrl.text.replaceAll(',', '')) ?? 0;
 
   bool get _hasInput =>
       _marriageYearsCtrl.text.isNotEmpty && _incomeCtrl.text.isNotEmpty;
@@ -288,7 +289,13 @@ class _NewlywedSpecialSupplyScreenState
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textAlign: TextAlign.right,
+          inputFormatters: [
+            if (suffix == '원' || suffix == '만원')
+              const ThousandsFormatter()
+            else
+              FilteringTextInputFormatter.digitsOnly,
+          ],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(
             hintText: hint,

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 class AcquisitionTaxScreen extends StatefulWidget {
   const AcquisitionTaxScreen({super.key});
@@ -90,14 +91,14 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('부동산 취득 시\n납부할 세금을 계산해요',
+            Text('부동산 취득 시\n납부할 세금을 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('취득세 + 지방교육세 + 농어촌특별세 합산 기준',
+            Text('취득세 + 지방교육세 + 농어촌특별세 합산 기준'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -129,7 +130,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('주택 수 (취득 후 보유 기준)',
+                  Text('주택 수 (취득 후 보유 기준)'.keepWords,
                       style: TextStyle(
                           color: textColor,
                           fontSize: 15,
@@ -152,7 +153,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
                           Text('조정대상지역',
                               style:
                                   TextStyle(color: textColor, fontSize: 14)),
-                          Text('서울 전역·과천·성남·하남 등',
+                          Text('서울 전역·과천·성남·하남 등'.keepWords,
                               style: TextStyle(
                                   color: subColor.withValues(alpha: 0.8),
                                   fontSize: 11)),

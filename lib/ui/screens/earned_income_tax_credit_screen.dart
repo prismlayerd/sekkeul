@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 enum _HouseholdType { single, oneEarner, dualEarner }
 
@@ -109,14 +110,14 @@ class _EarnedIncomeTaxCreditScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('저소득 근로자를 위한\n장려금을 계산해요',
+            Text('저소득 근로자를 위한\n장려금을 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('근로장려금과 자녀장려금은 매년 5월에 신청합니다.',
+            Text('근로장려금과 자녀장려금은 매년 5월에 신청합니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -170,7 +171,7 @@ class _EarnedIncomeTaxCreditScreenState
                           fontSize: 15,
                           fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text('근로소득 + 사업소득 + 기타소득 합산',
+                  Text('근로소득 + 사업소득 + 기타소득 합산'.keepWords,
                       style: TextStyle(
                           color: subColor.withValues(alpha: 0.7),
                           fontSize: 11)),
@@ -182,7 +183,7 @@ class _EarnedIncomeTaxCreditScreenState
                   ),
                   if (hasInput) ...[
                     const SizedBox(height: 6),
-                    Text('= ${_fmt.format(income.round())}만원',
+                    Text('= ${_fmt.format(income.round())}만원'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 12)),
                   ],
                 ],
@@ -271,7 +272,7 @@ class _EarnedIncomeTaxCreditScreenState
                     const SizedBox(height: 12),
                     _row('합계', _manwon(total), subColor, primary),
                   ] else
-                    Text('가구유형과 소득을 입력해보세요.',
+                    Text('가구유형과 소득을 입력해보세요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 13)),
                 ],
               ),

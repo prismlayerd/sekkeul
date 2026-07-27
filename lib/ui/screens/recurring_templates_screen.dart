@@ -6,6 +6,8 @@ import '../../core/data/recurring_template.dart';
 import '../../core/data/expense_category.dart';
 import '../../core/notifications/reminder_scheduler.dart';
 import '../theme/app_theme.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 const _pmCreditColor = Color(0xFF6B8FD4);
 const _pmDebitColor  = Color(0xFFD4A847);
@@ -212,6 +214,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                         controller: dayCtrl,
                         style: AppTheme.sans(15, ink),
                         keyboardType: TextInputType.number,
+                        textAlign: TextAlign.right,
                         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                         decoration: fieldDeco(hint: '1~31', suffix: '일 (매월)'),
                         validator: (v) {
@@ -230,7 +233,8 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                         controller: amountCtrl,
                         style: AppTheme.sans(15, ink),
                         keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        textAlign: TextAlign.right,
+                        inputFormatters: const [ThousandsFormatter()],
                         decoration: fieldDeco(hint: '미정이면 비워두기', suffix: '원'),
                       ),
                       if (_isBusinessUser) ...[
@@ -275,10 +279,10 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                   final t = RecurringTemplate(
                     id: existing?.id ?? 0,
                     name: nameCtrl.text.trim(),
-                    amountHint: int.tryParse(amountCtrl.text) ?? 0,
+                    amountHint: int.tryParse(amountCtrl.text.replaceAll(',', '')) ?? 0,
                     category: category,
                     paymentMethod: paymentMethod,
-                    dayOfMonth: int.parse(dayCtrl.text),
+                    dayOfMonth: int.parse(dayCtrl.text.replaceAll(',', '')),
                     sortOrder: existing?.sortOrder ?? _templates.length,
                     isBusiness: isBusiness,
                   );
@@ -372,7 +376,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
         ),
         title: Text('항목 삭제', style: AppTheme.serif(17, ink)),
         content: Text(
-          '"${t.name}"을 삭제하면 이번 달 확인 기록도 함께 사라져요.',
+          '"${t.name}"을 삭제하면 이번 달 확인 기록도 함께 사라져요.'.keepWords,
           style: AppTheme.sans(14, sub),
         ),
         actions: [
@@ -490,7 +494,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
           Text('매월 빠져나가는 돈', style: AppTheme.serif(22, ink)),
           const SizedBox(height: 8),
           Text(
-            '월세, 구독료, 보험료 등\n자동으로 챙겨드려요.',
+            '월세, 구독료, 보험료 등\n자동으로 챙겨드려요.'.keepWords,
             style: AppTheme.sans(14, sub),
             textAlign: TextAlign.center,
           ),

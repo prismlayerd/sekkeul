@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/tax_engine/document_checklist.dart';
+import '../theme/text_wrap.dart';
 
 class DocumentChecklistScreen extends StatefulWidget {
   final String userType;
@@ -68,7 +69,7 @@ class _DocumentChecklistScreenState extends State<DocumentChecklistScreen> {
                       style: AppTheme.label(context)),
                   const SizedBox(height: 4),
                   Text(
-                    '홈택스 간소화에서 자동 수집되지 않아 직접 준비해야 하는 서류만 모았어요.',
+                    '홈택스 간소화에서 자동 수집되지 않아 직접 준비해야 하는 서류만 모았어요.'.keepWords,
                     style: AppTheme.sans(13, sub, height: 1.5),
                   ),
                   const SizedBox(height: 20),
@@ -186,7 +187,7 @@ class _DocumentChecklistScreenState extends State<DocumentChecklistScreen> {
         Text('별도로 준비할 서류가 없어요',
             style: AppTheme.sans(15, tert, weight: FontWeight.w600)),
         const SizedBox(height: 6),
-        Text('홈택스 간소화 서비스에서 자동으로 수집돼요.',
+        Text('홈택스 간소화 서비스에서 자동으로 수집돼요.'.keepWords,
             style: AppTheme.sans(13, tert, height: 1.5),
             textAlign: TextAlign.center),
       ]),

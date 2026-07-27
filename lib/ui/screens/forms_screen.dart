@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 class _TaxForm {
   final String name;
@@ -173,7 +174,7 @@ class _TaxFormsBodyState extends State<TaxFormsBody> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('아직 PDF를 준비 중이에요.',
+          content: Text('아직 PDF를 준비 중이에요.'.keepWords,
               style: AppTheme.sans(13, Colors.white)),
           backgroundColor: AppTheme.ink(context),
           behavior: SnackBarBehavior.floating,

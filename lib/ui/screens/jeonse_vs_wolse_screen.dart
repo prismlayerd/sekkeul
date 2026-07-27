@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 class JeonseVsWolseScreen extends StatefulWidget {
   const JeonseVsWolseScreen({super.key});
@@ -43,7 +44,7 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
   double get _wolseMonthly =>
       double.tryParse(_wolseMonthlyController.text.replaceAll(',', '')) ?? 0.0;
   double get _rate =>
-      (double.tryParse(_rateController.text) ?? 0.0) / 100;
+      (double.tryParse(_rateController.text.replaceAll(',', '')) ?? 0.0) / 100;
 
   // 전세 기회비용 (연간) = 전세보증금의 금리 환산
   double get _jeonseCostAnnual => _jeonse * _rate;
@@ -100,14 +101,14 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('전세·월세의 실질 비용을\n비교해요',
+            Text('전세·월세의 실질 비용을\n비교해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('보증금 기회비용(금리 환산)까지 포함한 연간 비용으로 비교합니다.',
+            Text('보증금 기회비용(금리 환산)까지 포함한 연간 비용으로 비교합니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -184,7 +185,7 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold)),
                         const SizedBox(height: 4),
-                        Text('예금금리 또는 대출금리를 입력하세요.',
+                        Text('예금금리 또는 대출금리를 입력하세요.'.keepWords,
                             style: TextStyle(
                                 color: subColor.withValues(alpha: 0.8),
                                 fontSize: 11)),
@@ -335,7 +336,7 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
                 padding: const EdgeInsets.all(20),
                 decoration: AppTheme.getAccentCardDecoration(context,
                     borderRadius: 20),
-                child: Text('전세보증금·월세 조건·금리를 입력해보세요.',
+                child: Text('전세보증금·월세 조건·금리를 입력해보세요.'.keepWords,
                     style: TextStyle(color: subColor, fontSize: 13)),
               ),
 

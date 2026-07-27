@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 class PropertyTaxScreen extends StatefulWidget {
   const PropertyTaxScreen({super.key});
@@ -62,8 +63,8 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
     final filled = _prices.where((p) => p > 0).length;
     return filled == 0 ? 1 : filled;
   }
-  int get _age => int.tryParse(_ageController.text) ?? 0;
-  int get _years => int.tryParse(_yearsController.text) ?? 0;
+  int get _age => int.tryParse(_ageController.text.replaceAll(',', '')) ?? 0;
+  int get _years => int.tryParse(_yearsController.text.replaceAll(',', '')) ?? 0;
 
   bool get _creditEligible => _houses == 1 && !_jointOwnership;
 
@@ -176,14 +177,14 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('주택 보유 중\n매년 낼 보유세를 계산해요',
+            Text('주택 보유 중\n매년 낼 보유세를 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('재산세는 물건별로, 종부세는 합산 기준으로 계산해요',
+            Text('재산세는 물건별로, 종부세는 합산 기준으로 계산해요'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -193,7 +194,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('보유 주택별 공시가격 (1세대 합산)',
+                  Text('보유 주택별 공시가격 (1세대 합산)'.keepWords,
                       style: TextStyle(
                           color: textColor,
                           fontSize: 15,
@@ -260,7 +261,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                           Text('도시지역',
                               style:
                                   TextStyle(color: textColor, fontSize: 14)),
-                          Text('재산세 도시지역분 0.14% 추가',
+                          Text('재산세 도시지역분 0.14% 추가'.keepWords,
                               style: TextStyle(
                                   color: subColor.withValues(alpha: 0.8),
                                   fontSize: 11)),
@@ -284,7 +285,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                             Text('부부 공동명의',
                                 style:
                                     TextStyle(color: textColor, fontSize: 14)),
-                            Text('종부세 공제 9억×2인 대신 세액공제 미적용',
+                            Text('종부세 공제 9억×2인 대신 세액공제 미적용'.keepWords,
                                 style: TextStyle(
                                     color: subColor.withValues(alpha: 0.8),
                                     fontSize: 11)),
@@ -312,13 +313,13 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('1세대 1주택 종부세 세액공제',
+                    Text('1세대 1주택 종부세 세액공제'.keepWords,
                         style: TextStyle(
                             color: textColor,
                             fontSize: 15,
                             fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    Text('고령자·장기보유 공제 합산 최대 80%',
+                    Text('고령자·장기보유 공제 합산 최대 80%'.keepWords,
                         style: TextStyle(
                             color: subColor.withValues(alpha: 0.8),
                             fontSize: 11)),
@@ -341,7 +342,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                     ]),
                     if (_combinedCreditRate > 0) ...[
                       const SizedBox(height: 8),
-                      Text('세액공제율: ${_pct(_combinedCreditRate)}',
+                      Text('세액공제율: ${_pct(_combinedCreditRate)}'.keepWords,
                           style: TextStyle(
                               color: primary,
                               fontSize: 12,
@@ -417,7 +418,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                     const SizedBox(height: 12),
                     _row('총 보유세', _won(_grandTotal), subColor, primary),
                   ] else
-                    Text('주택 공시가격을 입력해보세요.',
+                    Text('주택 공시가격을 입력해보세요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 13)),
                 ],
               ),

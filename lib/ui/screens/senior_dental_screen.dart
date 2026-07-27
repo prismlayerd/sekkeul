@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 class SeniorDentalScreen extends StatefulWidget {
   const SeniorDentalScreen({super.key});
@@ -102,7 +103,7 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
                   const SizedBox(height: 8),
                   _row('건강보험·의료급여 부담', _won(_covered), ink, sub),
                   const SizedBox(height: 12),
-                  Text('* 2024년 표준 보험가 참고치 기반 단순 추정이며, 실제 진료비는 치과·지역별로 다를 수 있습니다.',
+                  Text('* 2024년 표준 보험가 참고치 기반 단순 추정이며, 실제 진료비는 치과·지역별로 다를 수 있습니다.'.keepWords,
                       style: AppTheme.sans(11, sub)),
                 ],
               ),

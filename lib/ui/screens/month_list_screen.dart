@@ -4,6 +4,7 @@ import '../../core/data/expense_category.dart';
 import '../../core/data/expense_item.dart';
 import '../../core/data/income_entry.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 const _incomeColor = Color(0xFF5CB87A); // 수익 — soft green
 
@@ -60,7 +61,7 @@ class MonthListScreen extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         iconTheme: IconThemeData(color: ink),
-        title: Text('$year년 $month월 기록', style: AppTheme.serif(22, ink)),
+        title: Text('$year년 $month월 기록'.keepWords, style: AppTheme.serif(22, ink)),
       ),
       body: SafeArea(
         child: sortedDays.isEmpty
@@ -71,7 +72,7 @@ class MonthListScreen extends StatelessWidget {
                   Text('이번 달 기록이 없어요',
                       style: AppTheme.sans(15, AppTheme.inkTertiary(context), weight: FontWeight.w600)),
                   const SizedBox(height: 6),
-                  Text('달력에서 날짜를 탭해 입력하세요.',
+                  Text('달력에서 날짜를 탭해 입력하세요.'.keepWords,
                       style: AppTheme.sans(13, AppTheme.inkTertiary(context))),
                 ]),
               )
@@ -109,10 +110,10 @@ class MonthListScreen extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
                 children: [
-                  Text('${day.month}월 ${day.day}일',
+                  Text('${day.month}월 ${day.day}일'.keepWords,
                       style: AppTheme.sans(13, ink, weight: FontWeight.w700)),
                   const SizedBox(width: 6),
-                  Text('(${wd[day.weekday - 1]})', style: AppTheme.sans(12, tert)),
+                  Text('(${wd[day.weekday - 1]})'.keepWords, style: AppTheme.sans(12, tert)),
                 ],
               ),
             ),

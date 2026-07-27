@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class FreshStartFundScreen extends StatefulWidget {
   const FreshStartFundScreen({super.key});
@@ -25,7 +27,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
   ];
 
   double get _debt => double.tryParse(_debtCtrl.text.replaceAll(',', '')) ?? 0;
-  int get _years => int.tryParse(_yearsCtrl.text) ?? 0;
+  int get _years => int.tryParse(_yearsCtrl.text.replaceAll(',', '')) ?? 0;
   double get _rate => _statuses[_statusIdx].$2;
 
   double get _reduction => _debt * _rate;
@@ -87,7 +89,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
                       DropdownMenuItem(
                           value: i,
                           child: Text(
-                              '${_statuses[i].$1} (${(_statuses[i].$2 * 100).round()}% 감면)')),
+                              '${_statuses[i].$1} (${(_statuses[i].$2 * 100).round()}% 감면)'.keepWords)),
                   ],
                   onChanged: (v) => setState(() => _statusIdx = v!),
                 ),
@@ -100,7 +102,8 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
             TextField(
               controller: _debtCtrl,
               keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              textAlign: TextAlign.right,
+              inputFormatters: const [ThousandsFormatter()],
               style: AppTheme.sans(14, ink),
               decoration: InputDecoration(
                 hintText: '50,000,000',
@@ -137,6 +140,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
             TextField(
               controller: _yearsCtrl,
               keyboardType: TextInputType.number,
+              textAlign: TextAlign.right,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: AppTheme.sans(14, ink),
               decoration: InputDecoration(
@@ -182,7 +186,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
                     const SizedBox(height: 8),
                     _row('감면 후 원금', _won(_afterDebt), ink, sub),
                     const SizedBox(height: 12),
-                    Text('* 무이자 분할 가정 단순 추정치. 약정 후 연 1~3%대 이자가 붙을 수 있습니다.',
+                    Text('* 무이자 분할 가정 단순 추정치. 약정 후 연 1~3%대 이자가 붙을 수 있습니다.'.keepWords,
                         style: AppTheme.sans(11, sub)),
                   ],
                 ),

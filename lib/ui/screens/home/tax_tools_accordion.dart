@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
 import '../tax_tools_screen.dart';
+import '../../theme/text_wrap.dart';
 
 /// 홈 세무 도구 아코디언 — 리마인더 카드와 동일한 헤더(라벨 + 요약 + 회전 화살표).
 /// 접힘 기본, 탭하면 세무 탭과 동일한 `TaxToolsMenu`를 펼친다.
@@ -37,7 +38,7 @@ class _TaxToolsAccordionState extends State<TaxToolsAccordion> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '기록 · 신고 준비 · 경정청구 · 양식',
+                  '기록 · 신고 준비 · 경정청구 · 양식'.keepWords,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTheme.sans(12, sub, weight: FontWeight.w600),

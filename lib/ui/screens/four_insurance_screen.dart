@@ -4,6 +4,7 @@ import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../../core/tax_engine/insurance_engine.dart';
+import '../theme/text_wrap.dart';
 
 /// 4대보험료 계산기 (2026년 기준)
 /// 엔진: InsuranceEngine.calculateEmployeeInsurance
@@ -64,14 +65,14 @@ class _FourInsuranceScreenState extends State<FourInsuranceScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('월급에서 빠져나가는\n4대보험료를 확인해요',
+            Text('월급에서 빠져나가는\n4대보험료를 확인해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('국민연금·건강보험·장기요양·고용보험 근로자 부담분 (2026년 기준)',
+            Text('국민연금·건강보험·장기요양·고용보험 근로자 부담분 (2026년 기준)'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 

@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../theme/app_theme.dart';
 import '../../../core/tax_engine/employee_tax.dart';
 import '../../../core/tax_engine/reserve_estimator.dart';
+import '../../components/amount_field.dart';
+import '../../theme/text_wrap.dart';
 
 /// 홈 "이번 달 현황" 패널 — 수입 + 지출 통합(에디토리얼: 카드 없이 선과 여백).
 ///
@@ -206,7 +208,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             behavior: HitTestBehavior.opaque,
             child: Row(children: [
               Expanded(
-                child: Text('내 정보에서 연봉을 설정하면 예상 환급을 계산해드려요',
+                child: Text('내 정보에서 연봉을 설정하면 예상 환급을 계산해드려요'.keepWords,
                     style: AppTheme.sans(12, accent, weight: FontWeight.w600)),
               ),
               Icon(Icons.arrow_forward, size: 14, color: accent),
@@ -280,7 +282,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             behavior: HitTestBehavior.opaque,
             child: Row(children: [
               Expanded(
-                child: Text('바뀐 내용이 있으면 내 정보에서 수정하세요',
+                child: Text('바뀐 내용이 있으면 내 정보에서 수정하세요'.keepWords,
                     style: AppTheme.sans(12, tert)),
               ),
               Icon(Icons.chevron_right_rounded, size: 16, color: tert),
@@ -370,6 +372,8 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             child: TextField(
               controller: controller,
               keyboardType: TextInputType.number,
+              inputFormatters: const [ThousandsFormatter()],
+              textAlign: TextAlign.right,
               autofocus: true,
               expands: true,
               maxLines: null,

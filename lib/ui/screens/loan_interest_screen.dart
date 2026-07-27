@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 class LoanInterestScreen extends StatefulWidget {
   const LoanInterestScreen({super.key});
@@ -33,8 +34,8 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
       });
 
   int get _principal => int.tryParse(_principalCtrl.text.replaceAll(',', '')) ?? 0;
-  double get _rate => double.tryParse(_rateCtrl.text) ?? 0;
-  int get _years => int.tryParse(_yearsCtrl.text) ?? 0;
+  double get _rate => double.tryParse(_rateCtrl.text.replaceAll(',', '')) ?? 0;
+  int get _years => int.tryParse(_yearsCtrl.text.replaceAll(',', '')) ?? 0;
 
   ({int monthlyPayment, int totalPayment, int totalInterest})? get _result {
     if (_principal <= 0 || _rate <= 0 || _years <= 0) return null;
@@ -109,7 +110,7 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('대출금액·금리·기간을 입력하면\n월 상환액과 총이자를 계산해드려요.',
+            Text('대출금액·금리·기간을 입력하면\n월 상환액과 총이자를 계산해드려요.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsLG, ink, height: 1.5)),
             const SizedBox(height: 24),
             Divider(height: 1, thickness: 1, color: line),

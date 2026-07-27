@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 /// 퇴직금 계산기
 /// 공식: 평균임금 × 30 × (재직일수 ÷ 365)
@@ -129,14 +130,14 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('퇴직 시 받을 수 있는\n퇴직금을 계산해요',
+            Text('퇴직 시 받을 수 있는\n퇴직금을 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('1년 이상 근무한 근로자에게 지급됩니다.',
+            Text('1년 이상 근무한 근로자에게 지급됩니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -273,7 +274,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
                     const SizedBox(height: 12),
                     _row('세전 퇴직금', _won(severance), subColor, primary),
                   ] else if (!hasInput)
-                    Text('날짜와 급여 정보를 입력해보세요.',
+                    Text('날짜와 급여 정보를 입력해보세요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 13)),
                 ],
               ),

@@ -12,6 +12,7 @@ import '../../core/data/occupation_data.dart';
 import '../../core/tax_engine/bookkeeping_duty.dart';
 import '../../core/tax_engine/simple_ledger_builder.dart';
 import 'expense_calendar_screen.dart';
+import '../theme/text_wrap.dart';
 
 /// 기장의무 안내 + 가계부 기록으로 간편장부 만들기.
 ///
@@ -125,7 +126,7 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                 Text('내 기장의무'.toUpperCase(), style: AppTheme.label(context)),
                 const SizedBox(height: 10),
                 if (_judgment == null)
-                  Text('업종코드를 설정하면 기장의무를 알려드려요.',
+                  Text('업종코드를 설정하면 기장의무를 알려드려요.'.keepWords,
                       style: AppTheme.sans(13, sub, height: 1.5))
                 else ...[
                   Text(_judgment!.isDoubleEntry ? '복식부기의무자' : '간편장부대상자',
@@ -162,7 +163,7 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                 Text('$_year년 간편장부'.toUpperCase(), style: AppTheme.label(context)),
                 const SizedBox(height: 10),
                 if (r == null || r.isEmpty) ...[
-                  Text('가계부에 사업 수입이나 사업경비를 기록하면 여기서 장부를 만들어드려요.',
+                  Text('가계부에 사업 수입이나 사업경비를 기록하면 여기서 장부를 만들어드려요.'.keepWords,
                       style: AppTheme.sans(13, sub, height: 1.5)),
                   const SizedBox(height: 14),
                   GestureDetector(
@@ -193,7 +194,7 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                   ]),
                   const SizedBox(height: 14),
                   Text(
-                    '수입은 원천징수 전(세전) 금액으로, 비용은 “사업경비로 인정”한 지출만 담겼어요.',
+                    '수입은 원천징수 전(세전) 금액으로, 비용은 “사업경비로 인정”한 지출만 담겼어요.'.keepWords,
                     style: AppTheme.sans(12, tert, height: 1.5),
                   ),
                   if (r.blankDescriptionCount > 0) ...[
@@ -231,7 +232,7 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                 ],
                 const SizedBox(height: 24),
                 Text(
-                  '참고용 정리본이에요. 복식부기의무자는 재무제표가 필요해 세무대리인 도움을 권해요.',
+                  '참고용 정리본이에요. 복식부기의무자는 재무제표가 필요해 세무대리인 도움을 권해요.'.keepWords,
                   style: AppTheme.sans(11.5, tert, height: 1.5),
                 ),
               ],

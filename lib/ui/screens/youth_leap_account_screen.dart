@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class YouthLeapAccountScreen extends StatefulWidget {
   const YouthLeapAccountScreen({super.key});
@@ -100,13 +102,14 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            Text('월 납입액 (최대 700,000원)',
+            Text('월 납입액 (최대 700,000원)'.keepWords,
                 style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _ctrl,
               keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              textAlign: TextAlign.right,
+              inputFormatters: const [ThousandsFormatter()],
               style: AppTheme.sans(14, ink),
               decoration: InputDecoration(
                 hintText: '700,000',
@@ -167,11 +170,11 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
                     ),
                     if (_monthlyGov == 0) ...[
                       const SizedBox(height: 8),
-                      Text('해당 소득 구간은 비과세 혜택만 적용됩니다.',
+                      Text('해당 소득 구간은 비과세 혜택만 적용됩니다.'.keepWords,
                           style: AppTheme.sans(11, sub)),
                     ],
                     const SizedBox(height: 8),
-                    Text('* 이자는 연 6% 단리 기준 추정값. 실제 은행 금리에 따라 상이.',
+                    Text('* 이자는 연 6% 단리 기준 추정값. 실제 은행 금리에 따라 상이.'.keepWords,
                         style: AppTheme.sans(11, sub)),
                   ],
                 ),

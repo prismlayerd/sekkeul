@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/ui/screens/deduction_gate_screen.dart';
 import 'package:secul/ui/screens/tax_simulator_screen.dart';
+import 'support/ko_finder.dart';
 
 /// 게이트는 "고르면 얼마"가 보여야 고를 이유가 생긴다.
 /// 금액이 사라지거나 0으로 표시되는 회귀를 여기서 잡는다.
@@ -22,7 +23,7 @@ void main() {
     await dbService.saveProfile({'user_type': '직장인', 'gross_income': 45000000.0});
     await pump(t, '직장인');
 
-    expect(find.textContaining('월세로 살아요'), findsOneWidget);
+    expect(findKo('월세로 살아요'), findsOneWidget);
     // 총급여 4,500만 → 5,500만 이하라 월세 17%, 한도 1,000만 → 170만
     expect(find.textContaining('1,700,000원'), findsWidgets);
     // 아직 아무것도 안 고른 상태
@@ -33,7 +34,7 @@ void main() {
     await dbService.saveProfile({'user_type': '직장인', 'gross_income': 45000000.0});
     await pump(t, '직장인');
 
-    await t.tap(find.textContaining('월세로 살아요'));
+    await t.tap(findKo('월세로 살아요'));
     await t.pumpAndSettle();
 
     expect(find.textContaining('고른 1개를 한도까지 채우면'), findsOneWidget);
@@ -47,7 +48,7 @@ void main() {
     expect(find.textContaining('중소기업에 다녀요'), findsNothing);
     expect(find.textContaining('주택담보대출'), findsNothing);
     // 월세는 성실사업자만 대상이라는 조건을 문구에 밝힌다
-    expect(find.textContaining('성실사업자만'), findsOneWidget);
+    expect(findKo('성실사업자만'), findsOneWidget);
   });
 
   // 숨긴 대가로 손해가 나면 안 된다 — 안 고른 항목은 결과 아래에서 다시 묻는다.
@@ -64,7 +65,7 @@ void main() {
 
     expect(find.textContaining('혹시 이건'), findsWidgets);
     // 고른 것(병원비)은 되묻지 않는다
-    expect(find.textContaining('병원비를 많이 썼어요'), findsNothing);
+    expect(findKo('병원비를 많이 썼어요'), findsNothing);
   });
 
   testWidgets('게이트를 안 거치면 되묻지 않는다', (t) async {
@@ -101,7 +102,7 @@ void main() {
 
     expect(find.textContaining('혹시 이건'), findsWidgets);
     // 고른 월세는 되묻지 않는다
-    expect(find.textContaining('월세로 살아요'), findsNothing);
+    expect(findKo('월세로 살아요'), findsNothing);
   });
 
   // 측정 결과: 총액이 한도 아래면 어떻게 쪼개든 결과가 0원 달라진다.
@@ -122,30 +123,30 @@ void main() {
       await openCalc(t, {'medical'});
       await t.enterText(find.byKey(const Key('medicalOtherField')), '5000000');
       await t.pumpAndSettle();
-      expect(find.textContaining('한도가 없으니'), findsNothing);
+      expect(findKo('한도가 없으니'), findsNothing);
     });
 
     testWidgets('의료비 700만을 넘으면 본인·65세↑ 칸을 연다', (t) async {
       await openCalc(t, {'medical'});
       await t.enterText(find.byKey(const Key('medicalOtherField')), '9000000');
       await t.pumpAndSettle();
-      expect(find.textContaining('700만원이 넘었어요'), findsOneWidget);
-      expect(find.textContaining('그중 본인·65세 이상·장애인 의료비'), findsOneWidget);
+      expect(findKo('700만원이 넘었어요'), findsOneWidget);
+      expect(findKo('그중 본인·65세 이상·장애인 의료비'), findsOneWidget);
     });
 
     testWidgets('연금저축 600만 이하면 IRP를 묻지 않는다', (t) async {
       await openCalc(t, {'pension'});
       await t.enterText(find.byKey(const Key('pensionSavingsField')), '4000000');
       await t.pumpAndSettle();
-      expect(find.textContaining('IRP·퇴직연금으로 넣으면'), findsNothing);
+      expect(findKo('IRP·퇴직연금으로 넣으면'), findsNothing);
     });
 
     testWidgets('연금저축 600만을 넘으면 IRP를 연다', (t) async {
       await openCalc(t, {'pension'});
       await t.enterText(find.byKey(const Key('pensionSavingsField')), '8000000');
       await t.pumpAndSettle();
-      expect(find.textContaining('600만원이 한도예요'), findsOneWidget);
-      expect(find.textContaining('IRP·퇴직연금(DC) 납입액'), findsOneWidget);
+      expect(findKo('600만원이 한도예요'), findsOneWidget);
+      expect(findKo('IRP·퇴직연금(DC) 납입액'), findsOneWidget);
     });
   });
 }

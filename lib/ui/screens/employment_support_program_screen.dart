@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 class EmploymentSupportProgramScreen extends StatefulWidget {
   const EmploymentSupportProgramScreen({super.key});
@@ -144,7 +145,7 @@ class _EmploymentSupportProgramScreenState
                         sub),
                   ],
                   const SizedBox(height: 12),
-                  Text('* 실지급액은 참여자 상황·출석·구직활동 이행 여부에 따라 달라지는 추정치입니다.',
+                  Text('* 실지급액은 참여자 상황·출석·구직활동 이행 여부에 따라 달라지는 추정치입니다.'.keepWords,
                       style: AppTheme.sans(11, sub)),
                 ],
               ),

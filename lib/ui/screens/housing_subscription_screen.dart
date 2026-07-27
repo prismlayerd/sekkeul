@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 class HousingSubscriptionScreen extends StatefulWidget {
   const HousingSubscriptionScreen({super.key});
@@ -92,7 +93,7 @@ class _HousingSubscriptionScreenState
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('무주택기간 + 부양가족 수 + 청약통장 기간으로 최대 84점',
+            Text('무주택기간 + 부양가족 수 + 청약통장 기간으로 최대 84점'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -143,7 +144,7 @@ class _HousingSubscriptionScreenState
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '${_dependentLabels[i]}  ${_dependentPoints[i]}점',
+                        '${_dependentLabels[i]}  ${_dependentPoints[i]}점'.keepWords,
                         style: TextStyle(
                             color: sel ? Colors.white : subColor,
                             fontSize: 12,

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class NewbornSpecialLoanScreen extends StatefulWidget {
   const NewbornSpecialLoanScreen({super.key});
@@ -121,7 +123,7 @@ class _NewbornSpecialLoanScreenState extends State<NewbornSpecialLoanScreen> {
                     const SizedBox(height: 8),
                     _row('총 이자', _manwon(_totalInterest), ink, sub),
                     const SizedBox(height: 8),
-                    Text('* 원리금균등 기준. 특례금리는 소득·자녀 수에 따라 차등 적용됩니다.',
+                    Text('* 원리금균등 기준. 특례금리는 소득·자녀 수에 따라 차등 적용됩니다.'.keepWords,
                         style: AppTheme.sans(11, sub)),
                   ],
                 ),
@@ -168,10 +170,14 @@ class _NewbornSpecialLoanScreenState extends State<NewbornSpecialLoanScreen> {
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.numberWithOptions(decimal: isRate),
-          inputFormatters: [
-            isRate
-                ? FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
-                : FilteringTextInputFormatter.digitsOnly,
+          textAlign: TextAlign.right,
+inputFormatters: [
+            if (suffix == '원' || suffix == '만원')
+              const ThousandsFormatter()
+            else
+              isRate
+                  ? FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+                  : FilteringTextInputFormatter.digitsOnly,
           ],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(

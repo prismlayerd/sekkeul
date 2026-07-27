@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 enum _TaxType { inheritance, gift }
 
@@ -132,14 +133,14 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('상속 또는 증여 시\n납부할 세금을 계산해요',
+            Text('상속 또는 증여 시\n납부할 세금을 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('공제 후 과세표준 기준, 5단계 누진세율 적용',
+            Text('공제 후 과세표준 기준, 5단계 누진세율 적용'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -275,7 +276,7 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
                     _row('납부 세금', _won(tax), subColor, primary),
                     if (taxBase <= 0) ...[
                       const SizedBox(height: 8),
-                      Text('공제액이 재산가액을 초과하여 세금이 없습니다.',
+                      Text('공제액이 재산가액을 초과하여 세금이 없습니다.'.keepWords,
                           style: TextStyle(color: subColor, fontSize: 12)),
                     ],
                   ] else

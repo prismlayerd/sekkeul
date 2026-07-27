@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import 'tax_simulator_screen.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/data/deduction_options.dart';
+import '../theme/text_wrap.dart';
 
 /// 공제 고르기 — 계산기에 들어가기 전, 해당되는 항목만 남기는 관문.
 ///
@@ -120,7 +121,7 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
                   ..._situation.map(_row),
                   const SizedBox(height: 24),
                   Text(
-                    '고르지 않아도 나중에 계산기에서 직접 열 수 있어요.',
+                    '고르지 않아도 나중에 계산기에서 직접 열 수 있어요.'.keepWords,
                     style: AppTheme.sans(12, AppTheme.inkTertiary(context), height: 1.5),
                   ),
                 ],
@@ -185,11 +186,11 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.label,
+                    Text(item.label.keepWords,
                         style: AppTheme.sans(14.5, AppTheme.ink(context),
                             weight: FontWeight.w700, spacing: -0.2)),
                     const SizedBox(height: 3),
-                    Text(item.basis,
+                    Text(item.basis.keepWords,
                         style: AppTheme.sans(12, AppTheme.inkTertiary(context), height: 1.4)),
                   ],
                 ),

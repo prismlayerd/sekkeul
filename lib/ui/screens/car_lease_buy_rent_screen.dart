@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class CarLeaseBuyRentScreen extends StatefulWidget {
   const CarLeaseBuyRentScreen({super.key});
@@ -123,7 +125,7 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('$_months개월 총 지출 비교',
+                    Text('$_months개월 총 지출 비교'.keepWords,
                         style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     _resultRow('리스', _leaseTotal, ink, sub, accent),
@@ -132,7 +134,7 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
                     const SizedBox(height: 8),
                     _resultRow('구매(대출)', _buyTotal, ink, sub, accent),
                     const SizedBox(height: 12),
-                    Text('* 보증금은 환급 여부와 무관하게 총 지출액에 포함한 단순 비교치입니다.',
+                    Text('* 보증금은 환급 여부와 무관하게 총 지출액에 포함한 단순 비교치입니다.'.keepWords,
                         style: AppTheme.sans(11, sub)),
                   ],
                 ),
@@ -161,7 +163,8 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textAlign: TextAlign.right,
+          inputFormatters: const [ThousandsFormatter()],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(
             suffixText: '원',
@@ -196,6 +199,7 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
         TextField(
           controller: ctrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          textAlign: TextAlign.right,
           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(

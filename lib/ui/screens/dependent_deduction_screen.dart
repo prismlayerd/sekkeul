@@ -6,6 +6,7 @@ import '../components/calc_disclaimer.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/tax_rates.dart';
+import '../theme/text_wrap.dart';
 
 /// 부양가족 공제 확인
 /// 기본공제(1인 150만) + 장애인 추가공제(200만) + 추가 인적공제(경로/부녀자/한부모)
@@ -156,10 +157,10 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('우리 가족,\n얼마나 공제받을 수 있을까요?',
+            Text('우리 가족,\n얼마나 공제받을 수 있을까요?'.keepWords,
                 style: TextStyle(color: textColor, fontSize: 22, fontWeight: FontWeight.bold, height: 1.4)),
             const SizedBox(height: 8),
-            Text('부양가족 1명당 기본 150만원이 소득에서 공제됩니다.',
+            Text('부양가족 1명당 기본 150만원이 소득에서 공제됩니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -256,7 +257,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
                   await _save();
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('공제 정보를 저장했어요. 연말정산 진단에 반영됩니다.')),
+                      SnackBar(content: Text('공제 정보를 저장했어요. 연말정산 진단에 반영됩니다.'.keepWords)),
                     );
                     Navigator.pop(context, true);
                   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 class NaeilChaeumScreen extends StatelessWidget {
   const NaeilChaeumScreen({super.key});
@@ -40,7 +41,7 @@ class NaeilChaeumScreen extends StatelessWidget {
                   Text('⚠️ ', style: AppTheme.sans(14, ink)),
                   Expanded(
                     child: Text(
-                      '2024년부터 신규 가입이 종료되었습니다.\n기존 가입자만 만기까지 유지 가능합니다.',
+                      '2024년부터 신규 가입이 종료되었습니다.\n기존 가입자만 만기까지 유지 가능합니다.'.keepWords,
                       style: AppTheme.sans(13, ink, height: 1.6),
                     ),
                   ),

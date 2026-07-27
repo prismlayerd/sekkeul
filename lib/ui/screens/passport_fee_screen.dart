@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 class PassportFeeScreen extends StatefulWidget {
   const PassportFeeScreen({super.key});
@@ -101,7 +102,7 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
                   const SizedBox(height: 12),
                   _row('유효기간', selected.$2, ink, sub),
                   const SizedBox(height: 8),
-                  Text('* 2026.3.1부터 재외공관 발급 여권 수수료는 USD 2 인상되었습니다.',
+                  Text('* 2026.3.1부터 재외공관 발급 여권 수수료는 USD 2 인상되었습니다.'.keepWords,
                       style: AppTheme.sans(11, sub)),
                 ],
               ),

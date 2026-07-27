@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/data/occupation_data.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 /// 업종코드 검색 — 풀스크린 push 화면.
 ///
@@ -174,7 +175,7 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
             Expanded(
               child: _filteredList.isEmpty
                   ? Center(
-                      child: Text('일치하는 업종이 없어요.\n다른 말로 검색해 보세요.',
+                      child: Text('일치하는 업종이 없어요.\n다른 말로 검색해 보세요.'.keepWords,
                           textAlign: TextAlign.center, style: AppTheme.sans(14, sub, height: 1.5)),
                     )
                   : ListView.separated(

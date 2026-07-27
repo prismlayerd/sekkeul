@@ -6,6 +6,7 @@ import 'tax_simulator_screen.dart';
 import 'tax_annual_report_screen.dart';
 import 'tax_tools_screen.dart';
 import '../components/tax_pipeline_rail.dart';
+import '../theme/text_wrap.dart';
 
 /// 가상 신고서 — 세금 계산의 하향식 흐름을 '장부' 형식으로 보여준다.
 /// 좌측 연산자 거터(− + × =)가 실제 세금 로직을 담고(structure is information),
@@ -70,7 +71,7 @@ class TaxReportFormScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
           children: [
             // ── 표제 ──
-            Text('가상 신고서 · ${reportType.toUpperCase()}', style: AppTheme.label(context)),
+            Text('가상 신고서 · ${reportType.toUpperCase()}'.keepWords, style: AppTheme.label(context)),
             const SizedBox(height: 12),
             Text(_officialName, style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
             const SizedBox(height: 22),
@@ -98,7 +99,7 @@ class TaxReportFormScreen extends StatelessWidget {
               _resultBlock(context),
               const SizedBox(height: 18),
               Text(
-                '※ 세끌 계산 결과로 만든 가상 양식이에요. 실제 신고 시 금액이 달라질 수 있어요.',
+                '※ 세끌 계산 결과로 만든 가상 양식이에요. 실제 신고 시 금액이 달라질 수 있어요.'.keepWords,
                 style: AppTheme.sans(12, tert, height: 1.5),
               ),
               // 주 CTA — 파이프라인 ③홈택스 가이드로. 위 숫자를 홈택스 화면 순서대로 안내.
@@ -193,10 +194,10 @@ class TaxReportFormScreen extends StatelessWidget {
         children: [
           Text('아직 계산 전이에요', style: AppTheme.label(context)),
           const SizedBox(height: 10),
-          Text('진단을 마치면 이 신고서가\n자동으로 채워져요.',
+          Text('진단을 마치면 이 신고서가\n자동으로 채워져요.'.keepWords,
               style: AppTheme.sans(14, ink, weight: FontWeight.w600, height: 1.4)),
           const SizedBox(height: 6),
-          Text('②단계에서 소득·공제를 넣으면 위 항목이 숫자로 채워집니다.',
+          Text('②단계에서 소득·공제를 넣으면 위 항목이 숫자로 채워집니다.'.keepWords,
               style: AppTheme.sans(12, sub, height: 1.45)),
           const SizedBox(height: 16),
           GestureDetector(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 class BogeumjariLoanScreen extends StatefulWidget {
   const BogeumjariLoanScreen({super.key});
@@ -40,8 +41,8 @@ class _BogeumjariLoanScreenState extends State<BogeumjariLoanScreen> {
       });
 
   int get _principal => int.tryParse(_principalCtrl.text.replaceAll(',', '')) ?? 0;
-  double get _rate => double.tryParse(_rateCtrl.text) ?? 0;
-  int get _years => int.tryParse(_yearsCtrl.text) ?? 0;
+  double get _rate => double.tryParse(_rateCtrl.text.replaceAll(',', '')) ?? 0;
+  int get _years => int.tryParse(_yearsCtrl.text.replaceAll(',', '')) ?? 0;
 
   ({int monthly, int totalInterest, int totalPayment})? get _result {
     if (_principal <= 0 || _rate <= 0 || _years <= 0 || _years > 50) return null;
@@ -91,10 +92,10 @@ class _BogeumjariLoanScreenState extends State<BogeumjariLoanScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('보금자리론(HF)의\n월 상환액과 총이자를 계산해드려요.',
+            Text('보금자리론(HF)의\n월 상환액과 총이자를 계산해드려요.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsLG, ink, height: 1.5)),
             const SizedBox(height: 4),
-            Text('원리금균등 방식. 우대금리 적용 후 금리를 직접 입력하세요.',
+            Text('원리금균등 방식. 우대금리 적용 후 금리를 직접 입력하세요.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsSM, tert)),
             const SizedBox(height: 16),
             _rateTable(sub, ink, line),
@@ -113,7 +114,7 @@ class _BogeumjariLoanScreenState extends State<BogeumjariLoanScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                     color: accentSoft, borderRadius: BorderRadius.circular(4)),
-                child: Text('대출금액·금리·기간을 입력하세요.',
+                child: Text('대출금액·금리·기간을 입력하세요.'.keepWords,
                     style: AppTheme.sans(AppTheme.tsMD, sub)),
               )
             else ...[
@@ -170,7 +171,7 @@ class _BogeumjariLoanScreenState extends State<BogeumjariLoanScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-            child: Text('2026년 기준 금리·우대금리',
+            child: Text('2026년 기준 금리·우대금리'.keepWords,
                 style: AppTheme.sans(AppTheme.tsSM, sub, weight: FontWeight.w600)),
           ),
           Divider(height: 1, thickness: 1, color: line),

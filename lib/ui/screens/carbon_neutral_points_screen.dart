@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class CarbonNeutralPointsScreen extends StatefulWidget {
   const CarbonNeutralPointsScreen({super.key});
@@ -102,7 +104,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
                 ),
                 Expanded(
                     child:
-                        Text('전기차·수소차 충전 이용(연 1회 인정)', style: AppTheme.sans(13, ink))),
+                        Text('전기차·수소차 충전 이용(연 1회 인정)'.keepWords, style: AppTheme.sans(13, ink))),
               ],
             ),
             Row(
@@ -156,7 +158,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
                     _row('친환경 매장', _won(_greenStorePoints), ink, sub),
                     if (_isCapped) ...[
                       const SizedBox(height: 12),
-                      Text('* 1인당 연간 지급 한도 7만원을 초과하여 상한으로 산정되었습니다.',
+                      Text('* 1인당 연간 지급 한도 7만원을 초과하여 상한으로 산정되었습니다.'.keepWords,
                           style: AppTheme.sans(11, sub)),
                     ],
                   ],
@@ -193,7 +195,13 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textAlign: TextAlign.right,
+          inputFormatters: [
+            if (suffix == '원' || suffix == '만원')
+              const ThousandsFormatter()
+            else
+              FilteringTextInputFormatter.digitsOnly,
+          ],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(
             suffixText: suffix,

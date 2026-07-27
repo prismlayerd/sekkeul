@@ -7,12 +7,19 @@ class CreditCardDeductionResult {
   final double finalDeduction;
   final String guideMessage;
 
+  /// 문턱을 넘었는가.
+  ///
+  /// `totalSpend >= threshold`만 보면 **아무것도 입력하지 않은 상태**(둘 다 0)에서
+  /// 0 >= 0이 참이 되어 "문턱 돌파"라고 알린다. 쓴 돈이 있어야 돌파다.
+  final bool passedThreshold;
+
   CreditCardDeductionResult({
     required this.threshold,
     required this.totalSpend,
     required this.excessSpend,
     required this.finalDeduction,
     required this.guideMessage,
+    required this.passedThreshold,
   });
 }
 
@@ -703,9 +710,12 @@ class EmployeeTaxCalculator {
     final double totalDeductionRaw = baseDeduction + extraDeduction;
     final double finalDeduction = totalDeductionRaw > 7000000.0 ? 7000000.0 : totalDeductionRaw;
 
-    String guideMessage = '아직 공제 문턱에 미달했습니다. 신용카드 할인/포인트 혜택 위주로 현명하게 소비하세요.';
+    final bool passedThreshold = totalSpend > 0 && totalSpend >= threshold;
 
-    if (totalSpend >= threshold) {
+    String guideMessage = '아직 공제 문턱에 미달했습니다. 신용카드 할인/포인트 혜택 위주로 현명하게 소비하세요.';
+    if (totalSpend <= 0) {
+      guideMessage = '올해 쓴 카드 금액을 넣으면 문턱까지 얼마 남았는지 알려드려요.';
+    } else if (passedThreshold) {
       guideMessage = '문턱 돌파 완료! 지금부터 체크카드 및 현금영수증 결제 시 30% 고율 공제가 적용됩니다.';
     }
 
@@ -715,6 +725,7 @@ class EmployeeTaxCalculator {
       excessSpend: excessSpend,
       finalDeduction: TaxRates.truncateWon(finalDeduction),
       guideMessage: guideMessage,
+      passedThreshold: passedThreshold,
     );
   }
 

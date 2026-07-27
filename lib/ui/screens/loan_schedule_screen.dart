@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 class LoanScheduleScreen extends StatefulWidget {
   const LoanScheduleScreen({super.key});
@@ -35,8 +36,8 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
       });
 
   int get _principal => int.tryParse(_principalCtrl.text.replaceAll(',', '')) ?? 0;
-  double get _rate => double.tryParse(_rateCtrl.text) ?? 0;
-  int get _months => int.tryParse(_monthsCtrl.text) ?? 0;
+  double get _rate => double.tryParse(_rateCtrl.text.replaceAll(',', '')) ?? 0;
+  int get _months => int.tryParse(_monthsCtrl.text.replaceAll(',', '')) ?? 0;
 
   List<({int month, int principal, int interest, int payment, int balance})>
       _buildSchedule() {
@@ -120,7 +121,7 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('대출 조건을 입력하면\n월별 상환 스케줄을 보여드려요.',
+            Text('대출 조건을 입력하면\n월별 상환 스케줄을 보여드려요.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsLG, ink, height: 1.5)),
             const SizedBox(height: 24),
             Divider(height: 1, thickness: 1, color: line),
@@ -177,7 +178,7 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                     color: accentSoft, borderRadius: BorderRadius.circular(4)),
-                child: Text('대출금액·금리·기간을 입력하세요.',
+                child: Text('대출금액·금리·기간을 입력하세요.'.keepWords,
                     style: AppTheme.sans(AppTheme.tsMD, sub)),
               )
             else ...[
@@ -300,7 +301,7 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         child: Center(
-                          child: Text('전체 ${schedule.length}개월 보기',
+                          child: Text('전체 ${schedule.length}개월 보기'.keepWords,
                               style: AppTheme.sans(AppTheme.tsMD, accent,
                                   weight: FontWeight.w600)),
                         ),

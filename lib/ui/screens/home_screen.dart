@@ -32,6 +32,7 @@ import '../../core/tax_engine/reserve_estimator.dart';
 import '../../core/security/notification_helper.dart';
 import '../../core/notifications/reminder_scheduler.dart';
 import '../../core/navigation/app_route_observer.dart';
+import '../theme/text_wrap.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -266,7 +267,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         title: Text('정확한 시간에 알림 받기',
             style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontWeight: FontWeight.bold)),
         content: Text(
-          '신고·납부 기한 알림이 정확한 시각에 오도록, 다음 화면에서 "정확한 알람" 권한을 허용해 주세요.',
+          '신고·납부 기한 알림이 정확한 시각에 오도록, 다음 화면에서 "정확한 알람" 권한을 허용해 주세요.'.keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!),
         ),
         actions: [
@@ -394,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               children: [
                 Text('지난 달 기록이 비어있어요', style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text('간단히 채우면 올해 판정이 더 정확해져요 →', style: AppTheme.sans(12, accent)),
+                Text('간단히 채우면 올해 판정이 더 정확해져요 →'.keepWords, style: AppTheme.sans(12, accent)),
               ],
             ),
           ),
@@ -603,7 +604,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Text('데이터 파기 확인', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontWeight: FontWeight.bold)),
           content: Text(
-            '모든 프로필 및 지출 데이터가 기기에서 영구적으로 파기됩니다.\n이 작업은 되돌릴 수 없어요. 정말 파기하시겠습니까?',
+            '모든 프로필 및 지출 데이터가 기기에서 영구적으로 파기됩니다.\n이 작업은 되돌릴 수 없어요. 정말 파기하시겠습니까?'.keepWords,
             style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!),
           ),
           actions: [
@@ -636,8 +637,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 });
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('특허 기술을 통해 로컬 세무 정보가 복구 불가능하게 완전 파기되었습니다.'),
+                    SnackBar(
+                      content: Text('특허 기술을 통해 로컬 세무 정보가 복구 불가능하게 완전 파기되었습니다.'.keepWords),
                       backgroundColor: Color(0xFFFF4D4D),
                     ),
                   );

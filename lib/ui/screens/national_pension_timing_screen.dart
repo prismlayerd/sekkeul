@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 class NationalPensionTimingScreen extends StatefulWidget {
   const NationalPensionTimingScreen({super.key});
@@ -73,14 +74,14 @@ class _NationalPensionTimingScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('수령 시기에 따른\n연금액 변화를 비교해요',
+            Text('수령 시기에 따른\n연금액 변화를 비교해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('조기수령 −6%/년(최대 5년), 연기수령 +7.2%/년(최대 5년)',
+            Text('조기수령 −6%/년(최대 5년), 연기수령 +7.2%/년(최대 5년)'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -96,7 +97,7 @@ class _NationalPensionTimingScreenState
                           fontSize: 15,
                           fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text('정상 수령 시 예상 월 연금액을 입력하세요.',
+                  Text('정상 수령 시 예상 월 연금액을 입력하세요.'.keepWords,
                       style: TextStyle(
                           color: subColor.withValues(alpha: 0.7), fontSize: 11)),
                   const SizedBox(height: 8),
@@ -107,7 +108,7 @@ class _NationalPensionTimingScreenState
                   ),
                   if (hasInput) ...[
                     const SizedBox(height: 8),
-                    Text('기준 연금: ${_won(_base)}',
+                    Text('기준 연금: ${_won(_base)}'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 12)),
                   ],
                 ],
@@ -126,7 +127,7 @@ class _NationalPensionTimingScreenState
                 padding: const EdgeInsets.all(20),
                 decoration:
                     AppTheme.getAccentCardDecoration(context, borderRadius: 20),
-                child: Text('기준 월 연금액을 입력해보세요.',
+                child: Text('기준 월 연금액을 입력해보세요.'.keepWords,
                     style: TextStyle(color: subColor, fontSize: 13)),
               ),
 

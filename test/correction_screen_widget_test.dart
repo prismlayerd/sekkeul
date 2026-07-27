@@ -4,6 +4,7 @@ import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/core/tax_engine/tax_year_rules.dart';
 import 'package:secul/ui/screens/correction_request_screen.dart';
 import 'package:secul/ui/screens/missed_deduction_diagnosis_screen.dart';
+import 'support/ko_finder.dart';
 
 /// 화면이 "왜 계산 못 했는지"를 실제로 그리는지 확인한다.
 /// 엔진 테스트는 값만 보므로, 차단 사유가 화면에 안 뜨고 0원으로만 보이는 회귀는
@@ -23,7 +24,7 @@ void main() {
 
   testWidgets('경정청구 — 총급여를 아직 안 넣으면 사유를 보여준다', (t) async {
     await pump(t, const CorrectionRequestScreen(userType: '직장인'));
-    expect(find.textContaining('총급여를 읽지 못했습니다'), findsOneWidget);
+    expect(findKo('총급여를 읽지 못했습니다'), findsOneWidget);
   });
 
   testWidgets('경정청구 — 청구 가능한 귀속연도만 고를 수 있다', (t) async {
@@ -62,6 +63,6 @@ void main() {
 
   testWidgets('빠진 공제 찾기 — 총급여를 아직 안 넣으면 사유를 보여준다', (t) async {
     await pump(t, const MissedDeductionDiagnosisScreen(userType: '직장인'));
-    expect(find.textContaining('총급여를 읽지 못했습니다'), findsOneWidget);
+    expect(findKo('총급여를 읽지 못했습니다'), findsOneWidget);
   });
 }

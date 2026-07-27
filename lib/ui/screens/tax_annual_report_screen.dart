@@ -9,6 +9,7 @@ import 'tax_simulator_screen.dart';
 import 'tax_tools_screen.dart';
 import '../theme/app_theme.dart';
 import '../components/tax_pipeline_rail.dart';
+import '../theme/text_wrap.dart';
 
 class TaxAnnualReportScreen extends StatefulWidget {
   final String userType;
@@ -181,8 +182,8 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     );
 
     _childTaxCredit = EmployeeTaxCalculator.calculateChildTaxCredit(
-      childrenCount: int.tryParse(_childrenCountCtrl.text) ?? 0,
-      newbornCount: int.tryParse(_newbornCountCtrl.text) ?? 0,
+      childrenCount: int.tryParse(_childrenCountCtrl.text.replaceAll(',', '')) ?? 0,
+      newbornCount: int.tryParse(_newbornCountCtrl.text.replaceAll(',', '')) ?? 0,
     );
 
     _pensionCredit = EmployeeTaxCalculator.calculatePensionAccountTaxCredit(
@@ -285,7 +286,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       return ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         children: [
-          Text('${_year}년 귀속\n종합소득세 신고서', style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
+          Text('${_year}년 귀속\n종합소득세 신고서'.keepWords, style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(20),
@@ -295,7 +296,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
               children: [
                 Text('아직 진단 결과가 없어요', style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Text('①종소세 진단에서 계산한 뒤 "가상 신고서 양식 보기"를 눌러야 홈택스에 입력할 숫자가 여기 채워져요.',
+                Text('①종소세 진단에서 계산한 뒤 "가상 신고서 양식 보기"를 눌러야 홈택스에 입력할 숫자가 여기 채워져요.'.keepWords,
                     style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
                 const SizedBox(height: 16),
                 GestureDetector(
@@ -321,9 +322,9 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       children: [
-        Text('${_year}년 귀속\n종합소득세 신고서', style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
+        Text('${_year}년 귀속\n종합소득세 신고서'.keepWords, style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
         const SizedBox(height: 4),
-        Text('①진단 결과를 홈택스 화면에 나오는 순서대로 안내해드려요.\n신고 기한: 매년 5월 1일 ~ 5월 31일',
+        Text('①진단 결과를 홈택스 화면에 나오는 순서대로 안내해드려요.\n신고 기한: 매년 5월 1일 ~ 5월 31일'.keepWords,
             style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
         const SizedBox(height: 20),
 
@@ -340,7 +341,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
               Row(children: [
                 Icon(Icons.format_list_numbered_rounded, color: primary, size: 18),
                 const SizedBox(width: 8),
-                Text('홈택스에 이 순서로 입력하세요', style: TextStyle(color: primary, fontSize: 14, fontWeight: FontWeight.bold)),
+                Text('홈택스에 이 순서로 입력하세요'.keepWords, style: TextStyle(color: primary, fontSize: 14, fontWeight: FontWeight.bold)),
               ]),
               const SizedBox(height: 14),
               for (int i = 0; i < items.length; i++) _businessItemRow(i + 1, items[i], primary, textColor, subColor),
@@ -431,7 +432,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
               Icon(Icons.schedule_rounded, color: Colors.orange, size: 16),
               const SizedBox(width: 8),
               Expanded(child: Text(
-                '신고 기한: 매년 5월 1일 ~ 5월 31일\n기한 초과 시 무신고 가산세 20% + 납부 지연 가산세 발생',
+                '신고 기한: 매년 5월 1일 ~ 5월 31일\n기한 초과 시 무신고 가산세 20% + 납부 지연 가산세 발생'.keepWords,
                 style: TextStyle(color: Colors.orange, fontSize: 12, height: 1.5),
               )),
             ]),
@@ -447,12 +448,12 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       children: [
         // ── 인트로 ──
         Text(
-          '${_year}년 귀속\n종합소득세 신고서',
+          '${_year}년 귀속\n종합소득세 신고서'.keepWords,
           style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2),
         ),
         const SizedBox(height: 4),
         Text(
-          '홈택스에 입력해야 할 항목을 앱이 안내합니다.\n신고 기한: 매년 5월 1일 ~ 5월 31일',
+          '홈택스에 입력해야 할 항목을 앱이 안내합니다.\n신고 기한: 매년 5월 1일 ~ 5월 31일'.keepWords,
           style: TextStyle(color: subColor, fontSize: 13, height: 1.5),
         ),
         const SizedBox(height: 20),
@@ -624,7 +625,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           _buildAmountField(_grossIncomeCtrl, '예: 55,000,000', textColor, subColor, bgColor),
           if (gross <= 0) ...[
             const SizedBox(height: 8),
-            Text('총급여를 입력해야 계산이 시작됩니다.',
+            Text('총급여를 입력해야 계산이 시작됩니다.'.keepWords,
                 style: TextStyle(color: Colors.orange, fontSize: 12)),
           ],
         ],
@@ -837,7 +838,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
   Widget _buildCountField(TextEditingController ctrl, Color textColor, Color subColor) {
     return Row(children: [
       _countButton(Icons.remove_circle_outline, subColor, () {
-        final v = (int.tryParse(ctrl.text) ?? 0) - 1;
+        final v = (int.tryParse(ctrl.text.replaceAll(',', '')) ?? 0) - 1;
         ctrl.text = v < 0 ? '0' : v.toString();
       }),
       const SizedBox(width: 12),
@@ -863,7 +864,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       ),
       const SizedBox(width: 12),
       _countButton(Icons.add_circle_outline, subColor, () {
-        final v = (int.tryParse(ctrl.text) ?? 0) + 1;
+        final v = (int.tryParse(ctrl.text.replaceAll(',', '')) ?? 0) + 1;
         ctrl.text = v.toString();
       }),
     ]);
@@ -983,7 +984,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
               Icon(Icons.schedule_rounded, color: Colors.orange, size: 16),
               const SizedBox(width: 8),
               Expanded(child: Text(
-                '신고 기한: 매년 5월 1일 ~ 5월 31일\n기한 초과 시 무신고 가산세 20% + 납부 지연 가산세 발생',
+                '신고 기한: 매년 5월 1일 ~ 5월 31일\n기한 초과 시 무신고 가산세 20% + 납부 지연 가산세 발생'.keepWords,
                 style: TextStyle(color: Colors.orange, fontSize: 12, height: 1.5),
               )),
             ]),

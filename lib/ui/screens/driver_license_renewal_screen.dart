@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class DriverLicenseRenewalScreen extends StatefulWidget {
   const DriverLicenseRenewalScreen({super.key});
@@ -17,10 +19,10 @@ class _DriverLicenseRenewalScreenState
   final _dayCtrl = TextEditingController();
   final _ageAtRenewalCtrl = TextEditingController();
 
-  int? get _year => int.tryParse(_yearCtrl.text);
-  int? get _month => int.tryParse(_monthCtrl.text);
-  int? get _day => int.tryParse(_dayCtrl.text);
-  int get _ageAtRenewal => int.tryParse(_ageAtRenewalCtrl.text) ?? 0;
+  int? get _year => int.tryParse(_yearCtrl.text.replaceAll(',', ''));
+  int? get _month => int.tryParse(_monthCtrl.text.replaceAll(',', ''));
+  int? get _day => int.tryParse(_dayCtrl.text.replaceAll(',', ''));
+  int get _ageAtRenewal => int.tryParse(_ageAtRenewalCtrl.text.replaceAll(',', '')) ?? 0;
 
   bool get _hasInput =>
       _year != null && _month != null && _day != null && _ageAtRenewalCtrl.text.isNotEmpty;
@@ -75,7 +77,7 @@ class _DriverLicenseRenewalScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('취득(또는 마지막 갱신) 날짜',
+            Text('취득(또는 마지막 갱신) 날짜'.keepWords,
                 style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(children: [
@@ -94,6 +96,7 @@ class _DriverLicenseRenewalScreenState
             TextField(
               controller: _ageAtRenewalCtrl,
               keyboardType: TextInputType.number,
+              textAlign: TextAlign.right,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: AppTheme.sans(14, ink),
               decoration: InputDecoration(
@@ -142,7 +145,7 @@ class _DriverLicenseRenewalScreenState
                     const SizedBox(height: 12),
                     _row('적용 갱신주기', '$_cycleYears년', ink, sub),
                     const SizedBox(height: 8),
-                    Text('* 갱신 기간은 생일 전후 6개월(총 1년)이며, 만료일 기준 안내입니다.',
+                    Text('* 갱신 기간은 생일 전후 6개월(총 1년)이며, 만료일 기준 안내입니다.'.keepWords,
                         style: AppTheme.sans(11, sub)),
                   ],
                 ),
@@ -196,7 +199,13 @@ class _DriverLicenseRenewalScreenState
     return TextField(
       controller: ctrl,
       keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      textAlign: TextAlign.right,
+      inputFormatters: [
+            if (suffix == '원' || suffix == '만원')
+              const ThousandsFormatter()
+            else
+              FilteringTextInputFormatter.digitsOnly,
+          ],
       style: AppTheme.sans(14, ink),
       decoration: InputDecoration(
         hintText: hint,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 class BeotimmokLoanScreen extends StatefulWidget {
   const BeotimmokLoanScreen({super.key});
@@ -37,8 +38,8 @@ class _BeotimmokLoanScreenState extends State<BeotimmokLoanScreen> {
       });
 
   int get _principal => int.tryParse(_principalCtrl.text.replaceAll(',', '')) ?? 0;
-  double get _rate => double.tryParse(_rateCtrl.text) ?? 0;
-  int get _years => int.tryParse(_yearsCtrl.text) ?? 0;
+  double get _rate => double.tryParse(_rateCtrl.text.replaceAll(',', '')) ?? 0;
+  int get _years => int.tryParse(_yearsCtrl.text.replaceAll(',', '')) ?? 0;
 
   ({int monthlyInterest, int totalInterest})? get _result {
     if (_principal <= 0 || _rate <= 0 || _years <= 0 || _years > 10) return null;
@@ -83,10 +84,10 @@ class _BeotimmokLoanScreenState extends State<BeotimmokLoanScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('전세자금 대출 (버팀목)의\n월 이자와 총 이자를 계산해드려요.',
+            Text('전세자금 대출 (버팀목)의\n월 이자와 총 이자를 계산해드려요.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsLG, ink, height: 1.5)),
             const SizedBox(height: 4),
-            Text('만기일시 방식 (매달 이자만, 만기에 원금 전액 상환).',
+            Text('만기일시 방식 (매달 이자만, 만기에 원금 전액 상환).'.keepWords,
                 style: AppTheme.sans(AppTheme.tsSM, tert)),
             const SizedBox(height: 16),
             _rateTable(sub, ink, line),
@@ -105,7 +106,7 @@ class _BeotimmokLoanScreenState extends State<BeotimmokLoanScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                     color: accentSoft, borderRadius: BorderRadius.circular(4)),
-                child: Text('대출금액·금리·기간을 입력하세요.',
+                child: Text('대출금액·금리·기간을 입력하세요.'.keepWords,
                     style: AppTheme.sans(AppTheme.tsMD, sub)),
               )
             else ...[
@@ -123,7 +124,7 @@ class _BeotimmokLoanScreenState extends State<BeotimmokLoanScreen> {
                         style: AppTheme.serif(AppTheme.serifLG, accent,
                             weight: FontWeight.w400)),
                     const SizedBox(height: 4),
-                    Text('만기 시 원금 ${_fmt.format(_principal)}원 전액 상환',
+                    Text('만기 시 원금 ${_fmt.format(_principal)}원 전액 상환'.keepWords,
                         style: AppTheme.sans(AppTheme.tsSM, sub)),
                   ],
                 ),
@@ -166,7 +167,7 @@ class _BeotimmokLoanScreenState extends State<BeotimmokLoanScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-            child: Text('2024년 기준 금리 (소득·유형 구간)',
+            child: Text('2024년 기준 금리 (소득·유형 구간)'.keepWords,
                 style: AppTheme.sans(AppTheme.tsSM, sub, weight: FontWeight.w600)),
           ),
           Divider(height: 1, thickness: 1, color: line),

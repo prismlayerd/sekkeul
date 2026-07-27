@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 class MonthlyRentTaxCreditScreen extends StatefulWidget {
   const MonthlyRentTaxCreditScreen({super.key});
@@ -77,10 +78,10 @@ class _MonthlyRentTaxCreditScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('연 급여와 월세를 입력하면\n공제 가능 금액을 알려드려요.',
+            Text('연 급여와 월세를 입력하면\n공제 가능 금액을 알려드려요.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsLG, ink, height: 1.5)),
             const SizedBox(height: 4),
-            Text('2024 귀속 기준. 무주택 세대주·세대원 대상.',
+            Text('2024 귀속 기준. 무주택 세대주·세대원 대상.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsSM, tert)),
             const SizedBox(height: 24),
             Divider(height: 1, thickness: 1, color: line),
@@ -97,7 +98,7 @@ class _MonthlyRentTaxCreditScreenState
                   color: accentSoft,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: Text('연 급여와 월세를 입력하면 결과가 나와요.',
+                child: Text('연 급여와 월세를 입력하면 결과가 나와요.'.keepWords,
                     style: AppTheme.sans(AppTheme.tsMD, sub)),
               )
             else if (!r.eligible)
@@ -113,7 +114,7 @@ class _MonthlyRentTaxCreditScreenState
                       size: 16, color: AppTheme.colorDanger),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text('총급여 8,000만원 초과 시 월세 세액공제 대상이 아니에요.',
+                    child: Text('총급여 8,000만원 초과 시 월세 세액공제 대상이 아니에요.'.keepWords,
                         style: AppTheme.sans(AppTheme.tsMD, AppTheme.colorDanger)),
                   ),
                 ]),

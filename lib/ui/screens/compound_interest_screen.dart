@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 class CompoundInterestScreen extends StatefulWidget {
   const CompoundInterestScreen({super.key});
@@ -41,8 +42,8 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
       double.tryParse(_principalController.text.replaceAll(',', '')) ?? 0.0;
   double get _monthly =>
       double.tryParse(_monthlyController.text.replaceAll(',', '')) ?? 0.0;
-  double get _rate => double.tryParse(_rateController.text) ?? 0.0;
-  int get _years => int.tryParse(_yearsController.text) ?? 0;
+  double get _rate => double.tryParse(_rateController.text.replaceAll(',', '')) ?? 0.0;
+  int get _years => int.tryParse(_yearsController.text.replaceAll(',', '')) ?? 0;
 
   List<(int year, double balance, double invested)> _buildData() {
     final rate = _rate / 100;
@@ -106,14 +107,14 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('복리의 마법으로\n자산 성장을 확인해요',
+            Text('복리의 마법으로\n자산 성장을 확인해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('월 복리 기준으로 계산됩니다.',
+            Text('월 복리 기준으로 계산됩니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -187,7 +188,7 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
                       Icon(Icons.trending_up_rounded,
                           color: primary, size: 20),
                       const SizedBox(width: 8),
-                      Text('${_years}년 후 예상 자산',
+                      Text('${_years}년 후 예상 자산'.keepWords,
                           style: TextStyle(
                               color: textColor,
                               fontSize: 14,
@@ -300,7 +301,7 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
                 padding: const EdgeInsets.all(20),
                 decoration: AppTheme.getAccentCardDecoration(context,
                     borderRadius: 20),
-                child: Text('투자금·수익률·기간을 입력해보세요.',
+                child: Text('투자금·수익률·기간을 입력해보세요.'.keepWords,
                     style: TextStyle(color: subColor, fontSize: 13)),
               ),
 

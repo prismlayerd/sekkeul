@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
+import '../theme/text_wrap.dart';
 
 /// 알림함 — 홈 우상단 벨 아이콘에서 진입.
 /// 발화된 즉시형 알림(문턱·예산·시즌 등) 기록을 최신순으로 표시.
@@ -43,7 +44,7 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         title: Text('알림 기록을 모두 지울까요?',
             style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
-        content: Text('지워진 기록은 복구할 수 없어요.',
+        content: Text('지워진 기록은 복구할 수 없어요.'.keepWords,
             style: AppTheme.sans(13, AppTheme.inkSecondary(ctx), height: 1.45)),
         actions: [
           TextButton(
@@ -126,7 +127,7 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
           Text('받은 알림이 없어요',
               style: AppTheme.sans(15, tert, weight: FontWeight.w600)),
           const SizedBox(height: 6),
-          Text('공제 문턱·예산 초과·세무 일정 알림이\n여기에 기록돼요.',
+          Text('공제 문턱·예산 초과·세무 일정 알림이\n여기에 기록돼요.'.keepWords,
               style: AppTheme.sans(13, tert, height: 1.5),
               textAlign: TextAlign.center),
         ]),

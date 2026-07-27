@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 /// 절세 유형 진단 — 4문항 순차 예/아니오 질문으로 N잡러 여부를 재판정.
 /// 온보딩(표제란 메타포)과 짝을 이루는 화면이라 같은 배너 글리프 어휘를 재사용한다.
@@ -96,7 +97,7 @@ class _TaxPersonaQuestionScreenState extends State<TaxPersonaQuestionScreen> {
               const SizedBox(height: 16),
               _progressTicks(),
               const SizedBox(height: 8),
-              Text('질문 ${_currentStep + 1} · 전체 ${_questions.length}',
+              Text('질문 ${_currentStep + 1} · 전체 ${_questions.length}'.keepWords,
                   style: AppTheme.sans(12, AppTheme.inkTertiary(context), weight: FontWeight.w600)),
               Expanded(
                 child: AnimatedSwitcher(

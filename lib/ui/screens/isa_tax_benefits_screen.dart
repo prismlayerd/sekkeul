@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 class IsaTaxBenefitsScreen extends StatefulWidget {
   const IsaTaxBenefitsScreen({super.key});
@@ -34,8 +35,8 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
       });
 
   int get _deposit => int.tryParse(_depositCtrl.text.replaceAll(',', '')) ?? 0;
-  double get _rate => double.tryParse(_rateCtrl.text) ?? 0;
-  int get _years => int.tryParse(_yearsCtrl.text) ?? 0;
+  double get _rate => double.tryParse(_rateCtrl.text.replaceAll(',', '')) ?? 0;
+  int get _years => int.tryParse(_yearsCtrl.text.replaceAll(',', '')) ?? 0;
 
   ({
     int totalDeposit,
@@ -112,7 +113,7 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('ISA 납입액·기간·수익률을 입력하면\n일반계좌 대비 절세 효과를 계산해드려요.',
+            Text('ISA 납입액·기간·수익률을 입력하면\n일반계좌 대비 절세 효과를 계산해드려요.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsLG, ink, height: 1.5)),
             const SizedBox(height: 24),
             Divider(height: 1, thickness: 1, color: line),
@@ -129,7 +130,7 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
                 children: [
                   Text('가입 유형', style: AppTheme.sans(AppTheme.tsBase, ink)),
                   const SizedBox(height: 4),
-                  Text('서민·농어민형은 비과세 한도 400만원 (일반형: 200만원)',
+                  Text('서민·농어민형은 비과세 한도 400만원 (일반형: 200만원)'.keepWords,
                       style: AppTheme.sans(AppTheme.tsSM, sub)),
                   const SizedBox(height: 10),
                   Row(
@@ -169,7 +170,7 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                     color: accentSoft, borderRadius: BorderRadius.circular(4)),
-                child: Text('납입액·수익률·기간을 입력하세요.',
+                child: Text('납입액·수익률·기간을 입력하세요.'.keepWords,
                     style: AppTheme.sans(AppTheme.tsMD, sub)),
               )
             else ...[

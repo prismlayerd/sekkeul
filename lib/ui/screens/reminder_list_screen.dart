@@ -10,6 +10,7 @@ import '../../core/notifications/reminder_scheduler.dart';
 import '../../core/security/notification_helper.dart';
 import '../../core/data/db_helper.dart';
 import 'reminder_form_screen.dart';
+import '../theme/text_wrap.dart';
 
 /// 만료 알림 프리셋 — 계산기 연동 없이 제목만 미리 채우고 날짜는 직접 입력.
 const List<(String, String)> kExpiryReminderPresets = [
@@ -141,7 +142,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                   Text('챙길 알림',
                       style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
                   const SizedBox(height: 10),
-                  Text('직접 만든 알림과 가계부 기록 넛지를 관리해요.',
+                  Text('직접 만든 알림과 가계부 기록 넛지를 관리해요.'.keepWords,
                       style: AppTheme.sans(14, sub, height: 1.55)),
                   const SizedBox(height: 18),
 

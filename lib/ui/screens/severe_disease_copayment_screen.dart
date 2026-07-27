@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class SevereDiseaseCopaymentScreen extends StatefulWidget {
   const SevereDiseaseCopaymentScreen({super.key});
@@ -101,7 +103,8 @@ class _SevereDiseaseCopaymentScreenState
             TextField(
               controller: _costCtrl,
               keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              textAlign: TextAlign.right,
+              inputFormatters: const [ThousandsFormatter()],
               style: AppTheme.sans(14, ink),
               decoration: InputDecoration(
                 hintText: '5,000,000',
@@ -165,7 +168,7 @@ class _SevereDiseaseCopaymentScreenState
                   const SizedBox(height: 8),
                   _row('산정특례 본인부담 (5%)', _won(_specialCopay), ink, sub),
                   const SizedBox(height: 12),
-                  Text('* 암·희귀난치·중증화상 등 대부분 5% 적용, 결핵은 0%(면제)입니다.',
+                  Text('* 암·희귀난치·중증화상 등 대부분 5% 적용, 결핵은 0%(면제)입니다.'.keepWords,
                       style: AppTheme.sans(11, sub)),
                 ],
               ),

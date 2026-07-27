@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 class HouseholdSeparationScreen extends StatefulWidget {
   const HouseholdSeparationScreen({super.key});
@@ -19,7 +21,7 @@ class _HouseholdSeparationScreenState
 
   static const int _incomeThresholdWon = 950000; // 기준중위소득 40%(1인) 참고치
 
-  int get _age => int.tryParse(_ageCtrl.text) ?? -1;
+  int get _age => int.tryParse(_ageCtrl.text.replaceAll(',', '')) ?? -1;
   double get _income =>
       double.tryParse(_incomeCtrl.text.replaceAll(',', '')) ?? 0;
   bool get _hasInput => _ageCtrl.text.isNotEmpty;
@@ -76,6 +78,7 @@ class _HouseholdSeparationScreenState
             TextField(
               controller: _ageCtrl,
               keyboardType: TextInputType.number,
+              textAlign: TextAlign.right,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: AppTheme.sans(14, ink),
               decoration: InputDecoration(
@@ -129,7 +132,8 @@ class _HouseholdSeparationScreenState
             TextField(
               controller: _incomeCtrl,
               keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              textAlign: TextAlign.right,
+              inputFormatters: const [ThousandsFormatter()],
               style: AppTheme.sans(14, ink),
               decoration: InputDecoration(
                 hintText: '100',
@@ -188,11 +192,11 @@ class _HouseholdSeparationScreenState
                       Text('충족 요건: $_basis',
                           style: AppTheme.sans(13, sub))
                     else
-                      Text('연령·혼인·소득 요건 중 하나도 충족하지 못했습니다.',
+                      Text('연령·혼인·소득 요건 중 하나도 충족하지 못했습니다.'.keepWords,
                           style: AppTheme.sans(13, sub)),
                     const SizedBox(height: 8),
                     if (!_hasHousing)
-                      Text('* 실제 별도 거주지가 없으면 위장전입으로 간주되어 분리가 불가합니다.',
+                      Text('* 실제 별도 거주지가 없으면 위장전입으로 간주되어 분리가 불가합니다.'.keepWords,
                           style: AppTheme.sans(11, sub)),
                   ],
                 ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'tax_simulator_screen.dart';
+import '../theme/text_wrap.dart';
 
 /// 소득 유형 점검 — 도면의 표제란(title block) 메타포.
 /// 소득 항목을 체크하면 하단 표제란이 근로/사업 인디케이터와 함께
@@ -117,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   Text('어떤 소득이\n있으신가요?',
                       style: AppTheme.serif(34, ink, spacing: -0.5, height: 1.2)),
                   const SizedBox(height: 12),
-                  Text('해당하는 항목을 모두 골라주세요. 아래 표제란이 유형을 판정해드려요.',
+                  Text('해당하는 항목을 모두 골라주세요. 아래 표제란이 유형을 판정해드려요.'.keepWords,
                       style: AppTheme.sans(13, sub, height: 1.5)),
                 ],
               ),
@@ -290,7 +291,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   child: verdict == null
-                      ? Text('항목을 선택하면\n유형이 표시돼요',
+                      ? Text('항목을 선택하면\n유형이 표시돼요'.keepWords,
                           key: const ValueKey('empty'),
                           style: AppTheme.sans(13, tert, height: 1.45))
                       : Column(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 class DiagnosisScreen extends StatelessWidget {
   final String userType;
@@ -29,7 +30,7 @@ class DiagnosisScreen extends StatelessWidget {
             Text('준비 중',
                 style: AppTheme.sans(15, AppTheme.inkSecondary(context))),
             const SizedBox(height: 8),
-            Text('소득·지출·세금 종합 진단이 곧 열립니다.',
+            Text('소득·지출·세금 종합 진단이 곧 열립니다.'.keepWords,
                 style: AppTheme.sans(13, AppTheme.inkTertiary(context))),
           ],
         ),

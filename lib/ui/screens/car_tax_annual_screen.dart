@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/amount_field.dart';
 
 class CarTaxAnnualScreen extends StatefulWidget {
   const CarTaxAnnualScreen({super.key});
@@ -138,7 +139,8 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textAlign: TextAlign.right,
+          inputFormatters: const [ThousandsFormatter()],
           style: AppTheme.sans(14, ink),
           decoration: InputDecoration(
             suffixText: '원',

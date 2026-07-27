@@ -15,6 +15,7 @@ import '../../core/data/backup_service.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/security/app_lock_service.dart';
 import 'notification_settings_screen.dart';
+import '../theme/text_wrap.dart';
 
 /// 설정 — 홈 우상단 톱니에서 진입.
 /// 알림(마스터+세부) · 화면 테마 · 데이터 수집방식 · 백업/복원 · 개인정보처리방침 · 면책 · 파기 · 버전.
@@ -78,7 +79,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: Theme.of(ctx).cardColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          title: Text('PIN 설정 (4~6자리 숫자)',
+          title: Text('PIN 설정 (4~6자리 숫자)'.keepWords,
               style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -207,7 +208,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: Text('백업에서 복원할까요?',
             style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
-        content: Text('지금 기기에 있는 데이터는 백업 내용으로 덮어써져요.',
+        content: Text('지금 기기에 있는 데이터는 백업 내용으로 덮어써져요.'.keepWords,
             style: AppTheme.sans(14, AppTheme.inkSecondary(ctx), height: 1.45)),
         actions: [
           TextButton(
@@ -255,7 +256,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('앱에 대한 의견이나 불편한 점을 적어주세요.\n제 메일로 바로 전달돼요.',
+            Text('앱에 대한 의견이나 불편한 점을 적어주세요.\n제 메일로 바로 전달돼요.'.keepWords,
                 style: AppTheme.sans(13, AppTheme.inkSecondary(ctx), height: 1.5)),
             const SizedBox(height: 12),
             TextField(

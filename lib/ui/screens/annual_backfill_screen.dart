@@ -4,6 +4,8 @@ import '../../core/data/db_helper.dart';
 import '../../core/data/expense_item.dart';
 import '../../core/data/income_entry.dart';
 import '../theme/app_theme.dart';
+import '../components/amount_field.dart';
+import '../theme/text_wrap.dart';
 
 /// 연중 가입 사용자를 위한 1~N월 소급 입력 — 간단히 결제수단·소득유형별 총액만 받는다.
 /// 실제 expenses/income_entries에 매달 1건씩 기록(카테고리는 세분화하지 않음).
@@ -113,6 +115,8 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
         child: TextField(
           controller: c,
           keyboardType: TextInputType.number,
+          inputFormatters: const [ThousandsFormatter()],
+          textAlign: TextAlign.right,
           decoration: InputDecoration(
             isDense: true,
             labelText: label,
@@ -167,7 +171,7 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
                     if (row.hasData)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Text('${row.month}월 — 이미 기록 있음', style: AppTheme.sans(13, tert)),
+                        child: Text('${row.month}월 — 이미 기록 있음'.keepWords, style: AppTheme.sans(13, tert)),
                       )
                     else
                       Padding(

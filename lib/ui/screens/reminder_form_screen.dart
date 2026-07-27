@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../../core/notifications/reminder.dart';
 import '../../core/notifications/custom_reminder_service.dart';
+import '../theme/text_wrap.dart';
 
 /// '내가 만든' 알림 추가·수정 — 풀스크린(바텀시트 금지).
 /// 제목 · 반복(한번/매일/매주/매월) · 조건부(날짜/요일/일) · 인라인 시각.
@@ -113,7 +114,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: Text('알림을 삭제할까요?', style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
-        content: Text('이 알림과 예약된 알림이 함께 사라져요.', style: AppTheme.sans(14, AppTheme.inkSecondary(ctx), height: 1.45)),
+        content: Text('이 알림과 예약된 알림이 함께 사라져요.'.keepWords, style: AppTheme.sans(14, AppTheme.inkSecondary(ctx), height: 1.45)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('취소', style: AppTheme.sans(14, AppTheme.inkSecondary(ctx)))),
           TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('삭제', style: AppTheme.sans(14, AppTheme.colorDanger, weight: FontWeight.w700))),
@@ -167,7 +168,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
               const SizedBox(height: 12),
               Text(_titleCtrl.text, style: AppTheme.sans(15, ink, weight: FontWeight.w700)),
               const SizedBox(height: 8),
-              Text('기본 제공 알림은 시각만 바꿀 수 있어요.',
+              Text('기본 제공 알림은 시각만 바꿀 수 있어요.'.keepWords,
                   style: AppTheme.sans(12, AppTheme.inkTertiary(context), height: 1.45)),
             ] else ...[
               // ── 제목 ──

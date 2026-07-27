@@ -7,6 +7,7 @@ import '../components/calc_disclaimer.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/tax_engine/combined_tax.dart';
 import '../../core/tax_engine/tax_rates.dart';
+import '../theme/text_wrap.dart';
 
 /// 금융소득 종합과세 시뮬레이터
 /// 엔진: CombinedTaxCalculator.calculateFinancialIncomeTax (소득세법 §62)
@@ -114,10 +115,10 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('이자·배당이 많다면\n세금이 더 붙을 수 있어요',
+            Text('이자·배당이 많다면\n세금이 더 붙을 수 있어요'.keepWords,
                 style: TextStyle(color: textColor, fontSize: 22, fontWeight: FontWeight.bold, height: 1.4)),
             const SizedBox(height: 8),
-            Text('연간 금융소득이 2,000만원을 넘으면 종합소득에 합산되어 더 높은 세율이 적용됩니다.',
+            Text('연간 금융소득이 2,000만원을 넘으면 종합소득에 합산되어 더 높은 세율이 적용됩니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -261,7 +262,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
           Row(children: [
             Icon(Icons.check_circle_rounded, color: AppTheme.colorSuccess, size: 20),
             const SizedBox(width: 8),
-            Text('분리과세 완납 — 신고 불필요',
+            Text('분리과세 완납 — 신고 불필요'.keepWords,
                 style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 12),
@@ -286,11 +287,11 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
           Row(children: [
             Icon(Icons.assignment_rounded, color: Colors.redAccent, size: 20),
             const SizedBox(width: 8),
-            Text('종합과세 대상 — 5월 신고 필요',
+            Text('종합과세 대상 — 5월 신고 필요'.keepWords,
                 style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 12),
-          Text('추가 세부담 ${_toManwon(r.additionalTaxBurden)}',
+          Text('추가 세부담 ${_toManwon(r.additionalTaxBurden)}'.keepWords,
               style: TextStyle(color: Colors.redAccent, fontSize: 28, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
           Text('(종합과세 기준)',

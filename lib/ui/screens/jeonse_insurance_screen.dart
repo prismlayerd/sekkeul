@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
+import '../theme/text_wrap.dart';
 
 class JeonseInsuranceScreen extends StatefulWidget {
   const JeonseInsuranceScreen({super.key});
@@ -35,7 +36,7 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
       });
 
   int get _deposit => int.tryParse(_depositCtrl.text.replaceAll(',', '')) ?? 0;
-  int get _months => int.tryParse(_monthsCtrl.text) ?? 0;
+  int get _months => int.tryParse(_monthsCtrl.text.replaceAll(',', '')) ?? 0;
 
   ({int hug, int hf, int sgi})? get _result {
     if (_deposit <= 0 || _months <= 0 || _months > 120) return null;
@@ -80,7 +81,7 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('전세보증금과 보증기간을 입력하면\nHUG·HF·SGI 3개 기관 보증료를 한눈에 비교해드려요.',
+            Text('전세보증금과 보증기간을 입력하면\nHUG·HF·SGI 3개 기관 보증료를 한눈에 비교해드려요.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsLG, ink, height: 1.5)),
             const SizedBox(height: 24),
             Divider(height: 1, thickness: 1, color: line),
@@ -98,7 +99,7 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
                     children: [
                       Text('청년 할인 (HF)', style: AppTheme.sans(AppTheme.tsBase, ink)),
                       const SizedBox(height: 2),
-                      Text('만 34세 이하 · HF 요율 0.02% 적용',
+                      Text('만 34세 이하 · HF 요율 0.02% 적용'.keepWords,
                           style: AppTheme.sans(AppTheme.tsSM, sub)),
                     ],
                   ),
@@ -141,7 +142,7 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                     color: accentSoft, borderRadius: BorderRadius.circular(4)),
-                child: Text('전세보증금·보증기간을 입력하세요.',
+                child: Text('전세보증금·보증기간을 입력하세요.'.keepWords,
                     style: AppTheme.sans(AppTheme.tsMD, sub)),
               )
             else ...[

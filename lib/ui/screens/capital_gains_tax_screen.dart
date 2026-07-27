@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 class _TaxResult {
   final double gain;
@@ -68,7 +69,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
       double.tryParse(_acquireController.text.replaceAll(',', '')) ?? 0.0;
   double get _transfer =>
       double.tryParse(_transferController.text.replaceAll(',', '')) ?? 0.0;
-  int get _years => int.tryParse(_yearsController.text) ?? 0;
+  int get _years => int.tryParse(_yearsController.text.replaceAll(',', '')) ?? 0;
 
   double get _ltdRate {
     final y = _years;
@@ -149,14 +150,14 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('부동산 양도 시\n납부할 세금을 계산해요',
+            Text('부동산 양도 시\n납부할 세금을 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('장기보유특별공제 · 기본공제 250만원 · 지방소득세 10% 포함',
+            Text('장기보유특별공제 · 기본공제 250만원 · 지방소득세 10% 포함'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -211,7 +212,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold)),
                           const SizedBox(height: 4),
-                          Text('3년 이상부터 장기보유특별공제 적용',
+                          Text('3년 이상부터 장기보유특별공제 적용'.keepWords,
                               style: TextStyle(
                                   color: subColor.withValues(alpha: 0.8),
                                   fontSize: 11)),
@@ -234,7 +235,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
                           Text('1세대 1주택',
                               style:
                                   TextStyle(color: textColor, fontSize: 14)),
-                          Text('보유+거주 3년↑, 공제율 연 8% (최대 80%)',
+                          Text('보유+거주 3년↑, 공제율 연 8% (최대 80%)'.keepWords,
                               style: TextStyle(
                                   color: subColor.withValues(alpha: 0.8),
                                   fontSize: 11)),
@@ -249,7 +250,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
                   ),
                   if (_years >= 3) ...[
                     const SizedBox(height: 8),
-                    Text('장기보유특별공제율: ${_pct(_ltdRate)}',
+                    Text('장기보유특별공제율: ${_pct(_ltdRate)}'.keepWords,
                         style: TextStyle(
                             color: primary,
                             fontSize: 12,

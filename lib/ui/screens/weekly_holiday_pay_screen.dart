@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../theme/text_wrap.dart';
 
 /// 주휴수당 · 최저임금 계산기 (2026년 기준)
 /// 최저임금: 10,320원/시간
@@ -43,7 +44,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
       double.tryParse(_hourlyController.text.replaceAll(',', '')) ?? 0.0;
 
   double get _dailyHours =>
-      double.tryParse(_dailyHoursController.text) ?? 0.0;
+      double.tryParse(_dailyHoursController.text.replaceAll(',', '')) ?? 0.0;
 
   String _won(double v) => v <= 0 ? '0원' : '${_fmt.format(v.round())}원';
 
@@ -92,14 +93,14 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('아르바이트 급여,\n주휴수당까지 확인해요',
+            Text('아르바이트 급여,\n주휴수당까지 확인해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('주 15시간 이상 일하면 주휴수당이 발생합니다. (2026 최저임금 10,320원)',
+            Text('주 15시간 이상 일하면 주휴수당이 발생합니다. (2026 최저임금 10,320원)'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -113,7 +114,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
               child: Row(children: [
                 Icon(Icons.info_outline_rounded, color: primary, size: 18),
                 const SizedBox(width: 10),
-                Text('2026년 최저임금 시급 10,320원',
+                Text('2026년 최저임금 시급 10,320원'.keepWords,
                     style: TextStyle(
                         color: primary,
                         fontSize: 13,
@@ -150,7 +151,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                         const Icon(Icons.warning_rounded,
                             color: Colors.redAccent, size: 14),
                         const SizedBox(width: 6),
-                        Text('최저임금 미달 (10,320원 이상이어야 합니다)',
+                        Text('최저임금 미달 (10,320원 이상이어야 합니다)'.keepWords,
                             style: TextStyle(
                                 color: Colors.redAccent,
                                 fontSize: 12,
@@ -272,7 +273,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                     _row('월 예상 수령액 (52주÷12 기준)',
                         _won(monthlyPay), subColor, primary),
                   ] else
-                    Text('시급과 근무조건을 입력해보세요.',
+                    Text('시급과 근무조건을 입력해보세요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 13)),
                 ],
               ),
