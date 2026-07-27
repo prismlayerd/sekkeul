@@ -152,6 +152,55 @@ void main() {
       }
     });
 
+    test('기타소득은 업종 경비율이 아니라 정률 60%로 계산된다', () {
+      // 강사료 1,000만원을 사업소득으로 넣으면 업종 경비율(64.1%)이 붙고,
+      // 기타소득으로 넣으면 정률 60%가 붙는다. 가계부에 '기타소득'으로 적은 돈을
+      // 계산기가 사업소득으로 삼키면 과세표준이 달라진다.
+      final asBusiness = FreelancerTaxCalculator.calculateTaxSimulation(
+        accumulatedIncome: 30000000 + 10000000,
+        inputMonths: 12, allowanceCount: 0, occupationCode: occ,
+      );
+      final asOther = FreelancerTaxCalculator.calculateTaxSimulation(
+        accumulatedIncome: 30000000,
+        accumulatedOtherIncome: 10000000,
+        inputMonths: 12, allowanceCount: 0, occupationCode: occ,
+      );
+      // ignore: avoid_print
+      print('강사료 1,000만 — 사업소득으로 처리 과표 ${won(asBusiness.taxBase)}'
+          ' / 기타소득으로 처리 과표 ${won(asOther.taxBase)}');
+      expect(asOther.taxBase, isNot(closeTo(asBusiness.taxBase, 1)),
+          reason: '두 처리가 같은 값이면 기타소득이 무시되고 있는 것');
+      // 기타소득금액 = 수입 × 40%.
+      expect(asOther.otherIncomeAmount, closeTo(10000000 * 0.4, 1));
+    });
+
+    test('기타소득 300만원 이하는 종합·분리 중 싼 쪽을 고른다 (소법 §14③8)', () {
+      // 분리과세는 **수입 전체**에 8.8%, 종합과세는 **소득금액(수입의 40%)**에
+      // 한계세율×1.1. 그래서 갈림길은 한계세율 22%(지방 포함 24.2%)다.
+      //   15% 구간 → 15×1.1×0.4 = 6.6% < 8.8% → 종합이 싸다
+      //   35% 구간 → 35×1.1×0.4 = 15.4% > 8.8% → 분리가 싸다
+      FreelancerTaxResult run(double biz) =>
+          FreelancerTaxCalculator.calculateTaxSimulation(
+            accumulatedIncome: biz,
+            accumulatedOtherIncome: 7000000, // 기타소득금액 280만 → 300만 이하
+            inputMonths: 12, allowanceCount: 0, occupationCode: occ,
+          );
+
+      final low = run(60000000);
+      // ignore: avoid_print
+      print('사업 6,000만 + 기타 700만 → 종합과세=${low.otherIncomeComprehensive}'
+          ' (합산 ${won(low.otherIncomeAmount)})');
+      expect(low.otherIncomeComprehensive, isTrue, reason: '낮은 구간은 종합이 싸다');
+      expect(low.otherIncomeAmount, closeTo(2800000, 1));
+
+      final high = run(200000000);
+      // ignore: avoid_print
+      print('사업 2억 + 기타 700만 → 종합과세=${high.otherIncomeComprehensive}'
+          ' (합산 ${won(high.otherIncomeAmount)})');
+      expect(high.otherIncomeComprehensive, isFalse, reason: '높은 구간은 분리가 싸다');
+      expect(high.otherIncomeAmount, 0, reason: '분리과세면 과세표준에 안 들어간다');
+    });
+
     test('국민연금을 내면 그만큼 과세표준이 줄어든다 (소법 §51의3)', () {
       FreelancerTaxResult run(bool pays) => FreelancerTaxCalculator.calculateTaxSimulation(
             accumulatedIncome: 40000000,

@@ -291,6 +291,8 @@ class FreelancerTaxCalculator {
       childTaxCredit: childTaxCredit,
       pensionPremiumDeduction: pensionPremiumDeduction,
       totalDeduction: totalDeduction,
+      otherIncomeAmount: includedOtherIncomeAmount,
+      otherIncomeComprehensive: otherIncomeComprehensive,
     );
   }
 
@@ -458,6 +460,10 @@ class FreelancerTaxResult {
   final double pensionPremiumDeduction;
   /// 소득공제 합계 (인적 + 장애인 + 노란우산 + 국민연금).
   final double totalDeduction;
+  /// 과세표준에 합산된 기타소득금액 (분리과세를 택했으면 0).
+  final double otherIncomeAmount;
+  /// 기타소득을 종합과세에 넣었는가 (거짓이면 원천징수 8.8%로 과세 종결).
+  final bool otherIncomeComprehensive;
 
   FreelancerTaxResult({
     required this.annualEstimatedIncome,
@@ -487,5 +493,7 @@ class FreelancerTaxResult {
     required this.childTaxCredit,
     this.pensionPremiumDeduction = 0.0,
     this.totalDeduction = 0.0,
+    this.otherIncomeAmount = 0.0,
+    this.otherIncomeComprehensive = true,
   });
 }

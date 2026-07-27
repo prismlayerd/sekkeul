@@ -176,6 +176,8 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     _profileCache = profile ?? {};
     _applySavedPicks(profile);
     double annualIncome = 0.0;
+    double ledgerMainIncome = 0.0;   // 급여·사업소득
+    double ledgerOtherIncome = 0.0;  // 기타소득 (강사료·원고료 등)
     double priorYearIncome = 0.0;
     bool isNewBusiness = false;
     bool hasMultipleBusinesses = false;
@@ -192,17 +194,25 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     bool isYouthSme = false;
     OccupationInfo? profileOccupation;
     if (profile != null) {
-      final gross = profile['gross_income'] as double? ?? 0.0;
-      if (gross > 0) {
-        annualIncome = gross;
-      } else {
-        // 유형별로 필터링된 달력 기록 합산 — 다른 유형으로 기록한 소득이 섞이지 않도록
-        // monthly_income_records(유형 미분리 캐시) 대신 income_entries를 직접 월별 합산한다.
-        for (int m = 1; m <= 12; m++) {
-          final monthEntries = await dbService.getIncomeEntriesForMonth(now.year, m, userType: widget.userType);
-          annualIncome += monthEntries.fold(0.0, (a, e) => a + e.amount);
+      // 기타소득(강사료·원고료 등)은 사업소득과 계산이 다르다 — 업종 경비율이 아니라
+      // 정률 60%를 빼고, 소득금액 300만원 이하면 분리과세를 고를 수도 있다.
+      // 그래서 달력 기록을 합칠 때 소득종류로 갈라 담는다. 예전엔 종류를 안 가리고
+      // 통째로 더해 기타소득이 사업소득 경비율로 계산됐다.
+      for (int m = 1; m <= 12; m++) {
+        final monthEntries = await dbService.getIncomeEntriesForMonth(now.year, m, userType: widget.userType);
+        for (final e in monthEntries) {
+          if (e.incomeType == '기타소득') {
+            ledgerOtherIncome += e.amount;
+          } else {
+            ledgerMainIncome += e.amount;
+          }
         }
       }
+
+      final gross = profile['gross_income'] as double? ?? 0.0;
+      // 유형별로 필터링된 달력 기록을 쓴다 — 다른 유형으로 기록한 소득이 섞이지 않도록
+      // monthly_income_records(유형 미분리 캐시) 대신 income_entries를 직접 합산한다.
+      annualIncome = gross > 0 ? gross : ledgerMainIncome;
       dependentCount = profile['dependents'] as int? ?? 0;
       hasSelfDisability = profile['has_self_disability'] == true;
       disabledDependentCount = profile['disabled_dependent_count'] as int? ?? 0;
@@ -263,6 +273,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     }
     if (priorYearIncome > 0) {
       _priorYearIncomeController.text = priorYearIncome.toInt().toString();
+    }
+    // 가계부에 기타소득을 적었으면 계산기에도 올린다 — 적립 카드는 이미 쓰고 있는데
+    // 계산기만 무시해, 같은 기록으로 두 화면이 다른 세금을 말하고 있었다.
+    if (ledgerOtherIncome > 0 && _otherIncomeController.text.isEmpty) {
+      _otherIncomeController.text = ledgerOtherIncome.toInt().toString();
     }
 
     setState(() {
@@ -501,6 +516,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       }
       final income = double.tryParse(_freelancerIncomeController.text.replaceAll(',', '')) ?? 0.0;
       final months = int.tryParse(_monthsController.text.replaceAll(',', '')) ?? 12;
+      // 기타소득은 업종 경비율이 아니라 정률 60%로 계산되고, 소득금액 300만원 이하면
+      // 분리과세를 고를 수 있다. 엔진이 그 분기를 갖고 있으므로 따로 넘긴다.
+      final otherIncomeFree = double.tryParse(_otherIncomeController.text.replaceAll(',', '')) ?? 0.0;
       final yellowUmbrella = _hasYellowUmbrella ? (double.tryParse(_yellowUmbrellaController.text.replaceAll(',', '')) ?? 0.0) : 0.0;
       final judgment = _bookkeepingJudgment;
 
@@ -529,6 +547,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           hasSelfDisability: _hasSelfDisability,
           forceStandardExpenseRate: !simpleRateEligible,
           paysNationalPension: _paysNationalPension,
+          accumulatedOtherIncome: otherIncomeFree,
         );
         setState(() {
           _bookkeepingComparison = comparison;
@@ -549,6 +568,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           disabledDependentCount: _disabledDependentCount,
           hasSelfDisability: _hasSelfDisability,
           paysNationalPension: _paysNationalPension,
+          accumulatedOtherIncome: otherIncomeFree,
           useStandardExpenseRate: !simpleRateEligible,
         );
         setState(() {
@@ -1568,6 +1588,8 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       items = [
         {'title': '총수입금액 (연환산)', 'amount': r.annualEstimatedIncome, 'isHeader': true},
         {'title': '(-) 필요경비 (단순/기준경비율 적용)', 'amount': r.estimatedExpense},
+        if (r.otherIncomeAmount > 0)
+          {'title': '(+) 기타소득금액 (수입의 40%)', 'amount': r.otherIncomeAmount},
         {'title': '(-) 소득공제 (인적·노란우산·국민연금 등)', 'amount': r.totalDeduction},
         {'title': '(=) 과세표준', 'amount': r.taxBase, 'isHeader': true, 'highlight': true},
         {'title': '(×) 산출세액 (지방세 포함)', 'amount': r.annualIncomeTax + r.annualLocalTax},
@@ -2041,9 +2063,10 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                 ),
                 ],
 
-                // N잡러 전용: 연금소득·기타소득 등 — 근로소득 관련 항목이라 사업분
-                // 기장의무 판정(복식부기)과 무관하게 항상 노출한다("기장/추계는 사업분에만").
-                if (_isEmployee && _isFreelancer) ...[
+                // 연금소득·기타소득 — 사업분 기장의무 판정(복식부기)과 무관하므로
+                // 항상 노출한다("기장/추계는 사업분에만"). 프리랜서도 강사료·원고료를
+                // 받으면 기타소득이 생기고, 60대는 연금소득이 함께 잡힌다.
+                ...[
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: AppTheme.getCardDecoration(context),
