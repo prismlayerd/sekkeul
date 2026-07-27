@@ -819,4 +819,37 @@ void main() {
       expect(none.healthInsurance, 0);
     });
   });
+
+  // 자녀세액공제(소득세법 §59의2)는 "종합소득이 있는 거주자"가 대상이다.
+  // ①(기본)과 ③(출산·입양)을 ④가 묶어 '자녀세액공제'라 부른다 — 프리랜서도 둘 다 받는다.
+  // 앱은 오랫동안 프리랜서에게 ①만 주고 ③을 빠뜨렸다.
+  group('프리랜서 출산·입양 세액공제 (소득세법 §59의2③)', () {
+    FreelancerTaxResult run({int children = 0, int newborn = 0}) =>
+        FreelancerTaxCalculator.calculateTaxSimulation(
+          accumulatedIncome: 60000000,
+          inputMonths: 12,
+          allowanceCount: 0,
+          occupationCode: '940909',
+          childrenCountForCredit: children,
+          newbornCount: newborn,
+        );
+
+    test('출산 1명 → 30만원이 자녀세액공제에 더해진다', () {
+      expect(run(newborn: 1).childTaxCredit - run().childTaxCredit, 300000);
+    });
+
+    test('둘째 50만·셋째 이상 70만 — 직장인 산식과 같다', () {
+      expect(run(newborn: 2).childTaxCredit, 800000);   // 30만 + 50만
+      expect(run(newborn: 3).childTaxCredit, 1500000);  // + 70만
+    });
+
+    test('기본 자녀공제와 합산된다 (①+③)', () {
+      // 자녀 1명(25만) + 출산 1명(30만) = 55만
+      expect(run(children: 1, newborn: 1).childTaxCredit, 550000);
+    });
+
+    test('출산이 없으면 종전과 동일 — 회귀 없음', () {
+      expect(run(children: 2).childTaxCredit, 550000);
+    });
+  });
 }

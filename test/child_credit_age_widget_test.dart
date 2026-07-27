@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/core/tax_engine/tax_rates.dart';
 import 'package:secul/ui/screens/dependent_deduction_screen.dart';
+import 'package:secul/ui/screens/tax_simulator_screen.dart';
 
 /// 자녀세액공제 대상 연령 문구가 화면까지 실제로 내려오는지 확인한다.
 ///
@@ -25,5 +26,20 @@ void main() {
         reason: '기준 귀속연도의 출생연도 안내($label)가 보여야 한다');
     expect(find.textContaining('8세 이상'), findsNothing,
         reason: '연도와 무관한 "8세 이상"은 2026 귀속부터 틀린 안내다');
+  });
+
+  testWidgets('세금 계산기(프리랜서) — 출산·입양 입력이 보인다', (t) async {
+    t.view.physicalSize = const Size(1200, 6000);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    await t.pumpWidget(const MaterialApp(home: TaxSimulatorScreen(userType: '프리랜서')));
+    await t.pumpAndSettle();
+
+    // 자녀세액공제는 종합소득자 전원 대상 — 프리랜서 화면에도 ①과 ③이 모두 있어야 한다.
+    expect(find.textContaining('자녀 수'), findsWidgets);
+    expect(find.textContaining('올해 출산·입양한 자녀 수'), findsOneWidget,
+        reason: '소득세법 §59의2③은 프리랜서에게도 적용된다');
   });
 }

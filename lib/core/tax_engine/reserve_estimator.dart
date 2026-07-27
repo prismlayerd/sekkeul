@@ -281,6 +281,7 @@ class ReserveEstimator {
           occupationCode: occupationCode,
           yellowUmbrellaPayment: yellowUmbrella,
           childrenCountForCredit: childrenCountForCredit,
+          newbornCount: newbornCount,
           disabledDependentCount: disabledDeps,
           hasSelfDisability: selfDisability,
           useStandardExpenseRate: pinnedStandardRate,
@@ -301,6 +302,7 @@ class ReserveEstimator {
           occupationCode: occupationCode,
           yellowUmbrellaPayment: yellowUmbrella,
           childrenCountForCredit: childrenCountForCredit,
+          newbornCount: newbornCount,
           disabledDependentCount: disabledDeps,
           hasSelfDisability: selfDisability,
         );
@@ -495,6 +497,7 @@ class ReserveEstimator {
           occupationCode: occupationCode,
           yellowUmbrellaPayment: yellowUmbrella,
           childrenCountForCredit: childrenCountForCredit,
+          newbornCount: newbornCount,
           disabledDependentCount: disabledDeps,
           hasSelfDisability: selfDisability,
           forceStandardExpenseRate: pinnedStandardRate,
