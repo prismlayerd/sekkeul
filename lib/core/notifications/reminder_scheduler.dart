@@ -303,24 +303,4 @@ class ReminderScheduler {
     );
   }
 
-  /// 월말 마감 알림 — 이번 달(또는 다음 달) 말일 20:00 (id=2003).
-  static Future<void> scheduleMonthEnd() async {
-    final now = DateTime.now();
-    int year  = now.year;
-    int month = now.month;
-    int lastDay = DateUtils.getDaysInMonth(year, month);
-    var when = DateTime(year, month, lastDay, 20);
-    if (!when.isAfter(now)) {
-      month   = month == 12 ? 1 : month + 1;
-      year    = month == 1  ? year + 1 : year;
-      lastDay = DateUtils.getDaysInMonth(year, month);
-      when    = DateTime(year, month, lastDay, 20);
-    }
-    await notificationHelper.scheduleAtDate(
-      id: 2003,
-      title: '이달 가계부 마감해요',
-      body: '이번 달 수입·지출을 확인하고 마무리해 보세요.',
-      when: when,
-    );
-  }
 }

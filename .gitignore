@@ -50,3 +50,6 @@ app.*.map.json
 # 내부 사업·성장 전략 문서 (민감 — GitHub 미공개)
 /성장계획.html
 /성장계획.pdf
+
+# 빌드 산출물 — 예전에 android/build 아래 리포트 한 개가 추적되고 있었다.
+android/build/

@@ -367,25 +367,6 @@ class AppTheme {
     );
   }
 
-  /// 패널 헤더 — 작은 선 아이콘 + 라벨(대문자 도면 주석) + 우측 액션.
-  /// 패널이 무슨 기능을 하는지 한 줄로 알려준다.
-  static Widget panelHeader(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    Widget? trailing,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, size: 15, color: inkTertiary(context)),
-        const SizedBox(width: 7),
-        Text(label.toUpperCase(), style: AppTheme.label(context)),
-        const Spacer(),
-        if (trailing != null) trailing,
-      ],
-    );
-  }
-
   /// 파란 테두리 도면 배지 (예: "5월 신고")
   static Widget blueprintBadge(BuildContext context, String text) {
     final accent = accentColor(context);
