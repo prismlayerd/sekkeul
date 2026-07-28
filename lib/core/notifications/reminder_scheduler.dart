@@ -176,7 +176,7 @@ class ReminderScheduler {
       await notificationHelper.scheduleAtDate(
         id: 2100 + i,
         title: '$name 결제일이에요',
-        body: '카드 결제 내역을 가계부에서 확인해 보세요.',
+        body: '가계부에 남겨두면 편해요',
         when: when,
         matchComponents: DateTimeComponents.dayOfMonthAndTime,
       );
@@ -200,8 +200,8 @@ class ReminderScheduler {
     final target = DateTime(now.year, now.month, now.day + 1, pref.hour, pref.minute);
     await notificationHelper.scheduleNotification(
       id: idInactivityNudge,
-      title: '가계부 기록이 없어요',
-      body: '최근 며칠간 지출 기록이 없네요. 잠깐 기록해 볼까요?',
+      title: '기록이 비었어요',
+      body: '며칠째 지출 기록이 없어요',
       delay: target.difference(now),
     );
   }
@@ -226,7 +226,7 @@ class ReminderScheduler {
       await notificationHelper.scheduleAtDate(
         id: 2200 + i,
         title: '오늘 ${t.name} 결제일이에요',
-        body: '가계부에 기록해서 잊지 않게 챙겨보세요.',
+        body: '가계부에 남겨둘까요?',
         when: when,
         matchComponents: DateTimeComponents.dayOfMonthAndTime,
       );
@@ -251,7 +251,7 @@ class ReminderScheduler {
     await notificationHelper.scheduleNotification(
       id: idIncomeInactivityNudge,
       title: '수입 기록이 없어요',
-      body: '최근 며칠간 수입 기록이 없네요. 잠깐 기록해 볼까요?',
+      body: '며칠째 수입 기록이 없어요',
       delay: target.difference(now),
     );
   }
@@ -278,7 +278,7 @@ class ReminderScheduler {
     await notificationHelper.scheduleNotification(
       id: idTaxReserveShortfall,
       title: '세금 적립이 부족해요',
-      body: '현재 권장 적립률보다 $shortfallPct% 부족해요. 가계부에서 확인해 보세요.',
+      body: '권장보다 $shortfallPct% 모자라요',
       delay: target.difference(now),
     );
   }
@@ -297,8 +297,8 @@ class ReminderScheduler {
     final target = DateTime(now.year, now.month, now.day + 1, pref.hour, pref.minute);
     await notificationHelper.scheduleNotification(
       id: idFreelancerHealthUninsured,
-      title: '건강보험 지역가입자 등록을 확인해보세요',
-      body: '프리랜서는 건강보험을 스스로 가입해야 해요. 내 정보에서 미가입으로 표시돼 있어요 — 지역가입자 등록을 하셨는지 확인해보세요. (배우자 등 가족의 피부양자로 등재돼 있다면 해당 없어요.)',
+      title: '건강보험 확인해보세요',
+      body: '프리랜서는 직접 가입해야 해요. 등록하셨나요?',
       delay: target.difference(now),
     );
   }

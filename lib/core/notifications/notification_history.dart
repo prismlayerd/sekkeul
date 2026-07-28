@@ -40,8 +40,8 @@ class NotificationHistory {
     for (final r in reminders.where((r) => r.enabled)) {
       for (final when in _occurrences(r, from, to)) {
         await dbService.insertNotificationLog(
-          title: '세끌 리마인더',
-          body: r.title,
+          title: r.title,
+          body: '',
           category: 'reminder',
           firedAt: when,
         );

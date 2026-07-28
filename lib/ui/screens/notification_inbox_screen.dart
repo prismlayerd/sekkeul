@@ -167,8 +167,10 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
                   const SizedBox(width: 8),
                   Text(firedAt, style: AppTheme.sans(12, tert)),
                 ]),
-                const SizedBox(height: 4),
-                Text(body, style: AppTheme.sans(13, sub, height: 1.45)),
+                if (body.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(body, style: AppTheme.sans(13, sub, height: 1.45)),
+                ],
               ],
             ),
           ),

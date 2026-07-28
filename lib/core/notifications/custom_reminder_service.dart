@@ -48,7 +48,7 @@ class CustomReminderService {
     return updated;
   }
 
-  static const String _payDayRecordTitle = '월급날이에요! 가계부에 기록해볼까요?';
+  static const String _payDayRecordTitle = '월급날이에요! 기록해볼까요?';
   static const String _freelancerRecordTitle = '가계부에 오늘 기록해볼까요?';
 
   /// 기록 넛지 시드 — 최초 1회만 reminders에 'record' 항목을 만든다(매월·급여일·18시).
@@ -152,8 +152,8 @@ class CustomReminderService {
         try {
           await notificationHelper.scheduleAtDate(
             id: _weeklySubId(notifId, wd),
-            title: '세끌 리마인더',
-            body: r.title,
+            title: r.title,
+            body: '',
             when: when,
             matchComponents: DateTimeComponents.dayOfWeekAndTime,
           );
@@ -172,8 +172,8 @@ class CustomReminderService {
     try {
       await notificationHelper.scheduleAtDate(
         id: notifId,
-        title: '세끌 리마인더',
-        body: r.title,
+        title: r.title,
+        body: '',
         when: when,
         matchComponents: _matchFor(r.frequency),
       );
