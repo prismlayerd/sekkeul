@@ -98,7 +98,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     }
     return [
       (label: '예상 연봉', filled: d('gross_income') > 0),
-      (label: '나이', filled: i('age') > 0),
+      (label: '만 나이', filled: i('age') > 0),
       (label: '부양가족', filled: p.containsKey('dependents')),
       // 자녀 수는 카드공제 한도(자녀 1명당 +50만)와 자녀세액공제 양쪽에 쓰인다.
       (label: '자녀', filled: p.containsKey('children_count_total')),
@@ -389,7 +389,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
           label: '예상 연봉',
           value: gross > 0 ? '${_fmt.format(gross.toInt())}원 (세전)' : null,
           valueExtra: gross > 0 ? '세후 약 ${_fmt.format(netAnnual.toInt())}원' : null,
-          placeholder: '설정되지 않았어요 — 카드공제·환급 계산 기준이 돼요',
+          placeholder: '미설정 — 카드공제·환급 계산 기준이 돼요',
           isSet: gross > 0,
           editKey: 'gross_income',
           ink: ink,
@@ -400,9 +400,9 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       if (!_isFreelancer)
         _infoRow(
           icon: Icons.cake_outlined,
-          label: '나이',
-          value: age > 0 ? '$age세' : null,
-          placeholder: '설정되지 않았어요 — 청년 감면 확인에 필요해요',
+          label: '만 나이',
+          value: age > 0 ? '만 $age세' : null,
+          placeholder: '미설정 — 청년 감면 확인에 필요해요',
           isSet: age > 0,
           editKey: 'age',
           ink: ink,
@@ -414,7 +414,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
         icon: Icons.groups_outlined,
         label: '부양가족',
         value: dependents != null ? '$dependents명' : null,
-        placeholder: '설정되지 않았어요 — 1명당 150만 원 공제돼요',
+        placeholder: '미설정 — 1명당 150만 원 공제돼요',
         isSet: dependents != null,
         editKey: 'dependents',
         ink: ink,
@@ -439,8 +439,8 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                 ? '카드공제 한도 +${_fmt.format((_childrenTotal > 2 ? 2 : _childrenTotal) * 500000)}원'
                 : null),
         placeholder: _isFreelancer
-            ? '설정되지 않았어요 — 공제대상 자녀는 세금에서 바로 빠져요'
-            : '설정되지 않았어요 — 카드공제 한도가 올라가요',
+            ? '미설정 — 공제대상 자녀는 세금에서 바로 빠져요'
+            : '미설정 — 카드공제 한도가 올라가요',
         isSet: _profile?.containsKey('children_count_total') == true,
         editKey: 'children',
         ink: ink,
@@ -452,7 +452,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
         icon: Icons.home_outlined,
         label: '거주 형태',
         value: hasResidence ? residence : null,
-        placeholder: '설정되지 않았어요 — 월세·전세 공제 기준이 달라요',
+        placeholder: '미설정 — 월세·전세 공제 기준이 달라요',
         isSet: hasResidence,
         editKey: 'residence',
         ink: ink,
@@ -465,7 +465,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
           icon: Icons.calendar_today_outlined,
           label: '급여일',
           value: payDay > 0 ? '매월 $payDay일' : null,
-          placeholder: '설정되지 않았어요 — 급여일 알림에 쓰여요',
+          placeholder: '미설정 — 급여일 알림에 쓰여요',
           isSet: payDay > 0,
           editKey: 'pay_day',
           ink: ink,
@@ -756,7 +756,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                   Text('업종코드',
                       style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
                   const SizedBox(height: 2),
-                  Text(occ != null ? occ.name : '설정되지 않았어요 — 세금 적립액 정확도에 쓰여요',
+                  Text(occ != null ? occ.name : '미설정 — 세금 적립액 정확도에 쓰여요',
                       style: AppTheme.sans(12, occ != null ? sub : accent)),
                 ]),
               ),

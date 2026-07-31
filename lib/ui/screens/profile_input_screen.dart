@@ -333,39 +333,6 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
   }
 
   /// 예상 연봉 입력 페이지 — 천 단위 콤마 자동 삽입 + 실시간 세후 예상 표시.
-  Widget _buildGrossIncomePage() {
-    final gross = double.tryParse(_grossIncomeController.text.replaceAll(',', '')) ?? 0.0;
-    final accent = AppTheme.accentColor(context);
-    Widget? footer;
-    if (gross > 0) {
-      final insurance = EmployeeTaxCalculator.calculateMonthlyInsurance(gross / 12);
-      final monthlyTax = EmployeeTaxCalculator.estimateMonthlyIncomeTax(
-        grossAnnual: gross,
-        dependentsIncludingSelf: 1 + _dependentCount,
-      );
-      final netAnnual = gross - (insurance.total + monthlyTax) * 12;
-      footer = Text(
-        '예상 세후 연 ${_amountFormat.format(netAnnual.toInt())}원 (4대보험·소득세 반영)'.keepWords,
-        style: AppTheme.sans(13, accent, weight: FontWeight.w600),
-      );
-    }
-    return _buildInputPage(
-      label: '예상 연봉',
-      title: '올해 예상 연봉이\n어느 정도 되시나요?',
-      subtitle: '카드 소득공제·연말정산 예상 환급 계산의 기준이 돼요.',
-      controller: _grossIncomeController,
-      suffix: '원',
-      onChanged: (v) {
-        final n = v.replaceAll(RegExp(r'[^0-9]'), '');
-        final f = n.isEmpty ? '' : _amountFormat.format(int.parse(n));
-        _grossIncomeController.value =
-            TextEditingValue(text: f, selection: TextSelection.collapsed(offset: f.length));
-        setState(() {});
-      },
-      footer: footer,
-    );
-  }
-
   Widget _buildSelectionPage({
     required String label,
     required String title,
@@ -590,64 +557,14 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
     );
   }
 
-  Widget _buildResidenceSelectorPage() {
-    final types = ['전세', '월세', '반전세', '자가'];
-    final ink = AppTheme.ink(context);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _pageHead('거주 · 주택', '현재 거주 형태가\n어떻게 되나요?', '월세는 세액공제, 전세·자가는 대출이자 공제 기준이 달라요.'),
-          const SizedBox(height: 36),
-          GridView.count(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 2.6,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            children: types.map((type) {
-              final isSelected = _residenceType == type;
-              return GestureDetector(
-                onTap: () {
-                  setState(() => _residenceType = type);
-                  Future.delayed(const Duration(milliseconds: 250), _nextPage);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: isSelected ? ink : null,
-                    border: Border.all(color: isSelected ? ink : AppTheme.line(context), width: 1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(type,
-                      style: AppTheme.sans(15, isSelected ? AppTheme.backgroundColor(context) : ink,
-                          weight: isSelected ? FontWeight.w700 : FontWeight.w500)),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
+  /// 내 정보에서만 진입한다("더 많은 공제 항목 입력하기"). 예상 연봉·만 나이·
+  /// 거주 형태·부양가족 수는 그 화면에 인라인으로 있어 여기서 다시 묻지 않는다 —
+  /// 값은 프로필에서 로드하고 그대로 저장하므로 유지된다.
   List<Widget> _buildPages() {
     List<Widget> pages = [];
     bool isFreelancerOnly = widget.userType == '프리랜서';
 
     if (!isFreelancerOnly) {
-      pages.add(_buildGrossIncomePage());
-      pages.add(_buildInputPage(
-        label: '청년 감면',
-        title: '올해 만 나이가\n어떻게 되시나요?',
-        subtitle: '중소기업 청년 감면 등 나이 확인에 필요해요.',
-        controller: _ageController,
-        suffix: '세',
-      ));
       if (_askMilitaryQuestion) {
         pages.add(_buildSelectionPage(
           label: '청년 감면',
@@ -693,9 +610,6 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
           Future.delayed(const Duration(milliseconds: 250), _nextPage);
         },
       ));
-      if (_isHeadOfHousehold) {
-        pages.add(_buildResidenceSelectorPage());
-      }
     }
 
     // Common
@@ -753,17 +667,6 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
         ));
       }
     }
-
-    pages.add(_buildCounterPage(
-      label: '부양가족',
-      title: '본인을 제외한\n부양가족이 몇 명인가요?',
-      subtitle: '소득 없는 가족 1명당 150만 원 공제돼요.',
-      count: _dependentCount,
-      onChanged: (v) => setState(() {
-        _dependentCount = v;
-        if (_disabledDependentCount > _dependentCount) _disabledDependentCount = _dependentCount;
-      }),
-    ));
 
     if (_dependentCount > 0) {
       pages.add(_buildCounterPage(
