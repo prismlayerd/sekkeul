@@ -107,7 +107,7 @@ void main() {
 
   group('본인부담상한 (국민건강보험법 시행령 별표3)', () {
     testWidgets('본인부담금이 상한 이하면 환급이 0이다', (t) async {
-      // 6~7분위 상한 303만. 250만 부담 → 환급 없음.
+      // 6~7분위 상한 320만. 250만 부담 → 환급 없음.
       await open(t, const OutOfPocketCapScreen(), [(0, '2500000')]);
       expect(shows(t, '1,970,000원'), isFalse);
       expect(shows(t, '0원'), isTrue, reason: '상한 이하면 환급액이 0원이어야 한다');
@@ -118,18 +118,51 @@ void main() {
 
     testWidgets('환급액 = 본인부담금 − 상한액', (t) async {
       await open(t, const OutOfPocketCapScreen(), [(0, '5000000')]);
-      // 기본 선택 분위(6~7분위) 상한 303만 → 500만 − 303만 = 197만
-      expect(shows(t, '1,970,000원'), isTrue, reason: '환급액이 차액과 다르다');
-      expect(shows(t, '3,030,000원'), isTrue, reason: '적용 상한액이 안 보인다');
+      // 기본 선택 분위(6~7분위) 상한 320만 → 500만 − 320만 = 180만
+      expect(shows(t, '1,800,000원'), isTrue, reason: '환급액이 차액과 다르다');
+      expect(shows(t, '3,200,000원'), isTrue, reason: '적용 상한액이 안 보인다');
     });
 
-    testWidgets('분위가 오르면 상한액도 오른다 — 단조 증가', (t) async {
-      // 소득이 높을수록 상한이 높다(=환급이 적다). 뒤집히면 표를 잘못 옮긴 것이다.
-      const caps = [870000, 1080000, 1620000, 3030000, 4140000, 4970000, 8080000];
-      for (var i = 1; i < caps.length; i++) {
-        expect(caps[i], greaterThan(caps[i - 1]),
-            reason: '$i번째 분위 상한이 앞 분위보다 낮다');
+    /// 보건복지부 「2025년도 본인부담상한액」 사전정보공표 표 그대로.
+    const general = [890000, 1100000, 1700000, 3200000, 4370000, 5250000, 8260000];
+    const longTerm = [1410000, 1780000, 2400000, 3960000, 5690000, 6840000, 10740000];
+
+    test('2025년 고시표와 정확히 일치한다', () {
+      // 종전 값은 어느 연도와도 맞지 않았다 — 7개 중 3개만 2024년과 같고
+      // 나머지는 2024·2025 어느 쪽도 아니었다.
+      const old = [870000, 1080000, 1620000, 3030000, 4140000, 4970000, 8080000];
+      for (var i = 0; i < 7; i++) {
+        expect(general[i], greaterThan(old[i]),
+            reason: '$i번째 구간: 고시값이 종전 값보다 커야 한다');
       }
+      // 요양병원 특례는 **전 구간**에 있다. 하위 분위에만 있는 게 아니다.
+      for (var i = 0; i < 7; i++) {
+        expect(longTerm[i], greaterThan(general[i]),
+            reason: '$i번째 구간: 요양병원 상한이 일반보다 낮을 수 없다');
+      }
+    });
+
+    test('분위가 오르면 상한액도 오른다 — 두 열 모두 단조 증가', () {
+      for (var i = 1; i < 7; i++) {
+        expect(general[i], greaterThan(general[i - 1]),
+            reason: '일반 $i번째 분위 상한이 앞 분위보다 낮다');
+        expect(longTerm[i], greaterThan(longTerm[i - 1]),
+            reason: '요양병원 $i번째 분위 상한이 앞 분위보다 낮다');
+      }
+    });
+
+    testWidgets('요양병원 120일 초과를 켜면 상한액이 특례값으로 바뀐다', (t) async {
+      // 1분위 89만 → 141만. 안 물으면 52만원 틀린 환급액을 보여준다.
+      await open(t, const OutOfPocketCapScreen(), [(0, '5000000')]);
+      expect(shows(t, '3,200,000원'), isTrue, reason: '기본은 일반 상한');
+      // 스크롤 안에 있으므로 먼저 보이게 한 뒤 누른다.
+      expect(find.byType(Switch), findsOneWidget, reason: '요양병원 토글이 없다');
+      await t.ensureVisible(find.byType(Switch));
+      await t.pump(const Duration(milliseconds: 200));
+      await t.tap(find.byType(Switch));
+      await t.pump(const Duration(milliseconds: 400));
+      expect(shows(t, '3,960,000원'), isTrue, reason: '요양병원 특례 상한');
+      expect(shows(t, '1,040,000원'), isTrue, reason: '500만 − 396만 = 104만');
     });
   });
 

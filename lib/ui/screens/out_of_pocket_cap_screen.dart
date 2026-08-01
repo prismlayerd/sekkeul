@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
@@ -15,31 +14,38 @@ class OutOfPocketCapScreen extends StatefulWidget {
 
 class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
   int _tierIdx = 3;
+  /// 요양병원에 120일을 넘겨 입원했는가 — 그러면 상한액이 따로 적용된다.
+  /// 1분위 기준 89만 → 141만으로 52만원이나 달라져서, 안 물으면 그만큼 틀린
+  /// 환급액을 보여주게 된다.
+  bool _longTermCare = false;
   final _amountCtrl = TextEditingController();
   final _fmt = NumberFormat('#,###');
 
-  // 소득분위 라벨, 일반 상한액(원) — 2025년 기준. 보건복지부 고시로 매년 바뀐다.
-  // 추적: test/notice_expiry_test.dart
-  //
-  // 종전에는 "요양병원 120일 초과 특례" 상한액 컬럼이 함께 있었는데 **한 번도
-  // 화면에 쓰이지 않았고**, 그 안에서 6~7분위만 특례(294만)가 일반(303만)보다
-  // 낮았다 — 나머지 구간은 전부 특례가 더 높다. 더 무겁게 이용한 사람의 상한이
-  // 더 낮을 수는 없으므로 옮겨 적을 때 틀린 값이다. 쓰지도 않는 틀린 숫자를
-  // 남겨 두면 나중에 배선하는 사람이 그대로 쓴다. 지운다 —
-  // 특례를 실제로 지원할 때 고시 원문을 다시 보고 넣는다.
+  /// (소득분위 라벨, 일반 상한액, 요양병원 120일 초과 입원 상한액) — 원 단위.
+  ///
+  /// 출처: 보건복지부 「2025년도 본인부담상한액」 사전정보공표
+  /// (mohw.go.kr, list_no=1486195). 확인일 2026-08-01.
+  ///
+  /// 종전 값은 **어느 연도와도 맞지 않았다.** 7개 구간 중 3개만 2024년 값과
+  /// 같고 나머지는 2024·2025 어느 쪽도 아니었다(4~5분위 162만, 6~7분위 303만,
+  /// 8분위 414만, 9분위 497만). 요양병원 열도 연도가 뒤섞여 있었고 8분위 이상은
+  /// 일반값이 그대로 들어가 있었다.
+  ///
+  /// 보건복지부 고시로 **매년 바뀐다.** 추적: test/notice_expiry_test.dart
   static const _tiers = [
-    ('1분위 (하위 10% 이하)', 870000),
-    ('2~3분위', 1080000),
-    ('4~5분위', 1620000),
-    ('6~7분위', 3030000),
-    ('8분위', 4140000),
-    ('9분위', 4970000),
-    ('10분위 (상위 10% 이상)', 8080000),
+    ('1분위 (하위 10% 이하)', 890000, 1410000),
+    ('2~3분위', 1100000, 1780000),
+    ('4~5분위', 1700000, 2400000),
+    ('6~7분위', 3200000, 3960000),
+    ('8분위', 4370000, 5690000),
+    ('9분위', 5250000, 6840000),
+    ('10분위 (상위 10% 이상)', 8260000, 10740000),
   ];
 
   double get _amount =>
       double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
-  int get _cap => _tiers[_tierIdx].$2;
+  int get _cap =>
+      _longTermCare ? _tiers[_tierIdx].$3 : _tiers[_tierIdx].$2;
   double get _refund => _amount > _cap ? _amount - _cap : 0;
   bool get _hasInput => _amount > 0;
 
@@ -139,6 +145,31 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
                 setState(() {});
               },
             ),
+            const SizedBox(height: 20),
+
+            // 요양병원 120일 초과 입원은 상한액이 따로 있다 — 안 물으면 1분위 기준
+            // 52만원(89만 vs 141만)이나 틀린 환급액을 보여주게 된다.
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('요양병원 120일 초과 입원',
+                          style: AppTheme.sans(14, ink)),
+                      Text('올해 요양병원 입원일수가 120일을 넘으면 상한액이 따로 적용돼요'
+                          .keepWords,
+                          style: AppTheme.sans(11, sub)),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _longTermCare,
+                  onChanged: (v) => setState(() => _longTermCare = v),
+                ),
+              ],
+            ),
             const SizedBox(height: 32),
             Container(
               width: double.infinity,
@@ -173,7 +204,10 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
                   if (_hasInput && _refund <= 0)
                     Text('* 본인부담금이 상한액을 초과하지 않아 환급 대상이 아닙니다.'.keepWords,
                         style: AppTheme.sans(11, sub)),
-                  Text('* 2025년 기준 상한액. 연도별 상한액은 매년 8월경 재고시됩니다.'.keepWords,
+                  Text(
+                      '* 2025년 기준 상한액'
+                      '${_longTermCare ? ' (요양병원 120일 초과)' : ''}. '
+                      '연도별 상한액은 매년 8월경 재고시됩니다.'.keepWords,
                       style: AppTheme.sans(11, sub)),
                 ],
               ),
