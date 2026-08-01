@@ -236,3 +236,90 @@ double refAdditionalPersonalDeduction({
 // ── 소득세법 §21③·시행령 §87 기타소득금액 ────────────────────────
 // 인적용역 기타소득의 필요경비는 총수입금액의 60% 정률 → 소득금액은 40%.
 double refOtherIncomeAmount(double grossOther) => grossOther * 0.4;
+
+// ── 소득세법 §59의4② 의료비 세액공제 ─────────────────────────────
+// 총급여의 3%를 넘는 분만 공제한다. 3% 문턱은 **공제율이 낮은 항목부터** 차감하므로,
+// 초과분은 고율(난임 30% → 미숙아·선천성이상아 20% → 본인·65세↑·장애인 15%
+// → 그 밖의 부양가족 15%) 순서로 채워 넣은 것과 같다.
+// 그 밖의 부양가족분만 연 700만원 한도, 나머지는 한도가 없다.
+double refMedicalTaxCredit({
+  required double gross,
+  double infertility = 0,
+  double prematureBaby = 0,
+  double selfSeniorDisabled = 0,
+  double otherDependent = 0,
+}) {
+  final threshold = gross * 0.03;
+  final total = infertility + prematureBaby + selfSeniorDisabled + otherDependent;
+  if (total <= threshold) return 0;
+  double rest = total - threshold;
+
+  double take(double bucket) {
+    final t = rest < bucket ? rest : bucket;
+    rest -= t;
+    return t;
+  }
+
+  final a = take(infertility);
+  final b = take(prematureBaby);
+  final c = take(selfSeniorDisabled);
+  final d = take(otherDependent);
+  final cappedD = d > 7000000 ? 7000000.0 : d;
+  return trunc10(a * 0.30 + b * 0.20 + (c + cappedD) * 0.15);
+}
+
+// ── 소득세법 §59의4③ 교육비 세액공제 ─────────────────────────────
+// 공제율 15%. 취학전아동·초중고 1인당 300만원, 대학생 1인당 900만원 한도.
+// 본인(대학원 포함)과 장애인 특수교육비는 한도가 없다.
+double refEducationTaxCredit({
+  double preschool = 0,
+  int preschoolCount = 0,
+  double children = 0,
+  int childrenCount = 0,
+  double college = 0,
+  int collegeCount = 0,
+  double self = 0,
+  double disabledSpecial = 0,
+}) {
+  double capped(double amount, double perHead, int heads) {
+    final limit = perHead * heads;
+    return amount > limit ? limit : amount;
+  }
+
+  final allowable = capped(preschool, 3000000, preschoolCount) +
+      capped(children, 3000000, childrenCount) +
+      capped(college, 9000000, collegeCount) +
+      self +
+      disabledSpecial;
+  return trunc10(allowable * 0.15);
+}
+
+// ── 기부금 세액공제 ───────────────────────────────────────────────
+// 일반(지정)기부금 — 소법 §59의4④: 1천만원 이하 15%, 초과분 30%.
+// 정치자금기부금 — 조특법 §76①: 10만원까지 110분의 100,
+//   10만원 초과분은 15%, 그 초과분이 3천만원을 넘으면 넘는 부분만 25%.
+//
+// "10만원은 전액 돌려받는다"는 말은 소득세 90,909원 + 지방소득세 9,091원을
+// 합친 얘기다. 여기서 내는 값은 **소득세** 세액공제라 100%로 두면 부풀려진다.
+double refDonationTaxCredit({
+  double general = 0,
+  double political = 0,
+}) {
+  double credit = 0;
+  if (general > 0) {
+    final low = general < 10000000 ? general : 10000000.0;
+    credit += low * 0.15;
+    if (general > 10000000) credit += (general - 10000000) * 0.30;
+  }
+  if (political > 0) {
+    final low = political < 100000 ? political : 100000.0;
+    credit += low * 100 / 110;
+    if (political > 100000) {
+      final excess = political - 100000;
+      final mid = excess < 30000000 ? excess : 30000000.0;
+      credit += mid * 0.15;
+      if (excess > 30000000) credit += (excess - 30000000) * 0.25;
+    }
+  }
+  return trunc10(credit);
+}

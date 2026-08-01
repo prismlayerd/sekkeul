@@ -57,13 +57,16 @@ String comma(num v) {
 /// `small_screen_overflow_test.dart`가, 알림 플러그인 미초기화
 /// (`LateInitializationError` — 실기기에선 초기화돼 있어 테스트 환경에서만 난다)는
 /// 어느 쪽의 관심사도 아니다. 여기서는 걸러 두고 값만 본다.
+/// 루트 키를 매번 바꿔 State 재사용을 막는다.
+int _pumpSeq = 0;
+
 Future<void> pump(WidgetTester t, Widget w) async {
   t.view.physicalSize = const Size(390, 1400); // 세로로 길게 — 스크롤 밖 요소도 그려지게
   t.view.devicePixelRatio = 1.0;
   addTearDown(t.view.resetPhysicalSize);
   addTearDown(t.view.resetDevicePixelRatio);
 
-  await t.pumpWidget(MaterialApp(home: w));
+  await t.pumpWidget(MaterialApp(key: ValueKey('pump-${_pumpSeq++}'), home: w));
   for (int i = 0; i < 6; i++) {
     await t.pump(const Duration(milliseconds: 300));
     t.takeException(); // 레이아웃 넘침은 small_screen_overflow_test의 몫

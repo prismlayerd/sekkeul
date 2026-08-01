@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:timezone/data/latest_all.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
 
 import 'support/screen_registry.dart';
 
@@ -9,6 +11,16 @@ import 'support/screen_registry.dart';
 /// 오버플로는 실기기에서 노란·검정 줄무늬로 보이고, 잘린 쪽 글자는 아예 읽을 수 없다.
 /// 개발용 큰 화면에서는 절대 드러나지 않아 눈으로는 못 잡는다.
 void main() {
+  // 프로덕션은 NotificationHelper.init()에서 타임존을 초기화한다. 안 맞춰 두면
+  // 예약 알림 경로가 tz.local에서 터져 레이아웃이 아니라 환경을 보게 된다.
+  setUpAll(() {
+    tzdata.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Asia/Seoul'));
+  });
+
+  // 루트 키를 매번 바꿔 State 재사용을 막는다 — 같은 타입이 연이어 오면
+  // initState가 다시 돌지 않아 앞 화면 상태로 검사하게 된다.
+  int seq = 0;
   final screens = noArgScreens;
 
   testWidgets('360×800에서 넘치는 화면이 없다', (t) async {
@@ -37,7 +49,7 @@ void main() {
       dbService = InMemoryDatabaseHelper();
       await dbService.initDatabase();
       try {
-        await t.pumpWidget(MaterialApp(home: build()));
+        await t.pumpWidget(MaterialApp(key: ValueKey('pump-${seq++}'), home: build()));
         await t.pump(const Duration(milliseconds: 400));
         await t.pump(const Duration(milliseconds: 400));
       } catch (_) {
@@ -89,7 +101,7 @@ void main() {
         current = '$name($userType)';
         await seedRealisticUser(userType);
         try {
-          await t.pumpWidget(MaterialApp(home: build(userType)));
+          await t.pumpWidget(MaterialApp(key: ValueKey('pump-${seq++}'), home: build(userType)));
           await t.pump(const Duration(milliseconds: 400));
           await t.pump(const Duration(milliseconds: 400));
         } catch (_) {

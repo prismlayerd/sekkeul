@@ -41,9 +41,14 @@ void main() {
     };
   }
 
+  // 한 테스트 안에서 화면을 연달아 펌프한다. 루트에 **매번 다른 키**를 준다 —
+  // 같은 위젯 타입이 연이어 오면 Flutter가 State를 재사용해 initState가 다시
+  // 돌지 않고, 앞 화면의 상태로 검사한 셈이 된다(실제로 월세 공제율 경계 테스트가
+  // 그렇게 거짓 실패를 냈다).
+  int seq = 0;
   Future<void> open(WidgetTester t, Widget w) async {
     try {
-      await t.pumpWidget(MaterialApp(home: w));
+      await t.pumpWidget(MaterialApp(key: ValueKey('pump-${seq++}'), home: w));
       for (int i = 0; i < 4; i++) {
         await t.pump(const Duration(milliseconds: 300));
       }
