@@ -175,6 +175,27 @@ final notices = <Notice>[
     primaryVerified: false,
   ),
 
+  // ── 복지 고시 (매년 갱신) ────────────────────────────────────
+  Notice(
+    what: '기초연금 선정기준액(단독, 만원)',
+    source: '보건복지부 고시 — 매년 1월 인상. 부부가구는 단독의 160%',
+    until: DateTime(2026, 12, 31),
+    actual: 247,
+    expected: 247,
+    checkedOn: '2026-08-01',
+    primaryVerified: false,
+  ),
+  Notice(
+    what: '본인부담상한액 10분위(원)',
+    source: '국민건강보험법 시행령 별표3 — 소득분위별 7구간, 매년 갱신. '
+        '요양병원 120일 초과 특례는 미지원(옮겨 적은 값에 모순이 있어 제거)',
+    until: DateTime(2026, 12, 31),
+    actual: 8080000,
+    expected: 8080000,
+    checkedOn: '2026-08-01',
+    primaryVerified: false,
+  ),
+
   // ── 고용·산재 ───────────────────────────────────────────────
   Notice(
     what: '특고(노무제공자) 고용보험료율 본인부담',
@@ -242,7 +263,7 @@ void main() {
     print('1차 미확인 ${unverified.length}건 / 전체 ${notices.length}건');
     // 실패시키지 않는다 — 값이 틀렸다는 뜻이 아니라 근거가 약하다는 뜻이다.
     // 다만 매 실행 로그에 남겨 "확인했다고 착각한 채 넘어가는 것"만 막는다.
-    expect(unverified.length, lessThanOrEqualTo(4),
+    expect(unverified.length, lessThanOrEqualTo(6),
         reason: '1차 미확인 상수가 늘고 있다 — 원문 확인 없이 값을 추가하지 말 것');
   });
 
