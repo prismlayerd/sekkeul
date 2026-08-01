@@ -101,6 +101,24 @@ final notices = <Notice>[
     checkedOn: '2026-07-27',
   ),
 
+  // ── 최저임금 · 실업급여 ─────────────────────────────────────
+  Notice(
+    what: '최저임금 시급',
+    source: '최저임금법 §10 · 고용노동부 고시 (최저임금위원회 minimumwage.go.kr)',
+    until: DateTime(2026, 12, 31),
+    actual: TaxRates.minimumHourlyWage2026,
+    expected: 10320,
+    checkedOn: '2026-08-01',
+  ),
+  Notice(
+    what: '구직급여 하한액(최저임금일액의 80%)',
+    source: '고용보험법 §46② — 최저임금에서 파생되므로 최저임금만 갱신하면 된다',
+    until: DateTime(2026, 12, 31),
+    actual: TaxRates.unemploymentDailyFloor,
+    expected: 66048,
+    checkedOn: '2026-08-01',
+  ),
+
   // ── 고용·산재 ───────────────────────────────────────────────
   Notice(
     what: '특고(노무제공자) 고용보험료율 본인부담',

@@ -46,7 +46,18 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
   }
 
   double get _acqTax => _price * _acquisitionRate(_price);
-  double get _eduTax => _acqTax * 0.2;
+
+  /// 지방교육세 — 지방세법 §151①1가목.
+  ///
+  /// 과세표준은 「취득세 표준세율을 적용해 산출한 금액」인데, **주택 유상거래는
+  /// 그 세율에 100분의 50을 곱한다**(같은 목 단서). 거기에 세율 20%를 곱하므로
+  /// 결과는 `취득가액 × 표준세율 × 10%`다.
+  ///
+  /// 종전에는 `취득세액 × 20%`로 계산해 **2배**가 나왔다 — 6억 이하 주택은
+  /// 취득세 1% + 지방교육세 0.1%(합 1.1%)가 맞는데 1.2%로 안내하고 있었다.
+  /// 다주택 중과세율(8·12%)일 때도 지방교육세는 **표준세율 기준**이라
+  /// 취득세액에 비례시키면 안 된다.
+  double get _eduTax => _price * _generalRate(_price) * 0.1;
   double get _ruralTax =>
       (_houses >= 2 || _price > 900000000) ? _price * 0.002 : 0.0;
   double get _totalTax => _acqTax + _eduTax + _ruralTax;
@@ -199,7 +210,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
                     const SizedBox(height: 8),
                     _row('취득세', _won(_acqTax), subColor, textColor),
                     const SizedBox(height: 8),
-                    _row('지방교육세 (취득세×20%)', _won(_eduTax), subColor, textColor),
+                    _row('지방교육세 (표준세율×10%)', _won(_eduTax), subColor, textColor),
                     const SizedBox(height: 8),
                     _row('농어촌특별세 (0.2%)',
                         _ruralTax > 0 ? _won(_ruralTax) : '해당없음', subColor,

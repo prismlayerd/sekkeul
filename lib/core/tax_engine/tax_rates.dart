@@ -150,6 +150,17 @@ class TaxRates {
     return raw > cap ? cap : raw;
   }
 
+  /// 최저임금 시급 — 최저임금법 §10, 고용노동부 고시. **매년 바뀐다.**
+  ///
+  /// 종전에는 이 값이 시급 계산기·최저임금 영향·주휴수당 세 화면에 따로 박혀
+  /// 있었다. 갱신할 때 하나를 빠뜨리면 화면마다 다른 최저임금을 말하게 된다.
+  /// 실업급여 구직급여 하한액도 여기서 파생된다(§46② 최저임금일액의 80%).
+  static const double minimumHourlyWage2026 = 10320.0;
+  static const double minimumHourlyWage2025 = 10030.0;
+
+  /// 구직급여 하한액 — 고용보험법 §46②: 최저임금일액(시급 × 8시간)의 80%.
+  static const double unemploymentDailyFloor = minimumHourlyWage2026 * 8 * 0.8;
+
   /// 종합소득 과세표준에 따른 산출세액 연산 함수 (세전 금액 기준)
   static double calculateTax(double taxBase) {
     if (taxBase <= 0) return 0;
@@ -162,9 +173,14 @@ class TaxRates {
     return 0;
   }
 
-  /// 10원 미만 절사 (국고금관리법에 의한 원 단위 버림)
+  /// 10원 미만 절사 (국고금관리법 §47).
+  ///
+  /// **먼저 원 단위로 반올림한 뒤** 10원 미만을 버린다. 곧바로 버리면 부동소수점
+  /// 오차 때문에 딱 떨어지는 금액이 10원씩 깎인다 —
+  /// `3,000,000 × 0.009`는 `26999.999999999996`이라 27,000원이 26,990원이 됐다.
+  /// 법이 정하는 최소 단위가 원이므로 원으로 맞춘 뒤 절사하는 것이 조문에도 맞다.
   static double truncateWon(double amount) {
-    return (amount / 10).floorToDouble() * 10;
+    return (amount.roundToDouble() / 10).floorToDouble() * 10;
   }
 }
 

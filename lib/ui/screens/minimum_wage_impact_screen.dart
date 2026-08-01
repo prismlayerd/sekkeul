@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/tax_engine/tax_rates.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
@@ -18,10 +19,10 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
   final _hoursCtrl = TextEditingController(text: '40');
   final _fmt = NumberFormat('#,###');
 
-  static const int _wage2025 = 10030;
-  static const int _wage2026 = 10320;
-  static const int _hourlyDiff = _wage2026 - _wage2025;
-  static const double _raiseRate = (_hourlyDiff / _wage2025) * 100;
+  static int get _wage2025 => TaxRates.minimumHourlyWage2025.toInt();
+  static int get _wage2026 => TaxRates.minimumHourlyWage2026.toInt();
+  static int get _hourlyDiff => _wage2026 - _wage2025;
+  static double get _raiseRate => (_hourlyDiff / _wage2025) * 100;
 
   double get _weeklyHours => double.tryParse(_hoursCtrl.text.replaceAll(',', '')) ?? 0;
   bool get _hasWeeklyHoliday => _weeklyHours >= 15;

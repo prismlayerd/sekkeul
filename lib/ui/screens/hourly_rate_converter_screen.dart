@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/tax_engine/tax_rates.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
@@ -19,7 +20,7 @@ class _HourlyRateConverterScreenState
   final _marginCtrl = TextEditingController(text: '0');
   final _fmt = NumberFormat('#,###');
 
-  static const int _minWage2026 = 10320;
+  static int get _minWage2026 => TaxRates.minimumHourlyWage2026.toInt();
 
   double _num(TextEditingController c) => double.tryParse(c.text.replaceAll(',', '')) ?? 0;
 

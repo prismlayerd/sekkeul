@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/tax_engine/tax_rates.dart';
 import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
@@ -23,7 +24,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
   int _workDaysPerWeek = 5;
   final _fmt = NumberFormat('#,###');
 
-  static const double _minimumWage2026 = 10320.0;
+  static const double _minimumWage2026 = TaxRates.minimumHourlyWage2026;
 
   void _reset() {
     setState(() {

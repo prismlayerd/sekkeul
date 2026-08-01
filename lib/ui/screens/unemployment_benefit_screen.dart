@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/tax_engine/tax_rates.dart';
 import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
@@ -25,7 +26,8 @@ class _UnemploymentBenefitScreenState
   final _fmt = NumberFormat('#,###');
 
   // 2026년 기준
-  static const double _minDailyLimit = 66048.0;
+  // 하한은 최저임금에서 파생된다 — 최저임금만 갱신하면 따라 움직인다.
+  static const double _minDailyLimit = TaxRates.unemploymentDailyFloor;
   static const double _maxDailyLimit = 68100.0;
 
   void _reset() {
