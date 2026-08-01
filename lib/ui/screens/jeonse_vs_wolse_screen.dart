@@ -37,14 +37,19 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
     super.dispose();
   }
 
-  double get _jeonse =>
-      double.tryParse(_jeonseController.text.replaceAll(',', '')) ?? 0.0;
-  double get _wolseDeposit =>
-      double.tryParse(_wolseDepositController.text.replaceAll(',', '')) ?? 0.0;
-  double get _wolseMonthly =>
-      double.tryParse(_wolseMonthlyController.text.replaceAll(',', '')) ?? 0.0;
+  double get _jeonse => saneInput(
+      double.tryParse(_jeonseController.text.replaceAll(',', '')) ?? 0.0,
+      InputMax.money);
+  double get _wolseDeposit => saneInput(
+      double.tryParse(_wolseDepositController.text.replaceAll(',', '')) ?? 0.0,
+      InputMax.money);
+  double get _wolseMonthly => saneInput(
+      double.tryParse(_wolseMonthlyController.text.replaceAll(',', '')) ?? 0.0,
+      InputMax.money);
   double get _rate =>
-      (double.tryParse(_rateController.text.replaceAll(',', '')) ?? 0.0) / 100;
+      saneInput(double.tryParse(_rateController.text.replaceAll(',', '')) ?? 0.0,
+              InputMax.percent) /
+          100;
 
   // 전세 기회비용 (연간) = 전세보증금의 금리 환산
   double get _jeonseCostAnnual => _jeonse * _rate;

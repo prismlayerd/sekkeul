@@ -19,10 +19,10 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
   final _monthsCtrl = TextEditingController();
   final _fmt = NumberFormat('#,###');
 
-  double get _monthly =>
-      double.tryParse(_monthlyCtrl.text.replaceAll(',', '')) ?? 0;
-  double get _months =>
-      double.tryParse(_monthsCtrl.text.replaceAll(',', '')) ?? 0;
+  double get _monthly => saneInput(
+      double.tryParse(_monthlyCtrl.text.replaceAll(',', '')) ?? 0, InputMax.money);
+  double get _months => saneInput(
+      double.tryParse(_monthsCtrl.text.replaceAll(',', '')) ?? 0, InputMax.months);
 
   // 드림 통장: 연 4.5% 단리
   double get _dreamInterest => _monthly * _months * 0.045 / 2 / 12 * _months;

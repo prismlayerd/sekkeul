@@ -24,22 +24,37 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
   int _years = 5;
   final _fmt = NumberFormat('#,###');
 
-  double _num(TextEditingController c) => double.tryParse(c.text.replaceAll(',', '')) ?? 0;
+  double _num(TextEditingController c) => saneInput(
+      double.tryParse(c.text.replaceAll(',', '')) ?? 0, InputMax.money);
+
+  double get _dailyKm => saneInput(_num(_dailyKmCtrl), InputMax.distance);
+  double get _gasEff => saneInput(_num(_gasEfficiencyCtrl), InputMax.efficiency);
+  double get _evEff => saneInput(_num(_evEfficiencyCtrl), InputMax.efficiency);
 
   double get _gasAnnualFuel =>
-      (_num(_dailyKmCtrl) * 365 / (_num(_gasEfficiencyCtrl) == 0 ? 1 : _num(_gasEfficiencyCtrl))) *
-      _num(_gasPriceCtrl);
+      (_dailyKm * 365 / (_gasEff == 0 ? 1 : _gasEff)) *
+      saneInput(_num(_gasPriceCtrl), InputMax.unitPrice);
   double get _evAnnualFuel =>
-      (_num(_dailyKmCtrl) * 365 / (_num(_evEfficiencyCtrl) == 0 ? 1 : _num(_evEfficiencyCtrl))) *
-      _num(_elecPriceCtrl);
+      (_dailyKm * 365 / (_evEff == 0 ? 1 : _evEff)) *
+      saneInput(_num(_elecPriceCtrl), InputMax.unitPrice);
 
-  double get _gasTco => _num(_gasPriceCarCtrl) * 10000 + _gasAnnualFuel * _years;
+  // 차량가격 칸은 **만원 단위**라 원 단위 상한을 그대로 쓰면 1만 배로 부푼다.
+  double get _carPriceMax => InputMax.money / 10000;
+  double get _gasTco =>
+      saneInput(_num(_gasPriceCarCtrl), _carPriceMax) * 10000 +
+      _gasAnnualFuel * _years;
   double get _evTco =>
-      (_num(_evPriceCarCtrl) - _num(_evSubsidyCtrl)) * 10000 + _evAnnualFuel * _years;
+      (saneInput(_num(_evPriceCarCtrl), _carPriceMax) -
+              saneInput(_num(_evSubsidyCtrl), _carPriceMax)) *
+          10000 +
+      _evAnnualFuel * _years;
 
   double get _yearlyGap => _gasAnnualFuel - _evAnnualFuel;
   int? get _breakEvenYears {
-    final initialGap = (_num(_evPriceCarCtrl) - _num(_evSubsidyCtrl) - _num(_gasPriceCarCtrl)) * 10000;
+    final initialGap = (saneInput(_num(_evPriceCarCtrl), _carPriceMax) -
+            saneInput(_num(_evSubsidyCtrl), _carPriceMax) -
+            saneInput(_num(_gasPriceCarCtrl), _carPriceMax)) *
+        10000;
     if (_yearlyGap <= 0 || initialGap <= 0) return null;
     return (initialGap / _yearlyGap).ceil();
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/amount_field.dart';
 import '../../core/tax_engine/tax_rates.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -24,7 +25,8 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
   static int get _hourlyDiff => _wage2026 - _wage2025;
   static double get _raiseRate => (_hourlyDiff / _wage2025) * 100;
 
-  double get _weeklyHours => double.tryParse(_hoursCtrl.text.replaceAll(',', '')) ?? 0;
+  double get _weeklyHours => saneInput(
+      double.tryParse(_hoursCtrl.text.replaceAll(',', '')) ?? 0, 168);
   bool get _hasWeeklyHoliday => _weeklyHours >= 15;
 
   double get _weeklyPaidHours =>

@@ -24,17 +24,26 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
   int _months = 60;
   final _fmt = NumberFormat('#,###');
 
-  double _num(TextEditingController c) =>
-      double.tryParse(c.text.replaceAll(',', '')) ?? 0;
+  double _num(TextEditingController c) => saneInput(
+      double.tryParse(c.text.replaceAll(',', '')) ?? 0, InputMax.money);
 
-  double get _price => _num(_priceCtrl);
-  double get _leaseTotal => _num(_leaseDepositCtrl) + _num(_leaseMonthlyCtrl) * _months;
-  double get _rentTotal => _num(_rentDepositCtrl) + _num(_rentMonthlyCtrl) * _months;
+  double get _price => saneInput(_num(_priceCtrl), InputMax.money);
+  // 월 납입액은 '월' 단위라 금액 상한을 그대로 쓰면 개월수만큼 부풀어 오른다.
+  double get _leaseTotal =>
+      _num(_leaseDepositCtrl) +
+      saneInput(_num(_leaseMonthlyCtrl), InputMax.unitPrice * 100) * _months;
+  double get _rentTotal =>
+      _num(_rentDepositCtrl) +
+      saneInput(_num(_rentMonthlyCtrl), InputMax.unitPrice * 100) * _months;
 
   double get _buyTotal {
-    final loanPrincipal = _price * (_num(_loanRatioCtrl) / 100);
-    final interest = loanPrincipal * (_num(_loanRateCtrl) / 100) * (_months / 12);
-    final residual = _price * (_num(_residualRateCtrl) / 100);
+    final loanPrincipal =
+        _price * (saneInput(_num(_loanRatioCtrl), InputMax.percent) / 100);
+    final interest = loanPrincipal *
+        (saneInput(_num(_loanRateCtrl), InputMax.percent) / 100) *
+        (_months / 12);
+    final residual =
+        _price * (saneInput(_num(_residualRateCtrl), InputMax.percent) / 100);
     return _price + interest - residual;
   }
 

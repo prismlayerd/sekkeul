@@ -46,8 +46,14 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
 
   double get _amount =>
       double.tryParse(_amountController.text.replaceAll(',', '')) ?? 0.0;
-  double get _rate => (double.tryParse(_rateController.text.replaceAll(',', '')) ?? 0.0) / 100;
-  int get _months => int.tryParse(_monthsController.text.replaceAll(',', '')) ?? 0;
+  double get _rate =>
+      saneInput(double.tryParse(_rateController.text.replaceAll(',', '')) ?? 0.0,
+              InputMax.percent) /
+          100;
+  int get _months => saneInput(
+          (int.tryParse(_monthsController.text.replaceAll(',', '')) ?? 0).toDouble(),
+          InputMax.months)
+      .toInt();
 
   double get _grossInterest {
     final a = _amount;

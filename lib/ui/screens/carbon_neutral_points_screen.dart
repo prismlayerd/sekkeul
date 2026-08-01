@@ -25,7 +25,8 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
 
   static const double _annualCap = 70000;
 
-  double _num(TextEditingController c) => double.tryParse(c.text.replaceAll(',', '')) ?? 0;
+  double _num(TextEditingController c) => saneInput(
+      double.tryParse(c.text.replaceAll(',', '')) ?? 0, InputMax.count);
 
   double _capped(double value, double limit) => value > limit ? limit : value;
 

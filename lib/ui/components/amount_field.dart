@@ -12,10 +12,17 @@ final NumberFormat _amountFormat = NumberFormat('#,###');
 class ThousandsFormatter extends TextInputFormatter {
   const ThousandsFormatter();
 
+  /// 입력 가능한 최대 자릿수. 개인 재무 앱에서 12자리(9,999억)를 넘는 금액은
+  /// 자릿수를 틀린 것이다. 상한이 없으면 계산이 폭발해 화면이 조 단위나
+  /// int64 최대값을 태연히 그린다 — 실제로 여러 계산기가 그랬다.
+  static const int maxDigits = 12;
+
   @override
   TextEditingValue formatEditUpdate(TextEditingValue old, TextEditingValue now) {
     final digits = now.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (digits.isEmpty) return now.copyWith(text: '');
+    // 자릿수를 넘기면 입력을 받지 않는다(이전 값 유지).
+    if (digits.length > maxDigits) return old;
     final text = _amountFormat.format(int.parse(digits));
     // 커서 앞의 숫자 개수를 유지한 위치로 되돌린다.
     final typedBefore =
@@ -32,6 +39,26 @@ class ThousandsFormatter extends TextInputFormatter {
       selection: TextSelection.collapsed(offset: offset),
     );
   }
+}
+
+/// 입력값 상한 — 자릿수를 틀린 입력이 계산을 폭발시키는 것을 막는다.
+///
+/// 사용자는 금리 칸에 금액을 넣고 개월 칸에 연도를 넣는다. 상한이 없으면
+/// 화면이 조 단위나 int64 최대값을 태연히 그리고, 그 순간 그 계산기의
+/// 신뢰가 끝난다. 각 화면이 자기 칸의 의미에 맞는 상한을 준다.
+double saneInput(double v, double max) =>
+    v.isFinite && v > 0 ? (v > max ? max : v) : 0.0;
+
+/// 흔한 상한값 — 개인 재무 앱 기준.
+class InputMax {
+  static const double money = 1000000000000; // 1조원
+  static const double unitPrice = 1000000;   // 시급·단가 100만원
+  static const double percent = 100;         // 비율
+  static const double years = 60;            // 근속·기간
+  static const double months = 600;          // 50년
+  static const double count = 10000;         // 횟수·건수
+  static const double distance = 2000;       // 일일 주행거리 km
+  static const double efficiency = 100;      // 연비 km/L · km/kWh
 }
 
 /// 앱 공통 액수 입력칸 — 모든 금액 기입란의 단일 디자인 소스.

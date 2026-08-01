@@ -22,12 +22,14 @@ class _HourlyRateConverterScreenState
 
   static int get _minWage2026 => TaxRates.minimumHourlyWage2026.toInt();
 
-  double _num(TextEditingController c) => double.tryParse(c.text.replaceAll(',', '')) ?? 0;
+  double _num(TextEditingController c) => saneInput(
+      double.tryParse(c.text.replaceAll(',', '')) ?? 0, InputMax.unitPrice);
 
-  double get _rate => _num(_rateCtrl);
-  double get _hours => _num(_hoursCtrl);
+  double get _rate => saneInput(_num(_rateCtrl), InputMax.unitPrice);
+  double get _hours => saneInput(_num(_hoursCtrl), 1000);
   double get _base => _rate * _hours;
-  double get _quote => _base * (1 + _num(_marginCtrl) / 100);
+  double get _quote =>
+      _base * (1 + saneInput(_num(_marginCtrl), InputMax.percent) / 100);
   double get _afterTax => _quote * (1 - 0.033);
 
   bool get _hasInput => _rate > 0 && _hours > 0;

@@ -19,9 +19,10 @@ class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
   final _yearsCtrl = TextEditingController();
   final _fmt = NumberFormat('#,###');
 
-  double get _wage => double.tryParse(_wageCtrl.text.replaceAll(',', '')) ?? 0;
-  double get _years =>
-      double.tryParse(_yearsCtrl.text.replaceAll(',', '')) ?? 0;
+  double get _wage => saneInput(
+      double.tryParse(_wageCtrl.text.replaceAll(',', '')) ?? 0, InputMax.money);
+  double get _years => saneInput(
+      double.tryParse(_yearsCtrl.text.replaceAll(',', '')) ?? 0, InputMax.years);
 
   // DB형(확정급여): 퇴직 시점 월평균임금 × 근속연수
   double get _db => _wage * _years;
