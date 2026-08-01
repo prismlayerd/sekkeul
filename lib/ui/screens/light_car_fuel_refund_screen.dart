@@ -19,7 +19,16 @@ class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
   final _fmt = NumberFormat('#,###');
 
   static const List<String> _fuelLabels = ['휘발유', '경유', 'LPG(부탄)'];
-  static const List<double> _fuelRates = [250, 160, 197];
+  /// 유종별 리터당 환급액 — 조특법 §111의2③ · 시행령 §112의2③.
+  ///
+  /// **휘발유·경유는 리터당 250원**(법제처 생활법령 「경형자동차 유류세 환급」,
+  /// 확인일 2026-08-01). 종전에는 경유를 160원으로 두어 조문의 64%만 환급되는
+  /// 것으로 안내했다 — 월 100L 주유 기준 연 10만 8천원을 덜 받는 것으로 계산된다.
+  ///
+  /// 부탄은 조문이 리터당 금액을 정하지 않고 "부과된 개별소비세 전액"이라고만
+  /// 한다. 여기 197원은 실무 환산값이라 원문으로 확정되지 않았다 —
+  /// 추적: test/notice_expiry_test.dart (1차 미확인)
+  static const List<double> _fuelRates = [250, 250, 197];
   static const double _annualCap = 300000;
 
   double _num(TextEditingController c) => double.tryParse(c.text.replaceAll(',', '')) ?? 0;
@@ -122,7 +131,7 @@ class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
             ], line, sub, ink),
             const SizedBox(height: 12),
             _infoBox('환급 단가 · 상한', const [
-              '휘발유 리터당 250원, 경유 리터당 160원, LPG(부탄) 리터당 197원',
+              '휘발유·경유 리터당 250원, LPG(부탄)는 부과된 개별소비세 전액(환산 197원)',
               '연간 상한 30만원(1대 기준)',
             ], line, sub, ink),
             const SizedBox(height: 12),
