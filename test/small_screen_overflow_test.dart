@@ -120,4 +120,74 @@ void main() {
     print('유형별 화면 ${byType.length}개 × 3유형 · 문제 ${problems.length}건');
     expect(problems, isEmpty, reason: '작은 화면에서 잘리거나 렌더링이 죽는 곳이 있다');
   });
+
+  testWidgets('홈 — 카드 문턱 미달 상태의 진행바도 360px에서 넘치지 않는다', (t) async {
+    // 전수검사 시드는 카드 사용액이 문턱을 넘겨 **환급 카운터**가 뜬다. 그래서
+    // 문턱 미달일 때만 나오는 진행바('카드 공제 문턱 (연봉의 25%)' + '○○○원 남음')가
+    // 한 번도 안 그려졌고, 그 줄이 60px 넘치던 걸 못 잡고 있었다.
+    // 라벨이 길고 금액도 긴 최악 조합을 일부러 만든다.
+    t.view.physicalSize = const Size(360, 800);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    final problems = <String>[];
+    final old = FlutterError.onError;
+    FlutterError.onError = (d) {
+      final s = d.exception.toString();
+      if (!s.contains('overflowed')) return;
+      final where =
+          RegExp(r'(\w+_screen\.dart|\w+\.dart):(\d+)').firstMatch(d.toString());
+      final line = '${s.split('.').first} @ ${where?.group(0) ?? '?'}';
+      if (!problems.contains(line)) problems.add(line);
+    };
+    addTearDown(() => FlutterError.onError = old);
+
+    dbService = InMemoryDatabaseHelper();
+    await dbService.initDatabase();
+    // 총급여 9,900만 → 문턱 2,475만. 카드는 조금만 써서 '남은 금액'이 8자리가 되게.
+    await dbService.saveProfile({
+      'user_type': '직장인',
+      'gross_income': 99000000.0,
+      'dependents': 2,
+    });
+    final now = DateTime.now();
+    for (int b = 0; b < 3; b++) {
+      final d = DateTime(now.year, now.month - b, 1);
+      await dbService.insertIncomeEntry(IncomeEntry(
+          id: 'th-inc-$b', date: d, amount: 8250000, memo: '',
+          incomeType: '급여', userType: '직장인'));
+      await dbService.insertExpense(ExpenseItem(
+          id: 'th-exp-$b', date: d, amount: 300000, content: '',
+          category: '기타', paymentMethod: '신용카드', isBusiness: false,
+          userType: '직장인'));
+    }
+
+    await t.pumpWidget(MaterialApp(
+        key: ValueKey('pump-threshold-${seq++}'), home: const HomeScreen()));
+    for (int i = 0; i < 6; i++) {
+      await t.pump(const Duration(milliseconds: 300));
+    }
+    t.takeException();
+    FlutterError.onError = old;
+
+    // 진행바가 실제로 그려졌는지 먼저 확인한다 — 안 그려졌으면 이 검사는 무의미하다.
+    final labels = <String>[];
+    for (final w in t.allWidgets) {
+      if (w is Text) {
+        final s = w.data ?? w.textSpan?.toPlainText();
+        if (s != null) labels.add(s);
+      }
+    }
+    expect(labels.any((s) => s.contains('문턱')), isTrue,
+        reason: '문턱 진행바가 안 그려졌다 — 시드가 이미 문턱을 넘겼다는 뜻이다');
+
+    for (final p in problems) {
+      // ignore: avoid_print
+      print('넘침: $p');
+    }
+    // ignore: avoid_print
+    print('문턱 미달 홈 · 넘친 곳 ${problems.length}건');
+    expect(problems, isEmpty, reason: '문턱 진행바가 작은 화면에서 넘친다');
+  });
 }

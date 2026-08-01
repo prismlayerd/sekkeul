@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 export 'package:secul/core/data/db_helper.dart' show dbService, InMemoryDatabaseHelper;
+export 'package:secul/core/data/expense_item.dart';
+export 'package:secul/core/data/income_entry.dart';
+export 'package:secul/ui/screens/home_screen.dart';
 
 import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/core/data/expense_item.dart';
