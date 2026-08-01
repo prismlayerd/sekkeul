@@ -46,6 +46,14 @@ class _Benefit {
   final List<(String, String)>? links;
   final WidgetBuilder? eligibilityBuilder;
 
+  /// 이 제도의 금액을 **원문과 대조한 기록**.
+  ///
+  /// 여기 적힌 금액은 거의 다 매년 고시로 바뀐다. 출처와 확인일을 안 남기면
+  /// 어느 값이 최신인지 아무도 모르고, 실제로 표본 6개 중 3개가 낡아 있었다.
+  /// `on`은 확인한 날(YYYY-MM-DD), `source`는 원문 주소다.
+  /// 비워 두면 `benefit_freshness_test`가 미확인으로 세고, 오래되면 터진다.
+  final ({String source, String on})? verified;
+
   const _Benefit({
     required this.name,
     required this.amount,
@@ -53,6 +61,7 @@ class _Benefit {
     this.calcBuilder,
     this.links,
     this.eligibilityBuilder,
+    this.verified,
   });
 }
 
@@ -67,6 +76,7 @@ final _categories = <_BenefitCategory>[
   _BenefitCategory(label: '세금·연금·환급', items: [
     _Benefit(
       name: '근로·자녀장려금',
+      verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-08-02'),
       amount: '근로 최대 330만원 / 자녀 1인당 최대 100만원',
       desc: '저소득 가구에 지급하는 환급형 세금 지원. 근로장려금과 자녀장려금 중복 수령 가능.\n\n'
           '근로장려금 지급 기준 (2025 귀속)\n'
@@ -97,6 +107,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '연금저축·IRP 세액공제',
+      verified: (source: 'https://www.law.go.kr/법령/소득세법', on: '2026-08-02'),
       amount: '납입액 최대 16.5% 환급',
       desc: '총급여 5,500만원 이하 16.5%, 초과 13.2% 공제율. 연금저축 단독 최대 600만원, IRP 포함 합산 최대 900만원까지 공제 가능.\n\n'
           '한도 구조\n'
@@ -121,12 +132,14 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '보험료 세액공제',
+      verified: (source: 'https://www.law.go.kr/법령/소득세법', on: '2026-08-02'),
       amount: '연 최대 27만원',
       desc: '보장성보험료 연 100만 한도, 12% 공제 (장애인 15%)',
       calcBuilder: (_) => const InsurancePremiumScreen(),
     ),
     _Benefit(
       name: '부양가족 공제',
+      verified: (source: 'https://www.law.go.kr/법령/소득세법', on: '2026-08-02'),
       amount: '기본 1인당 150만원 + 추가공제',
       desc: '기본공제 대상에 해당하는 가족 1인당 연 150만원 소득공제. 본인은 요건 없이 항상 적용.\n\n'
           '기본공제 대상 요건 (소득금액 연 100만원 이하)\n'
@@ -153,6 +166,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '결혼세액공제',
+      verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-08-02'),
       amount: '부부 합산 최대 100만원',
       desc: '혼인신고일이 2024.1.1~2026.12.31에 해당하는 근로자·종합소득자가 신청 가능. 부부 각자 50만원, 합산 최대 100만원 세액공제.\n\n'
           '공제 요건\n'
@@ -174,6 +188,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: 'ISA 비과세 혜택',
+      verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-08-02'),
       amount: '200~400만원 비과세',
       desc: '만기 시 이자·배당·매매차익 손익통산 후 비과세 또는 9.9% 분리과세. 일반형 200만원, 서민·농어민형 400만원 비과세.\n\n'
           '유형별 혜택\n'
@@ -226,6 +241,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '월세 세액공제',
+      verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-08-02'),
       amount: '연 최대 170만원',
       desc: '무주택 세대주(또는 세대원)가 낸 월세액의 일부를 연말정산·종합소득세 신고 시 세액에서 공제.\n\n'
           '공제율 및 한도\n'
@@ -250,6 +266,7 @@ final _categories = <_BenefitCategory>[
   _BenefitCategory(label: '급여·근로', items: [
     _Benefit(
       name: '청년 중소기업 소득세 감면',
+      verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-08-02'),
       amount: '연 200만원 한도',
       desc: '만 15~34세 청년이 중소기업에 취업하면 5년간 소득세 90% 감면, 연 200만원 한도.\n\n'
           '자격조건\n'
@@ -273,6 +290,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '실업급여',
+      verified: (source: 'https://www.moel.go.kr/policy/policyinfo/employ/list4.do', on: '2026-08-02'),
       amount: '평균임금의 60% (일 최대 68,100원)',
       desc: '고용보험 180일 이상 가입하고 비자발적으로 이직한 경우 지급.\n\n'
           '지급액\n'
@@ -339,6 +357,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '청년 월세 지원',
+      verified: (source: 'https://www.molit.go.kr/USR/NEWS/m_71/dtl.jsp?id=95087080', on: '2026-08-02'),
       amount: '월 최대 20만원 / 연 최대 240만원',
       desc: '지원 대상\n'
           '· 만 19~34세 무주택 청년\n'
@@ -419,11 +438,13 @@ final _categories = <_BenefitCategory>[
   _BenefitCategory(label: '출산·육아', items: [
     const _Benefit(
       name: '부모급여',
+      verified: (source: 'https://www.mohw.go.kr/menu.es?mid=a10711030600', on: '2026-08-02'),
       amount: '0세 월 100만 / 1세 월 50만',
       desc: '출생 후 자동 신청, 소득·재산 무관 전 가구 지급',
     ),
     _Benefit(
       name: '첫만남이용권',
+      verified: (source: 'https://www.bokjiro.go.kr/ssis-tbu/twataa/wlfareInfo/moveTWAT52011M.do?wlfareInfoId=WLF00004656', on: '2026-08-02'),
       amount: '첫째 200만원 / 둘째 이상 300만원',
       desc: '출생 아동에게 지급하는 일시금 바우처. 소득·재산 무관 전 가구 지급.\n\n'
           '지급액\n'
@@ -444,6 +465,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '6+6 부모육아휴직급여',
+      verified: (source: 'https://www.moel.go.kr/policy/policydata/view.do?bbs_seq=20240102052', on: '2026-08-02'),
       amount: '부모 각각 첫 6개월 통상임금 100%',
       desc: '생후 18개월 이내 자녀에 대해 부모가 모두 육아휴직을 사용하면 첫 6개월간 각자 통상임금 100%를 지급.\n\n'
           '제도 요건\n'
@@ -461,6 +483,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '아동수당',
+      verified: (source: 'https://www.mohw.go.kr/board.es?mid=a10503010100&bid=0027&act=view&list_no=1490257', on: '2026-08-02'),
       amount: '월 10만~12만원(거주지역별)',
       desc: '모든 아동에게 소득·재산 무관 매월 지급하는 현금 수당. 대상 연령이 2030년까지 '
           '매년 한 살씩 올라간다(아동수당법 개정, 법률 제21489호).\n\n'
@@ -483,6 +506,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '자녀세액공제·자녀장려금',
+      verified: (source: 'https://www.law.go.kr/법령/소득세법', on: '2026-08-02'),
       amount: '세액공제 25~55만원 / 장려금 최대 100만원',
       desc: '일정 연령 이상 자녀는 자녀세액공제(연말정산), 18세 미만 자녀를 둔 소득 7,000만원 미만 가구는 자녀장려금(5월 신청)이 별도 적용됨.\n\n'
           '자녀세액공제 기준\n'
@@ -566,12 +590,13 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '보육료 지원',
-      amount: '연령별 월 28만~54만원',
+      verified: (source: 'https://www.childcare.go.kr/index.html?menuno=325&flag=Sl&bgb=1&bid=1895876', on: '2026-08-02'),
+      amount: '연령별 월 28만~58.4만원',
       desc: '어린이집을 이용하는 아동의 보육료를 정부가 지원. 가정양육 시 현금 지원으로 전환.\n\n'
-          '연령별 지원 단가 (어린이집)\n'
-          '· 0세반: 월 54.2만원\n'
-          '· 1세반: 월 47.5만원\n'
-          '· 2세반: 월 39.4만원\n'
+          '연령별 지원 단가 (어린이집, 2026년 기본보육)\n'
+          '· 0세반: 월 58.4만원\n'
+          '· 1세반: 월 51.5만원\n'
+          '· 2세반: 월 42.6만원\n'
           '· 3~5세 누리과정: 월 28.0만원\n\n'
           '지급 방식\n'
           '· 어린이집에 직접 지급 (국민행복카드 결제)\n'
@@ -637,6 +662,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '본인부담상한제 환급',
+      verified: (source: 'https://www.nhis.or.kr/nhis/policy/wbhefa02700m01.do', on: '2026-08-02'),
       amount: '초과분 전액 환급',
       desc: '연간 건강보험 본인부담금(비급여 제외)이 소득분위별 상한액을 초과하면 초과분을 돌려받는 제도.\n\n'
           '대상 및 포함 항목\n'
@@ -706,6 +732,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '기초연금',
+      verified: (source: 'https://www.mohw.go.kr/board.es?mid=a10503000000&bid=0027&list_no=1488478&act=view', on: '2026-08-02'),
       amount: '월 최대 34.97만원(단독)',
       desc: '만 65세 이상 소득 하위 70% 어르신에게 매월 지급하는 공적 노령연금.\n\n'
           '대상 요건\n'
@@ -731,6 +758,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '장애인연금·장애수당',
+      verified: (source: 'https://www.mohw.go.kr/menu.es?mid=a10710030100', on: '2026-08-02'),
       amount: '중증 월 최대 43.97만원',
       desc: '만 18세 이상 등록 장애인에게 장애 정도에 따라 지급하는 현금 지원. 중증은 장애인연금, 경증은 장애수당.\n\n'
           '대상 및 소득 기준\n'
@@ -760,6 +788,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '주택연금',
+      verified: (source: 'https://www.hf.go.kr/ko/sub01/sub01_01_01.do', on: '2026-08-02'),
       amount: '월 최대 375만원(종신·정액)',
       desc: '만 55세 이상이 보유 주택을 담보로 평생 매달 연금을 받는 역모기지 제도 (한국주택금융공사 HF).\n\n'
           '대상 요건\n'
@@ -888,6 +917,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '신혼특공',
+      verified: (source: 'https://www.lh.or.kr/menu.es?mid=a10402010100', on: '2026-08-02'),
       amount: '시세 이하 공급',
       desc: '혼인 7년 이내 부부(예비신혼·재혼·한부모 포함)에게 우선 공급하는 특별공급 제도.\n\n'
           '대상 요건\n'
@@ -933,6 +963,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '주거급여',
+      verified: (source: 'https://www.myhome.go.kr/hws/portal/cont/selectRentalHouseholdSupView.do', on: '2026-08-02'),
       amount: '가구원수·급지별 월 기준임대료',
       desc: '기준중위소득 48% 이하 저소득 가구에게 임차료 또는 주택 수선비를 지원하는 제도.\n\n'
           '대상 요건\n'
@@ -958,6 +989,7 @@ final _categories = <_BenefitCategory>[
   _BenefitCategory(label: '일자리·행정', items: [
     _Benefit(
       name: '국민취업지원제도',
+      verified: (source: 'https://www.work24.go.kr/ua/z/z/1300/selectEmssRqutIntro.do', on: '2026-08-02'),
       amount: '최대 약 750만원 (I형)',
       desc: '고용보험 실업급여를 받을 수 없는 저소득 구직자·청년 등에게 구직촉진수당·취업활동비용을 지원하는 한국형 실업부조.\n\n'
           'I형 (구직촉진수당)\n'
@@ -1095,6 +1127,7 @@ final _categories = <_BenefitCategory>[
   _BenefitCategory(label: '교통·에너지', items: [
     _Benefit(
       name: '자동차세 연납 할인',
+      verified: (source: 'https://www.law.go.kr/법령/지방세법', on: '2026-08-02'),
       amount: '최대 약 4.57% 절감',
       desc: '자동차세를 연 단위로 미리 납부하면 남은 기간 이자 상당액을 공제받는 지방세 할인 제도.\n\n'
           '신청 시기별 공제율(2026년 기준)\n'
@@ -1165,6 +1198,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '경차 유류세 환급',
+      verified: (source: 'https://easylaw.go.kr/CSP/CnpClsMain.laf?csmSeq=679&ccfNo=3&cciNo=2&cnpClsNo=1', on: '2026-08-02'),
       amount: '연 최대 30만원',
       desc: '배기량 1,000cc 미만 경형자동차 소유자에게 유류세 일부를 환급하는 제도.\n\n'
           '적격 차량\n'
@@ -1210,6 +1244,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '탄소중립포인트',
+      verified: (source: 'https://www.cpoint.or.kr/netzero/site/cntnts/CNTNTS_002.do', on: '2026-08-02'),
       amount: '연 최대 7만원',
       desc: '일상 속 친환경 활동 실천 시 현금성 포인트를 지급하는 환경부 탄소중립 실천 포인트 제도.\n\n'
           '활동별 적립 단가(2026년 기준, 예산 상황에 따라 조정 가능)\n'
@@ -1235,6 +1270,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '에너지바우처',
+      verified: (source: 'https://www.energyv.or.kr/info/support_info.do', on: '2026-08-02'),
       amount: '연간 최대 약 70.1만원',
       desc: '냉방·난방비 부담이 큰 저소득 취약가구에 전기·가스·등유 등 에너지 비용을 지원하는 바우처 제도.\n\n'
           '대상 요건(모두 충족)\n'
