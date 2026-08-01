@@ -23,9 +23,19 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
   final _fmt = NumberFormat('#,###');
 
   static const int _capWon = 3750000;
-  // 연령 -> 억당 월지급률(만원)
-  static const _rateAges = [55, 60, 65, 70, 75];
-  static const _rates = [15.0, 21.0, 25.0, 30.0, 38.4];
+  /// 연령 → 1억원당 월지급금(만원) — 종신지급·정액형·일반주택.
+  ///
+  /// 출처: 한국주택금융공사 「월지급금 예시」(hf.go.kr/ko/sub03/sub03_01_01_02.do),
+  /// **2026년 3월 1일 기준**. 확인일 2026-08-01.
+  ///
+  /// 종전에는 15/21/25/30/38.4라는 어림값을 쓰고 있었다. 공시표와 −3.8%~+0.8%
+  /// 어긋났고(70세 3억 주택에서 90만원 vs 공시 92.3만원), 방향도 일정하지 않아
+  /// 어느 쪽으로 틀릴지 예측할 수 없었다. 공시표가 있으므로 근사할 이유가 없다.
+  ///
+  /// 80세를 표에 넣으면 75세 이상이 상수로 고정되지 않고 계속 오른다.
+  /// 매년 공시가 갱신되므로 추적: test/notice_expiry_test.dart
+  static const _rateAges = [55, 60, 65, 70, 75, 80];
+  static const _rates = [15.6, 21.0, 25.2, 30.7, 38.1, 48.3];
 
   int get _age => int.tryParse(_ageCtrl.text.replaceAll(',', '')) ?? 0;
   double get _priceManwon =>

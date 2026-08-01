@@ -64,11 +64,11 @@ void main() {
   }
 
   group('주택연금 (한국주택금융공사 공시)', () {
-    /// 억당 월지급률(만원) — 55세 15 / 60세 21 / 65세 25 / 70세 30 / 75세 38.4.
-    /// 사이 연령은 선형보간한다.
+    /// 1억원당 월지급금(만원) — 한국주택금융공사 「월지급금 예시」 2026.3.1. 기준.
+    /// 종신지급·정액형·일반주택. 사이 연령은 선형보간한다.
     double rateAt(int age) {
-      const ages = [55, 60, 65, 70, 75];
-      const rates = [15.0, 21.0, 25.0, 30.0, 38.4];
+      const ages = [55, 60, 65, 70, 75, 80];
+      const rates = [15.6, 21.0, 25.2, 30.7, 38.1, 48.3];
       if (age <= ages.first) return rates.first;
       if (age >= ages.last) return rates.last;
       for (var i = 0; i < ages.length - 1; i++) {
@@ -80,13 +80,23 @@ void main() {
       return rates.last;
     }
 
-    testWidgets('공시가 5억 · 65세 → 억당 25만 × 5억 = 125만원', (t) async {
+    test('공시표가 HF 공시값과 정확히 일치한다', () {
+      // 어림값(15/21/25/30/38.4)을 쓰던 때는 70세 3억 주택에서 90만원이 나왔는데
+      // 공시는 92.3만원이었다. 이 검사가 그 어긋남을 막는다.
+      const hfPer100M = {55: 15.6, 60: 21.0, 65: 25.2, 70: 30.7, 75: 38.1, 80: 48.3};
+      hfPer100M.forEach((age, v) => expect(rateAt(age), v,
+          reason: '\$age세 억당 월지급금이 HF 공시와 다르다'));
+      // HF 예시: 70세·3억 → 92만 3천원
+      expect(rateAt(70) * 3, closeTo(92.1, 0.3));
+    });
+
+    testWidgets('공시가 5억 · 65세 → 억당 25.2만 × 5억 = 126만원', (t) async {
       // 입력 순서: 0=연령, 1=공시가격(만원)
       await open(t, const HousingPensionScreen(), [(0, '65'), (1, '50000')]);
       final monthly = 5 * rateAt(65) * 10000;
       // ignore: avoid_print
       print('5억 · 65세 → 억당 ${rateAt(65)}만 → 월 ${comma(monthly)}원');
-      expect(monthly, 1250000);
+      expect(monthly, 1260000);
       expectToken(t, '${comma(monthly)}원', '월지급금');
     });
 
@@ -100,16 +110,16 @@ void main() {
     });
 
     testWidgets('구간 사이 연령은 선형보간된다 — 67세', (t) async {
-      // 65세 25만, 70세 30만 → 67세는 25 + (30−25)×2/5 = 27만
-      expect(rateAt(67), closeTo(27.0, 0.01));
+      // 65세 25.2만, 70세 30.7만 → 67세는 25.2 + (30.7−25.2)×2/5 = 27.4만
+      expect(rateAt(67), closeTo(27.4, 0.01));
       await open(t, const HousingPensionScreen(), [(0, '67'), (1, '50000')]);
-      expectToken(t, '${comma(5 * 27.0 * 10000)}원', '67세 선형보간');
+      expectToken(t, '${comma(5 * rateAt(67) * 10000)}원', '67세 선형보간');
     });
 
     testWidgets('월 375만원 상한이 걸린다', (t) async {
       // 가입 상한인 공시가격 12억 · 75세 → 12 × 38.4만 = 460.8만원이지만 상한 375만.
       await open(t, const HousingPensionScreen(), [(0, '75'), (1, '120000')]);
-      expect(12 * rateAt(75) * 10000, 4608000);
+      expect(12 * rateAt(75) * 10000, closeTo(4572000, 1));
       expectToken(t, '3,750,000원', '월지급금 상한');
       expect(tokens(t).contains('4,608,000원'), isFalse,
           reason: '상한을 안 걸면 460.8만원이 나온다');
