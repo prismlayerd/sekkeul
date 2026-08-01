@@ -81,6 +81,24 @@ void main() {
         reason: '매년 바뀌는 값을 화면에 적으면 갱신 때 한 곳을 빠뜨린다');
   });
 
+  /// 파생 상수를 리터럴로 바꿔 놓는 것도 같은 병이다.
+  ///
+  /// `unemploymentDailyFloor`를 `66048.0`으로 적어도 **오늘은 두 값이 같아서**
+  /// 어떤 값 검사도 안 깨진다. 최저임금이 바뀌는 내년에야 어긋난다 —
+  /// 실행 시점 검사로는 못 잡으므로 소스를 본다.
+  test('파생으로 정의된 상수가 리터럴로 바뀌지 않았다', () {
+    final src = File('lib/core/tax_engine/tax_rates.dart').readAsStringSync();
+    // 고용보험법 §46② — 구직급여 하한은 최저임금일액(시급 × 8시간)의 80%다.
+    final m = RegExp(r'unemploymentDailyFloor\s*=\s*([^;]+);').firstMatch(src);
+    expect(m, isNotNull, reason: 'unemploymentDailyFloor 정의를 못 찾았다');
+    final rhs = m!.group(1)!.trim();
+    // ignore: avoid_print
+    print('  unemploymentDailyFloor = ' + rhs);
+    expect(rhs.contains('minimumHourlyWage'), isTrue,
+        reason: '구직급여 하한이 최저임금에서 파생되지 않고 리터럴로 박혀 있다 — '
+            '오늘은 값이 같아도 최저임금이 바뀌면 어긋난다');
+  });
+
   test('엔진의 한계세율 함수가 구간표와 일치한다', () {
     // 화면이 쓰는 안내용 한계세율이 실제 세율표에서 파생되는지.
     expect(TaxRates.marginalRatePercent(13999999), 6);
