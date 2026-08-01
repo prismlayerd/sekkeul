@@ -96,8 +96,14 @@ RefInsurance refAnnualInsurance(double monthlyGross) {
       ? 6590000.0
       : (monthlyGross < 410000 ? 410000.0 : monthlyGross);
   final np = trunc10(npBase * 0.0475);
-  final hi = trunc10(monthlyGross * 0.03595);
-  final ltc = trunc10(hi * 0.1314);
+  // 건강보험은 **보험료액 자체**에 상·하한이 걸린다(보건복지부고시 제2025-222호).
+  // 소득에 캡을 씌우고 요율을 곱하면 하한이 어긋난다.
+  // 고시액은 노사 합산이라 본인부담은 그 1/2.
+  final rawHi = monthlyGross * 0.03595;
+  final hi = trunc10(rawHi < 20160 / 2
+      ? 20160 / 2
+      : (rawHi > 9183480 / 2 ? 9183480 / 2 : rawHi));
+  final ltc = trunc10(hi * (0.009448 / 0.0719));
   final ei = trunc10(monthlyGross * 0.009);
   final pension = np * 12;
   final special = (hi + ltc + ei) * 12;

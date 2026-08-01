@@ -1,4 +1,5 @@
 import 'tax_rates.dart';
+import 'insurance_engine.dart';
 
 class CreditCardDeductionResult {
   final double threshold;
@@ -146,22 +147,19 @@ class EmployeeTaxCalculator {
         longTermCare: 0, employmentInsurance: 0, total: 0,
       );
     }
-    // 국민연금은 기준소득월액 상·하한으로 클램프한 소득에만 부과 (고소득자 과대부과 방지).
-    final npBase = monthlyGross > TaxRates.nationalPensionBaseUpperLimit
-        ? TaxRates.nationalPensionBaseUpperLimit
-        : (monthlyGross < TaxRates.nationalPensionBaseLowerLimit
-            ? TaxRates.nationalPensionBaseLowerLimit
-            : monthlyGross);
-    final np  = TaxRates.truncateWon(npBase * 0.0475);
-    final hi  = TaxRates.truncateWon(monthlyGross * 0.03595);
-    final ltc = TaxRates.truncateWon(hi * 0.1314);
-    final ei  = TaxRates.truncateWon(monthlyGross * 0.009);
+    // 4대보험 계산은 InsuranceEngine 하나만 쓴다.
+    //
+    // 종전에는 여기에 요율을 다시 적어 두 벌이 돌아갔고, 그쪽에만 있는
+    // **건강보험 월별 보험료액 상·하한**(보건복지부고시 제2025-222호)이 빠져 있었다.
+    // 고시가 정하는 것은 소득이 아니라 보험료액이라, 저소득 구간에서 하한을
+    // 안 걸면 연말정산 보험료 특별소득공제가 실제보다 작게 잡힌다.
+    final r = InsuranceEngine.calculateEmployeeInsurance(monthlyGross);
     return InsuranceBreakdown(
-      nationalPension: np,
-      healthInsurance: hi,
-      longTermCare: ltc,
-      employmentInsurance: ei,
-      total: np + hi + ltc + ei,
+      nationalPension: r.nationalPension,
+      healthInsurance: r.healthInsurance,
+      longTermCare: r.longTermCare,
+      employmentInsurance: r.employmentInsurance,
+      total: r.nationalPension + r.healthInsurance + r.longTermCare + r.employmentInsurance,
     );
   }
 

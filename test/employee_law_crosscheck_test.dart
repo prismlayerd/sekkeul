@@ -3,6 +3,7 @@ import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/core/data/expense_item.dart';
 import 'package:secul/core/data/income_entry.dart';
 import 'package:secul/core/tax_engine/employee_tax.dart';
+import 'package:secul/core/tax_engine/insurance_engine.dart';
 import 'package:secul/core/tax_engine/tax_year.dart';
 
 import 'support/tax_law_reference.dart';
@@ -299,5 +300,39 @@ void main() {
           '    카드공제 ${won(engCard.finalDeduction)}  결정세액 ${won(engDecided)}'
           '  절세액 ${won(engRefund.taxSaving)}');
     }
+  });
+
+  /// 4대보험 계산 경로가 하나인지 못박는다.
+  ///
+  /// 종전에는 `EmployeeTaxCalculator`와 `InsuranceEngine`에 요율이 따로 적혀 있었고,
+  /// **건강보험 월별 보험료액 상·하한**(보건복지부고시 제2025-222호)이 한쪽에만 있었다.
+  /// 연말정산(전자)과 실수령액 계산기(후자)가 같은 사람에게 다른 보험료를 말할 수 있었다.
+  test('연말정산 경로와 실수령액 경로의 4대보험이 전 구간에서 같다', () {
+    final gaps = <String>[];
+    // 월 10만 ~ 1억 5천만까지 훑는다 — 건보료 하한·상한, 연금 상·하한을 모두 지난다.
+    for (double m = 100000; m <= 150000000; m *= 1.15) {
+      final a = EmployeeTaxCalculator.calculateMonthlyInsurance(m);
+      final b = InsuranceEngine.calculateEmployeeInsurance(m);
+      if (a.nationalPension != b.nationalPension ||
+          a.healthInsurance != b.healthInsurance ||
+          a.longTermCare != b.longTermCare ||
+          a.employmentInsurance != b.employmentInsurance) {
+        gaps.add('월 ${won(m)} — 연말정산 ${won(a.total)} vs 계산기 '
+            '${won(b.nationalPension + b.healthInsurance + b.longTermCare + b.employmentInsurance)}');
+      }
+      // 조문 검산과도 맞는지 같이 본다.
+      final ref = refAnnualInsurance(m);
+      if ((a.nationalPension * 12 - ref.pension).abs() > 0.01 ||
+          ((a.healthInsurance + a.longTermCare + a.employmentInsurance) * 12 - ref.special)
+                  .abs() >
+              0.01) {
+        gaps.add('월 ${won(m)} — 조문 검산과 불일치');
+      }
+    }
+    for (final g in gaps.take(10)) {
+      // ignore: avoid_print
+      print('  · $g');
+    }
+    expect(gaps, isEmpty, reason: '4대보험 계산이 경로마다 다르다');
   });
 }

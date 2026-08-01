@@ -8,6 +8,7 @@ import 'package:secul/core/tax_engine/reserve_estimator.dart';
 import 'package:secul/core/tax_engine/tax_year.dart';
 import 'package:secul/ui/screens/expense_calendar_screen.dart';
 import 'package:secul/ui/screens/home_screen.dart';
+import 'package:secul/ui/screens/salary_net_screen.dart';
 
 import 'support/tax_law_reference.dart';
 
@@ -215,5 +216,45 @@ void main() {
     expect(r.minMonthlyTaxReserve.round(), r.maxMonthlyTaxReserve.round(),
         reason: '이 조건이면 적립액이 범위가 아니라 단일 값이어야 한다');
     expectShown(t, r.minMonthlyTaxReserve, '가계부 적립 카드 세금적립액');
+  });
+
+  testWidgets('실수령액 계산기 — 공제 항목 6줄이 조문 검산과 일치한다', (t) async {
+    // 총급여 4,800만 · 본인만. 화면에 직접 타이핑해서 계산시킨다.
+    const gross = 48000000.0;
+    const monthly = gross / 12;
+
+    dbService = InMemoryDatabaseHelper();
+    await dbService.initDatabase();
+    await pump(t, const SalaryNetScreen());
+
+    await t.enterText(find.byType(TextField).first, '48000000');
+    await t.pump(const Duration(milliseconds: 300));
+    await t.pump(const Duration(milliseconds: 300));
+
+    // 조문 검산 — 4대보험 본인부담(월)
+    final np = trunc10((monthly > 6590000
+            ? 6590000.0
+            : (monthly < 410000 ? 410000.0 : monthly)) *
+        0.0475);
+    final rawHi = monthly * 0.03595;
+    final hi = trunc10(rawHi < 20160 / 2
+        ? 20160 / 2
+        : (rawHi > 9183480 / 2 ? 9183480 / 2 : rawHi));
+    final ltc = trunc10(hi * (0.009448 / 0.0719));
+    final ei = trunc10(monthly * 0.009);
+
+    expectShown(t, monthly, '실수령액 계산기 세전 월급');
+    expectShown(t, np, '실수령액 계산기 국민연금');
+    expectShown(t, hi + ltc, '실수령액 계산기 건강보험+장기요양');
+    expectShown(t, ei, '실수령액 계산기 고용보험');
+
+    // 근로소득세는 간이세액표가 아니라 연말정산식 추정이다 — 엔진과 대조하고,
+    // 지방소득세가 그 10%인지(지방세법 §92)까지 화면에서 확인한다.
+    final incomeTax = EmployeeTaxCalculator.estimateMonthlyIncomeTax(
+      grossAnnual: gross,
+      dependentsIncludingSelf: 1,
+    );
+    expectShown(t, incomeTax, '실수령액 계산기 근로소득세');
+    expectShown(t, (incomeTax * 0.1).floorToDouble(), '실수령액 계산기 지방소득세');
   });
 }
