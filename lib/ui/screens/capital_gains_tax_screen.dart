@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/tax_engine/tax_rates.dart';
 import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
@@ -39,16 +40,11 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
   bool _oneHousehold = false;
   final _fmt = NumberFormat('#,###');
 
-  static const List<(double, double, double)> _brackets = [
-    (12000000, 0.06, 0),
-    (46000000, 0.15, 1080000),
-    (88000000, 0.24, 5220000),
-    (150000000, 0.35, 14900000),
-    (300000000, 0.38, 19400000),
-    (500000000, 0.40, 25400000),
-    (1000000000, 0.42, 35400000),
-    (double.infinity, 0.45, 65400000),
-  ];
+  // 양도소득세 세율은 소득세법 §104①1이 **§55①의 종합소득세율을 그대로 준용**한다.
+  // 여기에 표를 따로 두었더니 2023년 개정(1,200만→1,400만, 4,600만→5,000만과
+  // 누진공제 전부 상향)을 놓쳐 2022년 이전 값으로 굳어 있었다.
+  // 과세표준 4,600만~5,000만 구간에서 세금이 과대 계산됐다.
+  // 표를 없애고 엔진 하나만 본다.
 
   void _reset() => setState(() {
         _acquireController.clear();
@@ -82,14 +78,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
     }
   }
 
-  double _incomeTax(double taxBase) {
-    for (final (limit, rate, deduction) in _brackets) {
-      if (taxBase <= limit) {
-        return taxBase * rate - deduction;
-      }
-    }
-    return taxBase * 0.45 - 65400000;
-  }
+  double _incomeTax(double taxBase) => TaxRates.calculateTax(taxBase);
 
   _TaxResult? _compute() {
     final gain = _transfer - _acquire;
@@ -336,8 +325,8 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
                           fontSize: 13,
                           fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
-                  _rateRow('1,200만원 이하', '6%', subColor, textColor),
-                  _rateRow('4,600만원 이하', '15%', subColor, textColor),
+                  _rateRow('1,400만원 이하', '6%', subColor, textColor),
+                  _rateRow('5,000만원 이하', '15%', subColor, textColor),
                   _rateRow('8,800만원 이하', '24%', subColor, textColor),
                   _rateRow('1.5억원 이하', '35%', subColor, textColor),
                   _rateRow('3억원 이하', '38%', subColor, textColor),

@@ -28,6 +28,11 @@ class _UnemploymentBenefitScreenState
   // 2026년 기준
   // 하한은 최저임금에서 파생된다 — 최저임금만 갱신하면 따라 움직인다.
   static const double _minDailyLimit = TaxRates.unemploymentDailyFloor;
+  /// 구직급여 상한액 — 2026.1.1. 이후 이직자부터 66,000원 → 68,100원.
+  /// 2019년 이후 6년 만의 인상이고, 사유는 최저임금 인상으로 **하한이 종전 상한을
+  /// 넘어섰기** 때문이다(하한 66,048 = 10,320 × 8 × 80% > 66,000).
+  /// 상한과 하한이 이렇게 맞물리므로 최저임금이 오르면 상한도 함께 확인해야 한다.
+  /// 추적: test/notice_expiry_test.dart (1차 자료 미확인 상태로 기록돼 있다)
   static const double _maxDailyLimit = 68100.0;
 
   void _reset() {

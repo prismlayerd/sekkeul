@@ -21,6 +21,12 @@ class Notice {
   final double expected; // 확인 시점에 원문에서 읽은 값
   final String checkedOn;
 
+  /// 1차 자료(고시 원문·소관부처 공식 페이지)로 확인했는가.
+  /// false면 2차 자료(언론·해설)만 본 상태 — 매 실행마다 경고로 남긴다.
+  /// 이 프로젝트는 "원문 없이 세법 상수를 고치지 않는다"를 원칙으로 하므로,
+  /// 여기에 false가 있다는 건 **아직 갚지 않은 빚**이라는 뜻이다.
+  final bool primaryVerified;
+
   const Notice({
     required this.what,
     required this.source,
@@ -28,6 +34,7 @@ class Notice {
     required this.actual,
     required this.expected,
     required this.checkedOn,
+    this.primaryVerified = true,
   });
 }
 
@@ -119,6 +126,18 @@ final notices = <Notice>[
     checkedOn: '2026-08-01',
   ),
 
+  Notice(
+    what: '구직급여 상한액',
+    source: '고용노동부 — 2026.1.1. 이후 이직자부터 66,000원 → 68,100원(6년 만의 인상). '
+        '최저임금 인상으로 하한(66,048)이 종전 상한을 넘어선 것이 인상 사유다. '
+        '⚠ 1차 자료(고시 원문) 미확인 — moel.go.kr·ei.go.kr 접근 실패, 2차 자료 다수 일치로 기록',
+    until: DateTime(2026, 12, 31),
+    actual: 68100,
+    expected: 68100,
+    checkedOn: '2026-08-01',
+    primaryVerified: false,
+  ),
+
   // ── 고용·산재 ───────────────────────────────────────────────
   Notice(
     what: '특고(노무제공자) 고용보험료율 본인부담',
@@ -174,6 +193,20 @@ void main() {
         reason: '유효기간이 지난 고시가 있다. 위 원문을 열어 새 값을 확인하고, '
             '코드 상수와 이 파일의 until·expected·checkedOn을 함께 갱신할 것. '
             '검색 요약으로 고치지 말 것.');
+  });
+
+  test('1차 자료로 확인하지 못한 상수를 드러낸다', () {
+    final unverified = notices.where((n) => !n.primaryVerified).toList();
+    for (final n in unverified) {
+      // ignore: avoid_print
+      print('  ⚠ 1차 미확인: ${n.what} (확인일 ${n.checkedOn}) — ${n.source}');
+    }
+    // ignore: avoid_print
+    print('1차 미확인 ${unverified.length}건 / 전체 ${notices.length}건');
+    // 실패시키지 않는다 — 값이 틀렸다는 뜻이 아니라 근거가 약하다는 뜻이다.
+    // 다만 매 실행 로그에 남겨 "확인했다고 착각한 채 넘어가는 것"만 막는다.
+    expect(unverified.length, lessThanOrEqualTo(2),
+        reason: '1차 미확인 상수가 늘고 있다 — 원문 확인 없이 값을 추가하지 말 것');
   });
 
   /// 경비율 고시는 값이 아니라 **표 전체**라 별도 파일에서 전수 대조한다
