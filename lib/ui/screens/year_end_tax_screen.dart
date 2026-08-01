@@ -668,7 +668,11 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               _buildDeductionRow('총급여', _numberFormat.format(salary.toInt()), false),
               Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
               _buildDeductionRow('근로소득공제', '-${_numberFormat.format(_laborDeduction.toInt())}', true),
-              _buildDeductionRow('인적공제 (${_dependentCount}인)', '-${_numberFormat.format(_personalExemption.toInt())}', true),
+              // 라벨은 본인을 포함해 센다. `_dependentCount`는 부양가족(본인 제외)이고
+              // 공제액은 150만 × (본인 + 부양가족)이라, 그냥 "1인"이라 쓰면
+              // 사용자가 1인당 300만원으로 읽는다.
+              _buildDeductionRow('인적공제 (본인 포함 ${1 + _dependentCount}인)',
+                  '-${_numberFormat.format(_personalExemption.toInt())}', true),
               _buildDeductionRow('4대보험 소득공제', '-${_numberFormat.format(_insuranceDeduction.toInt())}', true),
               _buildDeductionRow('신용카드 소득공제', '-${_numberFormat.format(_cardDeduction.toInt())}', true),
               Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
@@ -824,12 +828,16 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Theme.of(context).textTheme.labelMedium!.color!,
-              fontSize: 14,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+          // 금액은 절대 줄이지 않는다 — 라벨만 줄여서 넘침을 막는다.
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Theme.of(context).textTheme.labelMedium!.color!,
+                fontSize: 14,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
           ),
           Text(

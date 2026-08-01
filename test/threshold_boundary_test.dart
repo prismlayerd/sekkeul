@@ -3,6 +3,7 @@ import 'package:secul/core/tax_engine/combined_tax.dart';
 import 'package:secul/core/tax_engine/employee_tax.dart';
 import 'package:secul/core/tax_engine/freelancer_tax.dart';
 import 'package:secul/core/tax_engine/insurance_engine.dart';
+import 'package:secul/core/tax_engine/tax_year.dart';
 import 'package:secul/core/tax_engine/tax_rates.dart';
 
 /// 소득 구간이 갈리는 **경계값**을 1원 단위로 밟아 본다.
@@ -369,6 +370,54 @@ void main() {
       print('10만원 구간당 최대 상승폭 ${won(worstJump)}원 (총급여 ${won(worstAt)} 부근)');
       // 10만원을 더 벌었는데 세금이 10만원 넘게 늘면 실수령이 줄어든다.
       expect(worstJump, lessThan(100000), reason: '총급여 $worstAt 부근에서 실수령이 역전된다');
+    });
+  });
+
+  /// 3차 변이에서 드러난 것 — 누진식 경계에서 부등호를 뒤집어도 값이 안 변한다.
+  /// 그건 버그가 없다는 뜻이지만, **연속성이 깨지면 즉시 버그**가 된다.
+  /// 경계에서 값이 튀면 1원 차이로 세금이 계단처럼 뛴다.
+  group('경계 연속성 — 부등호를 어느 쪽에 두든 값이 같아야 한다', () {
+    test('단순경비율 4,000만 경계 (시행령 §143③1의2)', () {
+      // 4,000만 이하는 기본율, 초과분은 초과율. 경계에서 두 식이 만나야 한다.
+      const base = 0.641, excess = 0.497;
+      final atBoundary = TaxRates.simpleRateExpense(
+          revenue: 40000000, baseRate: base, excessRate: excess);
+      final justOver = TaxRates.simpleRateExpense(
+          revenue: 40000001, baseRate: base, excessRate: excess);
+      expect(atBoundary, closeTo(40000000 * base, 0.01));
+      // 1원 더 벌어서 경비가 줄어들면 안 된다(소득금액이 튄다).
+      expect(justOver, greaterThanOrEqualTo(atBoundary));
+      expect(justOver - atBoundary, closeTo(excess, 0.01),
+          reason: '경계 바로 위 1원에는 초과율만 붙어야 한다');
+    });
+
+    test('근로소득공제 1억 경계 (소법 §47①)', () {
+      final at = EmployeeTaxCalculator.calculateLaborDeduction(100000000);
+      final over = EmployeeTaxCalculator.calculateLaborDeduction(100000001);
+      expect(at, closeTo(14750000, 0.01));
+      expect(over - at, closeTo(0.02, 0.001),
+          reason: '경계 바로 위 1원에는 2%만 붙어야 한다');
+    });
+  });
+
+  /// 기준 귀속연도는 세법 판정의 뿌리다. 바꾸면 앱 전체가 다른 해를 계산한다.
+  /// 지금은 화면 테스트가 우연히 잡지만, 뿌리 자체를 직접 못박는다.
+  group('기준 귀속연도', () {
+    test('TaxYear.reference가 자녀세액공제 연령 판정을 실제로 움직인다', () {
+      // 연도가 바뀌면 대상 출생연도도 바뀌어야 한다 — 상수로 굳어 있으면 안 된다.
+      expect(TaxRates.childTaxCreditBirthYearCutoff(2025), 2017);
+      expect(TaxRates.childTaxCreditBirthYearCutoff(2026), 2016);
+      expect(TaxRates.childTaxCreditBirthYearCutoff(2030), 2017);
+      // 현재 기준연도가 무엇이든 그 해의 규칙을 따라야 한다.
+      expect(TaxRates.childTaxCreditEligibilityLabel(),
+          '${TaxRates.childTaxCreditBirthYearCutoff(TaxYear.reference)}년생 이하');
+    });
+
+    test('기준 귀속연도가 2026이다', () {
+      // 해가 바뀌면 이 값을 올려야 하고, 그때 경비율 고시·자녀 연령·요율을
+      // 함께 확인해야 한다. 만료 알람(notice_expiry_test)이 그 목록을 갖고 있다.
+      expect(TaxYear.reference, 2026,
+          reason: '기준 귀속연도를 바꿨다면 notice_expiry_test의 고시 19건도 함께 확인할 것');
     });
   });
 }
