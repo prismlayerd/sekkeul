@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -6,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../theme/app_theme.dart';
 import '../../core/data/app_mode.dart';
@@ -235,112 +233,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  // Web3Forms access key — https://web3forms.com 에서 이메일만 넣으면 발급(가입·서버 불필요).
-  // 발급받은 키로 교체하면 앱에서 바로 개발자 메일로 전송된다. 비어 있으면 mailto 폴백.
-  static const String _feedbackKey = '4c4f2513-1e3d-44ea-986a-7d1e6d158c3c';
-
-  /// 의견 보내기 — 사용자가 앱 안에서 직접 쓴 의견을 개발자 메일로 전송한다.
-  /// (세무·개인 데이터가 아니라 자발적으로 작성한 앱 피드백이라 온디바이스 원칙과 무관.)
-  /// 유형·버전·기기만 본문에 덧붙인다(진단용, 개인 세무 데이터 없음). 전송 실패 시 mailto 폴백.
-  Future<void> _sendFeedback() async {
-    final ctrl = TextEditingController();
-    final ink = AppTheme.ink(context);
-    final send = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: Text('의견 보내기',
-            style: AppTheme.sans(15, ink, weight: FontWeight.w700)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('앱에 대한 의견이나 불편한 점을 적어주세요.\n제 메일로 바로 전달돼요.'.keepWords,
-                style: AppTheme.sans(13, AppTheme.inkSecondary(ctx), height: 1.5)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: ctrl,
-              maxLines: 5,
-              minLines: 4,
-              autofocus: true,
-              style: AppTheme.sans(14, ink),
-              decoration: InputDecoration(
-                hintText: '여기에 의견을 적어주세요',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                contentPadding: const EdgeInsets.all(12),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('취소')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('보내기')),
-        ],
-      ),
-    );
-    if (send != true) return;
-    final text = ctrl.text.trim();
-    if (text.isEmpty) {
-      _snack('내용을 입력해주세요.');
-      return;
-    }
-
-    final v = _packageInfo;
-    final device = kIsWeb
-        ? 'Web'
-        : '${Platform.operatingSystem} ${Platform.operatingSystemVersion}';
-    final meta = '유형: ${widget.userType}\n'
-        '버전: ${v != null ? 'v${v.version} (${v.buildNumber})' : '-'}\n'
-        '기기: $device';
-    final message = '$text\n\n──────────\n$meta';
-
-    final ok = await _postFeedback(text: text, message: message);
-    if (!mounted) return;
-    if (ok) {
-      _snack('보냈어요. 소중한 의견 감사합니다 🙏');
-    } else {
-      // 전송 실패(키 미설정·네트워크 오류) → 메일 앱으로 폴백
-      await _feedbackMailto(message);
-    }
-  }
-
-  /// Web3Forms로 직접 전송. 성공 시 true. 웹·네트워크 오류 시 false(→ mailto 폴백).
-  Future<bool> _postFeedback({required String text, required String message}) async {
-    if (kIsWeb) return false;
-    try {
-      final client = HttpClient()..connectionTimeout = const Duration(seconds: 10);
-      final req = await client.postUrl(Uri.parse('https://api.web3forms.com/submit'));
-      req.headers.contentType = ContentType.json;
-      req.headers.set('Accept', 'application/json');
-      req.add(utf8.encode(jsonEncode({
-        'access_key': _feedbackKey,
-        'subject': '세끌 의견',
-        'from_name': '세끌 앱',
-        'message': message,
-      })));
-      final resp = await req.close();
-      final body = await resp.transform(utf8.decoder).join();
-      client.close();
-      return resp.statusCode == 200 && body.contains('"success":true');
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// mailto 폴백 — 전송 실패 시 사용자 메일 앱을 열어 직접 보내게.
-  Future<void> _feedbackMailto(String body) async {
-    final uri = Uri.parse('mailto:prismlayerd@gmail.com'
-        '?subject=${Uri.encodeComponent('세끌 의견')}'
-        '&body=${Uri.encodeComponent(body)}');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      await Clipboard.setData(const ClipboardData(text: 'prismlayerd@gmail.com'));
-      if (mounted) _snack('전송이 안 돼 메일 주소를 복사했어요. prismlayerd@gmail.com');
-    }
-  }
-
   void _showPrivacyPolicy() {
     showDialog(
       context: context,
@@ -353,8 +245,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           '세끌은 제1모드(완전 오프라인)로 운영됩니다.\n\n'
           '모든 납세자 정보·가계부·리마인더 데이터는 이 기기의 저장소에만 보관되며, '
           '외부 서버 전송·제3자 제공·광고 추적이 전혀 없습니다.\n\n'
-          '단, "의견 보내기"로 사용자가 직접 작성해 전송하는 내용은 개발자 메일로 전달됩니다. '
-          '이때도 세무·가계부 데이터는 포함되지 않고, 작성한 의견과 유형·앱 버전·기기 정보만 전송됩니다.\n\n'
           '데이터는 "개인 세무 데이터 영구 파기"로 언제든 완전히 삭제할 수 있습니다.',
           style: AppTheme.sans(13, AppTheme.inkSecondary(ctx), height: 1.55),
         ),
@@ -497,16 +387,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               AppTheme.hairline(context),
             ],
-
-            const SizedBox(height: 24),
-            Text('문의'.toUpperCase(), style: AppTheme.label(context)),
-            const SizedBox(height: 6),
-            AppTheme.hairline(context),
-            _glyphRow(
-              title: '의견 보내기',
-              onTap: _sendFeedback,
-            ),
-            AppTheme.hairline(context),
 
             const SizedBox(height: 24),
             Text('법적 고지'.toUpperCase(), style: AppTheme.label(context)),
