@@ -81,6 +81,10 @@ class CombinedTaxCalculator {
     int smeStartYear = 0,
     bool isYouthSme = false, // 청년 트랙(90%·5년) 여부 — 나이·군복무로 판정
     bool useStandardExpenseRate = false, // true면 단순경비율 대신 기준경비율(적립 범위 산출용) — 사업소득에만 적용
+    /// 연환산 실제 필요경비(가계부 기록). 주어지면 경비율 추정 대신 이 값을 쓴다
+    /// — 간편장부로 신고했을 때의 세액을 내려고 할 때. 프리랜서 엔진의
+    /// `actualExpense`와 같은 의미이며, 그래야 N잡러도 기장 vs 추계를 비교할 수 있다.
+    double? actualExpense,
   }) {
     final months = inputMonths < 1 ? 1 : (inputMonths > 12 ? 12 : inputMonths);
     final freelancerIncome = accumulatedFreelancerIncome < 0 ? 0.0 : accumulatedFreelancerIncome;
@@ -105,7 +109,9 @@ class CombinedTaxCalculator {
       excessRate: simpleExcessRate,
     );
     double estimatedFreelancerExpense = 0.0;
-    if (useStandardExpenseRate) {
+    if (actualExpense != null) {
+      estimatedFreelancerExpense = actualExpense < 0 ? 0.0 : actualExpense;
+    } else if (useStandardExpenseRate) {
       // 기준경비율 소득금액에는 소득상한배율(시행령 §143③1)이 걸린다.
       estimatedFreelancerExpense = annualEstimatedFreelancerIncome -
           TaxRates.standardRateIncome(

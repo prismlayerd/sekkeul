@@ -237,6 +237,8 @@ class ReserveEstimator {
       );
     }
 
+    // 프리랜서·N잡러 양쪽 분기에서 채우므로 둘보다 앞에서 선언한다.
+    RefundProgress? refundProgress;
     double minMonthlyTaxReserve;
     double maxMonthlyTaxReserve;
     double? cardDeductionTaxSaving; // N잡러만 채워진다
@@ -344,6 +346,7 @@ class ReserveEstimator {
         required double creditCard,
         required double debitCardAndCash,
         required bool useStandardRate,
+        double? actualExpense,
       }) =>
           CombinedTaxCalculator.calculateCombinedTax(
             grossIncome: annualGrossLabor,
@@ -368,6 +371,7 @@ class ReserveEstimator {
             isSingleFemaleHead: isFemaleHead,
             otherIncome: annualOtherIncome,
             useStandardExpenseRate: useStandardRate,
+            actualExpense: actualExpense,
           );
 
       // ── 카드공제 절세액 (홈 '올해 쌓인 예상 환급' 카운터용) ──────────────
@@ -385,6 +389,44 @@ class ReserveEstimator {
           creditCard: 0, debitCardAndCash: 0, useStandardRate: cardRateBasis);
       final rawCardSaving = taxWithoutCard.annualTotalTax - taxWithCard.annualTotalTax;
       cardDeductionTaxSaving = rawCardSaving > 0 ? rawCardSaving : 0;
+
+      // ── 환급 진행도 (N잡러) — 기장 vs 추계 ───────────────────────────
+      // 프리랜서와 같은 규칙이다: 같은 조건에서 실제경비(간편장부)와 경비율(추계)로
+      // 각각 세액을 내고 차이를 환급 증가분으로 본다. 근로소득·카드공제·월세까지
+      // 합산 엔진이 함께 계산하므로 프리랜서 쪽과 달리 세율 구간 이동도 반영된다.
+      if (pinnedStandardRate != null && ytdBusinessIncome > 0) {
+        final duty = judgeBookkeepingDuty(
+          occupation: occupation!,
+          priorYearIncome: priorYearIncome,
+          isNewBusiness: isNewBusiness,
+        );
+        if (duty.isSimplified) {
+          final annualActualExpense = (ytdBusinessExpense / now.month) * 12;
+          final book = combined(
+              creditCard: ytdCreditCard,
+              debitCardAndCash: ytdDebitCash,
+              useStandardRate: pinnedStandardRate,
+              actualExpense: annualActualExpense);
+          final est = combined(
+              creditCard: ytdCreditCard,
+              debitCardAndCash: ytdDebitCash,
+              useStandardRate: pinnedStandardRate);
+          final gain = est.annualTotalTax - book.annualTotalTax;
+          refundProgress = RefundProgress(
+            recordedExpense: ytdBusinessExpense,
+            // 추계 경비는 연환산값이라 누적 기간으로 되돌려야 기록액과 같은 잣대가 된다.
+            // 추계가 인정해 주는 경비를 누적 기간 잣대로 되돌린 값.
+            // `est.annualEstimatedIncome`은 근로 총급여까지 더한 값이라 쓰면 안 된다 —
+            // 사업 수입만 따로 잡는다.
+            breakevenExpense: ytdBusinessIncome -
+                est.estimatedFreelancerBusinessIncome * now.month / 12,
+            isAhead: book.annualTotalTax <= est.annualTotalTax,
+            refundGain: gain > 0 ? gain : 0,
+            bookkeepingTax: book.annualTotalTax,
+            estimateTax: est.annualTotalTax,
+          );
+        }
+      }
 
       if (pinnedStandardRate != null) {
         final result = combined(
@@ -479,7 +521,6 @@ class ReserveEstimator {
     // 프리랜서·간편장부대상자만. N잡러는 근로소득까지 합산해야 세액이 맞는데
     // CombinedTaxCalculator가 실제경비 입력을 받지 않아 아직 계산할 수 없다.
     // pinnedStandardRate가 null이면 적용 경비율 자체가 미정이라 분기점을 못 잡는다.
-    RefundProgress? refundProgress;
     if (userType == '프리랜서' &&
         occupation != null &&
         pinnedStandardRate != null &&

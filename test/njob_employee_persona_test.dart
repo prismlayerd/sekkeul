@@ -361,8 +361,21 @@ void main() {
       // ── 유형 경계 불변식 ──
       expect(lp.tracksBusinessExpense, isTrue, reason: '${p.name}: N잡러는 사업경비 추적');
       expect(lp.showsCardThreshold, isTrue, reason: '${p.name}: N잡러는 카드공제 대상');
-      expect(r.refundProgress, isNull,
-          reason: '${p.name}: N잡러 환급블록은 아직 미지원(CombinedTaxCalculator가 실제경비 미수용)');
+      // N잡러 환급블록 — 근로소득까지 합산해 기장 vs 추계를 비교한다.
+      // 업종·직전연도가 확정되고 사업소득이 있는 간편장부대상자만 채워진다.
+      final rp = r.refundProgress;
+      if (rp != null) {
+        expect(rp.refundGain, greaterThanOrEqualTo(0),
+            reason: '${p.name}: 환급 증가분이 음수일 수 없다');
+        expect(rp.refundGain, lessThanOrEqualTo(rp.estimateTax + 1),
+            reason: '${p.name}: 경비를 아무리 찾아도 추계 세액보다 더 돌려받을 수 없다');
+        expect(rp.bookkeepingTax, greaterThanOrEqualTo(0));
+        expect(rp.estimateTax, greaterThanOrEqualTo(0));
+        expect(rp.isAhead, rp.bookkeepingTax <= rp.estimateTax,
+            reason: '${p.name}: isAhead는 두 세액 비교와 일치해야 한다');
+        expect(rp.recordedExpense, greaterThanOrEqualTo(0),
+            reason: '${p.name}: 기록 경비는 음수일 수 없다');
+      }
       expect(r.insuranceProfileSet, isTrue,
           reason: '${p.name}: N잡러 건보 소득월액은 프로필 없이도 소득 기반 자동 산정');
       expect(r.cardDeductionTaxSaving, isNotNull,

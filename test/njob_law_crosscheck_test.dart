@@ -4,6 +4,7 @@ import 'package:secul/core/data/expense_item.dart';
 import 'package:secul/core/data/income_entry.dart';
 import 'package:secul/core/data/occupation_data.dart';
 import 'package:secul/core/tax_engine/combined_tax.dart';
+import 'package:secul/core/tax_engine/reserve_estimator.dart';
 import 'package:secul/core/tax_engine/tax_year.dart';
 
 import 'support/tax_law_reference.dart';
@@ -309,5 +310,105 @@ void main() {
           '    과세표준 ${won(r.taxBase)}  결정세액 ${won(r.annualTotalTax)}'
           '  (표준 유리 ${std.tax < special.tax})');
     }
+  });
+
+  /// N잡러 환급블록 — 기장(가계부 실제경비) vs 추계(경비율)를 근로소득까지 합산해
+  /// 비교한다. 종전에는 `CombinedTaxCalculator`가 실제경비를 안 받아 세 유형 중
+  /// N잡러만 이 기능이 없었다.
+  test('N잡러 환급블록 — 기장 vs 추계 세액이 조문 검산과 일치한다', () async {
+    const gross = 42000000.0;      // 근로 총급여
+    const monthlyBiz = 4000000;    // 사업소득 월
+    const monthlyExp = 500000;     // 사업경비 월
+    const occ = '940306';
+    final now = DateTime.now();
+    final months = now.month;
+
+    dbService = InMemoryDatabaseHelper();
+    await dbService.initDatabase();
+    await dbService.saveProfile({
+      'user_type': 'N잡러',
+      'gross_income': gross,
+      'occupation_code': occ,
+      'prior_year_income': 30000000.0, // 간편장부대상자
+      'dependents': 0,
+      'is_new_business': false,
+      'pension_enrolled': false,
+      'yellow_umbrella': 0.0,
+      'children_count_credit': 0,
+      'children_count_total': 0,
+      'newborn_count': 0,
+    });
+    for (int m = 1; m <= months; m++) {
+      await dbService.insertIncomeEntry(IncomeEntry(
+          id: 'b$m', date: DateTime(now.year, m, 1), amount: monthlyBiz, memo: '',
+          incomeType: '사업소득', isWithheld: false, userType: 'N잡러'));
+      await dbService.insertExpense(ExpenseItem(
+          id: 'e$m', date: DateTime(now.year, m, 1), amount: monthlyExp, content: '',
+          category: '기타', paymentMethod: '신용카드', isBusiness: true, userType: 'N잡러'));
+    }
+
+    final r = await ReserveEstimator.estimateForCurrentMonth(userType: 'N잡러');
+    final rp = r.refundProgress;
+    expect(rp, isNotNull, reason: 'N잡러도 환급블록이 나와야 한다');
+
+    // ── 조문 검산 ──
+    final ytdBiz = monthlyBiz * months.toDouble();
+    final ytdExp = monthlyExp * months.toDouble();
+    final annualBiz = ytdBiz / months * 12;
+    final annualActualExp = ytdExp / months * 12;
+    final o = OccupationData.occupations[occ]!;
+    final simpleExp = annualBiz <= 40000000
+        ? annualBiz * (o.simpleBaseRate / 100.0)
+        : 40000000 * (o.simpleBaseRate / 100.0) +
+            (annualBiz - 40000000) * (o.simpleExcessRate / 100.0);
+
+    // 기장·추계 각각의 종합소득 결정세액 — 근로소득금액과 합쳐 하나의 누진세율을 탄다.
+    final laborIncome = gross - refLaborDeduction(gross);
+    final ins = refAnnualInsurance(gross / 12);
+
+    double decided(double bizExpense) {
+      final bizIncome = annualBiz - bizExpense;
+      double path({required bool standard}) {
+        final deductions = 1500000.0 + ins.pension + (standard ? 0.0 : ins.special);
+        final base = (laborIncome + bizIncome - deductions).clamp(0.0, double.infinity);
+        final calculated = refProgressiveTax(base);
+        final globalIncome = laborIncome + bizIncome;
+        final laborShare =
+            globalIncome > 0 ? calculated * (laborIncome / globalIncome) : 0.0;
+        final tax = (calculated -
+                refLaborTaxCredit(gross: gross, calculatedTax: laborShare) -
+                (standard ? 130000.0 : 0.0))
+            .clamp(0.0, double.infinity);
+        return tax;
+      }
+      final a = path(standard: false), b = path(standard: true);
+      final national = trunc10(a < b ? a : b);
+      return national + trunc10(national * 0.1); // 지방소득세 10%
+    }
+
+    final refBook = decided(annualActualExp);
+    final refEst = decided(simpleExp);
+
+    // ignore: avoid_print
+    print('근로 ${won(gross)} + 사업 연환산 ${won(annualBiz)}\n'
+        '    실제경비 ${won(annualActualExp)} → ${won(rp!.bookkeepingTax)}'
+        ' (검산 ${won(refBook)})\n'
+        '    추계경비 ${won(simpleExp)} → ${won(rp.estimateTax)}'
+        ' (검산 ${won(refEst)})\n'
+        '    환급 증가분 ${won(rp.refundGain)}');
+
+    expect(rp.bookkeepingTax, closeTo(refBook, 0.01), reason: '기장 결정세액');
+    expect(rp.estimateTax, closeTo(refEst, 0.01), reason: '추계 결정세액');
+    expect(rp.refundGain, closeTo((refEst - refBook).clamp(0.0, double.infinity), 0.01),
+        reason: '환급 증가분 = 추계 세액 − 장부 세액');
+
+    // 실제경비가 추계경비보다 적으면 추계가 유리하다 — 방향까지 못박는다.
+    expect(annualActualExp, lessThan(simpleExp));
+    expect(rp.isAhead, isFalse, reason: '경비가 적으면 기장이 유리할 수 없다');
+
+    // 분기점 = 추계가 인정하는 경비를 누적 기간 잣대로 되돌린 값.
+    expect(rp.breakevenExpense, closeTo(simpleExp * months / 12, 1),
+        reason: '분기점은 추계 경비와 같은 기간 잣대여야 한다');
+    expect(rp.recordedExpense, closeTo(ytdExp, 0.01));
   });
 }
