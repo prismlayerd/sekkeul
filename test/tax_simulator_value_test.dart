@@ -5,6 +5,7 @@ import 'package:secul/core/data/expense_item.dart';
 import 'package:secul/core/data/income_entry.dart';
 import 'package:secul/core/data/occupation_data.dart';
 import 'package:secul/core/tax_engine/employee_tax.dart';
+import 'package:secul/ui/screens/tax_annual_report_screen.dart';
 import 'package:secul/ui/screens/tax_simulator_screen.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -309,5 +310,68 @@ void main() {
         reason: '공제액보다 환급이 크면 안 된다');
     // 화면도 상한이 걸린 값을 그린다.
     expectShown(t, est.refund, '직장인 진단 5월 추가 환급(상한 적용)');
+  });
+
+  // ── ①진단 → ②가상신고서 → ③홈택스 파이프라인 ─────────────────────
+  // ②는 ①이 저장한 draft를 그대로 쓰고, ③도 같은 draft를 읽는다. 그래서
+  // 세 화면이 **같은 숫자를 말하는지**가 이 파이프라인의 유일한 계약이다.
+  testWidgets('①→②→③ — 가상신고서 항목이 서로 맞아떨어지고 ③에도 같은 값이 간다', (t) async {
+    await seed();
+    await pump(t);
+
+    // ①에서 '가상 신고서로 넘어가기'를 누른다 → draft 저장 + ② 화면 진입
+    final cta = find.text('가상 신고서로 넘어가기');
+    expect(cta, findsOneWidget, reason: '①진단에 ②로 가는 CTA가 있어야 한다');
+    await t.tap(cta);
+    for (int i = 0; i < 6; i++) {
+      await t.pump(const Duration(milliseconds: 300));
+      t.takeException();
+    }
+
+    final draft = await dbService.getReportDraft('프리랜서');
+    expect(draft, isNotNull, reason: '②로 넘어갈 때 draft가 저장돼야 ③이 채워진다');
+
+    final items = (draft!['items'] as List).cast<Map<String, dynamic>>();
+    double amountOf(String contains) => (items.firstWhere(
+            (m) => (m['title'] as String).contains(contains))['amount'] as num)
+        .toDouble();
+
+    final revenue = amountOf('총수입금액');
+    final expense = amountOf('필요경비');
+    final deduction = amountOf('소득공제');
+    final taxBase = amountOf('과세표준');
+    final decided = amountOf('결정세액');
+    final paid = amountOf('기납부세액');
+
+    // ignore: avoid_print
+    print('신고서 — 수입 ${comma(revenue)} − 경비 ${comma(expense)} − 공제 ${comma(deduction)}'
+        ' = 과세표준 ${comma(taxBase)}\n    결정세액 ${comma(decided)}'
+        ' · 기납부 ${comma(paid)} → ${comma(draft['final_amount'] as num)}');
+
+    // ── 신고서 안에서 수식이 닫히는가 ──
+    // 사용자는 이 표를 보고 홈택스에 그대로 옮겨 적는다. 줄끼리 안 맞으면
+    // 어느 줄을 믿어야 할지 알 수 없다.
+    expect(taxBase, closeTo((revenue - expense - deduction).clamp(0.0, double.infinity), 1),
+        reason: '과세표준 = 총수입 − 필요경비 − 소득공제');
+    expect((draft['final_amount'] as num).toDouble(), closeTo(paid - decided, 1),
+        reason: '환급/납부 = 기납부세액 − 결정세액');
+
+    // ── 조문 검산과도 맞는가 ──
+    const rev = monthlyIncome * 3.0;
+    final o = OccupationData.occupations[occ]!;
+    final refExpense = rev * (o.simpleBaseRate / 100.0);
+    final refNational = decidedNational(rev - refExpense);
+    final refDecided = refNational + trunc10(refNational * 0.1);
+    expect(decided, closeTo(refDecided, 0.01), reason: '신고서 결정세액이 조문 검산과 다르다');
+
+    // ── ③ 홈택스 가이드가 같은 draft를 읽는가 ──
+    await t.pumpWidget(MaterialApp(
+        key: const ValueKey('report'),
+        home: const TaxAnnualReportScreen(userType: '프리랜서')));
+    for (int i = 0; i < 6; i++) {
+      await t.pump(const Duration(milliseconds: 300));
+      t.takeException();
+    }
+    expectShown(t, refDecided, '③홈택스 가이드의 결정세액');
   });
 }
