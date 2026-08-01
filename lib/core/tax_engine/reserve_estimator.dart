@@ -136,6 +136,9 @@ class ReserveEstimator {
     // null이면 프로필의 부양가족 수를 쓴다. 과거엔 기본값 0이라 호출부 4곳 전부
     // 인적공제가 본인 1명으로 고정되는 버그가 있었다(2026-07-25 수정).
     int? allowanceCount,
+    // 테스트 전용 기준일. 페르소나 테스트가 시드를 고정 월에 심으므로
+    // 엔진도 같은 달을 "이번 달"로 봐야 한다.
+    DateTime? asOf,
   }) async {
     final profile = await dbService.getProfile();
     final occupationCode = (profile?['occupation_code'] as String?) ?? '';
@@ -163,7 +166,7 @@ class ReserveEstimator {
     final isSingleParent = profile?['is_single_parent'] == true;
     final isFemaleHead = profile?['is_female_head'] == true;
 
-    final now = DateTime.now();
+    final now = asOf ?? DateTime.now();
     double ytdBusinessIncome = 0;
     double ytdOtherIncome = 0;
     double ytdLaborIncome = 0;

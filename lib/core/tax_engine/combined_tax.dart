@@ -99,16 +99,25 @@ class CombinedTaxCalculator {
     }
     final double standardExpenseRate = (occupation?.standardRate ?? 0.0) / 100.0;
 
+    final double simpleFreelancerExpense = TaxRates.simpleRateExpense(
+      revenue: annualEstimatedFreelancerIncome,
+      baseRate: simpleBaseRate,
+      excessRate: simpleExcessRate,
+    );
     double estimatedFreelancerExpense = 0.0;
     if (useStandardExpenseRate) {
-      estimatedFreelancerExpense = annualEstimatedFreelancerIncome * standardExpenseRate;
-    } else if (annualEstimatedFreelancerIncome <= 40000000) {
-      estimatedFreelancerExpense = annualEstimatedFreelancerIncome * simpleBaseRate;
+      // 기준경비율 소득금액에는 소득상한배율(시행령 §143③1)이 걸린다.
+      estimatedFreelancerExpense = annualEstimatedFreelancerIncome -
+          TaxRates.standardRateIncome(
+            revenue: annualEstimatedFreelancerIncome,
+            standardRate: standardExpenseRate,
+            simpleIncomeAmount:
+                annualEstimatedFreelancerIncome - simpleFreelancerExpense,
+          );
     } else {
-      estimatedFreelancerExpense = (40000000 * simpleBaseRate) +
-          ((annualEstimatedFreelancerIncome - 40000000) * simpleExcessRate);
+      estimatedFreelancerExpense = simpleFreelancerExpense;
     }
-    
+
     final double estimatedFreelancerBusinessIncome = annualEstimatedFreelancerIncome - estimatedFreelancerExpense;
     final double pensionIncomeAmount = EmployeeTaxCalculator.calculatePensionIncomeAmount(pensionIncome);
     final double otherIncomeAmount = EmployeeTaxCalculator.calculateOtherIncomeAmount(otherIncome);

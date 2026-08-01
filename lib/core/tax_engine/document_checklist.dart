@@ -19,14 +19,18 @@ List<DocItem> buildChecklist(Map<String, dynamic> profile, String userType) {
   final isEmployee = userType == '직장인' || userType == 'N잡러';
   final isBusiness = userType == '프리랜서' || userType == 'N잡러';
 
-  final isMonthlyRent = (profile['is_monthly_rent'] as int?) == 1;
-  final isMarried = (profile['is_married'] as int?) == 1;
+  // `dbService.getProfile()`은 DB의 0/1을 **bool로 정규화해서** 돌려준다.
+  // 여기서 `as int?`로 캐스팅하면 프로필을 한 번이라도 저장한 사용자에게
+  // `type 'bool' is not a subtype of type 'int?'`로 화면이 통째로 죽는다.
+  // (프로필이 비어 있을 때만 null이라 지금까지 테스트에서 드러나지 않았다.)
+  final isMonthlyRent = profile['is_monthly_rent'] == true;
+  final isMarried = profile['is_married'] == true;
   final dependents = (profile['dependents'] as int?) ?? 0;
-  final hasSelfDisability = (profile['has_self_disability'] as int?) == 1;
-  final hasSpouseDisability = (profile['has_spouse_disability'] as int?) == 1;
+  final hasSelfDisability = profile['has_self_disability'] == true;
+  final hasSpouseDisability = profile['has_spouse_disability'] == true;
   final disabledDependentCount = (profile['disabled_dependent_count'] as int?) ?? 0;
   final weddingYear = (profile['wedding_year'] as int?) ?? 0;
-  final isSmeEmployee = (profile['is_sme_employee'] as int?) == 1;
+  final isSmeEmployee = profile['is_sme_employee'] == true;
 
   final now = DateTime.now();
   final isRecentWedding = weddingYear >= now.year - 2 && weddingYear > 0;

@@ -5,6 +5,7 @@ import 'package:secul/core/data/income_entry.dart';
 import 'package:secul/core/tax_engine/reserve_estimator.dart';
 import 'package:secul/core/tax_engine/employee_tax.dart';
 import 'package:secul/core/tax_engine/simple_ledger_builder.dart';
+import 'package:secul/core/tax_engine/tax_year.dart';
 
 /// 프리랜서 10인 페르소나 회귀 — 실제 코드 경로(ReserveEstimator)에 태워 검증한다.
 /// dbService를 InMemory로 갈아끼워 화면이 부르는 함수를 그대로 호출하므로,
@@ -138,7 +139,9 @@ String won(num v) {
 }
 
 void main() {
-  final now = DateTime.now();
+  // 시드는 고정 기준일에 심는다. DateTime.now()를 쓰면 시드 월(최대 7월)이
+  // "이번 달"에서 벗어나는 8월~12월·1월에 매년 깨진다.
+  final now = DateTime(TaxYear.reference, 7, 20);
 
   test('프리랜서 10인 — 내 정보 / 수익지출카드 / 적립카드', () async {
     for (final p in personas) {
@@ -193,7 +196,7 @@ void main() {
       final incomeMonths = usableIncomes.map((e) => e.$1).toSet();
       final expenseMonths = usableExpenses.map((e) => e.$1).toSet();
 
-      final r = await ReserveEstimator.estimateForCurrentMonth(userType: '프리랜서');
+      final r = await ReserveEstimator.estimateForCurrentMonth(userType: '프리랜서', asOf: now);
 
       final ytdBizExp = usableExpenses.where((e) => e.$4).fold<int>(0, (s, e) => s + e.$2);
       final ytdGross = usableIncomes.fold<double>(0, (s, e) {
@@ -347,7 +350,7 @@ void main() {
           id: 'x$m', date: DateTime(now.year, m, 10), amount: 3000000,
           memo: '', incomeType: '사업소득', isWithheld: true, userType: '프리랜서'));
       }
-      final r = await ReserveEstimator.estimateForCurrentMonth(userType: '프리랜서');
+      final r = await ReserveEstimator.estimateForCurrentMonth(userType: '프리랜서', asOf: now);
       return r.minMonthlyTaxReserve;
     }
 
@@ -375,7 +378,7 @@ void main() {
           id: 'h$m', date: DateTime(now.year, m, 10), amount: 4000000,
           memo: '', incomeType: '사업소득', isWithheld: true, userType: '프리랜서'));
       }
-      final r = await ReserveEstimator.estimateForCurrentMonth(userType: '프리랜서');
+      final r = await ReserveEstimator.estimateForCurrentMonth(userType: '프리랜서', asOf: now);
       return r.minMonthlyTaxReserve;
     }
 
@@ -399,7 +402,7 @@ void main() {
           id: 'p$m', date: DateTime(now.year, m, 10), amount: 4000000,
           memo: '', incomeType: '사업소득', isWithheld: true, userType: '프리랜서'));
       }
-      final r = await ReserveEstimator.estimateForCurrentMonth(userType: '프리랜서');
+      final r = await ReserveEstimator.estimateForCurrentMonth(userType: '프리랜서', asOf: now);
       return (r.minMonthlyTaxReserve, r.includesNoBookkeepingPenalty);
     }
 

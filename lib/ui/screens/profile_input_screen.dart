@@ -137,6 +137,10 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
         double.tryParse(_grossIncomeController.text.replaceAll(',', ''));
     final double gross = enteredGross ?? (existingProfile['gross_income'] as num?)?.toDouble() ?? 0.0;
     final newProfile = {
+      // 이 화면이 안 다루는 항목(자녀 수·급여일·업종코드·유형판정 등)은 기존 값을 그대로
+      // 얹는다. saveProfile은 행 전체를 덮어쓰므로, 여기 안 적힌 키는 지워진다 —
+      // 내 정보에서 방금 입력한 값이 이 화면을 다녀오면 미설정으로 돌아가던 원인.
+      ...existingProfile,
       'user_type': existingProfile['user_type'] ?? widget.userType,
       'gross_income': gross,
       'dependents': _dependentCount,

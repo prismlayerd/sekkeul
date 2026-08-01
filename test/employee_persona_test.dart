@@ -91,7 +91,9 @@ String won(num v) {
 }
 
 void main() {
-  final now = DateTime.now();
+  // 시드는 고정 기준일에 심는다. DateTime.now()를 쓰면 시드 월(최대 7월)이
+  // "이번 달"에서 벗어나는 8월~12월·1월에 매년 깨진다.
+  final now = DateTime(TaxYear.reference, 7, 20);
 
   // 3개월치 급여를 만든다(이번 달 포함) — 홈 카드가 이번 달만 보므로 필수.
   List<(int, int)> pay(int monthly) {

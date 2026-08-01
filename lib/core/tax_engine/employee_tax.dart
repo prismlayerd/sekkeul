@@ -870,7 +870,17 @@ class EmployeeTaxCalculator {
       return d < 0 ? 0 : d;
     }
 
-    final double saving = decidedTaxOf(baseBeforeCard) - decidedTaxOf(baseAfterCard);
+    double saving = decidedTaxOf(baseBeforeCard) - decidedTaxOf(baseAfterCard);
+
+    // 「결정세액 0원 법칙」 — 낸 것보다 더 돌려받을 수 없다.
+    // 위 decidedTaxOf는 추가공제(§51)를 빼지 않고 표준세액공제(§59의4⑨) 길도 따지지
+    // 않는 간이 계산이라, 저소득 구간에서 실제 결정세액이 0인 사람에게도 절세액이
+    // 잡힌다(총급여 1,200만·한부모 기준 8,100원). 실제 결정세액으로 상한을 건다.
+    final double decidedCap = estimateDecidedTaxBeforeCredits(
+      grossIncome: grossAnnual,
+      dependentsIncludingSelf: heads,
+    );
+    if (saving > decidedCap) saving = decidedCap;
     // 카드공제만 쓰면 기본한도가 실질 상한 — 추가한도(전통시장 등)는 미반영.
     final double baseLimit =
         creditCardBaseLimit(grossIncome: grossAnnual, childrenCount: childrenCount);

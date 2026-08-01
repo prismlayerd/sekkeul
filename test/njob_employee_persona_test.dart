@@ -7,6 +7,7 @@ import 'package:secul/core/tax_engine/employee_tax.dart';
 import 'package:secul/core/tax_engine/reserve_estimator.dart';
 import 'package:secul/core/tax_engine/combined_tax.dart';
 import 'package:secul/core/tax_engine/simple_ledger_builder.dart';
+import 'package:secul/core/tax_engine/tax_year.dart';
 
 /// N잡러·직장인 페르소나 회귀.
 ///
@@ -213,7 +214,9 @@ String won(num v) {
 }
 
 void main() {
-  final now = DateTime.now();
+  // 시드는 고정 기준일에 심는다. DateTime.now()를 쓰면 시드 월(최대 7월)이
+  // "이번 달"에서 벗어나는 8월~12월·1월에 매년 깨진다.
+  final now = DateTime(TaxYear.reference, 7, 20);
 
   /// 프로필·기록을 심고 화면이 쓰는 값들을 그대로 재현한다.
   Future<Map<String, dynamic>> seed(P p) async {
@@ -294,7 +297,7 @@ void main() {
   test('N잡러 10인 — 적립카드(사업) + 카드공제(근로)', () async {
     for (final p in njobPersonas) {
       final s = await seed(p);
-      final r = await ReserveEstimator.estimateForCurrentMonth(userType: p.userType);
+      final r = await ReserveEstimator.estimateForCurrentMonth(userType: p.userType, asOf: now);
       final cc = cardRefund(p, s);
       final lp = LedgerProfile.of(p.userType);
 
@@ -583,7 +586,7 @@ void main() {
         expenses: [(2, 12000000, '신용카드', false), (5, 10000000, '체크+현금', false),
                    (7, 100000, '신용카드', false)]);
       final s = await seed(p);
-      final r = await ReserveEstimator.estimateForCurrentMonth(userType: 'N잡러');
+      final r = await ReserveEstimator.estimateForCurrentMonth(userType: 'N잡러', asOf: now);
       return (r.cardDeductionTaxSaving!, cardRefund(p, s).taxSaving);
     }
 

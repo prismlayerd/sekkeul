@@ -1517,7 +1517,9 @@ class _SmeYouthEligibilityBannerState
               color: sub,
               borderColor: line);
         }
-        final isSme = (profile['is_sme_employee'] as int? ?? 0) == 1;
+        // getProfile()은 불리언 컬럼을 bool로 정규화해 돌려준다 — int로 캐스팅하면
+        // 프로필을 저장한 사용자에게서 TypeError로 죽는다.
+        final isSme = profile['is_sme_employee'] == true;
         if (!isSme) {
           return _banner(context,
               icon: Icons.info_outline,

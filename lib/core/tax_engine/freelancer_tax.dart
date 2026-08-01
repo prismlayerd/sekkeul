@@ -58,16 +58,24 @@ class FreelancerTaxCalculator {
     // actualExpense가 주어지면(간편장부 기장) 경비율 추정 대신 실제 경비를 그대로 사용.
     // 아니면 경비율 추정(단순경비율 기준, useStandardExpenseRate이면 기준경비율).
     // 단순경비율 적용 시, 수입 4,000만 원 이하 분은 기본율, 초과분은 초과율 적용
+    final double simpleExpense = TaxRates.simpleRateExpense(
+      revenue: annualEstimatedIncome,
+      baseRate: simpleBaseRate,
+      excessRate: simpleExcessRate,
+    );
     double estimatedExpense = 0.0;
     if (actualExpense != null) {
       estimatedExpense = actualExpense < 0 ? 0.0 : actualExpense;
     } else if (useStandardExpenseRate) {
-      estimatedExpense = annualEstimatedIncome * standardExpenseRate;
-    } else if (annualEstimatedIncome <= 40000000) {
-      estimatedExpense = annualEstimatedIncome * simpleBaseRate;
+      // 기준경비율 소득금액에는 소득상한배율(시행령 §143③1)이 걸린다.
+      estimatedExpense = annualEstimatedIncome -
+          TaxRates.standardRateIncome(
+            revenue: annualEstimatedIncome,
+            standardRate: standardExpenseRate,
+            simpleIncomeAmount: annualEstimatedIncome - simpleExpense,
+          );
     } else {
-      estimatedExpense = (40000000 * simpleBaseRate) +
-          ((annualEstimatedIncome - 40000000) * simpleExcessRate);
+      estimatedExpense = simpleExpense;
     }
 
     // 4. 추정 사업소득금액 산출

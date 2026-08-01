@@ -114,6 +114,42 @@ class TaxRates {
   static const double nationalPensionBaseUpperLimit = 6590000.0;
   static const double nationalPensionBaseLowerLimit = 410000.0;
 
+  /// 단순경비율 필요경비 — 소득세법 시행령 §143③1의2.
+  /// 수입금액 4,000만원 이하분은 기본율, 초과분은 초과율.
+  static double simpleRateExpense({
+    required double revenue,
+    required double baseRate,
+    required double excessRate,
+  }) {
+    if (revenue <= 0) return 0;
+    final ex = excessRate == 0 ? baseRate : excessRate;
+    if (revenue <= 40000000) return revenue * baseRate;
+    return 40000000 * baseRate + (revenue - 40000000) * ex;
+  }
+
+  /// 기준경비율 추계 소득금액 — 소득세법 시행령 §143③1.
+  ///
+  /// 기준경비율은 **주요경비(매입비용·임차료·인건비)를 증빙으로 따로 빼는 것을 전제**한
+  /// 율이다. 이 앱은 주요경비를 받지 않으므로 수입에 (1−기준경비율)을 곱하기만 하는데,
+  /// 그러면 소득금액이 과대해진다. 조문은 그 안전판으로 상한을 둔다 —
+  /// **단순경비율로 계산한 소득금액 × 배율**(간편장부 2.8배 / 복식부기 3.4배)이 한도다.
+  /// 적용기한은 2027.12.31.까지 연장됐다(2025년 개정세법 해설).
+  ///
+  /// 이 상한이 없으면 보험설계사·골프장캐디·퀵서비스배달원·개인간병인 등
+  /// 단순경비율이 높은 인적용역 업종에서 세금이 크게 과대 계산된다.
+  static double standardRateIncome({
+    required double revenue,
+    required double standardRate,
+    required double simpleIncomeAmount,
+    /// 복식부기의무자면 3.4. 이 앱은 복식부기 판정 시 계산을 멈추므로 기본은 간편장부.
+    double multiple = 2.8,
+  }) {
+    if (revenue <= 0) return 0;
+    final raw = revenue * (1 - standardRate);
+    final cap = simpleIncomeAmount * multiple;
+    return raw > cap ? cap : raw;
+  }
+
   /// 종합소득 과세표준에 따른 산출세액 연산 함수 (세전 금액 기준)
   static double calculateTax(double taxBase) {
     if (taxBase <= 0) return 0;

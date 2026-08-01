@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/db_helper.dart';
+import 'package:secul/core/data/expense_item.dart';
+import 'package:secul/core/data/income_entry.dart';
 import 'package:secul/ui/screens/annual_backfill_screen.dart';
 import 'package:secul/ui/screens/benefit_screen.dart';
 import 'package:secul/ui/screens/bookkeeping_guide_screen.dart';
@@ -87,6 +89,27 @@ import 'package:secul/ui/screens/youth_leap_account_screen.dart';
 ///
 /// 오버플로는 실기기에서 노란·검정 줄무늬로 보이고, 잘린 쪽 글자는 아예 읽을 수 없다.
 /// 개발용 큰 화면에서는 절대 드러나지 않아 눈으로는 못 잡는다.
+/// 최근 3개월치 수입·지출을 심는다 — 긴 금액 문구가 실제로 그려지게 하려면
+/// 빈 DB로는 부족하다. 자릿수가 큰 값을 일부러 쓴다.
+Future<void> seedLedger(String userType) async {
+  final now = DateTime.now();
+  final incomeType = userType == '프리랜서' ? '사업소득' : '급여';
+  for (int back = 0; back < 3; back++) {
+    final d = DateTime(now.year, now.month - back, 1);
+    await dbService.insertIncomeEntry(IncomeEntry(
+        id: 'sd-inc-$back', date: d, amount: 4500000, memo: '',
+        incomeType: incomeType, userType: userType));
+    await dbService.insertExpense(ExpenseItem(
+        id: 'sd-exp-c-$back', date: d, amount: 4800000, content: '',
+        category: '기타', paymentMethod: '신용카드', isBusiness: false,
+        userType: userType));
+    await dbService.insertExpense(ExpenseItem(
+        id: 'sd-exp-d-$back', date: d, amount: 1200000, content: '',
+        category: '기타', paymentMethod: '체크+현금', isBusiness: true,
+        userType: userType));
+  }
+}
+
 void main() {
   final screens = <(String, Widget Function())>[
     ('AcquisitionTaxScreen', () => const AcquisitionTaxScreen()),
@@ -242,12 +265,26 @@ void main() {
     };
     addTearDown(() => FlutterError.onError = old);
 
+    // 빈 상태로만 훑으면 **데이터가 있을 때만 나타나는 넘침**을 통째로 놓친다.
+    // 실제로 '카드 공제 문턱 (연봉의 25%)' + '12,500,000원 남음'이 한 줄에 안 들어가
+    // 60px 넘치던 것을 이 시드가 없어서 못 잡고 있었다.
     for (final userType in ['직장인', '프리랜서', 'N잡러']) {
       for (final (name, build) in byType) {
         current = '$name($userType)';
         dbService = InMemoryDatabaseHelper();
         await dbService.initDatabase();
-        await dbService.saveProfile({'user_type': userType, 'gross_income': 42000000.0});
+        await dbService.saveProfile({
+          'user_type': userType,
+          'gross_income': 42000000.0,
+          'occupation_code': '940306',
+          'prior_year_income': 30000000.0,
+          'dependents': 2,
+          'children_count_total': 2,
+          'children_count_credit': 2,
+          'is_monthly_rent': true,
+          'monthly_rent': 600000.0,
+        });
+        await seedLedger(userType);
         try {
           await t.pumpWidget(MaterialApp(home: build(userType)));
           await t.pump(const Duration(milliseconds: 400));

@@ -74,12 +74,18 @@ class NotificationHelper {
       iOS: DarwinNotificationDetails(),
     );
 
-    await flutterLocalNotificationsPlugin.show(
-      id: id,
-      title: title,
-      body: body,
-      notificationDetails: platformChannelSpecifics,
-    );
+    // 즉시 알림도 홈에서 await 없이 던져진다(문턱 돌파·예산 초과 안내).
+    // 여기서 안 막으면 처리되지 않은 비동기 예외가 된다.
+    try {
+      await flutterLocalNotificationsPlugin.show(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: platformChannelSpecifics,
+      );
+    } catch (e) {
+      debugPrint('즉시 알림 표시 실패($id): $e');
+    }
   }
 
   Future<void> scheduleNotification({required int id, required String title, required String body, required Duration delay}) async {
@@ -137,15 +143,21 @@ class NotificationHelper {
     } catch (e) {
       // 단말이 정확 알람을 거부하는 드문 경우 — 비정확으로라도 예약(크래시 방지). 원인은 로깅.
       debugPrint('정확 알람 예약 실패 → 비정확 폴백: $e');
-      await flutterLocalNotificationsPlugin.zonedSchedule(
-        id: id,
-        title: title,
-        body: body,
-        scheduledDate: tzWhen,
-        notificationDetails: platformChannelSpecifics,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        matchDateTimeComponents: matchComponents,
-      );
+      try {
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+          id: id,
+          title: title,
+          body: body,
+          scheduledDate: tzWhen,
+          notificationDetails: platformChannelSpecifics,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          matchDateTimeComponents: matchComponents,
+        );
+      } catch (e2) {
+        // 폴백까지 실패해도 화면은 그대로 떠야 한다. 홈은 이 예약들을 await 없이
+        // 던져 두므로(fire-and-forget), 여기서 안 막으면 처리되지 않은 비동기 예외가 된다.
+        debugPrint('비정확 알람 예약도 실패: $e2');
+      }
     }
   }
 
@@ -171,9 +183,24 @@ class NotificationHelper {
     }
   }
 
-  Future<void> cancel(int id) => flutterLocalNotificationsPlugin.cancel(id: id);
+  // 취소도 실패할 수 있다(플러그인 미초기화 등). 홈이 넛지 취소를 await 없이
+  // 부르므로 여기서 막지 않으면 처리되지 않은 비동기 예외가 된다 — 값은 이미
+  // setState로 그려진 뒤라 화면은 멀쩡한데 예외만 남는다.
+  Future<void> cancel(int id) async {
+    try {
+      await flutterLocalNotificationsPlugin.cancel(id: id);
+    } catch (e) {
+      debugPrint('알림 취소 실패($id): $e');
+    }
+  }
 
-  Future<void> cancelAll() => flutterLocalNotificationsPlugin.cancelAll();
+  Future<void> cancelAll() async {
+    try {
+      await flutterLocalNotificationsPlugin.cancelAll();
+    } catch (e) {
+      debugPrint('알림 전체 취소 실패: $e');
+    }
+  }
 }
 
 final notificationHelper = NotificationHelper();

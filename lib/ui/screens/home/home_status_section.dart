@@ -584,9 +584,18 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // 라벨과 값이 한 줄에 다 안 들어가면 값이 아니라 **라벨**이 줄어야 한다 —
+        // 숫자가 잘리면 화면이 거짓말을 한다. ('카드 공제 문턱 (연봉의 25%)' +
+        // '12,500,000원 남음' 조합이 360~390px에서 60px 넘쳤다.)
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Row(mainAxisSize: MainAxisSize.min, children: [
-            Text(label, style: AppTheme.sans(12, AppTheme.inkSecondary(context), weight: FontWeight.w500)),
+          Flexible(
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Flexible(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTheme.sans(12, AppTheme.inkSecondary(context),
+                        weight: FontWeight.w500))),
             if (onEdit != null) ...[
               const SizedBox(width: 6),
               GestureDetector(
@@ -598,7 +607,8 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
                 ),
               ),
             ],
-          ]),
+          ])),
+          const SizedBox(width: 8),
           Text(value, style: AppTheme.sans(12, color, weight: FontWeight.w700)),
         ]),
         const SizedBox(height: 8),
