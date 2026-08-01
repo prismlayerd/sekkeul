@@ -43,6 +43,10 @@ class _EarnedIncomeTaxCreditScreenState
   // 근로장려금 (만원 단위)
   double _earnedCredit(double income) {
     switch (_type) {
+      // ⚠ 단독·홑벌이 산정식은 개정이 없어 개정세법 해설에 실리지 않았다.
+      // 조특법 §100의5 원문을 확인하기 전까지 손대지 않는다 — 2차 자료로 고쳐
+      // 두 번 틀린 적이 있다. 총소득 기준(2,200만·3,200만)은 2025년 해설의
+      // "좌동" 표기로 확인됐다. 추적: test/notice_expiry_test.dart
       case _HouseholdType.single:
         if (income <= 0) return 0;
         if (income <= 900) return income / 900 * 165;
@@ -56,10 +60,18 @@ class _EarnedIncomeTaxCreditScreenState
         if (income <= 3200) return 285 * (3200 - income) / 1100;
         return 0;
       case _HouseholdType.dualEarner:
+        // 조특법 §100의5 — 2025.1.1. 이후 신청분부터.
+        // 출처: 「2025년 개정세법 해설」 p.298 "맞벌이 가구 근로장려금 소득상한금액 인상"
+        //   800만원 미만        : 총급여액 등 × 800분의 330
+        //   800만~1,700만원 미만 : 330만원
+        //   1,700만~4,400만원 미만: 330만원 − (총급여액 등 − 1,700만) × 2,700분의 330
+        //
+        // 종전 코드는 1,700 / 2,500 / 3,800에 2,100분의 330을 쓰고 있었다 —
+        // 구간 경계가 전부 어긋났고 상한도 개정 전(3,800만) 값이었다.
         if (income <= 0) return 0;
-        if (income <= 1700) return income / 1700 * 330;
-        if (income <= 2500) return 330;
-        if (income <= 3800) return 330 * (3800 - income) / 1300;
+        if (income < 800) return income / 800 * 330;
+        if (income < 1700) return 330;
+        if (income < 4400) return 330 - (income - 1700) * 330 / 2700;
         return 0;
     }
   }
@@ -147,7 +159,7 @@ class _EarnedIncomeTaxCreditScreenState
                         ? '배우자·부양자녀 없는 단독 가구 (소득상한 2,200만원, 최대 165만원)'
                         : _type == _HouseholdType.oneEarner
                             ? '배우자 또는 부양자녀가 있는 홑벌이 (소득상한 3,200만원, 최대 285만원)'
-                            : '부부 모두 근로·사업소득이 있는 맞벌이 (소득상한 3,800만원, 최대 330만원)',
+                            : '부부 모두 근로·사업소득이 있는 맞벌이 (소득상한 4,400만원, 최대 330만원)',
                     style: TextStyle(
                         color: subColor.withValues(alpha: 0.8),
                         fontSize: 11,

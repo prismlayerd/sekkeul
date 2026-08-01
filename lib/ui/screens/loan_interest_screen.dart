@@ -38,7 +38,10 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
   int get _years => int.tryParse(_yearsCtrl.text.replaceAll(',', '')) ?? 0;
 
   ({int monthlyPayment, int totalPayment, int totalInterest})? get _result {
-    if (_principal <= 0 || _rate <= 0 || _years <= 0) return null;
+    // 금리 0%도 계산한다 — 무이자 사내대출·이차보전 상품이 실제로 있다.
+    // 종전에는 `_rate <= 0`으로 막아 화면이 아무것도 안 그렸다(0으로 나누는 것을
+    // 피하려던 가드인데, 0%는 나눗셈이 아니라 원금/개월로 답이 정해진다).
+    if (_principal <= 0 || _rate < 0 || _years <= 0) return null;
     final p = _principal.toDouble();
     final r = _rate / 100 / 12;
     final n = _years * 12;
@@ -47,7 +50,8 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
     int interest = 0;
     switch (_method) {
       case 0: // 원리금균등
-        final payment = p * r * _pow(1 + r, n) / (_pow(1 + r, n) - 1);
+        final payment =
+            r == 0 ? p / n : p * r * _pow(1 + r, n) / (_pow(1 + r, n) - 1);
         monthly = payment.round();
         total = monthly * n;
         interest = total - _principal;
