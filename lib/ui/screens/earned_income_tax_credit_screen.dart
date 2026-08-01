@@ -43,21 +43,35 @@ class _EarnedIncomeTaxCreditScreenState
   // 근로장려금 (만원 단위)
   double _earnedCredit(double income) {
     switch (_type) {
-      // ⚠ 단독·홑벌이 산정식은 개정이 없어 개정세법 해설에 실리지 않았다.
-      // 조특법 §100의5 원문을 확인하기 전까지 손대지 않는다 — 2차 자료로 고쳐
-      // 두 번 틀린 적이 있다. 총소득 기준(2,200만·3,200만)은 2025년 해설의
-      // "좌동" 표기로 확인됐다. 추적: test/notice_expiry_test.dart
+      // 조특법 §100의5 — 세 가구 유형이 모두 같은 구조다.
+      //   점증: 총급여액 등 × (최대액 / 점증경계)
+      //   평탄: 최대액
+      //   점감: 최대액 − (총급여액 등 − 평탄끝) × (최대액 / (상한 − 평탄끝))
+      //
+      // 맞벌이 표는 「2025년 개정세법 해설」p.298 원문으로 확인했고
+      // (800 / 800~1,700 / 2,700분의 330, 상한 4,400),
+      // 점감 분모 = 상한 − 평탄끝이라는 관계가 세 유형에서 모두 성립한다.
+      //   단독   400 / 400~900   / 1,300분의 165  (2,200 − 900)
+      //   홑벌이 700 / 700~1,400 / 1,800분의 285  (3,200 − 1,400)
+      //
+      // 종전 코드는 단독 900/2,100/2,200(점감 분모 100), 홑벌이 1,400/2,100/3,200
+      // 이었다 — 점감 분모가 상한 − 평탄끝과 맞지 않아 조문 구조와 양립할 수 없다.
+      // 그 결과 저소득자에게는 과소(총급여 300만: 55만 vs 123.8만),
+      // 중간 소득자에게는 과대(1,500만: 165만 vs 88.8만) 안내했다.
+      //
+      // ⚠ 조문 계산식이 law.go.kr에 **이미지로만** 실려 텍스트 원문은 못 읽었다.
+      //   추적: test/notice_expiry_test.dart (1차 미확인)
       case _HouseholdType.single:
         if (income <= 0) return 0;
-        if (income <= 900) return income / 900 * 165;
-        if (income <= 2100) return 165;
-        if (income <= 2200) return 165 * (2200 - income) / 100;
+        if (income < 400) return income / 400 * 165;
+        if (income < 900) return 165;
+        if (income < 2200) return 165 - (income - 900) * 165 / 1300;
         return 0;
       case _HouseholdType.oneEarner:
         if (income <= 0) return 0;
-        if (income <= 1400) return income / 1400 * 285;
-        if (income <= 2100) return 285;
-        if (income <= 3200) return 285 * (3200 - income) / 1100;
+        if (income < 700) return income / 700 * 285;
+        if (income < 1400) return 285;
+        if (income < 3200) return 285 - (income - 1400) * 285 / 1800;
         return 0;
       case _HouseholdType.dualEarner:
         // 조특법 §100의5 — 2025.1.1. 이후 신청분부터.

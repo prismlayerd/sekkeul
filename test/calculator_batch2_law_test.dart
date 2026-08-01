@@ -133,6 +133,67 @@ void main() {
       await t.pump(const Duration(milliseconds: 400));
     }
 
+
+    /// 세 가구 유형이 같은 구조를 따른다 — 조특법 §100의5.
+    ///   점증: 총급여액 등 × (최대액 / 점증경계)
+    ///   평탄: 최대액
+    ///   점감: 최대액 − (초과분) × (최대액 / (상한 − 평탄끝))
+    double refByType(double manwon, double rise, double flat, double cap, double max) {
+      if (manwon <= 0) return 0;
+      if (manwon < rise) return manwon / rise * max;
+      if (manwon < flat) return max;
+      if (manwon < cap) return max - (manwon - flat) * max / (cap - flat);
+      return 0;
+    }
+
+    test('점감 분모는 언제나 상한 − 평탄끝이다 — 세 유형 공통 구조', () {
+      // 맞벌이는 「2025년 개정세법 해설」p.298 원문으로 확인된 값이다.
+      // 그 구조가 단독·홑벌이에도 성립해야 한다.
+      const types = [
+        ('단독', 400.0, 900.0, 2200.0, 165.0, 1300.0),
+        ('홑벌이', 700.0, 1400.0, 3200.0, 285.0, 1800.0),
+        ('맞벌이', 800.0, 1700.0, 4400.0, 330.0, 2700.0),
+      ];
+      for (final (name, rise, flat, cap, max, denom) in types) {
+        expect(cap - flat, denom, reason: '$name: 점감 분모 ≠ 상한 − 평탄끝');
+        // 평탄 끝에서 최대액, 상한에서 0 — 구간이 이어진다.
+        expect(refByType(flat, rise, flat, cap, max), max);
+        expect(refByType(cap - 0.01, rise, flat, cap, max), lessThan(0.1));
+      }
+    });
+
+    testWidgets('단독가구 — 총급여 1,500만은 88.8만원이지 165만원이 아니다', (t) async {
+      // 종전 코드는 900~2,100만을 평탄 구간으로 봐서 165만원 전액을 안내했다.
+      // 조문은 900만부터 점감이 시작된다 — 76만원 과대였다.
+      await open(t, const EarnedIncomeTaxCreditScreen(), ['15000000']);
+      final v = refByType(1500, 400, 900, 2200, 165);
+      // ignore: avoid_print
+      print('단독 1,500만 → ${v.toStringAsFixed(1)}만원 (종전 코드는 165만원)');
+      expect(v, closeTo(88.8, 0.1));
+      expectToken(t, '${v.round()}만원', '단독 점감 구간');
+      // 안내 문구의 "최대 165만원"은 설명이라 화면에 남는다. 확인할 것은
+      // **계산 결과**가 최대액이 아니라는 것 — 89만원과 165만원은 다른 값이다.
+      expect(v, lessThan(165), reason: '900만원을 넘으면 최대액이 아니다');
+    });
+
+    testWidgets('단독가구 — 저소득 구간은 400분의 165로 가파르게 오른다', (t) async {
+      // 총급여 300만 → 300/400 × 165 = 123.8만. 종전 코드(900분의 165)는 55만이었다.
+      await open(t, const EarnedIncomeTaxCreditScreen(), ['3000000']);
+      final v = refByType(300, 400, 900, 2200, 165);
+      // ignore: avoid_print
+      print('단독 300만 → ${v.toStringAsFixed(1)}만원 (종전 코드는 55만원)');
+      expect(v, closeTo(123.75, 0.1));
+      expectToken(t, '${v.round()}만원', '단독 점증 구간');
+    });
+
+    testWidgets('홑벌이 — 700만에서 최대액에 도달하고 1,400만부터 줄어든다', (t) async {
+      await open(t, const EarnedIncomeTaxCreditScreen(), ['7000000']);
+      await t.tap(find.text('홑벌이'));
+      await t.pump(const Duration(milliseconds: 400));
+      expect(refByType(700, 700, 1400, 3200, 285), 285);
+      expectToken(t, '285만원', '홑벌이 최대액 도달점');
+    });
+
     testWidgets('점증 구간 — 총급여 600만 → 800분의 330', (t) async {
       await openDual(t, '6000000');
       final v = refDual(600);
