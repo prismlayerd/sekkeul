@@ -46,7 +46,12 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
     int normalAfterTax,
     int taxSaving,
   })? get _result {
-    if (_deposit <= 0 || _rate <= 0 || _years <= 0 || _years > 20) return null;
+    // 수익률에 상한을 둔다. 사용자가 실수로 큰 수를 넣으면 복리가 폭발해
+    // `.round()`가 int64 최대값(9,223,372,036,854,775,807)을 뱉고, 화면이 그걸
+    // "절세 효과"라고 태연히 보여줬다. 금융 계산기가 그런 숫자를 내면 신뢰가 끝난다.
+    if (_deposit <= 0 || _rate <= 0 || _rate > 100 || _years <= 0 || _years > 20) {
+      return null;
+    }
     final r = _rate / 100;
     final n = _years;
     final d = _deposit.toDouble();
@@ -63,6 +68,10 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
     final isaAfterTax = totalInterest - taxableInterest * 0.099;
     final normalAfterTax = totalInterest * (1 - 0.154);
     final taxSaving = isaAfterTax - normalAfterTax;
+
+    // 위 상한을 지나도 계산이 유한한지 마지막으로 확인한다 — 무한대·NaN을
+    // round()에 넣으면 조용히 int64 최대값이 된다.
+    if (!totalValue.isFinite || !taxSaving.isFinite) return null;
 
     return (
       totalDeposit: totalDeposit,

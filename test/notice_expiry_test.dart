@@ -161,6 +161,20 @@ final notices = <Notice>[
     primaryVerified: false,
   ),
 
+  // ── 지방세 ──────────────────────────────────────────────────
+  Notice(
+    what: '자동차세 연납 공제율 기준(%)',
+    source: '지방세법 §128③ · 시행령 §125 — 화면의 1월 4.57%는 334/365 × **5%**에서 나온다. '
+        '2차 자료는 2025년 이후 3%(2023년 7% → 2024년 5% → 2025년~ 3%)라고 하는데, '
+        'law.go.kr 조문에서 확인된 문구는 "100분의 5"뿐이고 연도별 경과규정 여부를 '
+        '확인하지 못했다. ⚠ 원문 불명확 — 3%가 맞으면 화면이 할인을 과대 안내 중이다',
+    until: DateTime(2026, 12, 31),
+    actual: 5,
+    expected: 5,
+    checkedOn: '2026-08-01',
+    primaryVerified: false,
+  ),
+
   // ── 고용·산재 ───────────────────────────────────────────────
   Notice(
     what: '특고(노무제공자) 고용보험료율 본인부담',
@@ -228,7 +242,7 @@ void main() {
     print('1차 미확인 ${unverified.length}건 / 전체 ${notices.length}건');
     // 실패시키지 않는다 — 값이 틀렸다는 뜻이 아니라 근거가 약하다는 뜻이다.
     // 다만 매 실행 로그에 남겨 "확인했다고 착각한 채 넘어가는 것"만 막는다.
-    expect(unverified.length, lessThanOrEqualTo(3),
+    expect(unverified.length, lessThanOrEqualTo(4),
         reason: '1차 미확인 상수가 늘고 있다 — 원문 확인 없이 값을 추가하지 말 것');
   });
 
