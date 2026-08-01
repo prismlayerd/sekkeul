@@ -19,8 +19,8 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
   final _cupReturnCtrl = TextEditingController();
   final _refillCtrl = TextEditingController();
   final _deliveryCtrl = TextEditingController();
-  bool _evCharging = false;
-  bool _greenStore = false;
+  bool _solar = false;
+  bool _greenBuy = false;
   final _fmt = NumberFormat('#,###');
 
   static const double _annualCap = 70000;
@@ -30,13 +30,16 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
 
   double _capped(double value, double limit) => value > limit ? limit : value;
 
-  double get _receiptPoints => _capped(_num(_receiptCtrl) * 12 * 100, 100 * 100);
-  double get _tumblerPoints => _capped(_num(_tumblerCtrl) * 12 * 300, 100 * 300);
+  // 단가는 2026.1.1 개편분이다(cpoint.or.kr 인센티브 안내).
+  // 전자영수증만 별도 연간한도 7만원이 명시돼 있고, 나머지는 전체 상한 7만원만 걸린다 —
+  // 원문에 없는 항목별 한도를 지어내지 않는다.
+  double get _receiptPoints => _capped(_num(_receiptCtrl) * 12 * 10, _annualCap);
+  double get _tumblerPoints => _num(_tumblerCtrl) * 12 * 300;
   double get _cupReturnPoints => _num(_cupReturnCtrl) * 12 * 100;
-  double get _refillPoints => _num(_refillCtrl) * 12 * 2000;
-  double get _deliveryPoints => _num(_deliveryCtrl) * 12 * 1000;
-  double get _evPoints => _evCharging ? 10000 : 0;
-  double get _greenStorePoints => _greenStore ? 2000 * 12 : 0;
+  double get _refillPoints => _num(_refillCtrl) * 12 * 500;
+  double get _deliveryPoints => _num(_deliveryCtrl) * 12 * 500;
+  double get _solarPoints => _solar ? 10000 : 0;
+  double get _greenBuyPoints => _greenBuy ? 500 * 12 : 0;
 
   double get _totalRaw =>
       _receiptPoints +
@@ -44,8 +47,8 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
       _cupReturnPoints +
       _refillPoints +
       _deliveryPoints +
-      _evPoints +
-      _greenStorePoints;
+      _solarPoints +
+      _greenBuyPoints;
   double get _total => _totalRaw > _annualCap ? _annualCap : _totalRaw;
   bool get _isCapped => _totalRaw > _annualCap;
 
@@ -99,23 +102,23 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
             Row(
               children: [
                 Checkbox(
-                  value: _evCharging,
-                  onChanged: (v) => setState(() => _evCharging = v ?? false),
+                  value: _solar,
+                  onChanged: (v) => setState(() => _solar = v ?? false),
                   activeColor: accent,
                 ),
                 Expanded(
                     child:
-                        Text('전기차·수소차 충전 이용(연 1회 인정)'.keepWords, style: AppTheme.sans(13, ink))),
+                        Text('가정용 베란다 태양광 설치(연 1회)'.keepWords, style: AppTheme.sans(13, ink))),
               ],
             ),
             Row(
               children: [
                 Checkbox(
-                  value: _greenStore,
-                  onChanged: (v) => setState(() => _greenStore = v ?? false),
+                  value: _greenBuy,
+                  onChanged: (v) => setState(() => _greenBuy = v ?? false),
                   activeColor: accent,
                 ),
-                Expanded(child: Text('친환경 매장 매월 이용', style: AppTheme.sans(13, ink))),
+                Expanded(child: Text('친환경제품 구매(매월 1건)', style: AppTheme.sans(13, ink))),
               ],
             ),
             const SizedBox(height: 32),
@@ -146,7 +149,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
                     const SizedBox(height: 12),
                     _row('전자영수증(연 상한 10,000원)', _won(_receiptPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('텀블러·다회용컵(연 상한 30,000원)', _won(_tumblerPoints), ink, sub),
+                    _row('텀블러·다회용컵', _won(_tumblerPoints), ink, sub),
                     const SizedBox(height: 8),
                     _row('일회용컵 보증금 반환', _won(_cupReturnPoints), ink, sub),
                     const SizedBox(height: 8),
@@ -154,9 +157,9 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
                     const SizedBox(height: 8),
                     _row('다회용기 배달주문', _won(_deliveryPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('전기차·수소차 충전', _won(_evPoints), ink, sub),
+                    _row('가정용 베란다 태양광', _won(_solarPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('친환경 매장', _won(_greenStorePoints), ink, sub),
+                    _row('친환경제품 구매', _won(_greenBuyPoints), ink, sub),
                     if (_isCapped) ...[
                       const SizedBox(height: 12),
                       Text('* 1인당 연간 지급 한도 7만원을 초과하여 상한으로 산정되었습니다.'.keepWords,
@@ -176,7 +179,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
             const SizedBox(height: 12),
             _infoBox('주요 유의사항', const [
               '1인당 연간 지급 한도는 7만원입니다.',
-              '전자영수증·텀블러 사용은 각각 연 100건·100회까지만 인정됩니다.',
+              '전자영수증은 건당 10원이며 연간 7만원까지 인정됩니다.',
               '적립 포인트는 매월 자동 정산되며, 세부 단가는 환경부 고시에 따라 변동될 수 있습니다.',
             ], line, sub, ink),
             const CalcDisclaimer(),

@@ -163,12 +163,18 @@ void main() {
   });
 
   group('탄소중립포인트', () {
-    testWidgets('항목별 연 상한이 각각 걸린다', (t) async {
-      // 전자영수증 월 300건·텀블러 월 15회 → 둘 다 상한(1만·3만)에 걸린다.
-      await open(t, const CarbonNeutralPointsScreen(), [(0, '300'), (1, '15')]);
-      expectToken(t, '10,000원', '전자영수증 연 상한');
-      expectToken(t, '30,000원', '텀블러 연 상한');
-      expectToken(t, '40,000원', '연간 총 포인트');
+    testWidgets('2026년 개편 단가로 적립된다', (t) async {
+      // 2026.1.1 개편(cpoint.or.kr 인센티브 안내) — 전자영수증 100→10원,
+      // 리필스테이션 2,000→500원, 다회용기 2,000→500원.
+      // 개편 전 값이 남아 있으면 여기서 갈린다.
+      await open(t, const CarbonNeutralPointsScreen(),
+          [(0, '10'), (1, '5'), (2, '4'), (3, '2'), (4, '4')]);
+      expectToken(t, '1,200원', '전자영수증 월 10건 × 12 × 10원');
+      expectToken(t, '18,000원', '텀블러 월 5회 × 12 × 300원');
+      expectToken(t, '4,800원', '일회용컵 월 4개 × 12 × 100원');
+      expectToken(t, '12,000원', '리필스테이션 월 2회 × 12 × 500원');
+      expectToken(t, '24,000원', '다회용기 월 4회 × 12 × 500원');
+      expectToken(t, '60,000원', '연간 총 포인트');
     });
 
     testWidgets('입력이 없으면 결과를 그리지 않는다', (t) async {
