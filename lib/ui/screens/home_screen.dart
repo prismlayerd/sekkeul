@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../core/tax_engine/tax_rates.dart';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -808,17 +809,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     return '${_numberFormat.format(man)}만원';
   }
 
-  /// 한국 소득세 한계세율 (2024년 기준)
-  int _marginalRate(double annualIncome) {
-    if (annualIncome <= 12000000) return 6;
-    if (annualIncome <= 46000000) return 15;
-    if (annualIncome <= 88000000) return 24;
-    if (annualIncome <= 150000000) return 35;
-    if (annualIncome <= 300000000) return 38;
-    if (annualIncome <= 500000000) return 40;
-    if (annualIncome <= 1000000000) return 42;
-    return 45;
-  }
+  /// 한계세율 — 구간표는 엔진 하나만 본다(소법 §55①).
+  /// 여기에 표를 복사해 두었더니 2023년 개정을 놓쳐 4,600만~5,000만 구간의
+  /// N잡러에게 15%를 24%라고 말하고 있었다.
+  int _marginalRate(double annualIncome) =>
+      TaxRates.marginalRatePercent(annualIncome);
 
 
   /// 직장인/N잡러/프리랜서별 세무 도구 카드

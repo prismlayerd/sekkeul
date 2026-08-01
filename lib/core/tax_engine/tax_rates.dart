@@ -173,6 +173,18 @@ class TaxRates {
     return 0;
   }
 
+  /// 과세표준이 속한 한계세율(%) — 안내 문구용.
+  ///
+  /// 화면이 세율 구간표를 따로 들고 있으면 개정 때 반드시 낡는다. 실제로 홈
+  /// N잡러 배너가 2022년 이전 표(1,200만·4,600만)를 들고 "2024년 기준"이라고
+  /// 주석까지 달아 둔 채 굳어 있었다. 구간표는 [incomeTaxBrackets] 하나만 본다.
+  static int marginalRatePercent(double taxBase) {
+    for (final b in incomeTaxBrackets) {
+      if (taxBase <= b.limit) return (b.rate * 100).round();
+    }
+    return (incomeTaxBrackets.last.rate * 100).round();
+  }
+
   /// 10원 미만 절사 (국고금관리법 §47).
   ///
   /// **먼저 원 단위로 반올림한 뒤** 10원 미만을 버린다. 곧바로 버리면 부동소수점

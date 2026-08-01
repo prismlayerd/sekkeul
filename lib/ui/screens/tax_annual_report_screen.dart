@@ -616,7 +616,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
                 style: TextStyle(color: primary, fontSize: 13, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 14),
-          _autoRow('부양가족', '$_dependentCount인 (인적공제 ${_fmt.format((_dependentCount * 1500000).toInt())}원)', textColor, subColor),
+          _autoRow('부양가족', '$_dependentCount인 (인적공제 ${_fmt.format((_dependentCount * TaxRates.basicDeductionPerPerson).toInt())}원)', textColor, subColor),
           _autoRow('연간 신용카드 지출', _annualCreditCard > 0 ? '${_fmt.format(_annualCreditCard.toInt())}원' : '기록 없음', textColor, subColor),
           _autoRow('연간 체크카드·현금', _annualDebitCash > 0 ? '${_fmt.format(_annualDebitCash.toInt())}원' : '기록 없음', textColor, subColor),
           if (_isMonthlyRent && _monthlyRent > 0)
