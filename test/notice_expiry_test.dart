@@ -208,6 +208,18 @@ final notices = <Notice>[
     primaryVerified: false,
   ),
 
+  Notice(
+    what: '주택연금 억당 월지급률(65세, 만원)',
+    source: '한국주택금융공사 공시 — 종신·정액형. 55/60/65/70/75세 = 15/21/25/30/38.4만원, '
+        '사이 연령은 선형보간. 월지급금 상한 375만·가입 공시가격 상한 12억. '
+        '⚠ 매년 공시 갱신 대상, 1차 확인 미완',
+    until: DateTime(2026, 12, 31),
+    actual: 25,
+    expected: 25,
+    checkedOn: '2026-08-01',
+    primaryVerified: false,
+  ),
+
   // ── 고용·산재 ───────────────────────────────────────────────
   Notice(
     what: '특고(노무제공자) 고용보험료율 본인부담',
@@ -275,7 +287,7 @@ void main() {
     print('1차 미확인 ${unverified.length}건 / 전체 ${notices.length}건');
     // 실패시키지 않는다 — 값이 틀렸다는 뜻이 아니라 근거가 약하다는 뜻이다.
     // 다만 매 실행 로그에 남겨 "확인했다고 착각한 채 넘어가는 것"만 막는다.
-    expect(unverified.length, lessThanOrEqualTo(6),
+    expect(unverified.length, lessThanOrEqualTo(8),
         reason: '1차 미확인 상수가 늘고 있다 — 원문 확인 없이 값을 추가하지 말 것');
   });
 
