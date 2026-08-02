@@ -26,6 +26,7 @@ dependencies:
   sqflite_sqlcipher: ^3.4.0
   flutter_secure_storage: ^10.3.1
   local_auth: ^3.0.2
+  in_app_update: ^5.0.0
 
 dev_dependencies:
   flutter_test:

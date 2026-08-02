@@ -7,7 +7,9 @@ import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../theme/app_theme.dart';
+import '../../core/update_service.dart';
 import '../components/reminder_card.dart';
+import '../components/update_card.dart';
 import 'onboarding_screen.dart';
 import 'my_info_screen.dart';
 import 'year_end_tax_screen.dart';
@@ -121,6 +123,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
+    // Play에 새 버전이 있는지 조용히 확인한다. 없거나 확인이 안 되는 환경이면
+    // 카드가 아예 안 그려지므로 결과를 기다릴 필요가 없다.
+    updateService.check();
     // 알림 권한 요청은 여기서 하지 않는다(U-1) — 리마인더 화면 진입/설정 알림 토글 시 요청.
     _salaryController.addListener(_calculateTax);
     _monthlyRentController.addListener(_calculateTax);
@@ -877,6 +882,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         children: [
           _buildTypeSelector(),
           const SizedBox(height: 16),
+          // 업데이트가 있을 때만 그려진다. 없으면 자리를 차지하지 않는다.
+          const UpdateCard(),
           // 상단 회전 배너(광고/배너/알림 카드).
           AppTheme.panel(context, child: HomeBannerCarousel(
             cards: _bannerCards(),
