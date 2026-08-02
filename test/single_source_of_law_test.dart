@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/tax_engine/tax_rates.dart';
+import 'package:secul/ui/screens/out_of_pocket_cap_screen.dart';
 
 /// **법정 상수는 엔진 한 곳에만 둔다.**
 ///
@@ -97,6 +98,27 @@ void main() {
     expect(rhs.contains('minimumHourlyWage'), isTrue,
         reason: '구직급여 하한이 최저임금에서 파생되지 않고 리터럴로 박혀 있다 — '
             '오늘은 값이 같아도 최저임금이 바뀌면 어긋난다');
+  });
+
+  /// 혜택 탭 설명문이 계산기 화면의 표를 베껴 적는 것도 같은 병이다.
+  ///
+  /// 본인부담상한액 7개 구간이 두 벌 있었다. 계산기만 2025년 값으로 고치고
+  /// 혜택 탭은 2024년 값인 채 "2025년 기준"이라 써 붙어 있었다 —
+  /// 같은 앱의 두 화면이 사용자에게 다른 금액을 말했다.
+  test('혜택 설명이 계산기 상수를 리터럴로 베끼지 않았다', () {
+    final benefit = File('lib/ui/screens/benefit_screen.dart').readAsStringSync();
+    // 설명문을 상수에서 만들어 쓰는 한 두 값이 어긋날 길이 없다.
+    // 금액 리터럴을 세는 방식은 안 쓴다 — 월세 공제 170만원처럼 무관한 제도의
+    // 금액이 우연히 겹쳐서 엉뚱한 곳을 가리킨다.
+    expect(benefit.contains('outOfPocketCapTiers'), isTrue,
+        reason: '본인부담상한 표를 상수에서 만들지 않고 설명문에 다시 적었다 — '
+            '두 벌이 되면 한쪽만 갱신되고 사용자는 화면마다 다른 금액을 본다');
+
+    // 옛 복사본으로 되돌아가는 것도 막는다(2024년 값).
+    for (final stale in ['162만원', '303만원', '414만원', '497만원', '808만원']) {
+      expect(benefit.contains(stale), isFalse,
+          reason: '$stale — 2024년 본인부담상한액이 설명문에 되살아났다');
+    }
   });
 
   test('엔진의 한계세율 함수가 구간표와 일치한다', () {

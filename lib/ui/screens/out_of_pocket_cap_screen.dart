@@ -5,6 +5,27 @@ import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
 
+/// (소득분위 라벨, 일반 상한액, 요양병원 120일 초과 입원 상한액) — 원 단위.
+///
+/// 출처: 보건복지부 「2025년도 본인부담상한액」 사전정보공표
+/// (mohw.go.kr, list_no=1486195). 확인일 2026-08-01.
+///
+/// 종전 값은 **어느 연도와도 맞지 않았다.** 7개 구간 중 3개만 2024년 값과
+/// 같고 나머지는 2024·2025 어느 쪽도 아니었다(4~5분위 162만, 6~7분위 303만,
+/// 8분위 414만, 9분위 497만). 요양병원 열도 연도가 뒤섞여 있었고 8분위 이상은
+/// 일반값이 그대로 들어가 있었다.
+///
+/// 보건복지부 고시로 **매년 바뀐다.** 추적: test/notice_expiry_test.dart
+const outOfPocketCapTiers = [
+  ('1분위 (하위 10% 이하)', 890000, 1410000),
+  ('2~3분위', 1100000, 1780000),
+  ('4~5분위', 1700000, 2400000),
+  ('6~7분위', 3200000, 3960000),
+  ('8분위', 4370000, 5690000),
+  ('9분위', 5250000, 6840000),
+  ('10분위 (상위 10% 이상)', 8260000, 10740000),
+];
+
 class OutOfPocketCapScreen extends StatefulWidget {
   const OutOfPocketCapScreen({super.key});
 
@@ -21,31 +42,11 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
   final _amountCtrl = TextEditingController();
   final _fmt = NumberFormat('#,###');
 
-  /// (소득분위 라벨, 일반 상한액, 요양병원 120일 초과 입원 상한액) — 원 단위.
-  ///
-  /// 출처: 보건복지부 「2025년도 본인부담상한액」 사전정보공표
-  /// (mohw.go.kr, list_no=1486195). 확인일 2026-08-01.
-  ///
-  /// 종전 값은 **어느 연도와도 맞지 않았다.** 7개 구간 중 3개만 2024년 값과
-  /// 같고 나머지는 2024·2025 어느 쪽도 아니었다(4~5분위 162만, 6~7분위 303만,
-  /// 8분위 414만, 9분위 497만). 요양병원 열도 연도가 뒤섞여 있었고 8분위 이상은
-  /// 일반값이 그대로 들어가 있었다.
-  ///
-  /// 보건복지부 고시로 **매년 바뀐다.** 추적: test/notice_expiry_test.dart
-  static const _tiers = [
-    ('1분위 (하위 10% 이하)', 890000, 1410000),
-    ('2~3분위', 1100000, 1780000),
-    ('4~5분위', 1700000, 2400000),
-    ('6~7분위', 3200000, 3960000),
-    ('8분위', 4370000, 5690000),
-    ('9분위', 5250000, 6840000),
-    ('10분위 (상위 10% 이상)', 8260000, 10740000),
-  ];
 
   double get _amount =>
       double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
   int get _cap =>
-      _longTermCare ? _tiers[_tierIdx].$3 : _tiers[_tierIdx].$2;
+      _longTermCare ? outOfPocketCapTiers[_tierIdx].$3 : outOfPocketCapTiers[_tierIdx].$2;
   double get _refund => _amount > _cap ? _amount - _cap : 0;
   bool get _hasInput => _amount > 0;
 
@@ -97,10 +98,10 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
                   style: AppTheme.sans(14, ink),
                   dropdownColor: Theme.of(context).scaffoldBackgroundColor,
                   items: [
-                    for (int i = 0; i < _tiers.length; i++)
+                    for (int i = 0; i < outOfPocketCapTiers.length; i++)
                       DropdownMenuItem(
                           value: i,
-                          child: Text(_tiers[i].$1,
+                          child: Text(outOfPocketCapTiers[i].$1,
                               style: AppTheme.sans(14, ink))),
                   ],
                   onChanged: (v) => setState(() => _tierIdx = v!),
