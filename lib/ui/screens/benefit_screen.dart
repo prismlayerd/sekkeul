@@ -347,6 +347,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '청년 주택드림 청약통장',
+      verified: (source: 'https://nhuf.molit.go.kr/FP/FP07/FP0701/FP07010301.jsp', on: '2026-08-02'),
       amount: '금리 연 최대 4.5%',
       desc: '무주택 청년 대상 고금리 청약통장. 연 최대 4.5% (일반 2.0~2.8% 대비).\n\n'
           '자격 및 혜택\n'
@@ -392,11 +393,12 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '문화예술패스',
-      amount: '최대 15만원 바우처',
+      verified: (source: 'https://www.korea.kr/news/policyNewsView.do?newsId=148959296', on: '2026-08-02'),
+      amount: '수도권 15만원 · 비수도권 20만원',
       desc: '대상\n'
-          '· 2007.1.1~2007.12.31 출생 (만 19세), 소득 무관\n\n'
+          '· 2006·2007년생 (만 19~20세), 소득 무관 — 2026년부터 20세까지 확대\n\n'
           '지원 내용\n'
-          '· 국비 10만원 + 지방비 최대 5만원 = 최대 15만원\n'
+          '· 서울·수도권 15만원 / 비수도권 20만원 (2025년보다 5만원 인상)\n'
           '· 순수예술만 사용 가능 (클래식·오페라·뮤지컬·연극·무용·국악·전시)\n'
           '· 영화·대중가요·스포츠 사용 불가\n\n'
           '주의사항\n'
@@ -408,6 +410,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '장병내일적금',
+      verified: (source: 'https://www.mma.go.kr/board/boardView.do?gesipan_id=2&gsgeul_no=1518778&mc=usr0000379', on: '2026-08-02'),
       amount: '이율 최대 9.0% / 예상 약 1,900만원',
       desc: '대상\n'
           '· 현역병·상근예비역·의무경찰·사회복무요원 등\n\n'
@@ -547,6 +550,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '산모·신생아 건강관리 (산후조리 바우처)',
+      verified: (source: 'https://www.mohw.go.kr/board.es?mid=a10409020000&bid=0026&list_no=1488490&act=view', on: '2026-08-02'),
       amount: '건강관리사 방문 서비스 지원',
       desc: '출산 가정에 산모·신생아 건강관리사(도우미) 방문 서비스 비용을 바우처로 지원.\n\n'
           '지원 대상\n'
@@ -554,10 +558,10 @@ final _categories = <_BenefitCategory>[
           '· 일부 지자체는 소득 무관 지원 (지역별 상이)\n\n'
           '지원 내용\n'
           '· 산후조리 도우미 방문 (가사·신생아 돌봄·산모 케어)\n'
-          '· 서비스 기간: 5~25일 (단태아·쌍태아·삼태아 및 출산순위별 차등)\n'
+          '· 서비스 기간: 5~40일 (태아 유형·출산순위·선택 기간별 차등)\n'
           '· 본인부담금: 소득구간·서비스기간별 차등\n\n'
           '신청 방법\n'
-          '· 출산일 60일 이내 복지로·보건소 신청',
+          '· 복지로·보건소 신청, 바우처 유효기간은 출산일로부터 80일 이내(60일에서 연장)',
       links: const [
         ('복지로', 'https://www.bokjiro.go.kr'),
         ('보건복지부', 'https://www.mohw.go.kr'),
@@ -1243,6 +1247,7 @@ final _categories = <_BenefitCategory>[
     ),
     const _Benefit(
       name: '하이패스 할인카드',
+      verified: (source: 'https://www.korea.kr/news/policyNewsView.do?newsId=148936173', on: '2026-08-02'),
       amount: '통행료 최대 50% 할인',
       desc: '장애인·국가유공자·경차·친환경차·다인승 차량의 고속도로 통행료를 할인하는 한국도로공사 제도.\n\n'
           '대상별 할인율 · 조건\n'
@@ -1250,7 +1255,7 @@ final _categories = <_BenefitCategory>[
           '· 장애인 4~6급: 50%, 평일 출퇴근 혼잡시간(오전 7~9시, 오후 6~8시) 제외\n'
           '· 국가유공자: 50%, 차량등록 필요\n'
           '· 경형자동차(1,000cc 미만): 50%\n'
-          '· 전기차·수소차: 50%, 2026년까지 한시 적용\n'
+          '· 전기차·수소차: 2026년 30% — 감면율이 해마다 준다(2025년 40% → 2026년 30% → 2027년 20%)\n'
           '· 3인 이상 카풀: 50%, 심야~새벽 시간대(평일 21시~익일 7시)에 한해 적용\n\n'
           '이용 방식\n'
           '장애인은 지문 인증 하이패스카드로, 경차·친환경차는 차량번호 등록만으로 한국도로공사 시스템에서 자동 할인됩니다.\n\n'
