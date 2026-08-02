@@ -77,7 +77,7 @@ void main() {
     const allowed = [
       'go.kr', // 정부·공공기관
       'or.kr', // 공단·공사
-      'law.go.kr',
+      'korea.kr', // 정책브리핑 — 문체부가 운영하는 정부 공식 발표 창구
     ];
     final bad = [
       for (final e in entries)
