@@ -1,7 +1,7 @@
 name: secul
 description: 세끌 — 직장인·프리랜서·N잡러를 위한 온디바이스 종합소득세·연말정산 도우미 (민감정보는 기기에만 저장)
 publish_to: 'none'
-version: 1.0.0+4
+version: 1.0.0+5
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
