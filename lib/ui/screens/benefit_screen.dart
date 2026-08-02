@@ -314,8 +314,18 @@ final _categories = <_BenefitCategory>[
   _BenefitCategory(label: '청년·장병', items: [
     _Benefit(
       name: '청년도약계좌',
-      amount: '만기 최대 약 5,028만원',
-      desc: '만 19~34세 청년 대상 5년 만기 적금. 정부기여금 + 비과세 혜택.\n\n'
+      verified: (source: 'https://www.fsc.go.kr/no010101/87106', on: '2026-08-02'),
+      amount: '⚠️ 신규가입 종료 — 청년미래적금으로 대체',
+      desc: '⚠️ 청년도약계좌는 2025년 12월 신규가입이 종료되었습니다. 기존 가입자만 만기까지 '
+          '유지하며, 새로 가입하려면 후속 상품인 청년미래적금을 봐야 합니다.\n\n'
+          '청년미래적금 (2026.6.22 출시)\n'
+          '· 3년 만기 자유적립식, 월 최대 50만원\n'
+          '· 정부기여금 일반형 6% / 우대형 12%(중소기업 재직·신규취업자, 연매출 1억 이하 소상공인)\n'
+          '· 총급여 6,000만원 초과~7,500만원 이하는 비과세만 적용\n'
+          '· 소득: 총급여 7,500만원(종합소득 6,300만원) 이하 또는 연매출 3억원 이하 소상공인\n'
+          '· 가구 중위소득 200% 이하(우대형은 150% 이하)\n'
+          '· 기존 청년도약계좌 가입자는 2026.6~8월에 한해 갈아타기 가능\n\n'
+          '── 아래는 기존 가입자용 청년도약계좌 정보 ──\n\n'
           '자격 요건\n'
           '· 만 19~34세 (병역 이행 기간 최대 6년 추가 인정)\n'
           '· 총급여 7,500만원 이하\n'
@@ -614,6 +624,7 @@ final _categories = <_BenefitCategory>[
   _BenefitCategory(label: '의료·어르신', items: [
     _Benefit(
       name: '국가건강검진',
+      verified: (source: 'https://www.nhis.or.kr/nhis/healthin/wbhaea01000m01.do', on: '2026-08-02'),
       amount: '일반검진 무료 · 암검진 10%',
       desc: '국민건강보험공단이 제공하는 무료 건강검진. 일반검진은 전액 무료, 암검진은 본인부담 10%(취약계층은 면제).\n\n'
           '검진 대상 및 주기\n'
@@ -637,6 +648,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '의료급여',
+      verified: (source: 'https://www.mohw.go.kr/menu.es?mid=a10708030100', on: '2026-08-02'),
       amount: '1종 입원 0원 · 2종 입원 10%',
       desc: '기초생활수급자 등 저소득층의 병원비를 지원하는 공적부조 제도. 1종·2종에 따라 본인부담률이 다름.\n\n'
           '대상자 구분\n'
@@ -688,6 +700,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '중증질환 산정특례',
+      verified: (source: 'https://www.nhis.or.kr/nhis/policy/wbhefa03000m01.do', on: '2026-08-02'),
       amount: '본인부담 5%로 경감 (결핵 0%)',
       desc: '암·희귀난치·중증화상 등으로 등록하면 진료비 본인부담률이 5%(결핵은 면제)로 낮아지는 제도.\n\n'
           '대상 질환\n'
