@@ -20,7 +20,8 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
   final _fmt = NumberFormat('#,###');
 
   static const _statuses = [
-    ('부실 (저소득)', 0.80),
+    // 저소득 부실차주의 무담보 채무 감면율이 80%에서 90%로 올랐다(금융위).
+    ('부실 (저소득)', 0.90),
     ('부실 (일반)', 0.70),
     ('부실우려', 0.30),
     ('정상 차주', 0.0),

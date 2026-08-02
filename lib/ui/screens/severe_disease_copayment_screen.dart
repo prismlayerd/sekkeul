@@ -17,10 +17,17 @@ class SevereDiseaseCopaymentScreen extends StatefulWidget {
 class _SevereDiseaseCopaymentScreenState
     extends State<SevereDiseaseCopaymentScreen> {
   int _typeIdx = 0;
+  int _diseaseIdx = 0;
   final _costCtrl = TextEditingController();
   final _fmt = NumberFormat('#,###');
 
-  static const double _specialRate = 0.05; // 산정특례 본인부담 5% (결핵 0% 별도 안내)
+  /// 산정특례 본인부담률은 질환군마다 다르다(국민건강보험 산정특례 안내).
+  /// 5%로 뭉뚱그리면 희귀질환자에게 실제의 절반을 보여준다.
+  static const _diseases = [
+    ('암 · 중증화상', 0.05),
+    ('희귀질환 · 중증난치 · 중증치매', 0.10),
+    ('결핵 · 잠복결핵감염', 0.00),
+  ];
 
   // 진료유형 라벨, 일반 본인부담률
   static const _types = [
@@ -34,6 +41,7 @@ class _SevereDiseaseCopaymentScreenState
   double get _cost => double.tryParse(_costCtrl.text.replaceAll(',', '')) ?? 0;
   double get _generalRate => _types[_typeIdx].$2;
   double get _generalCopay => _cost * _generalRate;
+  double get _specialRate => _diseases[_diseaseIdx].$2;
   double get _specialCopay => _cost * _specialRate;
   double get _saved => _generalCopay - _specialCopay;
   bool get _hasInput => _cost > 0;
@@ -70,6 +78,33 @@ class _SevereDiseaseCopaymentScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text('질환군',
+                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                  border: Border.all(color: line),
+                  borderRadius: BorderRadius.circular(4)),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  value: _diseaseIdx,
+                  isExpanded: true,
+                  style: AppTheme.sans(14, ink),
+                  dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                  items: [
+                    for (int i = 0; i < _diseases.length; i++)
+                      DropdownMenuItem(
+                          value: i,
+                          child: Text(_diseases[i].$1,
+                              style: AppTheme.sans(14, ink))),
+                  ],
+                  onChanged: (v) => setState(() => _diseaseIdx = v!),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             Text('진료 유형',
                 style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),

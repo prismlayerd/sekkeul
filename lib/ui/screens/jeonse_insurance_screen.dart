@@ -17,6 +17,9 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
   bool _isYouth = false;
   final _fmt = NumberFormat('#,###');
 
+  /// HUG 전세보증금반환보증 요율은 보증금·주택유형·부채비율에 따라
+  /// 0.115~0.154%로 갈린다(khug.or.kr). 계산기는 중간값을 쓴다 —
+  /// 정확한 요율은 신청 시 산출되므로 예상액으로만 본다.
   static const _hugRate = 0.128;
   static const _hfRateGeneral = 0.04;
   static const _hfRateYouth = 0.02;

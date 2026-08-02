@@ -19,7 +19,9 @@ class _HouseholdSeparationScreenState
   int _maritalIdx = 0; // 0=미혼, 1=기혼(혼인신고), 2=이혼·사별+자녀부양
   bool _hasHousing = true;
 
-  static const int _incomeThresholdWon = 950000; // 기준중위소득 40%(1인) 참고치
+  /// 기준중위소득 40%(1인). 2026년 1인 중위소득 2,564,238원 × 40%.
+  /// 매년 보건복지부 고시로 바뀐다 — 2026년은 6.51% 올랐다.
+  static const int _incomeThresholdWon = 1025695;
 
   int get _age => int.tryParse(_ageCtrl.text.replaceAll(',', '')) ?? -1;
   double get _income =>

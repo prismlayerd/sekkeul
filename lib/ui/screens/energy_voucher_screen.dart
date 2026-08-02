@@ -17,12 +17,15 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
   final _fmt = NumberFormat('#,###');
 
   static const List<String> _sizeLabels = ['1인', '2인', '3인', '4인 이상'];
-  static const List<int> _summer = [55700, 73800, 90500, 117000];
-  static const List<int> _winter = [254500, 348700, 456900, 599300];
 
-  int get _summerAmount => _summer[_householdSize];
-  int get _winterAmount => _winter[_householdSize];
-  int get _annualTotal => _summerAmount + _winterAmount;
+  /// 2026년 가구원수별 지원금액(한국에너지공단 energyv.or.kr).
+  ///
+  /// 2026년부터 **하·동절기 구분이 없어졌다.** 종전에는 여름·겨울 바우처를
+  /// 따로 두고 각각 사용 상한이 있었는데, 이제 사용기간(26.7.1~27.5.31)
+  /// 동안 연간 총액을 자유롭게 쓴다.
+  static const List<int> _annual = [295200, 407500, 532700, 701300];
+
+  int get _annualTotal => _annual[_householdSize];
 
   String _won(int v) => '${_fmt.format(v)}원';
 
@@ -101,9 +104,9 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('여름(냉방) 바우처', _won(_summerAmount), ink, sub),
+                    _row('사용기간', '26.7.1 ~ 27.5.31', ink, sub),
                     const SizedBox(height: 8),
-                    _row('겨울(난방) 바우처', _won(_winterAmount), ink, sub),
+                    _row('계절 구분', '없음 (기간 내 자유 사용)', ink, sub),
                   ],
                 ),
               ),
