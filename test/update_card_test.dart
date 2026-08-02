@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data_vintage.dart';
 import 'package:secul/core/update_service.dart';
-import 'package:secul/ui/components/calc_disclaimer.dart';
 import 'package:secul/ui/components/update_card.dart';
 
 /// 업데이트 카드는 Play가 있는 실기기에서만 뜬다. 로컬에서 눈으로 볼 수 없으므로
@@ -67,9 +66,4 @@ void main() {
     }
   });
 
-  testWidgets('계산기 하단 고지에 기준 시점이 들어 있다', (t) async {
-    // 업데이트를 끝내 안 받는 사람에게 닿는 유일한 경로다.
-    await pump(t, const CalcDisclaimer());
-    expect(plain(t), contains(DataVintage.sentence));
-  });
 }

@@ -28,9 +28,7 @@ void main() {
   });
 
   test('사용자에게 보이는 문장이 읽을 만하다', () {
-    // 화면에 그대로 나가는 문장이라 형식이 깨지면 바로 보인다.
+    // 업데이트 카드에 그대로 나가는 문구라 형식이 깨지면 바로 보인다.
     expect(DataVintage.label, matches(RegExp(r'^\d{4}년 \d{1,2}월$')));
-    expect(DataVintage.sentence, contains('${DataVintage.taxYear}년 귀속'));
-    expect(DataVintage.sentence, contains(DataVintage.label));
   });
 }

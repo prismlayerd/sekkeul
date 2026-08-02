@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/data_vintage.dart';
 import '../theme/app_theme.dart';
 
 /// 계산 결과 화면 하단 면책 문구 — 세액·환급·수급액 추정치가 있는 화면에서 공통 사용.
@@ -18,12 +17,6 @@ class CalcDisclaimer extends StatelessWidget {
           Text(
             '이 결과는 참고용 추정치예요. 실제 세액·환급액·수급액은 개인 상황에 따라 달라질 수 있으니, '
             '정확한 금액은 홈택스나 관할 기관, 세무사를 통해 확인하세요.',
-            style: AppTheme.sans(11, AppTheme.inkTertiary(context), height: 1.5),
-          ),
-          const SizedBox(height: 6),
-          // 업데이트를 안 받는 사람에게도 "이 값이 언제 것인지"는 닿아야 한다.
-          Text(
-            DataVintage.sentence,
             style: AppTheme.sans(11, AppTheme.inkTertiary(context), height: 1.5),
           ),
         ],
