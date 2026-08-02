@@ -18,7 +18,7 @@ class _BogeumjariLoanScreenState extends State<BogeumjariLoanScreen> {
   final _fmt = NumberFormat('#,###');
 
   static const _rates = [
-    ('기본 금리', '4.00~4.50%'),
+    ('기본 금리', '4.90~5.30%'),
     ('전자약정·MyHome 앱', '-0.10%p'),
     ('신혼부부 (혼인 7년 이내)', '-0.20%p'),
     ('다자녀 (2자녀 이상)', '-0.40%p (3자녀 -0.50%p)'),
