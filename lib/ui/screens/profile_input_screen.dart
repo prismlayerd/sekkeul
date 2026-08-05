@@ -3,9 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
-import '../../core/tax_engine/employee_tax.dart';
 import '../components/amount_field.dart';
-import '../theme/text_wrap.dart';
 
 
 /// 기초 프로필 작성 — 치수가 매겨진 도면 시트 메타포.

@@ -151,7 +151,6 @@ class FreelancerTaxCalculator {
     }
 
     final double includedOtherIncomeAmount = otherIncomeComprehensive ? otherIncomeAmount : 0.0;
-    final double estimatedGlobalIncome = estimatedBusinessIncome + includedOtherIncomeAmount;
 
     // 과세표준 (사업소득금액 + 종합과세 선택된 기타소득금액 - 소득공제)
     final double taxBase = otherIncomeComprehensive ? taxBaseWithOther : taxBaseWithoutOther;

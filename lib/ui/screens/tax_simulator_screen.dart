@@ -61,10 +61,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
   FreelancerTaxResult? _freelancerResult;
   CombinedTaxResult? _combinedResult;
   CreditCardDeductionResult? _employeeCardResult;
-  RentRefundResult? _employeeRentResult;
-  SpecialDeductionResult? _specialDeductionResult;
   EmployeeRefundEstimate? _employeeRefund;
-  double _employeeTotalRefund = 0.0;
   // 장기주택저당차입금 한도 분기 (소법 §52⑥) — 금액을 넣은 사람에게만 물어본다.
   bool _mortgageFixedRate = false;
   bool _mortgageNonDeferred = false;
@@ -400,9 +397,6 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       if (_salaryController.text.isEmpty) {
         setState(() {
           _employeeCardResult = null;
-          _employeeRentResult = null;
-          _specialDeductionResult = null;
-          _employeeTotalRefund = 0.0;
         });
         return;
       }
@@ -510,10 +504,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
 
       setState(() {
         _employeeCardResult = cResult;
-        _employeeRentResult = rResult;
-        _specialDeductionResult = specialResult;
         _employeeRefund = estimate;
-        _employeeTotalRefund = estimate.refund;
       });
     }
     else if (_isFreelancer && !_isEmployee) {

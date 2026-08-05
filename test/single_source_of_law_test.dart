@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/tax_engine/tax_rates.dart';
-import 'package:secul/ui/screens/out_of_pocket_cap_screen.dart';
 
 /// **법정 상수는 엔진 한 곳에만 둔다.**
 ///
