@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
@@ -17,7 +16,6 @@ class FourInsuranceScreen extends StatefulWidget {
 
 class _FourInsuranceScreenState extends State<FourInsuranceScreen> {
   final TextEditingController _salaryController = TextEditingController();
-  final _fmt = NumberFormat('#,###');
 
   void _reset() => setState(() => _salaryController.clear());
 
@@ -30,7 +28,7 @@ class _FourInsuranceScreenState extends State<FourInsuranceScreen> {
   double get _monthly =>
       double.tryParse(_salaryController.text.replaceAll(',', '')) ?? 0.0;
 
-  String _won(double v) => v <= 0 ? '0원' : '${_fmt.format(v.round())}원';
+  String _won(double v) => v <= 0 ? '0원' : '${comma(v.round())}원';
 
   @override
   Widget build(BuildContext context) {
@@ -172,8 +170,8 @@ class _FourInsuranceScreenState extends State<FourInsuranceScreen> {
                   ]),
                   const SizedBox(height: 8),
                   Text(
-                    '• 국민연금 상한 월 ${_fmt.format(InsuranceEngine.pensionUpperBound.round())}원 / '
-                    '하한 ${_fmt.format(InsuranceEngine.pensionLowerBound.round())}원 적용됩니다.\n'
+                    '• 국민연금 상한 월 ${comma(InsuranceEngine.pensionUpperBound.round())}원 / '
+                    '하한 ${comma(InsuranceEngine.pensionLowerBound.round())}원 적용됩니다.\n'
                     '• 건강보험료 기준으로 장기요양보험료가 산정됩니다.\n'
                     '• 사업주도 동일 금액을 부담합니다 (산재는 전액 사업주 부담).\n'
                     '• 소득세·지방소득세는 별도 세율표에 따라 추가 공제됩니다.',

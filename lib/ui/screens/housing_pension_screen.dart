@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
@@ -20,7 +19,6 @@ class HousingPensionScreen extends StatefulWidget {
 class _HousingPensionScreenState extends State<HousingPensionScreen> {
   final _ageCtrl = TextEditingController();
   final _priceCtrl = TextEditingController(); // 만원 단위
-  final _fmt = NumberFormat('#,###');
 
   static const int _capWon = 3750000;
   /// 연령 → 1억원당 월지급금(만원) — 종신지급·정액형·일반주택.
@@ -64,7 +62,6 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
     return raw > _capWon ? _capWon : raw;
   }
 
-  String _won(int v) => '${_fmt.format(v)}원';
 
   @override
   void dispose() {
@@ -125,7 +122,7 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
               onChanged: (v) {
                 final digits = v.replaceAll(RegExp(r'[^0-9]'), '');
                 final formatted =
-                    digits.isEmpty ? '' : _fmt.format(int.parse(digits));
+                    digits.isEmpty ? '' : comma(int.parse(digits));
                 _priceCtrl.value = TextEditingValue(
                   text: formatted,
                   selection: TextSelection.collapsed(offset: formatted.length),
@@ -157,7 +154,7 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
                                 weight: FontWeight.w700)),
                         Text(
                             _ageEligible && _priceEligible
-                                ? _won(_monthlyPaymentWon)
+                                ? won(_monthlyPaymentWon)
                                 : '-',
                             style: AppTheme.sans(16, accent,
                                 weight: FontWeight.w700)),

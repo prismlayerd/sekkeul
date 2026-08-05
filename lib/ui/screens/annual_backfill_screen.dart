@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/data/expense_item.dart';
 import '../../core/data/income_entry.dart';
@@ -106,7 +105,6 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
     if (mounted) Navigator.pop(context, true);
   }
 
-  static final _fmt = NumberFormat('#,###');
 
   Widget _field(String label, TextEditingController c) {
     return Expanded(
@@ -129,7 +127,7 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
             if (n.isEmpty) return;
             final parsed = int.tryParse(n);
             if (parsed == null) return;
-            final f = _fmt.format(parsed);
+            final f = comma(parsed);
             if (f != c.text) {
               c.value = TextEditingValue(text: f, selection: TextSelection.collapsed(offset: f.length));
             }

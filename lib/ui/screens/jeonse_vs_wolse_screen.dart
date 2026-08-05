@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
@@ -17,7 +16,6 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
   final TextEditingController _wolseMonthlyController = TextEditingController();
   final TextEditingController _rateController =
       TextEditingController(text: '3.5');
-  final _fmt = NumberFormat('#,###');
 
   void _reset() {
     setState(() {
@@ -65,11 +63,11 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
     return _wolseMonthly * 12 / diff * 100;
   }
 
-  String _won(double v) {
+  String won(double v) {
     if (v <= 0) return '0원';
     final eok = v / 100000000;
     if (eok >= 1) return '${eok.toStringAsFixed(1)}억원';
-    return '${_fmt.format((v / 10000).round())}만원';
+    return '${comma((v / 10000).round())}만원';
   }
 
   bool get _hasInput =>
@@ -235,8 +233,8 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
                     const SizedBox(height: 4),
                     Text(
                       jeonseIsBetter
-                          ? '연간 ${_won(wCost - jCost)} 절감'
-                          : '연간 ${_won(jCost - wCost)} 절감',
+                          ? '연간 ${won(wCost - jCost)} 절감'
+                          : '연간 ${won(jCost - wCost)} 절감',
                       style: TextStyle(
                           color: subColor, fontSize: 13, height: 1.4),
                     ),
@@ -263,16 +261,16 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold)),
                           const SizedBox(height: 12),
-                          _miniRow('보증금', _won(_jeonse), subColor, textColor),
+                          _miniRow('보증금', won(_jeonse), subColor, textColor),
                           const SizedBox(height: 8),
-                          _miniRow('기회비용/년', _won(jCost), subColor,
+                          _miniRow('기회비용/년', won(jCost), subColor,
                               jeonseIsBetter ? primary : textColor),
                           const SizedBox(height: 8),
                           Divider(
                               height: 1,
                               color: Theme.of(context).dividerColor),
                           const SizedBox(height: 8),
-                          _miniRow('연간 비용', _won(jCost), subColor,
+                          _miniRow('연간 비용', won(jCost), subColor,
                               jeonseIsBetter ? primary : textColor),
                         ],
                       ),
@@ -293,17 +291,17 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold)),
                           const SizedBox(height: 12),
-                          _miniRow('월세 합계', _won(_wolseMonthly * 12),
+                          _miniRow('월세 합계', won(_wolseMonthly * 12),
                               subColor, textColor),
                           const SizedBox(height: 8),
-                          _miniRow('보증금 기회비용', _won(_wolseDeposit * _rate),
+                          _miniRow('보증금 기회비용', won(_wolseDeposit * _rate),
                               subColor, textColor),
                           const SizedBox(height: 8),
                           Divider(
                               height: 1,
                               color: Theme.of(context).dividerColor),
                           const SizedBox(height: 8),
-                          _miniRow('연간 비용', _won(wCost), subColor,
+                          _miniRow('연간 비용', won(wCost), subColor,
                               !jeonseIsBetter ? primary : textColor),
                         ],
                       ),

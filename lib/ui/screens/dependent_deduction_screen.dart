@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
@@ -19,7 +18,6 @@ class DependentDeductionScreen extends StatefulWidget {
 }
 
 class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
-  final _numberFormat = NumberFormat('#,###');
 
   // 기본공제 대상
   int _dependents = 0;          // 본인·배우자 제외 부양가족 수
@@ -103,7 +101,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
   String _toManwon(double won) {
     if (won <= 0) return '0원';
     final man = (won / 10000).round();
-    return '${_numberFormat.format(man)}만원';
+    return '${comma(man)}만원';
   }
 
   @override

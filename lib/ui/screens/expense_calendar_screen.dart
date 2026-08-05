@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/physics.dart';
-import 'package:intl/intl.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/data/expense_category.dart';
 import '../../core/data/expense_item.dart';
@@ -113,7 +112,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   double _minPanX = 0.0;
   final _panVTracker = VelocityTracker.withKind(PointerDeviceKind.touch);
 
-  final _fmt = NumberFormat('#,###');
 
   // ── 줌 레벨 파생 ──────────────────────────────────────────────────
   bool get _showAmounts => _zoomLevel >= 2;
@@ -418,10 +416,10 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       else if (e.paymentMethod == _catDebit) { _debitCategory = e.category; _debitIsBusiness = e.isBusiness; }
       else if (e.paymentMethod == _catOther) { _otherCategory = e.category; _otherIsBusiness = e.isBusiness; }
     }
-    _incomeCtrl.text = inc > 0 ? _fmt.format(inc) : '';
-    _creditCtrl.text = cr > 0 ? _fmt.format(cr) : '';
-    _debitCtrl.text  = db > 0 ? _fmt.format(db) : '';
-    _otherCtrl.text  = ot > 0 ? _fmt.format(ot) : '';
+    _incomeCtrl.text = inc > 0 ? comma(inc) : '';
+    _creditCtrl.text = cr > 0 ? comma(cr) : '';
+    _debitCtrl.text  = db > 0 ? comma(db) : '';
+    _otherCtrl.text  = ot > 0 ? comma(ot) : '';
   }
 
   void _prefillForm() {
@@ -432,7 +430,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       _incomeIsWithheld = (_incomesByDay[key] ?? const []).isEmpty
         ? _profile.withholdingDefault
         : (_incomesByDay[key] ?? const []).first.isWithheld;
-      _incomeCtrl.text = inc > 0 ? _fmt.format(inc) : '';
+      _incomeCtrl.text = inc > 0 ? comma(inc) : '';
       final cr = _paymentOf(key, _catCredit);
       final db = _paymentOf(key, _catDebit);
       final ot = _paymentOf(key, _catOther);
@@ -441,9 +439,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         else if (e.paymentMethod == _catDebit) { _debitCategory = e.category; _debitIsBusiness = e.isBusiness; }
         else if (e.paymentMethod == _catOther) { _otherCategory = e.category; _otherIsBusiness = e.isBusiness; }
       }
-      _creditCtrl.text = cr > 0 ? _fmt.format(cr) : '';
-      _debitCtrl.text  = db > 0 ? _fmt.format(db) : '';
-      _otherCtrl.text  = ot > 0 ? _fmt.format(ot) : '';
+      _creditCtrl.text = cr > 0 ? comma(cr) : '';
+      _debitCtrl.text  = db > 0 ? comma(db) : '';
+      _otherCtrl.text  = ot > 0 ? comma(ot) : '';
     } else {
       _clearForm();
     }
@@ -1299,9 +1297,8 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   /// 기본 접힘(요약 1줄) — 캘린더 위 크롬을 줄이기 위해 탭해야 상세가 펼쳐진다.
   Widget _buildReserveCard(Color ink, Color sub) {
     final r = _reserveEstimate!;
-    String won(double v) => '${_fmt.format(v.round())}원';
     String range(double min, double max) =>
-        min.round() == max.round() ? won(min) : '${_fmt.format(min.round())}~${_fmt.format(max.round())}원';
+        min.round() == max.round() ? won(min) : '${comma(min.round())}~${comma(max.round())}원';
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -1962,7 +1959,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         ),
         // 시작 칸에만 금액 표기 — 범위 중간/끝은 막대만 이어짐.
         child: (roundL && amt > 0)
-            ? Text('$sign${_fmt.format(amt)}',
+            ? Text('$sign${comma(amt)}',
                 style: AppTheme.sans(8.5, Colors.white, weight: FontWeight.w700),
                 softWrap: false, overflow: TextOverflow.clip)
             : null,
@@ -2150,7 +2147,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   /// 목표를 정하는 곳은 여기 하나뿐이다.
   Future<void> _showExpenseTargetDialog() async {
     final ctrl = TextEditingController(
-      text: _expenseTarget > 0 ? _fmt.format(_expenseTarget) : '');
+      text: _expenseTarget > 0 ? comma(_expenseTarget) : '');
     final ink = AppTheme.ink(context);
     final accent = AppTheme.accentColor(context);
     final bg = AppTheme.backgroundColor(context);
@@ -2188,7 +2185,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             ),
             onChanged: (v) {
               final n = v.replaceAll(RegExp(r'[^0-9]'), '');
-              final f = n.isEmpty ? '' : _fmt.format(int.parse(n));
+              final f = n.isEmpty ? '' : comma(int.parse(n));
               ctrl.value = TextEditingValue(text: f, selection: TextSelection.collapsed(offset: f.length));
             },
           ),
@@ -2321,15 +2318,15 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         const SizedBox(height: 10),
         if (_expenseTarget > 0)
           _analysisSimpleBar(
-            label: '목표 ${_fmt.format(_expenseTarget)}원',
+            label: '목표 ${comma(_expenseTarget)}원',
             amount: totalExp,
             max: _expenseTarget,
             color: totalExp > _expenseTarget
                 ? AppTheme.colorDanger
                 : accent,
             trailText: totalExp > _expenseTarget
-                ? '목표 ${_fmt.format(totalExp - _expenseTarget)}원 초과'
-                : '${_fmt.format(_expenseTarget - totalExp)}원 남음',
+                ? '목표 ${comma(totalExp - _expenseTarget)}원 초과'
+                : '${comma(_expenseTarget - totalExp)}원 남음',
             ink: ink, sub: sub,
           )
         else
@@ -2377,7 +2374,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             Text('인정 경비 합계'.toUpperCase(), style: AppTheme.label(context)),
             const SizedBox(width: 8),
             if (totalBusinessExp > 0)
-              AppTheme.blueprintBadge(context, '${_fmt.format(totalBusinessExp)}원'),
+              AppTheme.blueprintBadge(context, '${comma(totalBusinessExp)}원'),
           ]),
           const SizedBox(height: 10),
           if (totalBusinessExp == 0)
@@ -2401,13 +2398,13 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           Text('카드 공제 문턱'.toUpperCase(), style: AppTheme.label(context)),
           const SizedBox(height: 10),
           _analysisSimpleBar(
-            label: '연봉의 25% (${_fmt.format(cardThreshold.toInt())}원)',
+            label: '연봉의 25% (${comma(cardThreshold.toInt())}원)',
             amount: cardEligibleYtd,
             max: cardThreshold.toInt(),
             color: cardEligibleYtd >= cardThreshold ? AppTheme.colorSuccess : accent,
             trailText: cardEligibleYtd >= cardThreshold
                 ? '돌파 — 체크·현금이 공제율 2배예요'
-                : '${_fmt.format(cardThreshold.toInt() - cardEligibleYtd)}원 남음',
+                : '${comma(cardThreshold.toInt() - cardEligibleYtd)}원 남음',
             ink: ink, sub: sub,
           ),
           const SizedBox(height: 20),
@@ -2420,7 +2417,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           Text('세금 공제 가능 지출'.toUpperCase(), style: AppTheme.label(context)),
           const SizedBox(width: 8),
           if (totalTaxDeduct > 0)
-            AppTheme.blueprintBadge(context, '${_fmt.format(totalTaxDeduct)}원'),
+            AppTheme.blueprintBadge(context, '${comma(totalTaxDeduct)}원'),
         ]),
         const SizedBox(height: 10),
         if (totalTaxDeduct == 0)
@@ -2464,7 +2461,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(label, style: AppTheme.sans(11, sub, weight: FontWeight.w500, spacing: 0.3)),
           const SizedBox(height: 2),
-          Text('${_fmt.format(amount)}원',
+          Text('${comma(amount)}원',
               style: AppTheme.sans(13, color, weight: FontWeight.w700),
               maxLines: 1, overflow: TextOverflow.ellipsis),
         ]),
@@ -2485,7 +2482,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         Expanded(child: Text(label, style: AppTheme.sans(13, ink, weight: FontWeight.w600))),
-        Text(trailText ?? '${_fmt.format(amount)}원  ${(pct * 100).round()}%',
+        Text(trailText ?? '${comma(amount)}원  ${(pct * 100).round()}%',
             style: AppTheme.sans(12, sub)),
       ]),
       const SizedBox(height: 5),
@@ -2511,7 +2508,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         Text(cat.label, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
         Text(hint, style: AppTheme.sans(11, AppTheme.inkTertiary(context))),
       ])),
-      Text('${_fmt.format(amount)}원', style: AppTheme.sans(13, sub, weight: FontWeight.w600)),
+      Text('${comma(amount)}원', style: AppTheme.sans(13, sub, weight: FontWeight.w600)),
     ]);
   }
 
@@ -2541,7 +2538,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         Text('전체 지출 ', style: AppTheme.sans(13, sub)),
-        Text('$overallSign${_fmt.format(diff.abs())}원',
+        Text('$overallSign${comma(diff.abs())}원',
             style: AppTheme.sans(13, overallColor, weight: FontWeight.w700)),
         Text(prevTotal > 0
             ? '  (${((diff.abs() / prevTotal) * 100).round()}%)'
@@ -2555,7 +2552,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
               color: expenseCategoryById(topIncrCat).color),
           const SizedBox(width: 5),
           Text('${expenseCategoryById(topIncrCat).label} 지출이 가장 많이 늘었어요 '
-              '(+${_fmt.format(topIncrDiff)}원)',
+              '(+${comma(topIncrDiff)}원)',
               style: AppTheme.sans(12, sub, height: 1.4)),
         ]),
       ],
@@ -2576,7 +2573,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
               child: Text(cat.label,
                   style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
             ),
-            Text('${_fmt.format(amount)}원',
+            Text('${comma(amount)}원',
                 style: AppTheme.sans(13, sub, weight: FontWeight.w600)),
             const SizedBox(width: 8),
             SizedBox(
@@ -2669,7 +2666,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           Text('$_year년 세금 공제 가능 지출'.toUpperCase(), style: AppTheme.label(context)),
           const SizedBox(width: 8),
           if (yearTotalTaxDeduct > 0)
-            AppTheme.blueprintBadge(context, '${_fmt.format(yearTotalTaxDeduct)}원'),
+            AppTheme.blueprintBadge(context, '${comma(yearTotalTaxDeduct)}원'),
         ]),
         const SizedBox(height: 10),
         if (yearTotalTaxDeduct == 0)
@@ -2692,13 +2689,13 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           Text('$_year년 카드 공제 문턱'.toUpperCase(), style: AppTheme.label(context)),
           const SizedBox(height: 10),
           _analysisSimpleBar(
-            label: '연봉의 25% (${_fmt.format(cardThreshold.toInt())}원)',
+            label: '연봉의 25% (${comma(cardThreshold.toInt())}원)',
             amount: cardEligibleYtd,
             max: cardThreshold.toInt(),
             color: cardEligibleYtd >= cardThreshold ? AppTheme.colorSuccess : accent,
             trailText: cardEligibleYtd >= cardThreshold
                 ? '돌파 — 체크·현금이 공제율 2배예요'
-                : '${_fmt.format(cardThreshold.toInt() - cardEligibleYtd)}원 남음',
+                : '${comma(cardThreshold.toInt() - cardEligibleYtd)}원 남음',
             ink: ink, sub: sub,
           ),
           const SizedBox(height: 20),
@@ -2712,14 +2709,14 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             Text('$_year년 인정 경비 합계'.toUpperCase(), style: AppTheme.label(context)),
             const SizedBox(width: 8),
             if (yearBusinessExp > 0)
-              AppTheme.blueprintBadge(context, '${_fmt.format(yearBusinessExp)}원'),
+              AppTheme.blueprintBadge(context, '${comma(yearBusinessExp)}원'),
           ]),
           const SizedBox(height: 10),
           if (yearBusinessExp == 0)
             Text('지출 입력 시 "사업경비로 인정"을 체크하면 여기에 합산돼요.'.keepWords,
                 style: AppTheme.sans(13, tert, height: 1.5))
           else
-            Text('${_fmt.format(yearBusinessExp)}원', style: AppTheme.sans(20, ink, weight: FontWeight.w700)),
+            Text('${comma(yearBusinessExp)}원', style: AppTheme.sans(20, ink, weight: FontWeight.w700)),
           const SizedBox(height: 20),
           AppTheme.hairline(context),
         ],
@@ -2799,7 +2796,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           SizedBox(
             width: 96,
             child: Text(
-              net == 0 ? '—' : '${isPositive ? '+' : '-'}${_fmt.format(netAbs)}원',
+              net == 0 ? '—' : '${isPositive ? '+' : '-'}${comma(netAbs)}원',
               style: AppTheme.sans(12,
                   net == 0
                       ? AppTheme.inkTertiary(context)

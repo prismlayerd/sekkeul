@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
@@ -15,7 +14,6 @@ class _BeotimmokLoanScreenState extends State<BeotimmokLoanScreen> {
   final _principalCtrl = TextEditingController();
   final _rateCtrl = TextEditingController(text: '2.10');
   final _yearsCtrl = TextEditingController(text: '2');
-  final _fmt = NumberFormat('#,###');
 
   /// 주택도시기금이 공시하는 금리 **범위**만 적는다.
   ///
@@ -121,11 +119,11 @@ class _BeotimmokLoanScreenState extends State<BeotimmokLoanScreen> {
                   children: [
                     Text('월 이자', style: AppTheme.sans(AppTheme.tsMD, sub)),
                     const SizedBox(height: 6),
-                    Text('${_fmt.format(r.monthlyInterest)}원',
+                    Text('${comma(r.monthlyInterest)}원',
                         style: AppTheme.serif(AppTheme.serifLG, accent,
                             weight: FontWeight.w400)),
                     const SizedBox(height: 4),
-                    Text('만기 시 원금 ${_fmt.format(_principal)}원 전액 상환'.keepWords,
+                    Text('만기 시 원금 ${comma(_principal)}원 전액 상환'.keepWords,
                         style: AppTheme.sans(AppTheme.tsSM, sub)),
                   ],
                 ),
@@ -136,11 +134,11 @@ class _BeotimmokLoanScreenState extends State<BeotimmokLoanScreen> {
                     border: Border.all(color: line),
                     borderRadius: BorderRadius.circular(4)),
                 child: Column(children: [
-                  _resultRow('월 이자', '${_fmt.format(r.monthlyInterest)}원',
+                  _resultRow('월 이자', '${comma(r.monthlyInterest)}원',
                       accent, sub, line),
-                  _resultRow('총 이자 (기간 합계)', '${_fmt.format(r.totalInterest)}원',
+                  _resultRow('총 이자 (기간 합계)', '${comma(r.totalInterest)}원',
                       ink, sub, line),
-                  _resultRow('만기 상환 원금', '${_fmt.format(_principal)}원',
+                  _resultRow('만기 상환 원금', '${comma(_principal)}원',
                       ink, sub, line, last: true),
                 ]),
               ),

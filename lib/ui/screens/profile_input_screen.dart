@@ -7,7 +7,6 @@ import '../../core/tax_engine/employee_tax.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
 
-final NumberFormat _amountFormat = NumberFormat('#,###');
 
 /// 기초 프로필 작성 — 치수가 매겨진 도면 시트 메타포.
 /// 각 질문은 세금신고의 실제 챕터(청년 감면·거주·인적 공제…)로 묶이고,
@@ -82,7 +81,7 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
     final values = await dbService.getProfileTypeValues(widget.userType);
     final gross = values['gross_income'] ?? 0.0;
     if (mounted && gross > 0) {
-      setState(() => _grossIncomeController.text = _amountFormat.format(gross.toInt()));
+      setState(() => _grossIncomeController.text = comma(gross.toInt()));
     }
   }
 

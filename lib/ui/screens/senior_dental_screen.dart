@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../theme/text_wrap.dart';
@@ -14,7 +13,6 @@ class SeniorDentalScreen extends StatefulWidget {
 class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
   int _procIdx = 0; // 0=임플란트 1개, 1=완전틀니, 2=부분틀니
   int _insIdx = 0; // 0=건강보험, 1=의료급여 1종, 2=의료급여 2종
-  final _fmt = NumberFormat('#,###');
 
   static const _procs = [
     ('임플란트 1개', 1300000),
@@ -33,7 +31,6 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
   double get _copay => _standardPrice * _copayRate;
   double get _covered => _standardPrice - _copay;
 
-  String _won(double v) => '${_fmt.format(v.round())}원';
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +84,7 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
                       Text('본인부담금',
                           style: AppTheme.sans(14, ink,
                               weight: FontWeight.w700)),
-                      Text(_won(_copay),
+                      Text(won(_copay),
                           style: AppTheme.sans(16, accent,
                               weight: FontWeight.w700)),
                     ],
@@ -95,9 +92,9 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
                   const SizedBox(height: 12),
                   Divider(height: 1, color: line),
                   const SizedBox(height: 12),
-                  _row('표준 보험가', _won(_standardPrice.toDouble()), ink, sub),
+                  _row('표준 보험가', won(_standardPrice.toDouble()), ink, sub),
                   const SizedBox(height: 8),
-                  _row('건강보험·의료급여 부담', _won(_covered), ink, sub),
+                  _row('건강보험·의료급여 부담', won(_covered), ink, sub),
                   const SizedBox(height: 12),
                   Text('* 2024년 표준 보험가 참고치 기반 단순 추정이며, 실제 진료비는 치과·지역별로 다를 수 있습니다.'.keepWords,
                       style: AppTheme.sans(11, sub)),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
@@ -17,7 +16,6 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
   final _monthsCtrl = TextEditingController(text: '240');
   int _method = 0; // 0=원리금균등, 1=원금균등
   bool _showAll = false;
-  final _fmt = NumberFormat('#,###');
 
   @override
   void dispose() {
@@ -190,7 +188,7 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
                       children: [
                         Text('총 이자', style: AppTheme.sans(AppTheme.tsSM, sub)),
                         const SizedBox(height: 4),
-                        Text('${_fmt.format(totalInterest)}원',
+                        Text('${comma(totalInterest)}원',
                             style: AppTheme.sans(AppTheme.tsLG, accent,
                                 weight: FontWeight.w700)),
                       ],
@@ -202,7 +200,7 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
                       children: [
                         Text('총 상환액', style: AppTheme.sans(AppTheme.tsSM, sub)),
                         const SizedBox(height: 4),
-                        Text('${_fmt.format(totalPayment)}원',
+                        Text('${comma(totalPayment)}원',
                             style: AppTheme.sans(AppTheme.tsLG, ink,
                                 weight: FontWeight.w700)),
                       ],
@@ -263,21 +261,21 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
                                 child: Text('${row.month}',
                                     style: AppTheme.sans(AppTheme.tsSM, sub))),
                             Expanded(
-                                child: Text(_fmt.format(row.principal),
+                                child: Text(comma(row.principal),
                                     textAlign: TextAlign.right,
                                     style: AppTheme.sans(AppTheme.tsSM, ink))),
                             Expanded(
-                                child: Text(_fmt.format(row.interest),
+                                child: Text(comma(row.interest),
                                     textAlign: TextAlign.right,
                                     style: AppTheme.sans(AppTheme.tsSM,
                                         accent.withValues(alpha: 0.7)))),
                             Expanded(
-                                child: Text(_fmt.format(row.payment),
+                                child: Text(comma(row.payment),
                                     textAlign: TextAlign.right,
                                     style: AppTheme.sans(AppTheme.tsSM, ink,
                                         weight: FontWeight.w600))),
                             Expanded(
-                                child: Text(_fmt.format(row.balance),
+                                child: Text(comma(row.balance),
                                     textAlign: TextAlign.right,
                                     style: AppTheme.sans(AppTheme.tsSM, sub))),
                           ]),

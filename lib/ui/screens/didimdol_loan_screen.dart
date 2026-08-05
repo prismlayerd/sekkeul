@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
@@ -15,7 +14,6 @@ class _DidimdolLoanScreenState extends State<DidimdolLoanScreen> {
   final _principalCtrl = TextEditingController();
   final _rateCtrl = TextEditingController(text: '2.55');
   final _yearsCtrl = TextEditingController(text: '30');
-  final _fmt = NumberFormat('#,###');
 
   /// 주택도시기금이 공시하는 금리 **범위**만 적는다.
   ///
@@ -125,7 +123,7 @@ class _DidimdolLoanScreenState extends State<DidimdolLoanScreen> {
                   children: [
                     Text('월 상환액', style: AppTheme.sans(AppTheme.tsMD, sub)),
                     const SizedBox(height: 6),
-                    Text('${_fmt.format(r.monthly)}원',
+                    Text('${comma(r.monthly)}원',
                         style: AppTheme.serif(AppTheme.serifLG, accent,
                             weight: FontWeight.w400)),
                   ],
@@ -137,9 +135,9 @@ class _DidimdolLoanScreenState extends State<DidimdolLoanScreen> {
                     border: Border.all(color: line),
                     borderRadius: BorderRadius.circular(4)),
                 child: Column(children: [
-                  _resultRow('총 이자', '${_fmt.format(r.totalInterest)}원',
+                  _resultRow('총 이자', '${comma(r.totalInterest)}원',
                       accent, sub, line),
-                  _resultRow('총 상환액', '${_fmt.format(r.totalPayment)}원',
+                  _resultRow('총 상환액', '${comma(r.totalPayment)}원',
                       ink, sub, line, last: true),
                 ]),
               ),

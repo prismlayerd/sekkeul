@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -28,7 +27,6 @@ class BookkeepingGuideScreen extends StatefulWidget {
 }
 
 class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
-  final _fmt = NumberFormat('#,###');
   final int _year = DateTime.now().year;
   SimpleLedgerResult? _result;
   BookkeepingJudgment? _judgment;
@@ -184,9 +182,9 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                   Row(children: [
                     _cell('거래', '${r.rows.length}건', ink, tert),
                     Container(width: 1, height: 40, color: AppTheme.line(context)),
-                    _cell('수입', '${_fmt.format(r.totalIncome)}원', ink, tert),
+                    _cell('수입', '${comma(r.totalIncome)}원', ink, tert),
                     Container(width: 1, height: 40, color: AppTheme.line(context)),
-                    _cell('비용', '${_fmt.format(r.totalExpense)}원', ink, tert),
+                    _cell('비용', '${comma(r.totalExpense)}원', ink, tert),
                   ]),
                   const SizedBox(height: 14),
                   Text(

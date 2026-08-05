@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
@@ -22,7 +21,6 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
   final TextEditingController _monthsController =
       TextEditingController(text: '12');
   bool _taxExempt = false;
-  final _fmt = NumberFormat('#,###');
 
   static const double _taxRate = 0.154;
 
@@ -74,13 +72,13 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
       _type == _SavingsType.deposit ? _amount : _amount * _months;
   double get _maturityAmount => _totalPrincipal + _netInterest;
 
-  String _won(double v) {
+  String won(double v) {
     if (v <= 0) return '0원';
     final eok = v / 100000000;
     if (eok >= 1) return '${eok.toStringAsFixed(2)}억원';
     final man = (v / 10000);
     if (man >= 1) return '${man.toStringAsFixed(1)}만원';
-    return '${_fmt.format(v.round())}원';
+    return '${comma(v.round())}원';
   }
 
   @override
@@ -239,25 +237,25 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
                             fontWeight: FontWeight.bold)),
                   ]),
                   const SizedBox(height: 12),
-                  Text(hasResult ? _won(_maturityAmount) : '0원',
+                  Text(hasResult ? won(_maturityAmount) : '0원',
                       style: TextStyle(
                           color: primary,
                           fontSize: 32,
                           fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   if (hasResult) ...[
-                    _row('총 납입원금', _won(_totalPrincipal), subColor, textColor),
+                    _row('총 납입원금', won(_totalPrincipal), subColor, textColor),
                     const SizedBox(height: 8),
-                    _row('세전 이자', _won(_grossInterest), subColor, textColor),
+                    _row('세전 이자', won(_grossInterest), subColor, textColor),
                     const SizedBox(height: 8),
                     _row(
                       _taxExempt ? '이자소득세 (비과세)' : '이자소득세 15.4%',
-                      _taxExempt ? '0원' : '- ${_won(_tax)}',
+                      _taxExempt ? '0원' : '- ${won(_tax)}',
                       subColor,
                       textColor,
                     ),
                     const SizedBox(height: 8),
-                    _row('세후 이자', _won(_netInterest), subColor, primary),
+                    _row('세후 이자', won(_netInterest), subColor, primary),
                   ] else
                     Text('금액·이율·기간을 입력해보세요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 13)),

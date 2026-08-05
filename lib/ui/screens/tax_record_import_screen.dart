@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:intl/intl.dart';
 
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
@@ -22,7 +21,6 @@ class TaxRecordImportScreen extends StatefulWidget {
 }
 
 class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
-  final _fmt = NumberFormat('#,###');
   GansoDeductions? _ganso;
   WithholdingReceipt? _wh;
   bool _busy = false;
@@ -55,7 +53,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
   int _v(String key) =>
       int.tryParse((_ctrls[key]?.text ?? '').replaceAll(',', '')) ?? 0;
   void _seed(String key, int value) {
-    _ctrl(key).text = value == 0 ? '' : _fmt.format(value);
+    _ctrl(key).text = value == 0 ? '' : comma(value);
   }
 
   /// 편집된 값으로 재구성한 원천징수 (보정 반영).
@@ -168,7 +166,6 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
     if (mounted) Navigator.pop(context, true);
   }
 
-  String _won(int v) => '${_fmt.format(v)}원';
 
   @override
   Widget build(BuildContext context) {
@@ -210,7 +207,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
                 label: '간소화 자료',
                 hint: '신용카드·의료비·보험료 등 공제 가능액',
                 done: g != null,
-                summary: g == null ? null : '카드 ${_won(g.creditCard)} · 의료비 ${_won(g.medical)} · 보장성 ${_won(g.lifeInsurance)}',
+                summary: g == null ? null : '카드 ${won(g.creditCard)} · 의료비 ${won(g.medical)} · 보장성 ${won(g.lifeInsurance)}',
                 onTap: _busy ? null : () => _pick(isGanso: true),
               ),
               AppTheme.hairline(context),
@@ -218,7 +215,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
                 label: '원천징수영수증',
                 hint: '총급여·결정세액·신고한 공제',
                 done: w != null,
-                summary: w == null ? null : '총급여 ${_won(w.grossSalary)} · ${w.isRefund ? '환급' : '추가납부'} ${_won(w.settlementAbs)}',
+                summary: w == null ? null : '총급여 ${won(w.grossSalary)} · ${w.isRefund ? '환급' : '추가납부'} ${won(w.settlementAbs)}',
                 onTap: _busy ? null : () => _pick(isGanso: false),
               ),
               AppTheme.hairline(context),

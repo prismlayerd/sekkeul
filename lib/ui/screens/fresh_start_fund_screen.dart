@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
@@ -17,7 +16,6 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
   final _debtCtrl = TextEditingController();
   final _yearsCtrl = TextEditingController(text: '10');
   int _statusIdx = 1; // 0=부실(저소득), 1=부실(일반), 2=부실우려, 3=정상
-  final _fmt = NumberFormat('#,###');
 
   static const _statuses = [
     // 저소득 부실차주의 무담보 채무 감면율이 80%에서 90%로 올랐다(금융위).
@@ -37,7 +35,6 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
 
   bool get _hasInput => _debt > 0 && _years > 0;
 
-  String _won(double v) => '${_fmt.format(v.round())}원';
 
   @override
   void dispose() {
@@ -122,7 +119,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
               onChanged: (v) {
                 final digits = v.replaceAll(RegExp(r'[^0-9]'), '');
                 final formatted =
-                    digits.isEmpty ? '' : _fmt.format(int.parse(digits));
+                    digits.isEmpty ? '' : comma(int.parse(digits));
                 _debtCtrl.value = TextEditingValue(
                   text: formatted,
                   selection: TextSelection.collapsed(offset: formatted.length),
@@ -173,15 +170,15 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
                         style:
                             AppTheme.sans(11, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
-                    Text(_won(_monthlyPayment),
+                    Text(won(_monthlyPayment),
                         style: AppTheme.sans(20, accent,
                             weight: FontWeight.w700)),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('원금 감면액', _won(_reduction), ink, sub),
+                    _row('원금 감면액', won(_reduction), ink, sub),
                     const SizedBox(height: 8),
-                    _row('감면 후 원금', _won(_afterDebt), ink, sub),
+                    _row('감면 후 원금', won(_afterDebt), ink, sub),
                     const SizedBox(height: 12),
                     Text('* 무이자 분할 가정 단순 추정치. 약정 후 연 1~3%대 이자가 붙을 수 있습니다.'.keepWords,
                         style: AppTheme.sans(11, sub)),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/tax_engine/tax_rates.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
@@ -38,7 +37,6 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
   final TextEditingController _yearsController =
       TextEditingController(text: '5');
   bool _oneHousehold = false;
-  final _fmt = NumberFormat('#,###');
 
   // 양도소득세 세율은 소득세법 §104①1이 **§55①의 종합소득세율을 그대로 준용**한다.
   // 여기에 표를 따로 두었더니 2023년 개정(1,200만→1,400만, 4,600만→5,000만과
@@ -100,13 +98,13 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
     );
   }
 
-  String _won(double v) {
+  String won(double v) {
     if (v <= 0) return '0원';
     final eok = v / 100000000;
     if (eok >= 1) return '${eok.toStringAsFixed(2)}억원';
     final man = v / 10000;
     if (man >= 1) return '${man.toStringAsFixed(0)}만원';
-    return '${_fmt.format(v.round())}원';
+    return '${comma(v.round())}원';
   }
 
   String _pct(double r) => '${(r * 100).toStringAsFixed(0)}%';
@@ -266,38 +264,38 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
                             fontWeight: FontWeight.bold)),
                   ]),
                   const SizedBox(height: 12),
-                  Text(result != null ? _won(result.total) : '0원',
+                  Text(result != null ? won(result.total) : '0원',
                       style: TextStyle(
                           color: primary,
                           fontSize: 32,
                           fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   if (result != null) ...[
-                    _row('양도차익', _won(result.gain), subColor, textColor),
+                    _row('양도차익', won(result.gain), subColor, textColor),
                     const SizedBox(height: 8),
                     _row(
                       '장기보유특별공제 (${_pct(_ltdRate)})',
-                      result.ltd > 0 ? '- ${_won(result.ltd)}' : '해당없음',
+                      result.ltd > 0 ? '- ${won(result.ltd)}' : '해당없음',
                       subColor,
                       textColor,
                     ),
                     const SizedBox(height: 8),
-                    _row('양도소득금액', _won(result.income), subColor, textColor),
+                    _row('양도소득금액', won(result.income), subColor, textColor),
                     const SizedBox(height: 8),
                     _row('기본공제', '- 250만원', subColor, textColor),
                     const SizedBox(height: 8),
-                    _row('과세표준', _won(result.base), subColor, textColor),
+                    _row('과세표준', won(result.base), subColor, textColor),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: Theme.of(context).dividerColor),
                     const SizedBox(height: 12),
-                    _row('양도소득세', _won(result.tax), subColor, textColor),
+                    _row('양도소득세', won(result.tax), subColor, textColor),
                     const SizedBox(height: 8),
-                    _row('지방소득세 (10%)', _won(result.local), subColor,
+                    _row('지방소득세 (10%)', won(result.local), subColor,
                         textColor),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: Theme.of(context).dividerColor),
                     const SizedBox(height: 12),
-                    _row('총 납부세액', _won(result.total), subColor, primary),
+                    _row('총 납부세액', won(result.total), subColor, primary),
                   ] else
                     Text(
                       _transfer > 0 && _acquire > 0 && _transfer <= _acquire

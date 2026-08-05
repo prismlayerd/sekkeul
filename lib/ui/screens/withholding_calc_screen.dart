@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
@@ -15,7 +14,6 @@ class WithholdingCalcScreen extends StatefulWidget {
 
 class _WithholdingCalcScreenState extends State<WithholdingCalcScreen> {
   final TextEditingController _amountCtrl = TextEditingController();
-  final _fmt = NumberFormat('#,###');
 
   void _reset() => setState(() => _amountCtrl.clear());
 
@@ -33,13 +31,13 @@ class _WithholdingCalcScreenState extends State<WithholdingCalcScreen> {
   double get _withheldTotal => _incomeTax + _localIncomeTax;
   double get _netReceived => _gross - _withheldTotal;
 
-  String _won(double v) {
+  String won(double v) {
     if (v <= 0) return '0원';
     final eok = v / 100000000;
     if (eok >= 1) return '${eok.toStringAsFixed(2)}억원';
     final man = v / 10000;
     if (man >= 1) return '${man.toStringAsFixed(0)}만원';
-    return '${_fmt.format(v.round())}원';
+    return '${comma(v.round())}원';
   }
 
   @override
@@ -117,22 +115,22 @@ class _WithholdingCalcScreenState extends State<WithholdingCalcScreen> {
                             fontWeight: FontWeight.bold)),
                   ]),
                   const SizedBox(height: 12),
-                  Text(hasResult ? _won(_netReceived) : '0원',
+                  Text(hasResult ? won(_netReceived) : '0원',
                       style: TextStyle(
                           color: primary,
                           fontSize: 32,
                           fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   if (hasResult) ...[
-                    _row('계약금액', _won(_gross), subColor, textColor),
+                    _row('계약금액', won(_gross), subColor, textColor),
                     const SizedBox(height: 8),
-                    _row('사업소득세 (3%)', _won(_incomeTax), subColor, textColor),
+                    _row('사업소득세 (3%)', won(_incomeTax), subColor, textColor),
                     const SizedBox(height: 8),
-                    _row('지방소득세 (0.3%)', _won(_localIncomeTax), subColor, textColor),
+                    _row('지방소득세 (0.3%)', won(_localIncomeTax), subColor, textColor),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: Theme.of(context).dividerColor),
                     const SizedBox(height: 12),
-                    _row('원천징수세액 합계', _won(_withheldTotal), subColor, primary),
+                    _row('원천징수세액 합계', won(_withheldTotal), subColor, primary),
                   ] else
                     Text('계약금액을 입력해보세요.',
                         style: TextStyle(color: subColor, fontSize: 13)),

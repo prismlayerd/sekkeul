@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
@@ -15,7 +14,6 @@ class CarTaxAnnualScreen extends StatefulWidget {
 class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
   final _taxCtrl = TextEditingController();
   int _month = 1;
-  final _fmt = NumberFormat('#,###');
 
   static const Map<int, double> _rates = {1: 4.57, 3: 3.76, 6: 2.51, 9: 1.26};
 
@@ -28,7 +26,6 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
 
   bool get _hasInput => _annualTax > 0;
 
-  String _won(double v) => '${_fmt.format(v.round())}원';
 
   @override
   void dispose() {
@@ -88,7 +85,7 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('절감액', style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
-                        Text('-${_won(_discount)}',
+                        Text('-${won(_discount)}',
                             style: AppTheme.sans(16, accent, weight: FontWeight.w700)),
                       ],
                     ),
@@ -97,7 +94,7 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
                     const SizedBox(height: 12),
                     _row('공제율', '${_rate.toStringAsFixed(2)}%', ink, sub),
                     const SizedBox(height: 8),
-                    _row('실제 납부액', _won(_payAmount), ink, sub),
+                    _row('실제 납부액', won(_payAmount), ink, sub),
                   ],
                 ),
               ),
@@ -151,7 +148,7 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
           ),
           onChanged: (v) {
             final digits = v.replaceAll(RegExp(r'[^0-9]'), '');
-            final formatted = digits.isEmpty ? '' : _fmt.format(int.parse(digits));
+            final formatted = digits.isEmpty ? '' : comma(int.parse(digits));
             ctrl.value = TextEditingValue(
                 text: formatted, selection: TextSelection.collapsed(offset: formatted.length));
             setState(() {});

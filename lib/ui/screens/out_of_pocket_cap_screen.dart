@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
@@ -40,7 +39,6 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
   /// 환급액을 보여주게 된다.
   bool _longTermCare = false;
   final _amountCtrl = TextEditingController();
-  final _fmt = NumberFormat('#,###');
 
 
   double get _amount =>
@@ -50,7 +48,6 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
   double get _refund => _amount > _cap ? _amount - _cap : 0;
   bool get _hasInput => _amount > 0;
 
-  String _won(double v) => '${_fmt.format(v.round())}원';
 
   @override
   void dispose() {
@@ -134,7 +131,7 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
               onChanged: (v) {
                 final digits = v.replaceAll(RegExp(r'[^0-9]'), '');
                 final formatted =
-                    digits.isEmpty ? '' : _fmt.format(int.parse(digits));
+                    digits.isEmpty ? '' : comma(int.parse(digits));
                 _amountCtrl.value = TextEditingValue(
                   text: formatted,
                   selection: TextSelection.collapsed(offset: formatted.length),
@@ -188,7 +185,7 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
                       Text('예상 환급액',
                           style: AppTheme.sans(14, ink,
                               weight: FontWeight.w700)),
-                      Text(_hasInput ? _won(_refund) : '-',
+                      Text(_hasInput ? won(_refund) : '-',
                           style: AppTheme.sans(16, accent,
                               weight: FontWeight.w700)),
                     ],
@@ -196,7 +193,7 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
                   const SizedBox(height: 12),
                   Divider(height: 1, color: line),
                   const SizedBox(height: 12),
-                  _row('적용 상한액', _won(_cap.toDouble()), ink, sub),
+                  _row('적용 상한액', won(_cap.toDouble()), ink, sub),
                   const SizedBox(height: 8),
                   if (_hasInput && _refund <= 0)
                     Text('* 본인부담금이 상한액을 초과하지 않아 환급 대상이 아닙니다.'.keepWords,

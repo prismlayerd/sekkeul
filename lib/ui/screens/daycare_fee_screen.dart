@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../theme/text_wrap.dart';
@@ -13,7 +12,6 @@ class DaycareFeeScreen extends StatefulWidget {
 
 class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
   int _ageIdx = 0;
-  final _fmt = NumberFormat('#,###');
 
   // 연령 구간, 어린이집 지원 보육료(월), 가정양육 현금(월), 현금 항목명
   static const _ages = [
@@ -28,7 +26,6 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
   int get _homeCash => _ages[_ageIdx].$3;
   String get _homeLabel => _ages[_ageIdx].$4;
 
-  String _won(int v) => '${_fmt.format(v)}원';
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +96,7 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
                                 weight: FontWeight.w600)),
                       ),
                       const SizedBox(width: 8),
-                      Text(_won(_daycare),
+                      Text(won(_daycare),
                           style: AppTheme.sans(14, accent,
                               weight: FontWeight.w700)),
                     ],
@@ -116,7 +113,7 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
                       Text('가정양육 ($_homeLabel)'.keepWords,
                           style: AppTheme.sans(13, ink,
                               weight: FontWeight.w600)),
-                      Text(_won(_homeCash),
+                      Text(won(_homeCash),
                           style: AppTheme.sans(14, accent,
                               weight: FontWeight.w700)),
                     ],

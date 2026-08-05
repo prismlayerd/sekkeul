@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/tax_engine/tax_rates.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
@@ -23,7 +22,6 @@ class _UnemploymentBenefitScreenState
   int _insuredMonths = 12;
   bool _isOver50 = false;
   bool _isDisabled = false;
-  final _fmt = NumberFormat('#,###');
 
   // 2026년 기준
   // 하한은 최저임금에서 파생된다 — 최저임금만 갱신하면 따라 움직인다.
@@ -53,11 +51,11 @@ class _UnemploymentBenefitScreenState
   double _parse() =>
       double.tryParse(_wageController.text.replaceAll(',', '')) ?? 0.0;
 
-  String _won(double v) => v <= 0 ? '0원' : '${_fmt.format(v.round())}원';
+  String _won(double v) => v <= 0 ? '0원' : '${comma(v.round())}원';
   String _manwon(double v) {
     if (v <= 0) return '0원';
     final man = (v / 10000).round();
-    return '${_fmt.format(man)}만원';
+    return '${comma(man)}만원';
   }
 
   int _benefitDays(int months, bool over50orDisabled) {
@@ -291,7 +289,7 @@ class _UnemploymentBenefitScreenState
                   const SizedBox(height: 8),
                   Text(
                     '• 비자발적 이직(권고사직·계약만료 등)이어야 수급 가능합니다.\n'
-                    '• 구직급여 일액 하한: ${_fmt.format(_minDailyLimit.round())}원, 상한: ${_fmt.format(_maxDailyLimit.round())}원 (2026년)\n'
+                    '• 구직급여 일액 하한: ${comma(_minDailyLimit.round())}원, 상한: ${comma(_maxDailyLimit.round())}원 (2026년)\n'
                     '• 실제 지급은 고용센터 신청·실업인정일 기준입니다.\n'
                     '• 이직 전 18개월 중 피보험단위기간 180일 이상 필요합니다.',
                     style: TextStyle(

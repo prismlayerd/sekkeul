@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
@@ -21,7 +20,6 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
   final TextEditingController _assetController = TextEditingController();
   _TaxType _type = _TaxType.inheritance;
   _Relation _relation = _Relation.adultChild;
-  final _fmt = NumberFormat('#,###');
 
   static const List<(double, double, double)> _brackets = [
     (100000000, 0.10, 0),
@@ -80,13 +78,13 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
     return (base, tax);
   }
 
-  String _won(double v) {
+  String won(double v) {
     if (v <= 0) return '0원';
     final eok = v / 100000000;
     if (eok >= 1) return '${eok.toStringAsFixed(2)}억원';
     final man = v / 10000;
     if (man >= 1) return '${man.toStringAsFixed(0)}만원';
-    return '${_fmt.format(v.round())}원';
+    return '${comma(v.round())}원';
   }
 
   String get _deductionLabel {
@@ -202,7 +200,7 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
                         Text(_deductionLabel,
                             style:
                                 TextStyle(color: subColor, fontSize: 12)),
-                        Text(_won(_deduction),
+                        Text(won(_deduction),
                             style: TextStyle(
                                 color: primary,
                                 fontSize: 12,
@@ -254,23 +252,23 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
                             fontWeight: FontWeight.bold)),
                   ]),
                   const SizedBox(height: 12),
-                  Text(result != null ? _won(tax) : '0원',
+                  Text(result != null ? won(tax) : '0원',
                       style: TextStyle(
                           color: primary,
                           fontSize: 32,
                           fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   if (result != null) ...[
-                    _row('재산가액', _won(_asset), subColor, textColor),
+                    _row('재산가액', won(_asset), subColor, textColor),
                     const SizedBox(height: 8),
-                    _row(_deductionLabel, '- ${_won(_deduction)}', subColor,
+                    _row(_deductionLabel, '- ${won(_deduction)}', subColor,
                         textColor),
                     const SizedBox(height: 8),
-                    _row('과세표준', _won(taxBase), subColor, textColor),
+                    _row('과세표준', won(taxBase), subColor, textColor),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: Theme.of(context).dividerColor),
                     const SizedBox(height: 12),
-                    _row('납부 세금', _won(tax), subColor, primary),
+                    _row('납부 세금', won(tax), subColor, primary),
                     if (taxBase <= 0) ...[
                       const SizedBox(height: 8),
                       Text('공제액이 재산가액을 초과하여 세금이 없습니다.'.keepWords,

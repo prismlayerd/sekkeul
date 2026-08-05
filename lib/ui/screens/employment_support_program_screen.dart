@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../theme/text_wrap.dart';
@@ -17,7 +16,6 @@ class _EmploymentSupportProgramScreenState
   int _typeIdx = 0; // 0=I형, 1=II형
   int _dependents = 0; // 0~4
   bool _includeSuccessBonus = true;
-  final _fmt = NumberFormat('#,###');
 
   static const int _monthlyAllowance = 600000;
   static const int _months = 6;
@@ -32,7 +30,6 @@ class _EmploymentSupportProgramScreenState
     return base + dependentBonus + success;
   }
 
-  String _won(int v) => '${_fmt.format(v)}원';
 
   @override
   Widget build(BuildContext context) {
@@ -123,21 +120,21 @@ class _EmploymentSupportProgramScreenState
                       style:
                           AppTheme.sans(11, sub, weight: FontWeight.w600)),
                   const SizedBox(height: 12),
-                  Text(_typeIdx == 0 ? _won(_typeITotal) : _won(_typeIIAmount),
+                  Text(_typeIdx == 0 ? won(_typeITotal) : won(_typeIIAmount),
                       style: AppTheme.sans(20, accent, weight: FontWeight.w700)),
                   const SizedBox(height: 12),
                   if (_typeIdx == 0) ...[
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
                     _row('기본 월수당 (6개월)',
-                        _won(_monthlyAllowance * _months), ink, sub),
+                        won(_monthlyAllowance * _months), ink, sub),
                     const SizedBox(height: 8),
                     _row('부양가족 가산',
-                        _won(_dependentBonusPerPerson * _dependents * _months),
+                        won(_dependentBonusPerPerson * _dependents * _months),
                         ink, sub),
                     const SizedBox(height: 8),
                     _row('취업성공수당',
-                        _won(_includeSuccessBonus ? _successBonus : 0), ink,
+                        won(_includeSuccessBonus ? _successBonus : 0), ink,
                         sub),
                   ],
                   const SizedBox(height: 12),

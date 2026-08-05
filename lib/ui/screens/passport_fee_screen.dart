@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
 
@@ -12,7 +11,6 @@ class PassportFeeScreen extends StatefulWidget {
 
 class _PassportFeeScreenState extends State<PassportFeeScreen> {
   int _idx = 0;
-  final _fmt = NumberFormat('#,###');
 
   // 종류, 유효기간, 수수료(원)
   static const _types = [
@@ -29,7 +27,6 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
     ('긴급여권', '1년', 50000),
   ];
 
-  String _won(int v) => '${_fmt.format(v)}원';
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +90,7 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
                       style:
                           AppTheme.sans(11, sub, weight: FontWeight.w600)),
                   const SizedBox(height: 12),
-                  Text(_won(selected.$3),
+                  Text(won(selected.$3),
                       style: AppTheme.sans(20, accent, weight: FontWeight.w700)),
                   const SizedBox(height: 12),
                   Divider(height: 1, color: line),

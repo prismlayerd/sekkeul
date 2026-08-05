@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
@@ -17,7 +16,6 @@ class ParentalLeave6Plus6Screen extends StatefulWidget {
 class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
   final _p1Ctrl = TextEditingController();
   final _p2Ctrl = TextEditingController();
-  final _fmt = NumberFormat('#,###');
 
   // 6+6 부모육아휴직제: 첫 6개월 통상임금 100%, 월별 상한 단계 상향
   static const _caps = [2000000, 2500000, 3000000, 3500000, 4000000, 4500000];
@@ -41,7 +39,7 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
 
   String _manwon(double v) {
     if (v <= 0) return '-';
-    return '약 ${_fmt.format((v / 10000).round())}만원';
+    return '약 ${comma((v / 10000).round())}만원';
   }
 
   @override

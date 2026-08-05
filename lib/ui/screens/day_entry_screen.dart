@@ -96,7 +96,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
   /// 즐겨찾기 프리셋을 결제수단에 맞는 행에 채운다.
   void _applyPreset(QuickEntryPreset p) {
     setState(() {
-      final amountText = _fmt.format(p.amount);
+      final amountText = comma(p.amount);
       switch (p.paymentMethod) {
         case _catCredit:
           _creditCtrl.text = amountText;
@@ -173,7 +173,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
                   ),
                   onChanged: (v) {
                     final n = v.replaceAll(RegExp(r'[^0-9]'), '');
-                    final f = n.isEmpty ? '' : _fmt.format(int.parse(n));
+                    final f = n.isEmpty ? '' : comma(int.parse(n));
                     amountCtrl.value = TextEditingValue(text: f, selection: TextSelection.collapsed(offset: f.length));
                   },
                 ),
@@ -411,7 +411,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
                 const SizedBox(width: 4),
                 Text(p.name, style: AppTheme.sans(12, ink, weight: FontWeight.w600)),
                 const SizedBox(width: 4),
-                Text('${_fmt.format(p.amount)}원', style: AppTheme.sans(11, sub)),
+                Text('${comma(p.amount)}원', style: AppTheme.sans(11, sub)),
               ]),
             ),
           ),
@@ -661,7 +661,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
           ),
           if (_incomeIsWithheld && raw > 0) ...[
             const SizedBox(height: 4),
-            Text('세전 금액(추정) ${_fmt.format(gross)}원'.keepWords,
+            Text('세전 금액(추정) ${comma(gross)}원'.keepWords,
                 style: AppTheme.sans(12, sub, height: 1.4)),
           ],
         ],

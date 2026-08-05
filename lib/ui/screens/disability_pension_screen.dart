@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 
@@ -15,7 +14,6 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
   int _severityIdx = 0; // 0=중증, 1=경증
   int _ageIdx = 0; // 0=18~64세, 1=65세 이상
   int _incomeIdx = 0; // 0=기초생활수급, 1=차상위계층, 2=일반
-  final _fmt = NumberFormat('#,###');
 
   // 중증(장애인연금): [연령][소득] -> 월 지급액(원). 2026년 기준.
   // 기초급여 349,700원(물가 2.1% 반영) + 부가급여(보건복지부 장애인연금 개요).
@@ -35,7 +33,6 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
   int get _amount =>
       _severityIdx == 0 ? _severeAmounts[_ageIdx][_incomeIdx] : _mildAmount;
 
-  String _won(int v) => '${_fmt.format(v)}원';
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +135,7 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
                       Text(_severityIdx == 0 ? '장애인연금' : '장애수당',
                           style: AppTheme.sans(14, ink,
                               weight: FontWeight.w700)),
-                      Text(_won(_amount),
+                      Text(won(_amount),
                           style: AppTheme.sans(16, accent,
                               weight: FontWeight.w700)),
                     ],

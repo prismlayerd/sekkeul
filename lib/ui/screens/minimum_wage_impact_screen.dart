@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../components/amount_field.dart';
 import '../../core/tax_engine/tax_rates.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 
@@ -18,7 +17,6 @@ class MinimumWageImpactScreen extends StatefulWidget {
 
 class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
   final _hoursCtrl = TextEditingController(text: '40');
-  final _fmt = NumberFormat('#,###');
 
   static int get _wage2025 => TaxRates.minimumHourlyWage2025.toInt();
   static int get _wage2026 => TaxRates.minimumHourlyWage2026.toInt();
@@ -38,7 +36,6 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
 
   bool get _hasInput => _weeklyHours > 0;
 
-  String _won(double v) => '${_fmt.format(v.round())}원';
 
   @override
   void dispose() {
@@ -114,7 +111,7 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
                         Text('월 추가 수입',
                             style: AppTheme.sans(14, ink,
                                 weight: FontWeight.w700)),
-                        Text('+${_won(_monthlyExtra)}',
+                        Text('+${won(_monthlyExtra)}',
                             style: AppTheme.sans(16, accent,
                                 weight: FontWeight.w700)),
                       ],
@@ -122,7 +119,7 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('연 추가 수입', '+${_won(_yearlyExtra)}', ink, sub),
+                    _row('연 추가 수입', '+${won(_yearlyExtra)}', ink, sub),
                     const SizedBox(height: 8),
                     _row('인상률', '+${_raiseRate.toStringAsFixed(1)}%', ink, sub),
                     const SizedBox(height: 8),

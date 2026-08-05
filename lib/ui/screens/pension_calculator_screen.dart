@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 
 import '../theme/app_theme.dart';
@@ -23,7 +22,6 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
   final TextEditingController _grossIncomeController = TextEditingController();
   final TextEditingController _savingsController = TextEditingController();
   final TextEditingController _irpController = TextEditingController();
-  final _numberFormat = NumberFormat('#,###');
   bool _isSalary = true; // 근로소득=true, 종합소득=false
 
   @override
@@ -38,7 +36,7 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
       final gross = (profile['gross_income'] as num?)?.toDouble() ?? 0.0;
       if (gross > 0) {
         setState(() {
-          _grossIncomeController.text = _numberFormat.format(gross.toInt());
+          _grossIncomeController.text = comma(gross.toInt());
         });
       }
     }
@@ -67,7 +65,7 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
   String _toManwon(double won) {
     if (won <= 0) return '0원';
     final man = (won / 10000).round();
-    return '${_numberFormat.format(man)}만원';
+    return '${comma(man)}만원';
   }
 
   @override

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
@@ -22,7 +21,6 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
   final _evPriceCarCtrl = TextEditingController();
   final _evSubsidyCtrl = TextEditingController();
   int _years = 5;
-  final _fmt = NumberFormat('#,###');
 
   double _num(TextEditingController c) => saneInput(
       double.tryParse(c.text.replaceAll(',', '')) ?? 0, InputMax.money);
@@ -61,7 +59,6 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
 
   bool get _hasInput => _num(_gasPriceCarCtrl) > 0 && _num(_evPriceCarCtrl) > 0;
 
-  String _won(double v) => '${_fmt.format(v.round())}원';
 
   @override
   void dispose() {
@@ -145,9 +142,9 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
                     Text('$_years년 총소유비용(TCO) 비교'.keepWords,
                         style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
-                    _row('휘발유차 TCO', _won(_gasTco), ink, sub),
+                    _row('휘발유차 TCO', won(_gasTco), ink, sub),
                     const SizedBox(height: 8),
-                    _row('전기차 TCO', _won(_evTco), ink, sub),
+                    _row('전기차 TCO', won(_evTco), ink, sub),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
@@ -161,7 +158,7 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    _row('연간 연료비 절감액', _won(_yearlyGap), ink, sub),
+                    _row('연간 연료비 절감액', won(_yearlyGap), ink, sub),
                     const SizedBox(height: 8),
                     _row('연간 CO2 절감량 (참고)', '약 2.3톤', ink, sub),
                   ],

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/deduction_catalog.dart';
 import 'amount_field.dart';
@@ -22,7 +21,6 @@ class DeductionChecklist extends StatefulWidget {
 }
 
 class _DeductionChecklistState extends State<DeductionChecklist> {
-  final _fmt = NumberFormat('#,###');
   final Set<String> _selected = {};
   final Map<String, TextEditingController> _ctrls = {};
 
@@ -35,7 +33,7 @@ class _DeductionChecklistState extends State<DeductionChecklist> {
     widget.initialAmounts.forEach((id, amt) {
       if (_ctrls.containsKey(id) && amt > 0) {
         _selected.add(id);
-        _ctrls[id]!.text = _fmt.format(amt);
+        _ctrls[id]!.text = comma(amt);
       }
     });
   }

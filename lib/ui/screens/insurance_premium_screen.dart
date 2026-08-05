@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 
 import '../theme/app_theme.dart';
@@ -22,7 +21,6 @@ class InsurancePremiumScreen extends StatefulWidget {
 class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
   final TextEditingController _generalController = TextEditingController();
   final TextEditingController _disabledController = TextEditingController();
-  final _numberFormat = NumberFormat('#,###');
 
   void _reset() {
     setState(() {
@@ -44,7 +42,7 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
   String _toManwon(double won) {
     if (won <= 0) return '0원';
     final man = (won / 10000).round();
-    return '${_numberFormat.format(man)}만원';
+    return '${comma(man)}만원';
   }
 
   @override

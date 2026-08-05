@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
@@ -18,7 +17,6 @@ class _NewbornSpecialLoanScreenState extends State<NewbornSpecialLoanScreen> {
   final _amountCtrl = TextEditingController();
   final _rateCtrl = TextEditingController();
   final _yearsCtrl = TextEditingController();
-  final _fmt = NumberFormat('#,###');
 
   double get _amount =>
       double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
@@ -42,14 +40,14 @@ class _NewbornSpecialLoanScreenState extends State<NewbornSpecialLoanScreen> {
 
   bool get _hasInput => _amount > 0 && _rate > 0 && _years > 0;
 
-  String _won(double v) {
+  String won(double v) {
     if (v <= 0) return '-';
-    return '${_fmt.format(v.round())}원';
+    return '${comma(v.round())}원';
   }
 
   String _manwon(double v) {
     if (v <= 0) return '-';
-    return '약 ${_fmt.format((v / 10000).round())}만원';
+    return '약 ${comma((v / 10000).round())}만원';
   }
 
   @override
@@ -107,7 +105,7 @@ class _NewbornSpecialLoanScreenState extends State<NewbornSpecialLoanScreen> {
                         Text('월 상환액',
                             style: AppTheme.sans(14, ink,
                                 weight: FontWeight.w700)),
-                        Text(_won(_monthlyPayment),
+                        Text(won(_monthlyPayment),
                             style: AppTheme.sans(16, accent,
                                 weight: FontWeight.w700)),
                       ],

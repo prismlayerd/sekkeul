@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 
 import '../theme/app_theme.dart';
@@ -26,7 +25,6 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
   final TextEditingController _interestController = TextEditingController();
   final TextEditingController _dividendController = TextEditingController();
   final TextEditingController _otherIncomeController = TextEditingController();
-  final _numberFormat = NumberFormat('#,###');
 
   @override
   void initState() {
@@ -47,7 +45,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
           dependentsIncludingSelf: 1 + ((profile['dependents'] as int?) ?? 0),
         );
         setState(() {
-          _otherIncomeController.text = _numberFormat.format(base.toInt());
+          _otherIncomeController.text = comma(base.toInt());
         });
       }
     }
@@ -75,7 +73,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
   String _toManwon(double won) {
     if (won <= 0) return '0원';
     final man = (won / 10000).round();
-    return '${_numberFormat.format(man)}만원';
+    return '${comma(man)}만원';
   }
 
   @override

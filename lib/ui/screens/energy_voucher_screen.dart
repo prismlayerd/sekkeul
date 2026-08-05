@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../theme/text_wrap.dart';
@@ -14,7 +13,6 @@ class EnergyVoucherScreen extends StatefulWidget {
 class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
   int _householdSize = 0;
   bool _isEligible = false;
-  final _fmt = NumberFormat('#,###');
 
   static const List<String> _sizeLabels = ['1인', '2인', '3인', '4인 이상'];
 
@@ -27,7 +25,6 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
 
   int get _annualTotal => _annual[_householdSize];
 
-  String _won(int v) => '${_fmt.format(v)}원';
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +90,7 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
                       children: [
                         Text('연간 합계',
                             style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
-                        Text(_won(_annualTotal),
+                        Text(won(_annualTotal),
                             style: AppTheme.sans(16, accent, weight: FontWeight.w700)),
                       ],
                     ),

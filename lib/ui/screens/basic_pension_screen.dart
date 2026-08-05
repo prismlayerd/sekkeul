@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
@@ -17,7 +16,6 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
   final _ageCtrl = TextEditingController();
   final _incomeCtrl = TextEditingController(); // 소득인정액, 만원 단위
   int _householdIdx = 0; // 0=단독, 1=부부
-  final _fmt = NumberFormat('#,###');
 
   static const _thresholdManwon = [247, 395]; // 단독/부부 선정기준액(만원)
   static const _baseAmountWon = [349700, 279760]; // 단독 최대 / 부부 1인당(20% 감액)
@@ -36,7 +34,6 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
     return _baseAmountWon[1] * 2; // 부부 각각 수급 시 가구 합산 표시
   }
 
-  String _won(int v) => '${_fmt.format(v)}원';
 
   @override
   void dispose() {
@@ -127,7 +124,7 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
                         Text(_eligible ? '수급 가능' : '수급 불가',
                             style: AppTheme.sans(16, ink,
                                 weight: FontWeight.w700)),
-                        Text(_eligible ? _won(_monthlyAmount) : '-',
+                        Text(_eligible ? won(_monthlyAmount) : '-',
                             style: AppTheme.sans(16, accent,
                                 weight: FontWeight.w700)),
                       ],

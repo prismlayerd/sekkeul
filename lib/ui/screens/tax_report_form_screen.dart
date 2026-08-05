@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
 import 'tax_simulator_screen.dart';
@@ -30,7 +29,6 @@ class TaxReportFormScreen extends StatelessWidget {
     this.userType,
   });
 
-  static final _fmt = NumberFormat('#,###');
 
   String get _officialName => reportType == '연말정산'
       ? '근로소득 원천징수영수증'
@@ -283,7 +281,7 @@ class TaxReportFormScreen extends StatelessWidget {
                 textBaseline: TextBaseline.alphabetic,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(_fmt.format(amount),
+                  Text(comma(amount),
                       style: AppTheme.serif(milestone ? 21 : 16.5, ink, spacing: -0.5, height: 1.0)),
                   const SizedBox(width: 3),
                   Text('원', style: AppTheme.sans(12, tert)),
@@ -329,7 +327,7 @@ class TaxReportFormScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(_fmt.format(abs), style: AppTheme.serif(36, accent, spacing: -1.2, height: 1.0)),
+              Text(comma(abs), style: AppTheme.serif(36, accent, spacing: -1.2, height: 1.0)),
               const SizedBox(width: 5),
               Text('원', style: AppTheme.sans(15, sub, weight: FontWeight.w600)),
             ],

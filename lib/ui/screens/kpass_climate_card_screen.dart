@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
@@ -18,7 +17,6 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
   int _kpassType = 0;
   bool _isYouthClimate = false;
   bool _ddareungi = false;
-  final _fmt = NumberFormat('#,###');
 
   static const List<String> _kpassLabels = ['일반', '청년', '저소득', '2자녀', '3자녀+'];
   static const List<double> _kpassRates = [20, 30, 53.3, 30, 50];
@@ -40,7 +38,6 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
 
   bool get _hasInput => _rides > 0 && _fare > 0;
 
-  String _won(double v) => '${_fmt.format(v.round())}원';
 
   @override
   void dispose() {
@@ -147,11 +144,11 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('K-패스 환급액', _won(_kpassRefund), ink, sub),
+                    _row('K-패스 환급액', won(_kpassRefund), ink, sub),
                     const SizedBox(height: 8),
-                    _row('K-패스 실질 부담액', _won(_kpassRealCost), ink, sub),
+                    _row('K-패스 실질 부담액', won(_kpassRealCost), ink, sub),
                     const SizedBox(height: 8),
-                    _row('기후동행카드 월 금액', _won(_climateFee), ink, sub),
+                    _row('기후동행카드 월 금액', won(_climateFee), ink, sub),
                     const SizedBox(height: 12),
                     Text('* 두 제도는 중복 사용이 불가하며, 하나를 선택해야 합니다.'.keepWords,
                         style: AppTheme.sans(11, sub)),

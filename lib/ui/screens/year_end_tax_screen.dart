@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/tax_rates.dart';
 import '../components/amount_field.dart';
 import '../components/check_row.dart';
 import 'tax_report_form_screen.dart';
+import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
 
 class YearEndTaxScreen extends StatefulWidget {
@@ -21,7 +21,6 @@ class YearEndTaxScreen extends StatefulWidget {
 class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
   // 입력 상태 제어
   bool _isAnalyzed = false;
-  final _numberFormat = NumberFormat('#,###');
 
   // 입력 필드 컨트롤러
   final TextEditingController _salaryController = TextEditingController();
@@ -147,7 +146,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       setState(() {
         final grossIncome = profile['gross_income'] as double? ?? 0.0;
         if (grossIncome > 0) {
-          _salaryController.text = _numberFormat.format(grossIncome.toInt());
+          _salaryController.text = comma(grossIncome.toInt());
         }
         _dependentCount = profile['dependents'] as int? ?? 0;
         _isMonthlyRent = profile['is_monthly_rent'] == true;
@@ -191,10 +190,10 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       }
       setState(() {
         if (creditTotal > 0) {
-          _creditCardController.text = _numberFormat.format(creditTotal);
+          _creditCardController.text = comma(creditTotal);
         }
         if (debitTotal > 0) {
-          _debitCardController.text = _numberFormat.format(debitTotal);
+          _debitCardController.text = comma(debitTotal);
         }
       });
     }
@@ -297,10 +296,10 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       }
 
       setState(() {
-        _salaryController.text = _numberFormat.format(55000000);
-        _creditCardController.text = _numberFormat.format(18000000);
-        _debitCardController.text = _numberFormat.format(4000000);
-        _paidTaxController.text = _numberFormat.format(3960000);
+        _salaryController.text = comma(55000000);
+        _creditCardController.text = comma(18000000);
+        _debitCardController.text = comma(4000000);
+        _paidTaxController.text = comma(3960000);
       });
 
       if (mounted) {
@@ -638,7 +637,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                '${_numberFormat.format(absAmount)}원',
+                '${comma(absAmount)}원',
                 style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 36, fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 8),
@@ -663,32 +662,32 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20)),
           child: Column(
             children: [
-              _buildDeductionRow('총급여', _numberFormat.format(salary.toInt()), false),
+              _buildDeductionRow('총급여', comma(salary.toInt()), false),
               Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
-              _buildDeductionRow('근로소득공제', '-${_numberFormat.format(_laborDeduction.toInt())}', true),
+              _buildDeductionRow('근로소득공제', '-${comma(_laborDeduction.toInt())}', true),
               // 라벨은 본인을 포함해 센다. `_dependentCount`는 부양가족(본인 제외)이고
               // 공제액은 150만 × (본인 + 부양가족)이라, 그냥 "1인"이라 쓰면
               // 사용자가 1인당 300만원으로 읽는다.
               _buildDeductionRow('인적공제 (본인 포함 ${1 + _dependentCount}인)',
-                  '-${_numberFormat.format(_personalExemption.toInt())}', true),
-              _buildDeductionRow('4대보험 소득공제', '-${_numberFormat.format(_insuranceDeduction.toInt())}', true),
-              _buildDeductionRow('신용카드 소득공제', '-${_numberFormat.format(_cardDeduction.toInt())}', true),
+                  '-${comma(_personalExemption.toInt())}', true),
+              _buildDeductionRow('4대보험 소득공제', '-${comma(_insuranceDeduction.toInt())}', true),
+              _buildDeductionRow('신용카드 소득공제', '-${comma(_cardDeduction.toInt())}', true),
               Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
-              _buildDeductionRow('과세표준', _numberFormat.format(_taxableIncome.toInt()), false),
-              _buildDeductionRow('산출세액', _numberFormat.format(_calculatedTax.toInt()), false),
+              _buildDeductionRow('과세표준', comma(_taxableIncome.toInt()), false),
+              _buildDeductionRow('산출세액', comma(_calculatedTax.toInt()), false),
               Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
               if (_smeExemption > 0)
-                _buildDeductionRow('중소기업취업자 감면', '-${_numberFormat.format(_smeExemption.toInt())}', true),
-              _buildDeductionRow('근로소득세액공제', '-${_numberFormat.format(_laborTaxCredit.toInt())}', true),
+                _buildDeductionRow('중소기업취업자 감면', '-${comma(_smeExemption.toInt())}', true),
+              _buildDeductionRow('근로소득세액공제', '-${comma(_laborTaxCredit.toInt())}', true),
               if (_rentRefund > 0)
-                _buildDeductionRow('월세 세액공제', '-${_numberFormat.format(_rentRefund.toInt())}', true),
+                _buildDeductionRow('월세 세액공제', '-${comma(_rentRefund.toInt())}', true),
               Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
-              _buildDeductionRow('결정세액', '${_numberFormat.format(_decidedTax.toInt())}원', false, isBold: true),
-              _buildDeductionRow('기납부세액', '${_numberFormat.format(_paidTax.toInt())}원', false),
+              _buildDeductionRow('결정세액', '${comma(_decidedTax.toInt())}원', false, isBold: true),
+              _buildDeductionRow('기납부세액', '${comma(_paidTax.toInt())}원', false),
               Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
               _buildDeductionRow(
                 isRefund ? '예상 환급' : '추가 납부',
-                '${_numberFormat.format(absAmount)}원',
+                '${comma(absAmount)}원',
                 false,
                 isBold: true,
                 highlightColor: isRefund ? Theme.of(context).primaryColor : Color(0xFFFF4D4D),
@@ -781,14 +780,14 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       final remaining = (_cardResult!.threshold - _cardResult!.totalSpend).toInt();
       missing.add({
         'title': '💳 신용카드 공제 문턱 미달',
-        'desc': '총급여의 25%(${_numberFormat.format(_cardResult!.threshold.toInt())}원)까지 ${_numberFormat.format(remaining)}원 부족해요. 문턱을 넘어야 소득공제가 시작돼요.',
+        'desc': '총급여의 25%(${comma(_cardResult!.threshold.toInt())}원)까지 ${comma(remaining)}원 부족해요. 문턱을 넘어야 소득공제가 시작돼요.',
       });
     }
 
     // 의료비 안내
     missing.add({
       'title': '🏥 의료비 세액공제',
-      'desc': '총급여의 3%(${_numberFormat.format((salary * 0.03).toInt())}원)를 초과한 의료비가 있다면 15% 공제를 받을 수 있어요.',
+      'desc': '총급여의 3%(${comma((salary * 0.03).toInt())}원)를 초과한 의료비가 있다면 15% 공제를 받을 수 있어요.',
     });
 
     if (missing.isEmpty) return const SizedBox.shrink();
@@ -1123,7 +1122,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '→ ${_numberFormat.format(previewChildCredit.toInt())}원 공제'.keepWords,
+                  '→ ${comma(previewChildCredit.toInt())}원 공제'.keepWords,
                   style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 13, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -1198,7 +1197,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Text('🏥 의료비 지출을 확인할게요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
         const SizedBox(height: 6),
         Text(
-          '총급여의 3%(${_numberFormat.format(threshold)}원)를 초과한 의료비부터 공제됩니다. 없으면 건너뛰세요.'.keepWords,
+          '총급여의 3%(${comma(threshold)}원)를 초과한 의료비부터 공제됩니다. 없으면 건너뛰세요.'.keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
         ),
         const SizedBox(height: 16),
@@ -1554,13 +1553,13 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                '+${_numberFormat.format(_additionalTaxCredit.toInt())}원',
+                '+${comma(_additionalTaxCredit.toInt())}원',
                 style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 34, fontWeight: FontWeight.w900),
               ),
               if (!widget.directWizardMode) ...[
                 const SizedBox(height: 4),
                 Text(
-                  '연말정산 환급(${_numberFormat.format(_expectedRefund.toInt())}원) + 추가 = 총 ${_numberFormat.format(totalRefund.toInt())}원'.keepWords,
+                  '연말정산 환급(${comma(_expectedRefund.toInt())}원) + 추가 = 총 ${comma(totalRefund.toInt())}원'.keepWords,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12, height: 1.4),
                 ),
@@ -1578,23 +1577,23 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           child: Column(
             children: [
               if (_wizardChildTaxCredit > 0)
-                _buildDeductionRow('자녀세액공제', '-${_numberFormat.format(_wizardChildTaxCredit.toInt())}', true),
+                _buildDeductionRow('자녀세액공제', '-${comma(_wizardChildTaxCredit.toInt())}', true),
               if (_wizardMarriageTaxCredit > 0)
-                _buildDeductionRow('혼인세액공제', '-${_numberFormat.format(_wizardMarriageTaxCredit.toInt())}', true),
+                _buildDeductionRow('혼인세액공제', '-${comma(_wizardMarriageTaxCredit.toInt())}', true),
               if (_wizardPensionTaxCredit > 0)
-                _buildDeductionRow('연금계좌 세액공제', '-${_numberFormat.format(_wizardPensionTaxCredit.toInt())}', true),
+                _buildDeductionRow('연금계좌 세액공제', '-${comma(_wizardPensionTaxCredit.toInt())}', true),
               if (sr != null && sr.medicalTaxCredit > 0)
-                _buildDeductionRow('의료비 세액공제', '-${_numberFormat.format(sr.medicalTaxCredit.toInt())}', true),
+                _buildDeductionRow('의료비 세액공제', '-${comma(sr.medicalTaxCredit.toInt())}', true),
               if (sr != null && sr.educationTaxCredit > 0)
-                _buildDeductionRow('교육비 세액공제', '-${_numberFormat.format(sr.educationTaxCredit.toInt())}', true),
+                _buildDeductionRow('교육비 세액공제', '-${comma(sr.educationTaxCredit.toInt())}', true),
               if (sr != null && sr.donationTaxCredit > 0)
-                _buildDeductionRow('기부금 세액공제', '-${_numberFormat.format(sr.donationTaxCredit.toInt())}', true),
+                _buildDeductionRow('기부금 세액공제', '-${comma(sr.donationTaxCredit.toInt())}', true),
               if (_wizardRentRefund > 0)
-                _buildDeductionRow('월세 세액공제', '-${_numberFormat.format(_wizardRentRefund.toInt())}', true),
+                _buildDeductionRow('월세 세액공제', '-${comma(_wizardRentRefund.toInt())}', true),
               if (_wizardIncomeDedSaving > 0)
-                _buildDeductionRow('주담대 소득공제·고향사랑 세액공제', '-${_numberFormat.format(_wizardIncomeDedSaving.toInt())}', true),
+                _buildDeductionRow('주담대 소득공제·고향사랑 세액공제', '-${comma(_wizardIncomeDedSaving.toInt())}', true),
               if (_wizardStandardTaxCredit > 0)
-                _buildDeductionRow('표준세액공제 (13만)', '-${_numberFormat.format(_wizardStandardTaxCredit.toInt())}', true),
+                _buildDeductionRow('표준세액공제 (13만)', '-${comma(_wizardStandardTaxCredit.toInt())}', true),
               if (_wizardChildTaxCredit == 0 && _wizardMarriageTaxCredit == 0 &&
                   _wizardPensionTaxCredit == 0 && (sr?.medicalTaxCredit ?? 0) == 0 &&
                   (sr?.educationTaxCredit ?? 0) == 0 && (sr?.donationTaxCredit ?? 0) == 0 &&
@@ -1606,7 +1605,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
               _buildDeductionRow(
                 '추가 환급 합계',
-                '+${_numberFormat.format(_additionalTaxCredit.toInt())}원',
+                '+${comma(_additionalTaxCredit.toInt())}원',
                 false,
                 isBold: true,
                 highlightColor: Theme.of(context).primaryColor,

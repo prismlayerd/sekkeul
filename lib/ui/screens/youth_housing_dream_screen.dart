@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
@@ -17,7 +16,6 @@ class YouthHousingDreamScreen extends StatefulWidget {
 class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
   final _monthlyCtrl = TextEditingController();
   final _monthsCtrl = TextEditingController();
-  final _fmt = NumberFormat('#,###');
 
   double get _monthly => saneInput(
       double.tryParse(_monthlyCtrl.text.replaceAll(',', '')) ?? 0, InputMax.money);
@@ -43,12 +41,12 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
 
   String _manwon(double v) {
     if (v <= 0) return '-';
-    return '약 ${_fmt.format((v / 10000).round())}만원';
+    return '약 ${comma((v / 10000).round())}만원';
   }
 
-  String _won(double v) {
+  String won(double v) {
     if (v <= 0) return '-';
-    return '약 ${_fmt.format(v.round())}원';
+    return '약 ${comma(v.round())}원';
   }
 
   @override
@@ -127,7 +125,7 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
                         Text('연 세금 환급 추정 (16.5%)'.keepWords,
                             style: AppTheme.sans(13, ink,
                                 weight: FontWeight.w700)),
-                        Text(_won(_taxRefund),
+                        Text(won(_taxRefund),
                             style: AppTheme.sans(13, accent,
                                 weight: FontWeight.w700)),
                       ],

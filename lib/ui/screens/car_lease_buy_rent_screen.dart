@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
@@ -22,7 +21,6 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
   final _loanRatioCtrl = TextEditingController(text: '70');
   final _residualRateCtrl = TextEditingController(text: '50');
   int _months = 60;
-  final _fmt = NumberFormat('#,###');
 
   double _num(TextEditingController c) => saneInput(
       double.tryParse(c.text.replaceAll(',', '')) ?? 0, InputMax.money);
@@ -49,7 +47,6 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
 
   bool get _hasInput => _price > 0;
 
-  String _won(double v) => '${_fmt.format(v.round())}원';
 
   @override
   void dispose() {
@@ -184,7 +181,7 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
           ),
           onChanged: (v) {
             final digits = v.replaceAll(RegExp(r'[^0-9]'), '');
-            final formatted = digits.isEmpty ? '' : _fmt.format(int.parse(digits));
+            final formatted = digits.isEmpty ? '' : comma(int.parse(digits));
             ctrl.value = TextEditingValue(
                 text: formatted, selection: TextSelection.collapsed(offset: formatted.length));
             setState(() {});
@@ -246,7 +243,7 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
-        Text(_won(value), style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
+        Text(won(value), style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
       ],
     );
   }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
@@ -18,7 +17,6 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
       TextEditingController(text: '7.0');
   final TextEditingController _yearsController =
       TextEditingController(text: '20');
-  final _fmt = NumberFormat('#,###');
 
   void _reset() {
     setState(() {
@@ -71,7 +69,7 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
     if (v <= 0) return '0원';
     final eok = v / 100000000;
     if (eok >= 1) return '${eok.toStringAsFixed(1)}억원';
-    return '${_fmt.format((v / 10000).round())}만원';
+    return '${comma((v / 10000).round())}만원';
   }
 
   @override

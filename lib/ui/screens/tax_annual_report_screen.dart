@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/tax_engine/employee_tax.dart';
@@ -20,7 +19,6 @@ class TaxAnnualReportScreen extends StatefulWidget {
 }
 
 class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
-  final _fmt = NumberFormat('#,###');
   bool _isLoading = true;
   final int _year = DateTime.now().year;
 
@@ -359,7 +357,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
             children: [
               Text(isRefund ? '5월 예상 환급액' : '5월 추가 납부 예상액', style: TextStyle(color: subColor, fontSize: 13, fontWeight: FontWeight.w600)),
               const SizedBox(height: 6),
-              Text('${_fmt.format(finalAmount.abs().toInt())}원',
+              Text('${comma(finalAmount.abs().toInt())}원',
                   style: TextStyle(color: textColor, fontSize: 30, fontWeight: FontWeight.w900)),
             ],
           ),
@@ -391,7 +389,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           child: Text(title,
               style: TextStyle(color: textColor, fontSize: 13, fontWeight: isHeader ? FontWeight.w700 : FontWeight.normal)),
         ),
-        Text('${_fmt.format(amount.toInt())}원',
+        Text('${comma(amount.toInt())}원',
             style: TextStyle(color: highlight ? primary : textColor, fontSize: 13, fontWeight: isHeader ? FontWeight.w800 : FontWeight.w600)),
       ]),
     );
@@ -613,11 +611,11 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
                 style: TextStyle(color: primary, fontSize: 13, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 14),
-          _autoRow('부양가족', '$_dependentCount인 (인적공제 ${_fmt.format((_dependentCount * TaxRates.basicDeductionPerPerson).toInt())}원)', textColor, subColor),
-          _autoRow('연간 신용카드 지출', _annualCreditCard > 0 ? '${_fmt.format(_annualCreditCard.toInt())}원' : '기록 없음', textColor, subColor),
-          _autoRow('연간 체크카드·현금', _annualDebitCash > 0 ? '${_fmt.format(_annualDebitCash.toInt())}원' : '기록 없음', textColor, subColor),
+          _autoRow('부양가족', '$_dependentCount인 (인적공제 ${comma((_dependentCount * TaxRates.basicDeductionPerPerson).toInt())}원)', textColor, subColor),
+          _autoRow('연간 신용카드 지출', _annualCreditCard > 0 ? '${comma(_annualCreditCard.toInt())}원' : '기록 없음', textColor, subColor),
+          _autoRow('연간 체크카드·현금', _annualDebitCash > 0 ? '${comma(_annualDebitCash.toInt())}원' : '기록 없음', textColor, subColor),
           if (_isMonthlyRent && _monthlyRent > 0)
-            _autoRow('월세', '${_fmt.format(_monthlyRent.toInt())}원/월 (무주택)', textColor, subColor),
+            _autoRow('월세', '${comma(_monthlyRent.toInt())}원/월 (무주택)', textColor, subColor),
           const SizedBox(height: 14),
           Text('총급여 (수정 가능)',
               style: TextStyle(color: subColor, fontSize: 12, fontWeight: FontWeight.w600)),
@@ -689,7 +687,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           ],
         )),
         Text(
-          amount > 0 ? '-${_fmt.format(amount.toInt())}원' : '—',
+          amount > 0 ? '-${comma(amount.toInt())}원' : '—',
           style: TextStyle(
             color: amount > 0 ? Colors.green : subColor,
             fontSize: 14,
@@ -758,7 +756,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
               )),
               if (resultAmount > 0) ...[
                 Text(
-                  '-${_fmt.format(resultAmount.toInt())}원',
+                  '-${comma(resultAmount.toInt())}원',
                   style: TextStyle(color: primary, fontSize: 13, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(width: 4),
@@ -908,7 +906,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
               style: TextStyle(color: subColor, fontSize: 13, fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
           Text(
-            _decidedTaxResult > 0 ? '${_fmt.format(_decidedTaxResult.toInt())}원' : '—',
+            _decidedTaxResult > 0 ? '${comma(_decidedTaxResult.toInt())}원' : '—',
             style: TextStyle(color: textColor, fontSize: 30, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 18),
@@ -942,7 +940,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           fontWeight: bold ? FontWeight.bold : FontWeight.normal,
         ))),
         Text(
-          '${minus ? '-' : ''}${_fmt.format(amount.toInt())}원',
+          '${minus ? '-' : ''}${comma(amount.toInt())}원',
           style: TextStyle(
             color: green ? Colors.green : (highlight ? textColor : subColor),
             fontSize: 13,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
@@ -16,7 +15,6 @@ class LightCarFuelRefundScreen extends StatefulWidget {
 class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
   final _monthlyLiterCtrl = TextEditingController();
   int _fuelType = 0;
-  final _fmt = NumberFormat('#,###');
 
   static const List<String> _fuelLabels = ['휘발유', '경유', 'LPG(부탄)'];
   /// 유종별 리터당 환급액 — 조특법 §111의2③ · 시행령 §112의2③.
@@ -42,7 +40,6 @@ class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
 
   bool get _hasInput => _monthlyLiter > 0;
 
-  String _won(double v) => '${_fmt.format(v.round())}원';
 
   @override
   void dispose() {
@@ -103,14 +100,14 @@ class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
                       children: [
                         Text('연간 환급액',
                             style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
-                        Text(_won(_annualRefund),
+                        Text(won(_annualRefund),
                             style: AppTheme.sans(16, accent, weight: FontWeight.w700)),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('월 환급액(리터당 ${_rate.toStringAsFixed(0)}원)', _won(_monthlyRefund), ink, sub),
+                    _row('월 환급액(리터당 ${_rate.toStringAsFixed(0)}원)', won(_monthlyRefund), ink, sub),
                     if (_capped) ...[
                       const SizedBox(height: 8),
                       Text('* 연간 상한 30만원 초과분은 지급되지 않습니다.'.keepWords,

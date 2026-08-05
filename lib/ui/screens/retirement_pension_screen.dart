@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
@@ -17,7 +16,6 @@ class RetirementPensionScreen extends StatefulWidget {
 class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
   final _wageCtrl = TextEditingController();
   final _yearsCtrl = TextEditingController();
-  final _fmt = NumberFormat('#,###');
 
   double get _wage => saneInput(
       double.tryParse(_wageCtrl.text.replaceAll(',', '')) ?? 0, InputMax.money);
@@ -37,7 +35,7 @@ class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
 
   String _manwon(double v) {
     if (v <= 0) return '-';
-    return '약 ${_fmt.format((v / 10000).round())}만원';
+    return '약 ${comma((v / 10000).round())}만원';
   }
 
   @override

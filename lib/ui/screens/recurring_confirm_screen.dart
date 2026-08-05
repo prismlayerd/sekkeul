@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/data/recurring_template.dart';
 import '../../core/data/expense_item.dart';
@@ -39,7 +38,6 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
 
   bool get _isBusinessUser => _userType == '프리랜서' || _userType == 'N잡러';
 
-  final _fmt = NumberFormat('#,###');
 
   final ScrollController _scrollCtrl = ScrollController();
   bool _moreBelow = false; // 목록 아래에 가려진(안 보이는) 항목이 더 있는지
@@ -371,7 +369,7 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
     if (dbStatus == 1) {
       // 이미 등록된 확정 금액 (읽기 전용)
       amountWidget = Text(
-        '${_fmt.format(item['actual_amount'] as int? ?? 0)}원',
+        '${comma(item['actual_amount'] as int? ?? 0)}원',
         style: AppTheme.serif(17, accent, height: 1.0),
         textAlign: TextAlign.right,
       );
@@ -521,7 +519,7 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
                 children: [
                   Text('이번 달 확인 합계', style: AppTheme.sans(13, sub)),
                   const Spacer(),
-                  Text(_fmt.format(_confirmedTotal),
+                  Text(comma(_confirmedTotal),
                       style: AppTheme.serif(22, ink, height: 1.0)),
                   Text(' 원', style: AppTheme.sans(13, sub)),
                 ],

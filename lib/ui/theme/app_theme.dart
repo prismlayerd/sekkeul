@@ -1,5 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+
+final NumberFormat _thousands = NumberFormat('#,###');
+
+/// 금액을 천단위로 끊어 쓴다 — `1234567` → `1,234,567`.
+///
+/// 화면 74개가 각자 `final _fmt = NumberFormat('#,###')`를 들고 있었다.
+/// 앱 어디서든 돈은 같은 모양으로 보여야 하니 한 곳에 둔다.
+/// 이 파일에 있는 이유는 화면이 전부 이미 app_theme을 import하기 때문이다.
+String comma(num v) => _thousands.format(v.round());
+
+/// 금액 + '원'. 음수는 음수로 보여준다(차액·환급이 실제로 음수일 수 있다).
+/// 0 이하를 '0원'으로 눌러야 하는 화면은 자기 화면에서 가드를 건다.
+String won(num v) => '${comma(v)}원';
 
 /// 세끌 디자인 시스템 v4.0 — Architectural Blueprint
 /// ─────────────────────────────────────────────────────────

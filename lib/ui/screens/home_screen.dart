@@ -3,7 +3,6 @@ import '../../core/tax_engine/tax_rates.dart';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../theme/app_theme.dart';
@@ -114,7 +113,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   bool get _isEmployee => _userType == '직장인' || _userType == 'N잡러';
 
-  final _numberFormat = NumberFormat('#,###');
 
   // 홈 상단 회전 배너 (광고·알림 카드) — 6초마다 페이드 전환, 유형별 카드 세트
   int _bannerIndex = 0;
@@ -179,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           } catch (_) {}
 
           if (monthlyIncome > 0) {
-            _salaryController.text = _numberFormat.format(monthlyIncome.toInt());
+            _salaryController.text = comma(monthlyIncome.toInt());
           }
           
           _dependentCount = profile['dependents'] as int? ?? 0;
@@ -188,12 +186,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           
           final monthlyRent = profile['monthly_rent'] as double? ?? 0.0;
           if (monthlyRent > 0) {
-            _monthlyRentController.text = _numberFormat.format(monthlyRent.toInt());
+            _monthlyRentController.text = comma(monthlyRent.toInt());
           }
 
           final yellowUmbrella = profile['yellow_umbrella'] as double? ?? 0.0;
           if (yellowUmbrella > 0) {
-            _yellowUmbrellaController.text = _numberFormat.format(yellowUmbrella.toInt());
+            _yellowUmbrellaController.text = comma(yellowUmbrella.toInt());
           }
 
           _decidedTax = profile['decided_tax'] as double? ?? 0.0;
@@ -322,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     if (mounted) {
       setState(() {
         if (total > 0) {
-          _activeIncomeController.text = _numberFormat.format(total.toInt());
+          _activeIncomeController.text = comma(total.toInt());
         }
         _laborIncome = labor;
         _otherIncome = other;
@@ -674,7 +672,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       _grossIncome = values['gross_income'] ?? 0.0;
       _expenseTarget = values['expense_target'] ?? 0.0;
       _savingGoalController.text =
-          _expenseTarget > 0 ? _numberFormat.format(_expenseTarget.toInt()) : '';
+          _expenseTarget > 0 ? comma(_expenseTarget.toInt()) : '';
     });
   }
 
@@ -808,7 +806,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   /// 만원 단위 표기 ("3,800만원")
   String _toWanWon(double won) {
     final man = (won / 10000).round();
-    return '${_numberFormat.format(man)}만원';
+    return '${comma(man)}만원';
   }
 
   /// 한계세율 — 구간표는 엔진 하나만 본다(소법 §55①).
@@ -921,7 +919,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             onApplyExpenseInput: (val) async {
               setState(() {
                 _expenseTarget = val;
-                _savingGoalController.text = _numberFormat.format(val.toInt());
+                _savingGoalController.text = comma(val.toInt());
                 _showExpenseInput = false;
               });
               await dbService.setProfileTypeValues(_userType, expenseTarget: val);

@@ -22,7 +22,6 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
   final TextEditingController _bonusController = TextEditingController();
   final TextEditingController _leaveAllowanceController =
       TextEditingController();
-  final _fmt = NumberFormat('#,###');
 
   void _reset() {
     setState(() {
@@ -45,11 +44,11 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
   double _parse(TextEditingController c) =>
       double.tryParse(c.text.replaceAll(',', '')) ?? 0.0;
 
-  String _won(double v) => v <= 0 ? '0원' : '${_fmt.format(v.round())}원';
+  String _won(double v) => v <= 0 ? '0원' : '${comma(v.round())}원';
   String _manwon(double v) {
     if (v <= 0) return '0원';
     final man = (v / 10000).round();
-    return '${_fmt.format(man)}만원';
+    return '${comma(man)}만원';
   }
 
   Future<void> _pickDate(bool isJoin) async {
@@ -179,8 +178,8 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
                         const SizedBox(width: 8),
                         Text(
                           workDays >= 365
-                              ? '총 ${_fmt.format(workDays)}일 근무 — 퇴직금 발생'
-                              : '총 ${_fmt.format(workDays)}일 — 1년 미만 (퇴직금 미발생)',
+                              ? '총 ${comma(workDays)}일 근무 — 퇴직금 발생'
+                              : '총 ${comma(workDays)}일 — 1년 미만 (퇴직금 미발생)',
                           style: TextStyle(
                             color: workDays >= 365
                                 ? primary
@@ -261,7 +260,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
                   if (severance != null && avgDailyWage != null) ...[
                     _row('1일 평균임금', _won(avgDailyWage), subColor, textColor),
                     const SizedBox(height: 8),
-                    _row('재직일수', '${_fmt.format(workDays)}일', subColor,
+                    _row('재직일수', '${comma(workDays!)}일', subColor,
                         textColor),
                     const SizedBox(height: 12),
                     Divider(

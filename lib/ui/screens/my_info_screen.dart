@@ -34,7 +34,6 @@ class MyInfoScreen extends StatefulWidget {
 }
 
 class _MyInfoScreenState extends State<MyInfoScreen> {
-  final _fmt = NumberFormat('#,###');
 
   Map<String, dynamic>? _profile;
   bool _loading = true;
@@ -133,7 +132,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       switch (key) {
         case 'gross_income':
           final v = (p['gross_income'] as num?)?.toDouble() ?? 0.0;
-          _grossEditCtrl.text = v > 0 ? _fmt.format(v.toInt()) : '';
+          _grossEditCtrl.text = v > 0 ? comma(v.toInt()) : '';
         case 'age':
           final v = (p['age'] as int?) ?? 0;
           _ageEditCtrl.text = v > 0 ? '$v' : '';
@@ -384,8 +383,8 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
         _infoRow(
           icon: Icons.payments_outlined,
           label: '예상 연봉',
-          value: gross > 0 ? '${_fmt.format(gross.toInt())}원 (세전)' : null,
-          valueExtra: gross > 0 ? '세후 약 ${_fmt.format(netAnnual.toInt())}원' : null,
+          value: gross > 0 ? '${comma(gross.toInt())}원 (세전)' : null,
+          valueExtra: gross > 0 ? '세후 약 ${comma(netAnnual.toInt())}원' : null,
           placeholder: '미설정 — 카드공제·환급 계산 기준이 돼요',
           isSet: gross > 0,
           editKey: 'gross_income',
@@ -430,10 +429,10 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
             : null,
         valueExtra: _isFreelancer
             ? (_childrenForCredit > 0
-                ? '자녀세액공제 ${_fmt.format(TaxRates.calculateChildTaxCredit(_childrenForCredit).toInt())}원'
+                ? '자녀세액공제 ${comma(TaxRates.calculateChildTaxCredit(_childrenForCredit).toInt())}원'
                 : null)
             : (_childrenTotal > 0
-                ? '카드공제 한도 +${_fmt.format((_childrenTotal > 2 ? 2 : _childrenTotal) * 500000)}원'
+                ? '카드공제 한도 +${comma((_childrenTotal > 2 ? 2 : _childrenTotal) * 500000)}원'
                 : null),
         placeholder: _isFreelancer
             ? '미설정 — 공제대상 자녀는 세금에서 바로 빠져요'
@@ -778,7 +777,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                   Text('건강보험료 부과점수 계산에 쓰여요'.keepWords, style: AppTheme.sans(12, sub)),
                 ]),
               ),
-              Text(propertyValue > 0 ? '${_fmt.format(propertyValue.toInt())}원' : '설정',
+              Text(propertyValue > 0 ? '${comma(propertyValue.toInt())}원' : '설정',
                   style: AppTheme.sans(15, propertyValue > 0 ? ink : accent, weight: FontWeight.w600)),
               const SizedBox(width: 4),
               Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.inkTertiary(context)),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/tax_year.dart';
@@ -19,7 +18,6 @@ class _MonthlyRentTaxCreditScreenState
     extends State<MonthlyRentTaxCreditScreen> {
   final _salaryCtrl = TextEditingController();
   final _rentCtrl = TextEditingController();
-  final _fmt = NumberFormat('#,###');
 
   @override
   void dispose() {
@@ -133,7 +131,7 @@ class _MonthlyRentTaxCreditScreenState
                     Text('세액공제 예상액',
                         style: AppTheme.sans(AppTheme.tsMD, sub)),
                     const SizedBox(height: 6),
-                    Text('${_fmt.format(r.credit)}원',
+                    Text('${comma(r.credit)}원',
                         style: AppTheme.serif(AppTheme.serifLG, accent,
                             weight: FontWeight.w400)),
                   ],
@@ -147,18 +145,18 @@ class _MonthlyRentTaxCreditScreenState
                 ),
                 child: Column(
                   children: [
-                    _resultRow('연간 월세 납부액', '${_fmt.format(r.annualRent)}원',
+                    _resultRow('연간 월세 납부액', '${comma(r.annualRent)}원',
                         ink, sub, line),
                     _resultRow(
                         '공제 적용 월세',
-                        '${_fmt.format(r.cappedRent)}원 (한도 1,000만원)',
+                        '${comma(r.cappedRent)}원 (한도 1,000만원)',
                         ink, sub, line),
                     _resultRow(
                         '공제율',
                         '${(r.rate * 100).toStringAsFixed(0)}%'
                             '${_salary <= 55000000 ? ' (5,500만원 이하)' : ' (5,500만원 초과)'}',
                         ink, sub, line),
-                    _resultRow('세액공제액', '${_fmt.format(r.credit)}원',
+                    _resultRow('세액공제액', '${comma(r.credit)}원',
                         ink, sub, line, last: true),
                   ],
                 ),

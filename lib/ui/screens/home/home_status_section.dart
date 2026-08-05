@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../theme/app_theme.dart';
 import '../../../core/tax_engine/employee_tax.dart';
@@ -80,7 +79,6 @@ class HomeStatusSection extends StatefulWidget {
 }
 
 class _HomeStatusSectionState extends State<HomeStatusSection> {
-  final _numberFormat = NumberFormat('#,###');
 
   // 프리랜서 헤드라인 탭-세전 보기 토글 / N잡러 "기타 수익" 칩 탭-세전 보기 토글 —
   // 이 패널 밖에서는 아무도 참조하지 않아 위젯 내부 상태로 둔다.
@@ -90,7 +88,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
   /// 원 단위 표기 ("36,000,000원")
   String _toWon(double won) {
     if (won <= 0) return '0원';
-    return '${_numberFormat.format(won.toInt())}원';
+    return '${comma(won.toInt())}원';
   }
 
   @override
@@ -251,7 +249,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
                     ? '목표 대비 ${_toWon(budget - totalSpent)} 절약 중이에요.'
                     : '지출을 추가해보세요.',
             onEdit: () {
-              widget.expenseTargetInlineCtrl.text = _numberFormat.format(widget.expenseTarget.toInt());
+              widget.expenseTargetInlineCtrl.text = comma(widget.expenseTarget.toInt());
               widget.onRequestExpenseInput();
             },
           ),
@@ -311,7 +309,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
       ink: ink, sub: sub, accent: accent,
       onTapBanner: () {
         widget.expenseTargetInlineCtrl.text =
-            widget.expenseTarget > 0 ? _numberFormat.format(widget.expenseTarget.toInt()) : '';
+            widget.expenseTarget > 0 ? comma(widget.expenseTarget.toInt()) : '';
         widget.onRequestExpenseInput();
       },
       onApply: () async {
@@ -399,7 +397,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
               ),
               onChanged: (v) {
                 final n = v.replaceAll(RegExp(r'[^0-9]'), '');
-                final f = n.isEmpty ? '' : _numberFormat.format(int.parse(n));
+                final f = n.isEmpty ? '' : comma(int.parse(n));
                 controller.value = TextEditingValue(
                   text: f, selection: TextSelection.collapsed(offset: f.length));
               },

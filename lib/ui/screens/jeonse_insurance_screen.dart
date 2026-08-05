@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
@@ -15,7 +14,6 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
   final _depositCtrl = TextEditingController();
   final _monthsCtrl = TextEditingController(text: '24');
   bool _isYouth = false;
-  final _fmt = NumberFormat('#,###');
 
   /// HUG 전세보증금반환보증 요율은 보증금·주택유형·부채비율에 따라
   /// 0.115~0.154%로 갈린다(khug.or.kr). 계산기는 중간값을 쓴다 —
@@ -225,7 +223,7 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
                   style: AppTheme.sans(AppTheme.tsSM, sub)),
             ],
           ),
-          Text('${_fmt.format(premium)}원',
+          Text('${comma(premium)}원',
               style: AppTheme.serif(AppTheme.serifMD,
                   primary ? accent : ink,
                   weight: FontWeight.w400)),
@@ -265,7 +263,7 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
           const SizedBox(width: 12),
           SizedBox(
             width: 90,
-            child: Text('${_fmt.format(premium)}원',
+            child: Text('${comma(premium)}원',
                 textAlign: TextAlign.right,
                 style: AppTheme.sans(AppTheme.tsSM, ink,
                     weight: FontWeight.w600)),

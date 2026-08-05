@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
@@ -20,7 +19,6 @@ class _EarnedIncomeTaxCreditScreenState
   _HouseholdType _type = _HouseholdType.single;
   final TextEditingController _incomeController = TextEditingController();
   int _children = 0;
-  final _fmt = NumberFormat('#,###');
 
   void _reset() {
     setState(() {
@@ -100,7 +98,7 @@ class _EarnedIncomeTaxCreditScreenState
 
   String _manwon(double v) {
     if (v <= 0) return '0원';
-    return '${_fmt.format(v.round())}만원';
+    return '${comma(v.round())}만원';
   }
 
   @override
@@ -206,7 +204,7 @@ class _EarnedIncomeTaxCreditScreenState
                   ),
                   if (hasInput) ...[
                     const SizedBox(height: 6),
-                    Text('= ${_fmt.format(income.round())}만원'.keepWords,
+                    Text('= ${comma(income.round())}만원'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 12)),
                   ],
                 ],

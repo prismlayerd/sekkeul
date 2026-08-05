@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
@@ -21,7 +20,6 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
   final _deliveryCtrl = TextEditingController();
   bool _solar = false;
   bool _greenBuy = false;
-  final _fmt = NumberFormat('#,###');
 
   static const double _annualCap = 70000;
 
@@ -54,7 +52,6 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
 
   bool get _hasInput => _totalRaw > 0;
 
-  String _won(double v) => '${_fmt.format(v.round())}원';
 
   @override
   void dispose() {
@@ -136,26 +133,26 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
                       children: [
                         Text('연간 총 포인트',
                             style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
-                        Text(_won(_total),
+                        Text(won(_total),
                             style: AppTheme.sans(16, accent, weight: FontWeight.w700)),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('전자영수증(연 상한 10,000원)', _won(_receiptPoints), ink, sub),
+                    _row('전자영수증(연 상한 10,000원)', won(_receiptPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('텀블러·다회용컵', _won(_tumblerPoints), ink, sub),
+                    _row('텀블러·다회용컵', won(_tumblerPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('일회용컵 보증금 반환', _won(_cupReturnPoints), ink, sub),
+                    _row('일회용컵 보증금 반환', won(_cupReturnPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('리필스테이션', _won(_refillPoints), ink, sub),
+                    _row('리필스테이션', won(_refillPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('다회용기 배달주문', _won(_deliveryPoints), ink, sub),
+                    _row('다회용기 배달주문', won(_deliveryPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('가정용 베란다 태양광', _won(_solarPoints), ink, sub),
+                    _row('가정용 베란다 태양광', won(_solarPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('친환경제품 구매', _won(_greenBuyPoints), ink, sub),
+                    _row('친환경제품 구매', won(_greenBuyPoints), ink, sub),
                     if (_isCapped) ...[
                       const SizedBox(height: 12),
                       Text('* 1인당 연간 지급 한도 7만원을 초과하여 상한으로 산정되었습니다.'.keepWords,

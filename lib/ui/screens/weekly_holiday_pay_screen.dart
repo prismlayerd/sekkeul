@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/tax_engine/tax_rates.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
@@ -22,7 +21,6 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
   final TextEditingController _dailyHoursController =
       TextEditingController(text: '8');
   int _workDaysPerWeek = 5;
-  final _fmt = NumberFormat('#,###');
 
   static const double _minimumWage2026 = TaxRates.minimumHourlyWage2026;
 
@@ -47,7 +45,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
   double get _dailyHours =>
       double.tryParse(_dailyHoursController.text.replaceAll(',', '')) ?? 0.0;
 
-  String _won(double v) => v <= 0 ? '0원' : '${_fmt.format(v.round())}원';
+  String _won(double v) => v <= 0 ? '0원' : '${comma(v.round())}원';
 
   @override
   Widget build(BuildContext context) {

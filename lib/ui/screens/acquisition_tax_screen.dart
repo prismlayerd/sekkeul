@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
@@ -16,7 +15,6 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
   final TextEditingController _priceController = TextEditingController();
   int _houses = 1;
   bool _adjusted = false;
-  final _fmt = NumberFormat('#,###');
 
   void _reset() => setState(() {
         _priceController.clear();
@@ -62,13 +60,13 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
       (_houses >= 2 || _price > 900000000) ? _price * 0.002 : 0.0;
   double get _totalTax => _acqTax + _eduTax + _ruralTax;
 
-  String _won(double v) {
+  String won(double v) {
     if (v <= 0) return '0원';
     final eok = v / 100000000;
     if (eok >= 1) return '${eok.toStringAsFixed(2)}억원';
     final man = v / 10000;
     if (man >= 1) return '${man.toStringAsFixed(0)}만원';
-    return '${_fmt.format(v.round())}원';
+    return '${comma(v.round())}원';
   }
 
   String _pct(double r) => '${(r * 100).toStringAsFixed(2)}%';
@@ -196,7 +194,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
                             fontWeight: FontWeight.bold)),
                   ]),
                   const SizedBox(height: 12),
-                  Text(hasResult ? _won(_totalTax) : '0원',
+                  Text(hasResult ? won(_totalTax) : '0원',
                       style: TextStyle(
                           color: primary,
                           fontSize: 32,
@@ -205,17 +203,17 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
                   if (hasResult) ...[
                     _row('취득세율', _pct(rate), subColor, textColor),
                     const SizedBox(height: 8),
-                    _row('취득세', _won(_acqTax), subColor, textColor),
+                    _row('취득세', won(_acqTax), subColor, textColor),
                     const SizedBox(height: 8),
-                    _row('지방교육세 (표준세율×10%)', _won(_eduTax), subColor, textColor),
+                    _row('지방교육세 (표준세율×10%)', won(_eduTax), subColor, textColor),
                     const SizedBox(height: 8),
                     _row('농어촌특별세 (0.2%)',
-                        _ruralTax > 0 ? _won(_ruralTax) : '해당없음', subColor,
+                        _ruralTax > 0 ? won(_ruralTax) : '해당없음', subColor,
                         textColor),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: Theme.of(context).dividerColor),
                     const SizedBox(height: 12),
-                    _row('총 납부세액', _won(_totalTax), subColor, primary),
+                    _row('총 납부세액', won(_totalTax), subColor, primary),
                   ] else
                     Text('취득가액을 입력해보세요.',
                         style: TextStyle(color: subColor, fontSize: 13)),

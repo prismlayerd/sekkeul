@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../theme/app_theme.dart';
 import 'tax_simulator_screen.dart';
@@ -25,7 +24,6 @@ class DeductionGateScreen extends StatefulWidget {
 }
 
 class _DeductionGateScreenState extends State<DeductionGateScreen> {
-  final _fmt = NumberFormat('#,###');
   final Set<String> _picked = {};
   double _gross = 0;
   bool _loaded = false;
@@ -57,7 +55,6 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
       .where((e) => _picked.contains(e.id))
       .fold(0.0, (s, e) => s + e.maxCredit);
 
-  String _won(num v) => '${_fmt.format(v.round())}원';
 
   Future<void> _goToCalculator() async {
     final profile = await dbService.getProfile() ?? {};
@@ -106,7 +103,7 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
                   const SizedBox(height: 10),
                   Text(
                     _gross > 0
-                        ? '고른 것만 입력창이 열려요. 금액은 총급여 ${_won(_gross)} 기준이에요.'
+                        ? '고른 것만 입력창이 열려요. 금액은 총급여 ${won(_gross)} 기준이에요.'
                         : '고른 것만 입력창이 열려요. 금액은 총급여 4,500만원 기준 예시예요.',
                     style: AppTheme.sans(14, sub, height: 1.55),
                   ),
@@ -151,7 +148,7 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
     return Semantics(
       button: true,
       selected: on,
-      label: '${item.label}, 최대 ${_won(item.maxCredit)}',
+      label: '${item.label}, 최대 ${won(item.maxCredit)}',
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => setState(() => on ? _picked.remove(item.id) : _picked.add(item.id)),
@@ -201,7 +198,7 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
                   children: [
                     Text('최대 ',
                         style: AppTheme.sans(11, AppTheme.inkTertiary(context))),
-                    Text(_won(item.maxCredit),
+                    Text(won(item.maxCredit),
                         style: AppTheme.sans(13,
                             on ? accent : AppTheme.inkSecondary(context),
                             weight: FontWeight.w600)),
@@ -242,7 +239,7 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
                 tween: Tween(begin: _total, end: _total),
                 duration: Duration(milliseconds: reduceMotion ? 0 : 260),
                 curve: Curves.easeOutCubic,
-                builder: (_, v, __) => Text(_won(v),
+                builder: (_, v, __) => Text(won(v),
                     style: AppTheme.serif(34, n == 0 ? AppTheme.inkTertiary(context) : ink,
                         spacing: -1)),
               ),

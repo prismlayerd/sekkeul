@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/tax_engine/tax_rates.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
 
@@ -18,7 +17,6 @@ class _HourlyRateConverterScreenState
   final _rateCtrl = TextEditingController();
   final _hoursCtrl = TextEditingController();
   final _marginCtrl = TextEditingController(text: '0');
-  final _fmt = NumberFormat('#,###');
 
   static int get _minWage2026 => TaxRates.minimumHourlyWage2026.toInt();
 
@@ -34,7 +32,6 @@ class _HourlyRateConverterScreenState
 
   bool get _hasInput => _rate > 0 && _hours > 0;
 
-  String _won(double v) => '${_fmt.format(v.round())}원';
 
   @override
   void dispose() {
@@ -88,20 +85,20 @@ class _HourlyRateConverterScreenState
                       children: [
                         Text('최종 제안 금액',
                             style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
-                        Text(_won(_quote),
+                        Text(won(_quote),
                             style: AppTheme.sans(16, accent, weight: FontWeight.w700)),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('기본 금액 (마진 전)', _won(_base), ink, sub),
+                    _row('기본 금액 (마진 전)', won(_base), ink, sub),
                     const SizedBox(height: 8),
-                    _row('3.3% 원천징수 후 실수령', _won(_afterTax), ink, sub),
+                    _row('3.3% 원천징수 후 실수령', won(_afterTax), ink, sub),
                     const SizedBox(height: 8),
-                    _row('일급 환산 (8시간)', _won(_rate * 8), ink, sub),
+                    _row('일급 환산 (8시간)', won(_rate * 8), ink, sub),
                     const SizedBox(height: 8),
-                    _row('월급 환산 (월 160시간)', _won(_rate * 160), ink, sub),
+                    _row('월급 환산 (월 160시간)', won(_rate * 160), ink, sub),
                     const SizedBox(height: 12),
                     Text(
                         _rate >= _minWage2026

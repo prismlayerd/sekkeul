@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
@@ -19,7 +18,6 @@ class _SevereDiseaseCopaymentScreenState
   int _typeIdx = 0;
   int _diseaseIdx = 0;
   final _costCtrl = TextEditingController();
-  final _fmt = NumberFormat('#,###');
 
   /// 산정특례 본인부담률은 질환군마다 다르다(국민건강보험 산정특례 안내).
   /// 5%로 뭉뚱그리면 희귀질환자에게 실제의 절반을 보여준다.
@@ -46,7 +44,6 @@ class _SevereDiseaseCopaymentScreenState
   double get _saved => _generalCopay - _specialCopay;
   bool get _hasInput => _cost > 0;
 
-  String _won(double v) => '${_fmt.format(v.round())}원';
 
   @override
   void dispose() {
@@ -157,7 +154,7 @@ class _SevereDiseaseCopaymentScreenState
               onChanged: (v) {
                 final digits = v.replaceAll(RegExp(r'[^0-9]'), '');
                 final formatted =
-                    digits.isEmpty ? '' : _fmt.format(int.parse(digits));
+                    digits.isEmpty ? '' : comma(int.parse(digits));
                 _costCtrl.value = TextEditingValue(
                   text: formatted,
                   selection: TextSelection.collapsed(offset: formatted.length),
@@ -186,7 +183,7 @@ class _SevereDiseaseCopaymentScreenState
                       Text('절감액',
                           style: AppTheme.sans(14, ink,
                               weight: FontWeight.w700)),
-                      Text(_hasInput ? _won(_saved) : '-',
+                      Text(_hasInput ? won(_saved) : '-',
                           style: AppTheme.sans(16, accent,
                               weight: FontWeight.w700)),
                     ],
@@ -195,9 +192,9 @@ class _SevereDiseaseCopaymentScreenState
                   Divider(height: 1, color: line),
                   const SizedBox(height: 12),
                   _row('일반 본인부담 (${(_generalRate * 100).round()}%)',
-                      _won(_generalCopay), ink, sub),
+                      won(_generalCopay), ink, sub),
                   const SizedBox(height: 8),
-                  _row('산정특례 본인부담 (5%)', _won(_specialCopay), ink, sub),
+                  _row('산정특례 본인부담 (5%)', won(_specialCopay), ink, sub),
                   const SizedBox(height: 12),
                   Text('* 암·희귀난치·중증화상 등 대부분 5% 적용, 결핵은 0%(면제)입니다.'.keepWords,
                       style: AppTheme.sans(11, sub)),

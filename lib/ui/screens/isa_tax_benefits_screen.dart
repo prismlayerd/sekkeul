@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
@@ -17,7 +16,6 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
   final _rateCtrl = TextEditingController(text: '5.0');
   final _yearsCtrl = TextEditingController(text: '5');
   int _type = 0; // 0=일반, 1=서민·농어민
-  final _fmt = NumberFormat('#,###');
 
   @override
   void dispose() {
@@ -189,7 +187,7 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
                   children: [
                     Text('절세 효과', style: AppTheme.sans(AppTheme.tsMD, sub)),
                     const SizedBox(height: 6),
-                    Text('+${_fmt.format(r.taxSaving)}원',
+                    Text('+${comma(r.taxSaving)}원',
                         style: AppTheme.serif(AppTheme.serifLG, accent,
                             weight: FontWeight.w400)),
                     const SizedBox(height: 4),
@@ -204,19 +202,19 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
                     border: Border.all(color: line),
                     borderRadius: BorderRadius.circular(4)),
                 child: Column(children: [
-                  _resultRow('총 납입액', '${_fmt.format(r.totalDeposit)}원',
+                  _resultRow('총 납입액', '${comma(r.totalDeposit)}원',
                       ink, sub, line),
-                  _resultRow('총 이자 수익', '${_fmt.format(r.totalInterest)}원',
+                  _resultRow('총 이자 수익', '${comma(r.totalInterest)}원',
                       ink, sub, line),
                   _resultRow(
                       '비과세 한도',
-                      '${_fmt.format(r.taxFreeLimit)}원 (${_type == 0 ? '일반형' : '서민·농어민형'})',
+                      '${comma(r.taxFreeLimit)}원 (${_type == 0 ? '일반형' : '서민·농어민형'})',
                       ink, sub, line),
-                  _resultRow('ISA 세후 이자', '${_fmt.format(r.isaAfterTax)}원',
+                  _resultRow('ISA 세후 이자', '${comma(r.isaAfterTax)}원',
                       ink, sub, line),
                   _resultRow('일반계좌 세후 이자',
-                      '${_fmt.format(r.normalAfterTax)}원', ink, sub, line),
-                  _resultRow('절세액', '+${_fmt.format(r.taxSaving)}원',
+                      '${comma(r.normalAfterTax)}원', ink, sub, line),
+                  _resultRow('절세액', '+${comma(r.taxSaving)}원',
                       accent, sub, line, last: true),
                 ]),
               ),

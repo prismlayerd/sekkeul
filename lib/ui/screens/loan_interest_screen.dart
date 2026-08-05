@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
@@ -16,7 +15,6 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
   final _rateCtrl = TextEditingController(text: '4.5');
   final _yearsCtrl = TextEditingController(text: '20');
   int _method = 0; // 0=원리금균등, 1=원금균등, 2=만기일시
-  final _fmt = NumberFormat('#,###');
 
   @override
   void dispose() {
@@ -172,7 +170,7 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
                     Text(_method == 2 ? '월 이자' : '월 상환액',
                         style: AppTheme.sans(AppTheme.tsMD, sub)),
                     const SizedBox(height: 6),
-                    Text('${_fmt.format(r.monthlyPayment)}원',
+                    Text('${comma(r.monthlyPayment)}원',
                         style: AppTheme.serif(AppTheme.serifLG, accent,
                             weight: FontWeight.w400)),
                     if (_method == 1)
@@ -191,9 +189,9 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
                     borderRadius: BorderRadius.circular(4)),
                 child: Column(children: [
                   _resultRow('총 상환액',
-                      '${_fmt.format(r.totalPayment)}원', ink, sub, line),
+                      '${comma(r.totalPayment)}원', ink, sub, line),
                   _resultRow('총 이자',
-                      '${_fmt.format(r.totalInterest)}원', ink, sub, line),
+                      '${comma(r.totalInterest)}원', ink, sub, line),
                   _resultRow(
                       '이자 비율',
                       '${(r.totalInterest / r.totalPayment * 100).toStringAsFixed(1)}%',

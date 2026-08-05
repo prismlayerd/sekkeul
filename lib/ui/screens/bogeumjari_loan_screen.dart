@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
@@ -15,7 +14,6 @@ class _BogeumjariLoanScreenState extends State<BogeumjariLoanScreen> {
   final _principalCtrl = TextEditingController();
   final _rateCtrl = TextEditingController(text: '4.25');
   final _yearsCtrl = TextEditingController(text: '30');
-  final _fmt = NumberFormat('#,###');
 
   static const _rates = [
     ('기본 금리', '4.90~5.30%'),
@@ -124,7 +122,7 @@ class _BogeumjariLoanScreenState extends State<BogeumjariLoanScreen> {
                   children: [
                     Text('월 상환액', style: AppTheme.sans(AppTheme.tsMD, sub)),
                     const SizedBox(height: 6),
-                    Text('${_fmt.format(r.monthly)}원',
+                    Text('${comma(r.monthly)}원',
                         style: AppTheme.serif(AppTheme.serifLG, accent,
                             weight: FontWeight.w400)),
                   ],
@@ -136,9 +134,9 @@ class _BogeumjariLoanScreenState extends State<BogeumjariLoanScreen> {
                     border: Border.all(color: line),
                     borderRadius: BorderRadius.circular(4)),
                 child: Column(children: [
-                  _resultRow('총 이자', '${_fmt.format(r.totalInterest)}원',
+                  _resultRow('총 이자', '${comma(r.totalInterest)}원',
                       accent, sub, line),
-                  _resultRow('총 상환액', '${_fmt.format(r.totalPayment)}원',
+                  _resultRow('총 상환액', '${comma(r.totalPayment)}원',
                       ink, sub, line, last: true),
                 ]),
               ),

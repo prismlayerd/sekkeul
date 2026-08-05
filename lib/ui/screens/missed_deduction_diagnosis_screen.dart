@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../components/deduction_checklist.dart';
 
@@ -25,7 +24,6 @@ class MissedDeductionDiagnosisScreen extends StatefulWidget {
 }
 
 class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosisScreen> {
-  final _fmt = NumberFormat('#,###');
   final _grossCtrl = TextEditingController();
   final _decidedCtrl = TextEditingController();
 
@@ -54,8 +52,8 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
     setState(() {
       final gross = (r['grossSalary'] as num?)?.toInt() ?? 0;
       final decided = (r['decidedTax'] as num?)?.toInt() ?? 0;
-      if (gross > 0) _grossCtrl.text = _fmt.format(gross);
-      if (decided > 0) _decidedCtrl.text = _fmt.format(decided);
+      if (gross > 0) _grossCtrl.text = comma(gross);
+      if (decided > 0) _decidedCtrl.text = comma(decided);
       _initialAmounts = amountsFromAnnualRecord(r);
       _amounts = Map.of(_initialAmounts);
     });
@@ -224,7 +222,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
           Text('더 받을 수 있는 환급', style: AppTheme.label(context)),
           const SizedBox(height: 10),
           Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-            Text(_fmt.format(refund), style: AppTheme.serif(34, accent, spacing: -1.2, height: 1.0)),
+            Text(comma(refund), style: AppTheme.serif(34, accent, spacing: -1.2, height: 1.0)),
             const SizedBox(width: 5),
             Text('원', style: AppTheme.sans(15, sub, weight: FontWeight.w600)),
           ]),
@@ -252,10 +250,10 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
               Row(children: [
                 Text(l.category, style: AppTheme.sans(15, ink, weight: FontWeight.w700)),
                 const Spacer(),
-                Text('+${_fmt.format(l.missedCredit)}원', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
+                Text('+${comma(l.missedCredit)}원', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
               ]),
               const SizedBox(height: 4),
-              Text('지출 ${_fmt.format(l.available)}원 기준'.keepWords, style: AppTheme.sans(12, sub, height: 1.4)),
+              Text('지출 ${comma(l.available)}원 기준'.keepWords, style: AppTheme.sans(12, sub, height: 1.4)),
             ],
           ),
         ),

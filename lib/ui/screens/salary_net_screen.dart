@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
@@ -19,7 +18,6 @@ class SalaryNetScreen extends StatefulWidget {
 class _SalaryNetScreenState extends State<SalaryNetScreen> {
   final TextEditingController _annualController = TextEditingController();
   int _dependents = 1;
-  final _fmt = NumberFormat('#,###');
 
   void _reset() {
     setState(() {
@@ -37,11 +35,11 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
   double get _annual =>
       double.tryParse(_annualController.text.replaceAll(',', '')) ?? 0.0;
 
-  String _won(double v) => v <= 0 ? '0원' : '${_fmt.format(v.round())}원';
+  String _won(double v) => v <= 0 ? '0원' : '${comma(v.round())}원';
   String _manwon(double v) {
     if (v <= 0) return '0원';
     final man = (v / 10000).round();
-    return '${_fmt.format(man)}만원';
+    return '${comma(man)}만원';
   }
 
   @override

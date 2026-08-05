@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
@@ -17,7 +16,6 @@ class YouthLeapAccountScreen extends StatefulWidget {
 class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
   final _ctrl = TextEditingController();
   int _incomeIdx = 0;
-  final _fmt = NumberFormat('#,###');
 
   // 소득 구간, 월 정부기여금
   static const _brackets = [
@@ -41,7 +39,7 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
   String _manwon(double v) {
     if (v <= 0) return '-';
     final man = (v / 10000).round();
-    return '약 ${_fmt.format(man)}만원';
+    return '약 ${comma(man)}만원';
   }
 
   @override
@@ -145,7 +143,7 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
                     _row('본인 납입 합계', _manwon(_totalSelf), ink, sub),
                     const SizedBox(height: 8),
                     if (_monthlyGov > 0) ...[
-                      _row('정부기여금 합계 (월 ${_fmt.format(_monthlyGov)}원)',
+                      _row('정부기여금 합계 (월 ${comma(_monthlyGov)}원)',
                           _manwon(_totalGov), ink, sub),
                       const SizedBox(height: 8),
                     ],

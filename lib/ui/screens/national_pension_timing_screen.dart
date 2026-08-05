@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
@@ -16,7 +15,6 @@ class NationalPensionTimingScreen extends StatefulWidget {
 class _NationalPensionTimingScreenState
     extends State<NationalPensionTimingScreen> {
   final TextEditingController _baseController = TextEditingController();
-  final _fmt = NumberFormat('#,###');
 
   void _reset() => setState(() => _baseController.clear());
 
@@ -40,10 +38,9 @@ class _NationalPensionTimingScreenState
     return (early * earlyMonths / (normal - early)).ceil();
   }
 
-  String _won(double v) => '${_fmt.format(v.round())}원';
   String _manwon(double v) {
     if (v <= 0) return '0원';
-    return '${_fmt.format((v / 10000).round())}만원';
+    return '${comma((v / 10000).round())}만원';
   }
 
   @override
@@ -105,7 +102,7 @@ class _NationalPensionTimingScreenState
                   ),
                   if (hasInput) ...[
                     const SizedBox(height: 8),
-                    Text('기준 연금: ${_won(_base)}'.keepWords,
+                    Text('기준 연금: ${won(_base)}'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 12)),
                   ],
                 ],
