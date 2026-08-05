@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/ui/screens/property_tax_screen.dart';
+
+import 'support/screen_probe.dart';
 
 /// 보유세 계산기 — 화면이 그린 재산세·종부세를 조문 검산과 대조한다.
 ///
@@ -11,45 +12,17 @@ import 'package:secul/ui/screens/property_tax_screen.dart';
 /// 근거: 지방세법 §111①3 재산세 주택분 세율 / §112①2 도시지역분 0.14%
 ///      / §151①2 지방교육세 20% / 시행령 §109 공정시장가액비율 60%
 ///      / 종합부동산세법 §8 공제액 · §9① 세율 · 시행령 §2의4 공정시장가액비율
-String comma(num v) {
-  final s = v.round().abs().toString();
-  final b = StringBuffer();
-  for (int i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-    b.write(s[i]);
-  }
-  return '${v < 0 ? '-' : ''}$b';
-}
-
 /// 이 화면은 금액을 **만원 단위로 반올림해서** 보여준다("57만원"). 그래서 검증도
 /// 사용자가 보는 정밀도로 한다 — 원 단위 차이는 애초에 화면에 나타나지 않는다.
 /// 대신 두 계산 방식이 갈리는지 같은 검사는 만원 단위로도 충분히 드러난다.
-Set<String> moneyTexts(WidgetTester t) {
-  final out = <String>{};
-  for (final w in t.allWidgets) {
-    if (w is Text) {
-      final s = w.data ?? w.textSpan?.toPlainText();
-      if (s == null) continue;
-      // '57만원' · '1,234만원' · '해당없음'
-      for (final m in RegExp(r'\d{1,3}(,\d{3})*만원').allMatches(s)) {
-        out.add(m.group(0)!);
-      }
-    }
-  }
-  return out;
-}
+final _re = RegExp(r'\d{1,3}(,\d{3})*만원');
+
+Set<String> moneyTexts(WidgetTester t) => screenTokens(t, _re);
 
 String manwon(num v) => '${comma((v / 10000).round())}만원';
 
-void expectShown(WidgetTester t, num value, String what) {
-  final want = manwon(value);
-  final shown = moneyTexts(t);
-  if (!shown.contains(want)) {
-    // ignore: avoid_print
-    print('  ✕ $what — 기대 $want, 화면의 금액: ${(shown.toList()..sort()).join(' / ')}');
-  }
-  expect(shown, contains(want), reason: '$what — 화면 숫자가 조문 검산과 다르다 (기대 $want)');
-}
+void expectShown(WidgetTester t, num value, String what) =>
+    expectScreenToken(t, _re, manwon(value), what);
 
 /// 지방세법 §111①3 — 주택분 재산세. 과세표준 = 공시가격 × 60%(시행령 §109).
 /// 6천만 이하 0.1% / ~1.5억 6만+0.15% / ~3억 19.5만+0.25% / 3억 초과 57만+0.4%
@@ -74,18 +47,8 @@ double refComprehensiveTax(double base) {
 }
 
 void main() {
-  int seq = 0;
-
   Future<void> open(WidgetTester t, List<int> prices) async {
-    t.view.physicalSize = const Size(390, 3000);
-    t.view.devicePixelRatio = 1.0;
-    addTearDown(t.view.resetPhysicalSize);
-    addTearDown(t.view.resetDevicePixelRatio);
-    dbService = InMemoryDatabaseHelper();
-    await dbService.initDatabase();
-    await t.pumpWidget(MaterialApp(
-        key: ValueKey('pt-${seq++}'), home: const PropertyTaxScreen()));
-    await t.pump(const Duration(milliseconds: 300));
+    await openScreen(t, const PropertyTaxScreen(), height: 3000);
 
     // 주택 수만큼 입력칸을 늘린다.
     for (int i = 1; i < prices.length; i++) {

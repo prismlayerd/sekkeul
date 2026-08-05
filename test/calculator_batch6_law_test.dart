@@ -1,67 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/ui/screens/carbon_neutral_points_screen.dart';
 import 'package:secul/ui/screens/housing_pension_screen.dart';
 import 'package:secul/ui/screens/jeonse_vs_wolse_screen.dart';
+
+import 'support/screen_probe.dart';
 
 /// 배치 6 — 주택연금 · 전세vs월세 · 탄소중립포인트.
 ///
 /// 이 셋은 세법이 아니라 **공시값과 산수**다. 주택연금 억당 월지급률은
 /// 한국주택금융공사가 매년 공시하므로 만료 알람 대상이고, 나머지 둘은
 /// 공식이 맞는지만 보면 된다.
-String comma(num v) {
-  final s = v.round().abs().toString();
-  final b = StringBuffer();
-  for (int i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-    b.write(s[i]);
-  }
-  return '${v < 0 ? '-' : ''}$b';
-}
+final _re = RegExp(r'\d+(,\d{3})*(\.\d+)?(억원|만원|원|%)?');
 
-Set<String> tokens(WidgetTester t) {
-  final out = <String>{};
-  for (final w in t.allWidgets) {
-    if (w is Text) {
-      final s = w.data ?? w.textSpan?.toPlainText();
-      if (s == null) continue;
-      for (final m in RegExp(r'\d+(,\d{3})*(\.\d+)?(억원|만원|원|%)?').allMatches(s)) {
-        out.add(m.group(0)!);
-      }
-    }
-  }
-  return out;
-}
+Set<String> tokens(WidgetTester t) => screenTokens(t, _re);
 
-void expectToken(WidgetTester t, String want, String what) {
-  final shown = tokens(t);
-  if (!shown.contains(want)) {
-    // ignore: avoid_print
-    print('  ✕ $what — 기대 $want, 화면: ${(shown.toList()..sort()).take(35).join(' / ')}');
-  }
-  expect(shown, contains(want), reason: '$what — 화면 값이 검산과 다르다 (기대 $want)');
-}
+void expectToken(WidgetTester t, String want, String what) =>
+    expectScreenToken(t, _re, want, what);
 
 void main() {
-  int seq = 0;
-
-  Future<void> open(WidgetTester t, Widget w, List<(int, String)> inputs) async {
-    t.view.physicalSize = const Size(390, 4500);
-    t.view.devicePixelRatio = 1.0;
-    addTearDown(t.view.resetPhysicalSize);
-    addTearDown(t.view.resetDevicePixelRatio);
-    dbService = InMemoryDatabaseHelper();
-    await dbService.initDatabase();
-    await t.pumpWidget(MaterialApp(key: ValueKey('b6-${seq++}'), home: w));
-    await t.pump(const Duration(milliseconds: 300));
-    for (final (idx, text) in inputs) {
-      await t.enterText(find.byType(TextField).at(idx), text);
-      await t.pump(const Duration(milliseconds: 250));
-    }
-    await t.pump(const Duration(milliseconds: 400));
-    t.takeException();
-  }
+  Future<void> open(WidgetTester t, Widget w, List<(int, String)> inputs) =>
+      openScreen(t, w, inputs: inputs, height: 4500);
 
   group('주택연금 (한국주택금융공사 공시)', () {
     /// 1억원당 월지급금(만원) — 한국주택금융공사 「월지급금 예시」 2026.3.1. 기준.

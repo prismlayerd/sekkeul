@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/core/tax_engine/tax_rates.dart';
 import 'package:secul/ui/screens/acquisition_tax_screen.dart';
 import 'package:secul/ui/screens/four_insurance_screen.dart';
 import 'package:secul/ui/screens/unemployment_benefit_screen.dart';
 import 'package:secul/ui/screens/weekly_holiday_pay_screen.dart';
 
+import 'support/screen_probe.dart';
 import 'support/tax_law_reference.dart';
 
 /// 계산기 화면들 — 화면에 그려진 숫자를 조문 검산과 대조한다.
@@ -18,59 +18,18 @@ import 'support/tax_law_reference.dart';
 ///      / 고용보험법 §45·§46·별표1 구직급여
 ///      / 근로기준법 §55·시행령 §30 주휴수당
 ///      / 국민연금법 부칙 §4 · 국민건강보험법 시행령 §44① · 보험료징수법 시행령 §12①2
-String comma(num v) {
-  final s = v.round().abs().toString();
-  final b = StringBuffer();
-  for (int i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-    b.write(s[i]);
-  }
-  return '${v < 0 ? '-' : ''}$b';
-}
-
 /// 화면에 보이는 모든 숫자 토큰 — '66,048원'과 '550만원' 양쪽을 다 잡는다.
-Set<String> shownTokens(WidgetTester t) {
-  final out = <String>{};
-  for (final w in t.allWidgets) {
-    if (w is Text) {
-      final s = w.data ?? w.textSpan?.toPlainText();
-      if (s == null) continue;
-      for (final m in RegExp(r'\d+(,\d{3})*(만원|억원|원|일|시간|%)?').allMatches(s)) {
-        out.add(m.group(0)!);
-      }
-    }
-  }
-  return out;
-}
+final _re = RegExp(r'\d+(,\d{3})*(만원|억원|원|일|시간|%)?');
 
-void expectToken(WidgetTester t, String want, String what) {
-  final shown = shownTokens(t);
-  if (!shown.contains(want)) {
-    // ignore: avoid_print
-    print('  ✕ $what — 기대 $want, 화면: ${(shown.toList()..sort()).join(' / ')}');
-  }
-  expect(shown, contains(want), reason: '$what — 화면 값이 조문 검산과 다르다 (기대 $want)');
-}
+Set<String> shownTokens(WidgetTester t) => screenTokens(t, _re);
+
+void expectToken(WidgetTester t, String want, String what) =>
+    expectScreenToken(t, _re, want, what);
 
 void main() {
-  int seq = 0;
-
-  Future<void> open(WidgetTester t, Widget w, List<String> inputs) async {
-    t.view.physicalSize = const Size(390, 3000);
-    t.view.devicePixelRatio = 1.0;
-    addTearDown(t.view.resetPhysicalSize);
-    addTearDown(t.view.resetDevicePixelRatio);
-    dbService = InMemoryDatabaseHelper();
-    await dbService.initDatabase();
-    await t.pumpWidget(MaterialApp(key: ValueKey('calc-${seq++}'), home: w));
-    await t.pump(const Duration(milliseconds: 300));
-    for (int i = 0; i < inputs.length; i++) {
-      await t.enterText(find.byType(TextField).at(i), inputs[i]);
-      await t.pump(const Duration(milliseconds: 200));
-    }
-    await t.pump(const Duration(milliseconds: 400));
-    t.takeException();
-  }
+  Future<void> open(WidgetTester t, Widget w, List<String> inputs) =>
+      openScreen(t, w,
+          inputs: inputs.indexed.toList(), height: 3000, stepMs: 200);
 
   // ── 취득세 ────────────────────────────────────────────────────
   group('취득세 (지방세법 §11①8 · §151①1가목)', () {

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/ui/screens/capital_gains_tax_screen.dart';
 import 'package:secul/ui/screens/inheritance_gift_tax_screen.dart';
 import 'package:secul/ui/screens/retirement_pension_screen.dart';
 
+import 'support/screen_probe.dart';
 import 'support/tax_law_reference.dart';
 
 /// 계산이 **위젯 State 안에** 있는 화면들 — 엔진의 조문 검증 체계가 닿지 않는다.
@@ -14,58 +14,16 @@ import 'support/tax_law_reference.dart';
 /// 근거: 소득세법 §55① 세율 · §95② 장기보유특별공제 · §103① 양도소득기본공제
 ///      · §104①1(§55① 준용) / 상속세 및 증여세법 §26 세율 · §21 일괄공제
 ///      / 근로자퇴직급여 보장법 §8① 퇴직금
-String comma(num v) {
-  final s = v.round().abs().toString();
-  final b = StringBuffer();
-  for (int i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-    b.write(s[i]);
-  }
-  return '${v < 0 ? '-' : ''}$b';
-}
+final _re = RegExp(r'\d+(,\d{3})*(\.\d+)?(만원|억원|원|%)?');
 
-Set<String> tokens(WidgetTester t) {
-  final out = <String>{};
-  for (final w in t.allWidgets) {
-    if (w is Text) {
-      final s = w.data ?? w.textSpan?.toPlainText();
-      if (s == null) continue;
-      for (final m in RegExp(r'\d+(,\d{3})*(\.\d+)?(만원|억원|원|%)?').allMatches(s)) {
-        out.add(m.group(0)!);
-      }
-    }
-  }
-  return out;
-}
+Set<String> tokens(WidgetTester t) => screenTokens(t, _re);
 
-void expectToken(WidgetTester t, String want, String what) {
-  final shown = tokens(t);
-  if (!shown.contains(want)) {
-    // ignore: avoid_print
-    print('  ✕ $what — 기대 $want, 화면: ${(shown.toList()..sort()).join(' / ')}');
-  }
-  expect(shown, contains(want), reason: '$what — 화면 값이 조문 검산과 다르다 (기대 $want)');
-}
+void expectToken(WidgetTester t, String want, String what) =>
+    expectScreenToken(t, _re, want, what);
 
 void main() {
-  int seq = 0;
-
-  Future<void> open(WidgetTester t, Widget w, List<String> inputs) async {
-    t.view.physicalSize = const Size(390, 4000);
-    t.view.devicePixelRatio = 1.0;
-    addTearDown(t.view.resetPhysicalSize);
-    addTearDown(t.view.resetDevicePixelRatio);
-    dbService = InMemoryDatabaseHelper();
-    await dbService.initDatabase();
-    await t.pumpWidget(MaterialApp(key: ValueKey('b1-${seq++}'), home: w));
-    await t.pump(const Duration(milliseconds: 300));
-    for (int i = 0; i < inputs.length; i++) {
-      await t.enterText(find.byType(TextField).at(i), inputs[i]);
-      await t.pump(const Duration(milliseconds: 200));
-    }
-    await t.pump(const Duration(milliseconds: 400));
-    t.takeException();
-  }
+  Future<void> open(WidgetTester t, Widget w, List<String> inputs) =>
+      openScreen(t, w, inputs: inputs.indexed.toList(), stepMs: 200);
 
   group('양도소득세 (소법 §95·§103·§104)', () {
     /// 양도차익 − 장기보유특별공제 − 기본공제 250만 → 누진세율(§55① 준용).

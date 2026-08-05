@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/ui/screens/basic_pension_screen.dart';
 import 'package:secul/ui/screens/out_of_pocket_cap_screen.dart';
 import 'package:secul/ui/screens/parental_leave_6plus6_screen.dart';
+
+import 'support/screen_probe.dart';
 
 /// 배치 4 — 기초연금 · 본인부담상한 · 육아휴직 6+6.
 ///
@@ -14,29 +15,9 @@ import 'package:secul/ui/screens/parental_leave_6plus6_screen.dart';
 /// 근거: 기초연금법 §5(선정기준액)·§8(부부 감액 20%)
 ///      / 국민건강보험법 시행령 별표3 본인부담상한액
 ///      / 고용보험법 시행령 §95의3 6+6 부모육아휴직급여
-String comma(num v) {
-  final s = v.round().abs().toString();
-  final b = StringBuffer();
-  for (int i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-    b.write(s[i]);
-  }
-  return '${v < 0 ? '-' : ''}$b';
-}
+final _re = RegExp(r'\d+(,\d{3})*(만원|원|%)?');
 
-Set<String> tokens(WidgetTester t) {
-  final out = <String>{};
-  for (final w in t.allWidgets) {
-    if (w is Text) {
-      final s = w.data ?? w.textSpan?.toPlainText();
-      if (s == null) continue;
-      for (final m in RegExp(r'\d+(,\d{3})*(만원|원|%)?').allMatches(s)) {
-        out.add(m.group(0)!);
-      }
-    }
-  }
-  return out;
-}
+Set<String> tokens(WidgetTester t) => screenTokens(t, _re);
 
 bool shows(WidgetTester t, String s) => tokens(t).contains(s);
 
@@ -53,24 +34,8 @@ bool hasPhrase(WidgetTester t, String phrase) {
 }
 
 void main() {
-  int seq = 0;
-
-  Future<void> open(WidgetTester t, Widget w, List<(int, String)> inputs) async {
-    t.view.physicalSize = const Size(390, 4500);
-    t.view.devicePixelRatio = 1.0;
-    addTearDown(t.view.resetPhysicalSize);
-    addTearDown(t.view.resetDevicePixelRatio);
-    dbService = InMemoryDatabaseHelper();
-    await dbService.initDatabase();
-    await t.pumpWidget(MaterialApp(key: ValueKey('b4-${seq++}'), home: w));
-    await t.pump(const Duration(milliseconds: 300));
-    for (final (idx, text) in inputs) {
-      await t.enterText(find.byType(TextField).at(idx), text);
-      await t.pump(const Duration(milliseconds: 250));
-    }
-    await t.pump(const Duration(milliseconds: 400));
-    t.takeException();
-  }
+  Future<void> open(WidgetTester t, Widget w, List<(int, String)> inputs) =>
+      openScreen(t, w, inputs: inputs, height: 4500);
 
   group('기초연금 (기초연금법 §5·§8)', () {
     testWidgets('소득인정액이 선정기준액 이하면 수급 가능', (t) async {

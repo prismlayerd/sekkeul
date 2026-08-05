@@ -2,10 +2,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/ui/screens/earned_income_tax_credit_screen.dart';
 import 'package:secul/ui/screens/loan_interest_screen.dart';
 import 'package:secul/ui/screens/loan_schedule_screen.dart';
+
+import 'support/screen_probe.dart';
 
 /// 배치 2 — 대출 계산기와 근로장려금.
 ///
@@ -15,38 +16,12 @@ import 'package:secul/ui/screens/loan_schedule_screen.dart';
 ///
 /// 근로장려금 근거: 조세특례제한법 §100의5
 ///   · 「2025년 개정세법 해설」 p.298 (맞벌이 소득상한 3,800만 → 4,400만)
-String comma(num v) {
-  final s = v.round().abs().toString();
-  final b = StringBuffer();
-  for (int i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-    b.write(s[i]);
-  }
-  return '${v < 0 ? '-' : ''}$b';
-}
+final _re = RegExp(r'\d+(,\d{3})*(\.\d+)?(만원|억원|원|%)?');
 
-Set<String> tokens(WidgetTester t) {
-  final out = <String>{};
-  for (final w in t.allWidgets) {
-    if (w is Text) {
-      final s = w.data ?? w.textSpan?.toPlainText();
-      if (s == null) continue;
-      for (final m in RegExp(r'\d+(,\d{3})*(\.\d+)?(만원|억원|원|%)?').allMatches(s)) {
-        out.add(m.group(0)!);
-      }
-    }
-  }
-  return out;
-}
+Set<String> tokens(WidgetTester t) => screenTokens(t, _re);
 
-void expectToken(WidgetTester t, String want, String what) {
-  final shown = tokens(t);
-  if (!shown.contains(want)) {
-    // ignore: avoid_print
-    print('  ✕ $what — 기대 $want, 화면: ${(shown.toList()..sort()).take(40).join(' / ')}');
-  }
-  expect(shown, contains(want), reason: '$what — 화면 값이 검산과 다르다 (기대 $want)');
-}
+void expectToken(WidgetTester t, String want, String what) =>
+    expectScreenToken(t, _re, want, what);
 
 /// 원리금균등 월 상환액 — M = P·r(1+r)^n / ((1+r)^n − 1)
 double refAnnuity({required double principal, required double annualRate, required int months}) {
@@ -57,24 +32,8 @@ double refAnnuity({required double principal, required double annualRate, requir
 }
 
 void main() {
-  int seq = 0;
-
-  Future<void> open(WidgetTester t, Widget w, List<String> inputs) async {
-    t.view.physicalSize = const Size(390, 4000);
-    t.view.devicePixelRatio = 1.0;
-    addTearDown(t.view.resetPhysicalSize);
-    addTearDown(t.view.resetDevicePixelRatio);
-    dbService = InMemoryDatabaseHelper();
-    await dbService.initDatabase();
-    await t.pumpWidget(MaterialApp(key: ValueKey('b2-${seq++}'), home: w));
-    await t.pump(const Duration(milliseconds: 300));
-    for (int i = 0; i < inputs.length; i++) {
-      await t.enterText(find.byType(TextField).at(i), inputs[i]);
-      await t.pump(const Duration(milliseconds: 250));
-    }
-    await t.pump(const Duration(milliseconds: 400));
-    t.takeException();
-  }
+  Future<void> open(WidgetTester t, Widget w, List<String> inputs) =>
+      openScreen(t, w, inputs: inputs.indexed.toList());
 
   group('대출 — 원리금균등 상환식', () {
     testWidgets('1억 · 연 4% · 30년 → 월 상환액이 공식과 일치한다', (t) async {

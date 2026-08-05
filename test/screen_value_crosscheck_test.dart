@@ -10,6 +10,7 @@ import 'package:secul/ui/screens/expense_calendar_screen.dart';
 import 'package:secul/ui/screens/home_screen.dart';
 import 'package:secul/ui/screens/salary_net_screen.dart';
 
+import 'support/screen_probe.dart';
 import 'support/tax_law_reference.dart';
 
 /// **화면에 실제로 그려진 숫자**를 엔진 값과 맞춰 본다.
@@ -20,38 +21,9 @@ import 'support/tax_law_reference.dart';
 /// 방식: 프로필·가계부를 심고 화면을 펌프한 뒤, 위젯 트리의 모든 `Text`를 긁어
 /// **금액 문자열**을 모은다. 기대값이 그 안에 없으면 실패하고, 화면이 실제로 무엇을
 /// 그렸는지 전부 출력한다.
-List<String> allTexts(WidgetTester t) {
-  final out = <String>[];
-  for (final e in t.allWidgets) {
-    if (e is Text) {
-      final s = e.data ?? e.textSpan?.toPlainText();
-      if (s != null && s.trim().isNotEmpty) out.add(s);
-    }
-  }
-  return out;
-}
-
 /// 화면에 보이는 금액 문자열만 추린다 — "3,500,000원", "1,125,000" 등.
-Set<String> moneyTexts(WidgetTester t) {
-  final re = RegExp(r'-?\d{1,3}(,\d{3})+');
-  final out = <String>{};
-  for (final s in allTexts(t)) {
-    for (final m in re.allMatches(s)) {
-      out.add(m.group(0)!);
-    }
-  }
-  return out;
-}
-
-String comma(num v) {
-  final s = v.round().abs().toString();
-  final b = StringBuffer();
-  for (int i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-    b.write(s[i]);
-  }
-  return '${v < 0 ? '-' : ''}$b';
-}
+Set<String> moneyTexts(WidgetTester t) =>
+    screenTokens(t, RegExp(r'-?\d{1,3}(,\d{3})+'));
 
 /// 이 파일은 **표시된 값**만 본다. 레이아웃 넘침은
 /// `small_screen_overflow_test.dart`가, 알림 플러그인 미초기화

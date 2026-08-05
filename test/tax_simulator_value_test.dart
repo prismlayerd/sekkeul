@@ -10,6 +10,7 @@ import 'package:secul/ui/screens/tax_simulator_screen.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'support/screen_probe.dart';
 import 'support/tax_law_reference.dart';
 
 /// 세무도구 ①진단 화면 — **화면에 뜬 세금이 조문 검산과 같은지** 본다.
@@ -20,40 +21,12 @@ import 'support/tax_law_reference.dart';
 ///
 /// 근거: 시행령 §143③1의2 단순경비율 / 소법 §50① 인적공제 / §55① 세율
 ///      / §59의4⑨ 표준세액공제 7만 / §127 원천징수 3.3% / 지방세법 §92
-String comma(num v) {
-  final s = v.round().abs().toString();
-  final b = StringBuffer();
-  for (int i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-    b.write(s[i]);
-  }
-  return '${v < 0 ? '-' : ''}$b';
-}
+final _re = RegExp(r'-?\d{1,3}(,\d{3})+');
 
-Set<String> moneyTexts(WidgetTester t) {
-  final re = RegExp(r'-?\d{1,3}(,\d{3})+');
-  final out = <String>{};
-  for (final w in t.allWidgets) {
-    if (w is Text) {
-      final s = w.data ?? w.textSpan?.toPlainText();
-      if (s == null) continue;
-      for (final m in re.allMatches(s)) {
-        out.add(m.group(0)!);
-      }
-    }
-  }
-  return out;
-}
+Set<String> moneyTexts(WidgetTester t) => screenTokens(t, _re);
 
-void expectShown(WidgetTester t, num value, String what) {
-  final want = comma(value);
-  final shown = moneyTexts(t);
-  if (!shown.contains(want)) {
-    // ignore: avoid_print
-    print('  ✕ $what — 기대 $want, 화면의 금액: ${(shown.toList()..sort()).join(' / ')}');
-  }
-  expect(shown, contains(want), reason: '$what — 화면 숫자가 조문 검산과 다르다 (기대 $want)');
-}
+void expectShown(WidgetTester t, num value, String what) =>
+    expectScreenToken(t, _re, comma(value), what);
 
 void main() {
   setUpAll(() {

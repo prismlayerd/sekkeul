@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/ui/screens/car_tax_annual_screen.dart';
 import 'package:secul/ui/screens/isa_tax_benefits_screen.dart';
 import 'package:secul/ui/screens/national_pension_timing_screen.dart';
+
+import 'support/screen_probe.dart';
 
 /// 배치 3 — 국민연금 수령시기 · ISA · 자동차세 연납.
 ///
@@ -12,59 +13,16 @@ import 'package:secul/ui/screens/national_pension_timing_screen.dart';
 ///      / 조특법 §91의18 ISA — 비과세 한도 일반 200만·서민형 400만,
 ///        초과분 9.9% 분리과세(지방세 포함), 일반계좌 이자소득세 15.4%
 ///      / 지방세법 §128③ · 시행령 §125 자동차세 연납 공제
-String comma(num v) {
-  final s = v.round().abs().toString();
-  final b = StringBuffer();
-  for (int i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-    b.write(s[i]);
-  }
-  return '${v < 0 ? '-' : ''}$b';
-}
+final _re = RegExp(r'[+-]?\d+(,\d{3})*(\.\d+)?(만원|억원|원|%)?');
 
-Set<String> tokens(WidgetTester t) {
-  final out = <String>{};
-  for (final w in t.allWidgets) {
-    if (w is Text) {
-      final s = w.data ?? w.textSpan?.toPlainText();
-      if (s == null) continue;
-      for (final m
-          in RegExp(r'[+-]?\d+(,\d{3})*(\.\d+)?(만원|억원|원|%)?').allMatches(s)) {
-        out.add(m.group(0)!);
-      }
-    }
-  }
-  return out;
-}
+Set<String> tokens(WidgetTester t) => screenTokens(t, _re);
 
-void expectToken(WidgetTester t, String want, String what) {
-  final shown = tokens(t);
-  if (!shown.contains(want)) {
-    // ignore: avoid_print
-    print('  ✕ $what — 기대 $want, 화면: ${(shown.toList()..sort()).take(40).join(' / ')}');
-  }
-  expect(shown, contains(want), reason: '$what — 화면 값이 검산과 다르다 (기대 $want)');
-}
+void expectToken(WidgetTester t, String want, String what) =>
+    expectScreenToken(t, _re, want, what);
 
 void main() {
-  int seq = 0;
-
-  Future<void> open(WidgetTester t, Widget w, List<String> inputs) async {
-    t.view.physicalSize = const Size(390, 4500);
-    t.view.devicePixelRatio = 1.0;
-    addTearDown(t.view.resetPhysicalSize);
-    addTearDown(t.view.resetDevicePixelRatio);
-    dbService = InMemoryDatabaseHelper();
-    await dbService.initDatabase();
-    await t.pumpWidget(MaterialApp(key: ValueKey('b3-${seq++}'), home: w));
-    await t.pump(const Duration(milliseconds: 300));
-    for (int i = 0; i < inputs.length; i++) {
-      await t.enterText(find.byType(TextField).at(i), inputs[i]);
-      await t.pump(const Duration(milliseconds: 250));
-    }
-    await t.pump(const Duration(milliseconds: 400));
-    t.takeException();
-  }
+  Future<void> open(WidgetTester t, Widget w, List<String> inputs) =>
+      openScreen(t, w, inputs: inputs.indexed.toList(), height: 4500);
 
   group('국민연금 조기·연기 (국민연금법 §61③·§62④)', () {
     testWidgets('조기수령은 1년당 6% 감액 — 5년이면 30%', (t) async {
