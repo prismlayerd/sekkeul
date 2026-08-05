@@ -10,10 +10,9 @@ extension KeepWords on String {
   /// 어절 안에서는 줄이 바뀌지 않게 한 문자열.
   ///
   /// 화면 폭보다 긴 어절을 붙여 두면 잘리지 못해 넘쳐흐르므로,
-  /// [maxToken]자를 넘는 어절은 손대지 않는다(끊기더라도 넘치는 것보다 낫다).
-  String get keepWords => keepWordsUpTo();
-
-  String keepWordsUpTo({int maxToken = 14}) {
+  /// 14자를 넘는 어절은 손대지 않는다(끊기더라도 넘치는 것보다 낫다).
+  String get keepWords {
+    const maxToken = 14;
     if (isEmpty) return this;
     const joiner = '⁠';
     // 줄바꿈(\n)과 공백은 그대로 둔다 — 거기서 줄이 바뀌어야 하니까.

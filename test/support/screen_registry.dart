@@ -12,7 +12,6 @@ import 'package:secul/ui/screens/benefit_screen.dart';
 import 'package:secul/ui/screens/bookkeeping_guide_screen.dart';
 import 'package:secul/ui/screens/correction_request_screen.dart';
 import 'package:secul/ui/screens/deduction_gate_screen.dart';
-import 'package:secul/ui/screens/diagnosis_screen.dart';
 import 'package:secul/ui/screens/document_checklist_screen.dart';
 import 'package:secul/ui/screens/forms_screen.dart';
 import 'package:secul/ui/screens/missed_deduction_diagnosis_screen.dart';
@@ -168,7 +167,6 @@ final byTypeScreens = <(String, Widget Function(String))>[
     ('BookkeepingGuideScreen', (u) => BookkeepingGuideScreen(userType: u)),
     ('CorrectionRequestScreen', (u) => CorrectionRequestScreen(userType: u)),
     ('DeductionGateScreen', (u) => DeductionGateScreen(userType: u)),
-    ('DiagnosisScreen', (u) => DiagnosisScreen(userType: u)),
     ('DocumentChecklistScreen', (u) => DocumentChecklistScreen(userType: u)),
     ('FormsScreen', (u) => FormsScreen(userType: u)),
     ('MissedDeductionDiagnosisScreen', (u) => MissedDeductionDiagnosisScreen(userType: u)),
