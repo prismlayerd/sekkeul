@@ -84,9 +84,6 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
         title: Text('알림함', style: AppTheme.serif(22, ink, weight: FontWeight.w400, spacing: -0.3)),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_rounded, color: sub),

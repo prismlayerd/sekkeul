@@ -68,11 +68,8 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: Text('연봉 실수령액',
             style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
-        iconTheme: IconThemeData(color: textColor),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),

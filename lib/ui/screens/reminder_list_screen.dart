@@ -118,9 +118,6 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
         leading: widget.embedded
             ? null

@@ -245,9 +245,6 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: bgColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor),
           onPressed: () => Navigator.pop(context),

@@ -417,10 +417,6 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: bg,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: ink),
         title: Text('고정 지출', style: AppTheme.serif(22, ink)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

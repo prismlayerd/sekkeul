@@ -70,10 +70,6 @@ class _BeotimmokLoanScreenState extends State<BeotimmokLoanScreen> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: AppTheme.backgroundColor(context),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: ink),
         titleSpacing: 0,
         title: Text('버팀목 대출 계산',
             style: AppTheme.serif(AppTheme.serifMD, ink,

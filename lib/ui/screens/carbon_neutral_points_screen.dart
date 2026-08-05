@@ -77,10 +77,6 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: ink),
         title: Text('탄소중립포인트',
             style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),

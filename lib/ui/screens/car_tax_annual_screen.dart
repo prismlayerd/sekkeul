@@ -47,10 +47,6 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: ink),
         title: Text('자동차세 연납 할인',
             style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),

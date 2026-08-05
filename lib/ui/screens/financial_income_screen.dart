@@ -104,11 +104,8 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: Text('금융소득 종합과세 계산',
             style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
-        iconTheme: IconThemeData(color: textColor),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),

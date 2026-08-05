@@ -199,10 +199,6 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: bg,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: ink),
         title: Text('$monthLabel 고정 지출'.keepWords, style: AppTheme.serif(22, ink)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

@@ -73,14 +73,11 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: Text('주휴수당 · 최저임금',
             style: TextStyle(
                 color: textColor,
                 fontSize: 16,
                 fontWeight: FontWeight.bold)),
-        iconTheme: IconThemeData(color: textColor),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),

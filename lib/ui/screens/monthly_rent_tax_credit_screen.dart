@@ -62,10 +62,6 @@ class _MonthlyRentTaxCreditScreenState
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: AppTheme.backgroundColor(context),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: ink),
         titleSpacing: 0,
         title: Text('월세 세액공제',
             style: AppTheme.serif(AppTheme.serifMD, ink,

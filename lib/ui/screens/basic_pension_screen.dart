@@ -56,10 +56,6 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: ink),
         title: Text('기초연금 계산기',
             style: AppTheme.serif(16, ink,
                 weight: FontWeight.w400, spacing: -0.3)),

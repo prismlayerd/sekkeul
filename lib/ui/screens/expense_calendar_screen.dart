@@ -520,10 +520,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: bg,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: ink),
         title: Text(
           widget.initialFocus == 'income'
               ? '소득 기록'

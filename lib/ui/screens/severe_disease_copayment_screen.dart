@@ -65,10 +65,6 @@ class _SevereDiseaseCopaymentScreenState
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: ink),
         title: Text('중증질환 산정특례',
             style: AppTheme.serif(16, ink,
                 weight: FontWeight.w400, spacing: -0.3)),

@@ -148,11 +148,8 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: Text('부양가족 공제 확인',
             style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
-        iconTheme: IconThemeData(color: textColor),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),

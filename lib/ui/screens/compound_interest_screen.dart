@@ -88,12 +88,9 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: Text('복리 계산기',
             style: TextStyle(
                 color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
-        iconTheme: IconThemeData(color: textColor),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),

@@ -761,9 +761,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
         titleSpacing: 16,
         title: Container(

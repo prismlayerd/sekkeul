@@ -464,10 +464,6 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: bg,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: ink),
         title: Text(title, style: AppTheme.serif(20, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SafeArea(

@@ -57,10 +57,6 @@ class MonthListScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: bg,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: ink),
         title: Text('$year년 $month월 기록'.keepWords, style: AppTheme.serif(22, ink)),
       ),
       body: SafeArea(

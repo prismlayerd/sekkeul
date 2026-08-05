@@ -67,11 +67,8 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: Text('보험료 세액공제 계산기',
             style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
-        iconTheme: IconThemeData(color: textColor),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),

@@ -57,10 +57,6 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: ink),
         title: Text('최저임금 인상 영향',
             style: AppTheme.serif(16, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
