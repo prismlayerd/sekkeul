@@ -7,7 +7,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../theme/app_theme.dart';
-import '../../core/data/app_mode.dart';
 import '../../core/data/theme_pref.dart';
 import '../../core/data/backup_service.dart';
 import '../../core/data/db_helper.dart';
@@ -141,20 +140,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (old.notificationsEnabled != widget.notificationsEnabled) {
       setState(() => _notificationsEnabled = widget.notificationsEnabled);
     }
-  }
-
-  Future<void> _setDataMode(bool wantLinked) async {
-    if (wantLinked && !kLinkedModeEnabled) {
-      _snack('자동 연동은 준비 중이에요. 곧 제공할게요.');
-      return;
-    }
-    final mode = wantLinked ? AppMode.linked : AppMode.manual;
-    final existing = await dbService.getProfile() ?? <String, dynamic>{};
-    final merged = Map<String, dynamic>.from(existing);
-    merged['data_mode'] = mode.dbValue;
-    merged['user_type'] = existing['user_type'] ?? '직장인';
-    await dbService.saveProfile(merged);
-    appModeNotifier.value = mode;
   }
 
   void _snack(String msg) {
@@ -319,23 +304,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           NotificationSettingsScreen(userType: widget.userType))),
             ),
             AppTheme.hairline(context),
-            ValueListenableBuilder<AppMode>(
-              valueListenable: appModeNotifier,
-              builder: (context, mode, _) {
-                final isLinked = mode.isLinked;
-                return _glyphRow(
-                  title: '데이터 수집 방식',
-                  trailingTag: isLinked ? null : _tag(context, '연동 준비 중'),
-                  trailing: Switch(
-                    value: isLinked,
-                    activeColor: AppTheme.accentColor(context),
-                    onChanged: _setDataMode,
-                  ),
-                  onTap: () => _setDataMode(!isLinked),
-                );
-              },
-            ),
-            AppTheme.hairline(context),
             ValueListenableBuilder<ThemeMode>(
               valueListenable: themeModeNotifier,
               builder: (context, mode, _) => _glyphRow(
@@ -454,12 +422,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: _statusCell(context, label: '알림', value: _notificationsEnabled ? '켜짐' : '꺼짐'),
               ),
               Container(width: 1, height: 44, color: line),
-              ValueListenableBuilder<AppMode>(
-                valueListenable: appModeNotifier,
-                builder: (context, mode, _) => Expanded(
-                  child: _statusCell(context,
-                      label: '데이터 수집', value: mode.isLinked ? '자동 연동' : '수동 입력'),
-                ),
+              Expanded(
+                child: _statusCell(context, label: '데이터 수집', value: '수동 입력'),
               ),
             ],
           ),

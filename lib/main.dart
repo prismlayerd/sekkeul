@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'core/data/db_helper.dart';
-import 'core/data/app_mode.dart';
 import 'core/data/theme_pref.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/app_lock_screen.dart';
@@ -29,10 +28,6 @@ void main() async {
       await notificationHelper.init();
     }
     await dbService.initDatabase();
-
-    // 저장된 데이터 수집 모드(제1/제2) 복원
-    final profile = await dbService.getProfile();
-    appModeNotifier.value = appModeFromDb(profile?['data_mode'] as String?);
 
     // 저장된 화면 테마(시스템/라이트/다크) 복원 — 미설정 시 시스템(OS 따라감)
     themeModeNotifier.value =
