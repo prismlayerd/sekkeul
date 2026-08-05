@@ -60,3 +60,10 @@ android/build/
 
 # 프로브·임시 테스트
 test/tmp/
+
+# 일회성 추출 스크립트와 그 출력물. 원문은 ../sekkeul-지식/에 정리돼 있고
+# 앱은 이걸 읽지 않는다 — 저장소에 남을 이유가 없다.
+scratch/
+
+# 폐기된 에이전트 워크플로(ARCHITECT/BUILDER/REVIEWER)의 빈 템플릿.
+project-folder/
