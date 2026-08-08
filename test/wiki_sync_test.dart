@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// **지식 노트(wiki)와 앱 코드가 같은 말을 하는지 본다.**
 ///
-/// 옵시디언 볼트의 `sekkeul/지식/세법/*.md`는 앱의 사양서다. 노트마다
+/// 옵시디언 볼트의 `AI-Sessions/wiki/concepts/*.md`는 앱의 사양서다. 노트마다
 /// `## 앱에서 쓰이는 곳`에 코드 위치와 **그 줄의 코드를 그대로** 적게 돼 있다.
 /// 이 테스트는 그 인용문이 실제 파일에 아직 그대로 있는지 확인한다.
 ///
@@ -72,7 +72,7 @@ Directory? _lawDir() {
     if (env['HOME'] != null) '${env['HOME']}/OneDrive/Desktop/wiki',
   ]) {
     if (root == null || root.isEmpty) continue;
-    final d = Directory('${root.replaceAll(r'\', '/')}/sekkeul/지식/세법');
+    final d = Directory('${root.replaceAll(r'\', '/')}/AI-Sessions/wiki/concepts');
     if (d.existsSync()) return d;
   }
   return null;
