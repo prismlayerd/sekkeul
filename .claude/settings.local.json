@@ -134,7 +134,10 @@
       "Bash(python -)",
       "Bash(grep -vE \"^\\\\s*#|^$\")",
       "mcp__claude-in-chrome__tabs_context_mcp",
-      "mcp__claude-in-chrome__navigate"
+      "mcp__claude-in-chrome__navigate",
+      "Bash(mkdir -p \"/c/src/project/sekkeul-work/마케팅\")",
+      "mcp__7d577208-aeb2-4438-b05c-c046d69710cf__notion-search",
+      "mcp__7d577208-aeb2-4438-b05c-c046d69710cf__notion-fetch"
     ]
   }
 }
