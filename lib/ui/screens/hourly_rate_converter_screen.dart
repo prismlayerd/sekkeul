@@ -102,8 +102,8 @@ class _HourlyRateConverterScreenState
                     const SizedBox(height: 12),
                     Text(
                         _rate >= _minWage2026
-                            ? '* 2026년 최저시급(10,320원) 이상입니다.'
-                            : '* 2026년 최저시급(10,320원)보다 낮습니다.',
+                            ? '* ${TaxRates.minimumWageYear}년 최저시급(${won(_minWage2026)}) 이상입니다.'
+                            : '* ${TaxRates.minimumWageYear}년 최저시급(${won(_minWage2026)})보다 낮습니다.',
                         style: AppTheme.sans(11, sub)),
                   ],
                 ),

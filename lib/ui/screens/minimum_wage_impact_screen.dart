@@ -137,11 +137,15 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
               const SizedBox(height: 24),
             ],
             _infoBox(
-              '2026년 최저임금',
+              '${TaxRates.minimumWageYear}년 최저임금',
               [
-                '시급 10,320원 (2025년 10,030원 대비 +290원, +2.9%)',
-                '월급(주 40시간, 월 209시간 기준): 2,156,880원',
-                '연환산: 약 25,882,560원',
+                '시급 ${won(_wage2026)} (${TaxRates.minimumWageYear - 1}년 ${won(_wage2025)} 대비 '
+                    '+${won(_wage2026 - _wage2025)}, '
+                    '+${((_wage2026 - _wage2025) / _wage2025 * 100).toStringAsFixed(1)}%)',
+                '월급(주 40시간, 월 209시간 기준): ${won(_wage2026 * 209)}',
+                '연환산: 약 ${won(_wage2026 * 209 * 12)}',
+                // ponytail: 실질 시급만 리터럴로 남겼다 — 주휴 포함 환산식을 확인 못 했다.
+                // 최저임금 갱신 때 이 줄은 손으로 고쳐야 한다.
                 '실질 시급(주휴 포함 환산): 약 12,414원',
               ],
               line,

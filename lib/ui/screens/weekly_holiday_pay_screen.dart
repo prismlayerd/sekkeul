@@ -96,7 +96,9 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('주 15시간 이상 일하면 주휴수당이 발생합니다. (2026 최저임금 10,320원)'.keepWords,
+            Text(
+                '주 15시간 이상 일하면 주휴수당이 발생합니다. (${TaxRates.minimumWageYear} 최저임금 ${won(_minimumWage2026)})'
+                    .keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
@@ -111,7 +113,9 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                 Icon(Icons.info_outline_rounded, color: primary, size: 18),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text('2026년 최저임금 시급 10,320원'.keepWords,
+                  child: Text(
+                      '${TaxRates.minimumWageYear}년 최저임금 시급 ${won(_minimumWage2026)}'
+                          .keepWords,
                       style: TextStyle(
                           color: primary,
                           fontSize: 13,
@@ -149,7 +153,9 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                         const Icon(Icons.warning_rounded,
                             color: Colors.redAccent, size: 14),
                         const SizedBox(width: 6),
-                        Text('최저임금 미달 (10,320원 이상이어야 합니다)'.keepWords,
+                        Text(
+                            '최저임금 미달 (${won(_minimumWage2026)} 이상이어야 합니다)'
+                                .keepWords,
                             style: TextStyle(
                                 color: Colors.redAccent,
                                 fontSize: 12,

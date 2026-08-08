@@ -158,6 +158,10 @@ class TaxRates {
   static const double minimumHourlyWage2026 = 10320.0;
   static const double minimumHourlyWage2025 = 10030.0;
 
+  /// [minimumHourlyWage2026]이 적용되는 해 — 화면에 "○○년 최저시급"으로 표시된다.
+  /// 위 상수를 새 해로 올릴 때 이 값도 같이 올린다. 따로 두면 금액과 연도가 어긋난다.
+  static const int minimumWageYear = 2026;
+
   /// 구직급여 하한액 — 고용보험법 §46②: 최저임금일액(시급 × 8시간)의 80%.
   static const double unemploymentDailyFloor = minimumHourlyWage2026 * 8 * 0.8;
 
