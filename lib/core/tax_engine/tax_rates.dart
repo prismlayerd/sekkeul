@@ -3,6 +3,8 @@ import 'tax_year.dart';
 /// 종합소득세 및 각종 세제 혜택 산정에 필요한 세율 구간 및 요율 정의 클래스
 class TaxRates {
   /// 종합소득세 세율 구간 정의 정보 (2024~2026년 귀속 기준 동일)
+  /// 소득세법 §55① 8구간 원문과 1:1 대조 — 확인일 2026-08-08.
+  /// 독립 참조표는 `test/support/tax_law_reference.dart`에 있다(엔진 상수를 빌려오지 않는다).
   static const List<TaxBracket> incomeTaxBrackets = [
     TaxBracket(limit: 14000000, rate: 0.06, deduction: 0),
     TaxBracket(limit: 50000000, rate: 0.15, deduction: 1260000),
@@ -15,6 +17,7 @@ class TaxRates {
   ];
 
   /// 인적공제 기본 공제액 (1인당 150만 원) — 소득세법 §50①, 연도 무관 고정액.
+  /// 확인일 2026-08-08.
   static const double basicDeductionPerPerson = 1500000.0;
 
   /// 인적공제 추가공제액 (2025~2026 귀속 동일)
