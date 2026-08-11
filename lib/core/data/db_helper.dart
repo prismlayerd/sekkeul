@@ -859,9 +859,10 @@ class SqfliteDatabaseHelper implements DatabaseService {
     final db = _db;
     if (db == null) return;
 
-    await db.transaction((txn) async {
-      await txn.delete('user_profile'); // 기존 단일 프로필 유지
-      await txn.insert('user_profile', await _fitToTable(txn, 'user_profile', {
+    // 거래 **밖에서** 컬럼을 맞춘다. 거래 안에서 같은 DB에 또 쓰면(오류 기록)
+    // sqflite가 교착에 빠져 저장이 영영 안 끝난다 — 2026-08-10에 그렇게 만들어
+    // 앱 화면이 통째로 안 뜨게 했다.
+    final row = await _fitToTable(db, 'user_profile', {
         'user_type': profile['user_type'],
         'gross_income': profile['gross_income'],
         'dependents': profile['dependents'],
@@ -906,7 +907,11 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'freelancer_health_insurance': profile['freelancer_health_insurance'],
         'is_new_business': profile['is_new_business'] == true ? 1 : 0,
         'has_multiple_businesses': profile['has_multiple_businesses'] == true ? 1 : 0,
-      }));
+    });
+
+    await db.transaction((txn) async {
+      await txn.delete('user_profile'); // 기존 단일 프로필 유지
+      await txn.insert('user_profile', row);
     });
   }
 
@@ -919,9 +924,10 @@ class SqfliteDatabaseHelper implements DatabaseService {
   /// "내 정보 저장이 전혀 안 된다"로 드러났다.
   ///
   /// 빠진 컬럼은 오류 기록에 남겨 다음에 무엇이 없었는지 알 수 있게 한다.
+  /// **거래 안에서 부르지 마라.** 안에서 오류 기록을 쓰면 교착에 빠진다.
   Future<Map<String, dynamic>> _fitToTable(
-      DatabaseExecutor txn, String table, Map<String, dynamic> row) async {
-    final info = await txn.rawQuery('PRAGMA table_info($table)');
+      Database db, String table, Map<String, dynamic> row) async {
+    final info = await db.rawQuery('PRAGMA table_info($table)');
     final columns = info.map((r) => r['name'] as String).toSet();
     final missing = row.keys.where((k) => !columns.contains(k)).toList();
     if (missing.isEmpty) return row;
