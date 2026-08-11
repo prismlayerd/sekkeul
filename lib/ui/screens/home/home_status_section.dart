@@ -254,9 +254,12 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             },
           ),
         ],
-        // ── 2순위 유도: 지출 목표 — 연봉을 채운 뒤에만 뜬다.
-        // (showExpenseInput은 기존 목표를 수정하려고 연 상태라 순서와 무관하게 유지)
-        if ((!needsSalary && needsBudget) || widget.showExpenseInput) ...[
+        // ── 지출 목표 유도 — 유형과 상관없이 처음부터 뜬다.
+        // 예전엔 직장인·N잡러에게 "연봉을 채운 뒤에만" 보여줬는데, 프리랜서는
+        // 연봉 단계가 없어 바로 떴다. 같은 기능이 유형에 따라 있고 없어 보였고,
+        // 연봉 저장이 막히면 지출 목표를 영영 못 만드는 잠금이 됐다 (2026-08-10).
+        // 대신 빈 상태에서 유도가 둘(연봉·지출 목표) 뜬다 — 그건 감수한다.
+        if (needsBudget || widget.showExpenseInput) ...[
           const SizedBox(height: 12),
           _buildExpensePromptOrInput(ink, sub, accent),
         ],
