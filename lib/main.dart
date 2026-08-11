@@ -12,6 +12,10 @@ import 'core/navigation/app_route_observer.dart';
 
 import 'ui/theme/app_theme.dart';
 
+/// 앱 시작 준비가 실패한 사유. DB가 안 열린 기기에서는 오류 기록 테이블에
+/// 못 적으므로 여기 들고 있다가 설정 화면에서 내보낼 때 함께 넘긴다.
+String? startupError;
+
 void main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
@@ -22,16 +26,24 @@ void main() async {
         details.stack?.toString() ?? '',
       );
     };
-    if (!kIsWeb) {
-      // 알림 권한은 여기서 즉시 요청하지 않는다(U-1) — 첫 리마인더 화면 진입 또는
-      // 설정에서 알림을 켤 때(맥락과 함께) 요청한다.
-      await notificationHelper.init();
-    }
-    await dbService.initDatabase();
+    // 준비가 실패해도 화면은 띄운다. 예전엔 이 셋 중 하나만 던져도 runApp에
+    // 닿지 못해 앱이 통째로 안 떴다 — 기기마다 흰 화면이 되던 자리다.
+    // DB가 안 열린 기기에서는 insertErrorLog도 못 쓰므로 사유를 메모리에 들고
+    // 있다가 설정 화면의 "오류 기록 내보내기"가 함께 내보낸다.
+    try {
+      if (!kIsWeb) {
+        // 알림 권한은 여기서 즉시 요청하지 않는다(U-1) — 첫 리마인더 화면 진입 또는
+        // 설정에서 알림을 켤 때(맥락과 함께) 요청한다.
+        await notificationHelper.init();
+      }
+      await dbService.initDatabase();
 
-    // 저장된 화면 테마(시스템/라이트/다크) 복원 — 미설정 시 시스템(OS 따라감)
-    themeModeNotifier.value =
-        themeModeFromDb(await dbService.getAppState('theme_mode'));
+      // 저장된 화면 테마(시스템/라이트/다크) 복원 — 미설정 시 시스템(OS 따라감)
+      themeModeNotifier.value =
+          themeModeFromDb(await dbService.getAppState('theme_mode'));
+    } catch (e, stack) {
+      startupError = '[시작 실패] $e\n$stack';
+    }
 
     runApp(const SeculApp());
   }, (error, stack) {

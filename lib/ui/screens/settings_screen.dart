@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../../core/data/theme_pref.dart';
 import '../../core/data/backup_service.dart';
 import '../../core/data/db_helper.dart';
+import '../../main.dart' show startupError;
 import '../../core/security/app_lock_service.dart';
 import 'notification_settings_screen.dart';
 import '../theme/text_wrap.dart';
@@ -167,11 +168,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _exportErrorLogs() async {
     final logs = await dbService.getErrorLogs();
-    if (logs.isEmpty) {
+    if (logs.isEmpty && startupError == null) {
       _snack('기록된 오류가 없어요.');
       return;
     }
     final buffer = StringBuffer();
+    if (startupError != null) {
+      buffer.writeln(startupError);
+      buffer.writeln('---');
+    }
     for (final log in logs) {
       buffer.writeln('[${log['occurred_at']}] ${log['message']}');
       buffer.writeln(log['stack_trace']);
