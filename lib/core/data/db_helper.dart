@@ -861,7 +861,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
 
     await db.transaction((txn) async {
       await txn.delete('user_profile'); // 기존 단일 프로필 유지
-      await txn.insert('user_profile', {
+      await txn.insert('user_profile', await _fitToTable(txn, 'user_profile', {
         'user_type': profile['user_type'],
         'gross_income': profile['gross_income'],
         'dependents': profile['dependents'],
@@ -906,8 +906,31 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'freelancer_health_insurance': profile['freelancer_health_insurance'],
         'is_new_business': profile['is_new_business'] == true ? 1 : 0,
         'has_multiple_businesses': profile['has_multiple_businesses'] == true ? 1 : 0,
-      });
+      }));
     });
+  }
+
+  /// **그 기기에 실제로 있는 컬럼만 남긴다.**
+  ///
+  /// 스키마 이전(`ALTER TABLE ... ADD COLUMN`)이 전부 `try/catch`로 감싸여 있어
+  /// 한 번 실패하면 그 컬럼은 영영 없다. 그런데 저장은 컬럼 목록을 손으로 적어
+  /// 넣으므로, 없는 컬럼 하나 때문에 **저장 전체가 터진다** — 화면에는 아무 일도
+  /// 안 일어난 것처럼 보이고, 기기마다 다르게 나타난다. 2026-08-10에 실기기에서
+  /// "내 정보 저장이 전혀 안 된다"로 드러났다.
+  ///
+  /// 빠진 컬럼은 오류 기록에 남겨 다음에 무엇이 없었는지 알 수 있게 한다.
+  Future<Map<String, dynamic>> _fitToTable(
+      DatabaseExecutor txn, String table, Map<String, dynamic> row) async {
+    final info = await txn.rawQuery('PRAGMA table_info($table)');
+    final columns = info.map((r) => r['name'] as String).toSet();
+    final missing = row.keys.where((k) => !columns.contains(k)).toList();
+    if (missing.isEmpty) return row;
+    await insertErrorLog(
+      '$table 에 없는 컬럼 ${missing.length}개를 빼고 저장했다: ${missing.join(", ")}',
+      '스키마 이전이 실패한 기기다. 값은 저장되지만 그 항목만 안 남는다.',
+    );
+    return Map<String, dynamic>.from(row)
+      ..removeWhere((k, _) => !columns.contains(k));
   }
 
   @override

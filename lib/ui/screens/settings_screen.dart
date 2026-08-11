@@ -168,11 +168,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _exportErrorLogs() async {
     final logs = await dbService.getErrorLogs();
-    if (logs.isEmpty && startupError == null) {
-      _snack('기록된 오류가 없어요.');
-      return;
-    }
     final buffer = StringBuffer();
+    // 기록이 없어도 공유는 연다. 예전엔 안내 문구만 띄우고 끝나서
+    // "눌러도 아무것도 안 된다"로 보였다 (2026-08-10 실기기).
+    // "기록 없음"도 진단에 쓰이는 정보다 — 저장이 되는지부터 갈라준다.
+    buffer.writeln('세끌 오류 기록 · ${_stamp()}');
+    buffer.writeln('기록 ${logs.length}건'
+        '${startupError == null ? '' : ' · 시작 실패 있음'}');
+    buffer.writeln('---');
     if (startupError != null) {
       buffer.writeln(startupError);
       buffer.writeln('---');
