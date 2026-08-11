@@ -182,11 +182,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
       buffer.writeln(log['stack_trace']);
       buffer.writeln('---');
     }
+    // 본문으로 보낸다. 첨부는 받는 앱(메일·메신저)에 따라 조용히 떨어진다 —
+    // 2026-08-10에 Gmail로 보냈더니 본문만 가고 .txt가 사라졌다.
+    // 로그가 길면 앱이 잘라먹으므로 최신 것부터 4,000자까지만 싣고,
+    // 그보다 길 때만 파일도 함께 붙인다.
+    final text = buffer.toString();
+    final head = text.length <= _shareTextLimit
+        ? text
+        : '${text.substring(0, _shareTextLimit)}\n…(뒷부분은 첨부파일에)';
+
+    if (text.length <= _shareTextLimit) {
+      await Share.share(head, subject: '세끌 오류 기록');
+      return;
+    }
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/sekkeul_error_log_${_stamp()}.txt');
-    await file.writeAsString(buffer.toString());
-    await Share.shareXFiles([XFile(file.path)], text: '세끌 오류 기록');
+    await file.writeAsString(text);
+    await Share.shareXFiles([XFile(file.path)], text: head, subject: '세끌 오류 기록');
   }
+
+  static const int _shareTextLimit = 4000;
 
   Future<void> _importBackup() async {
     final ok = await showDialog<bool>(
