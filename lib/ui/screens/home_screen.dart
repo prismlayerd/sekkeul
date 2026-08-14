@@ -13,7 +13,6 @@ import 'onboarding_screen.dart';
 import 'my_info_screen.dart';
 import 'year_end_tax_screen.dart';
 import 'tax_simulator_screen.dart';
-import 'tax_persona_question_screen.dart';
 import 'expense_calendar_screen.dart';
 import 'missed_deduction_diagnosis_screen.dart';
 import 'annual_backfill_screen.dart';
@@ -58,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   double _creditCardYtdTotal = 0.0;
   // 체크+현금 연간 누계 — 카드공제 환급 추정에 신용(15%)/체크·현금(30%) 분리 필요.
   double _debitCashYtdTotal = 0.0;
+  double _excludedYtdTotal = 0.0; // 결제수단 '기타'·미설정 — 문턱에서 빠진 금액
   // 프리랜서 '올해 쌓인 예상 환급'. null이면 계산 근거가 없다(업종·직전연도 수입 미입력 등).
   RefundProgress? _refundProgress;
   // N잡러 카드공제 절세액(종합 과세표준 기준). null이면 근로소득 기준 추정을 그대로 쓴다.
@@ -78,7 +78,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   int _dependentCount = 0;
   // 자녀등 수 — 카드공제 기본한도 상향(조특법 §126의2⑩)에 쓰인다.
   int _childrenCount = 0;
-  bool _isMonthlyRent = false;
   bool _isTypeIdentified = false;   // 유형 파악 완료 여부 (온보딩 1단계)
   bool _isProfileCompleted = false; // 프로필 완성 여부 (온보딩 2단계)
   bool _showBackfillPrompt = false; // 연중 가입 — 지난 달 소급 입력 유도 배너
@@ -182,7 +181,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           
           _dependentCount = profile['dependents'] as int? ?? 0;
           _childrenCount = profile['children_count_total'] as int? ?? 0;
-          _isMonthlyRent = profile['is_monthly_rent'] == true;
           
           final monthlyRent = profile['monthly_rent'] as double? ?? 0.0;
           if (monthlyRent > 0) {
@@ -438,6 +436,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     double debit = 0.0;
     double creditYtd = 0.0;
     double debitYtd = 0.0;
+    double excludedYtd = 0.0;
     DateTime? lastExpenseDate;
     for (final e in all) {
       final eStart = DateTime(e.date.year, e.date.month, e.date.day);
@@ -462,6 +461,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           creditYtd += e.amount;
         } else if (e.paymentMethod == '체크+현금') {
           debitYtd += e.amount;
+        } else {
+          // '기타'·미설정 — 문턱에 안 들어간다. 왜 안 줄어드는지 화면에서 말해주려고 센다.
+          excludedYtd += e.amount;
         }
       }
     }
@@ -471,6 +473,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         _debitCashTotal = debit;
         _creditCardYtdTotal = creditYtd;
         _debitCashYtdTotal = debitYtd;
+        _excludedYtdTotal = excludedYtd;
       });
       _checkCardThreshold();
       _checkBudget();
@@ -570,22 +573,21 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final monthlyIncome = double.tryParse(_salaryController.text.replaceAll(',', '')) ?? 0.0;
     final monthlyRent = double.tryParse(_monthlyRentController.text.replaceAll(',', '')) ?? 0.0;
     final yellowUmbrella = double.tryParse(_yellowUmbrellaController.text.replaceAll(',', '')) ?? 0.0;
-    final expenseTarget = double.tryParse(_savingGoalController.text.replaceAll(',', '')) ?? 0.0;
 
     // 기존 프로필을 읽어 위저드에서 설정한 공제 항목(혼인·자녀·경로우대 등)을 보존(merge)
     final existing = await dbService.getProfile() ?? <String, dynamic>{};
     final profile = {
       ...existing,
       'user_type': _userType,
-      'gross_income': _grossIncome,
-      'dependents': _dependentCount,
-      'is_monthly_rent': _isMonthlyRent,
+      // gross_income·expense_target은 여기서 안 쓴다 — 유형별 값(profile_type_values)이
+      // 원본이고, 그 저장 함수가 user_profile까지 같이 갱신한다. 홈이 자기 메모리 값으로
+      // 덮으면 아직 안 읽힌 0이 방금 저장한 연봉을 지운다(2026-08-14).
+      // 부양가족·거주형태·급여일도 홈은 읽기만 한다. 여기서 다시 적으면 미입력이
+      // 0·false·25로 굳어 내 정보가 "고른 적 없는 값"을 고른 것처럼 보여준다.
       'monthly_rent': monthlyRent,
       'decided_tax': _decidedTax,
       'yellow_umbrella': yellowUmbrella,
       'monthly_income': monthlyIncome,
-      'expense_target': expenseTarget,
-      'pay_day': _payDay,
       'type_identified': _isTypeIdentified,
     };
     await dbService.saveProfile(profile);
@@ -637,6 +639,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   _debitCashTotal = 0.0;
                   _creditCardYtdTotal = 0.0;
                   _debitCashYtdTotal = 0.0;
+                  _excludedYtdTotal = 0.0;
                   _monthlyRentController.clear();
                   _freelancerIncomeController.clear();
                   _monthsController.text = '12';
@@ -909,6 +912,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             debitCashTotal: _debitCashTotal,
             creditCardYtdTotal: _creditCardYtdTotal,
             debitCashYtdTotal: _debitCashYtdTotal,
+            excludedFromThresholdYtd: _excludedYtdTotal,
             refundProgress: _refundProgress,
             cardSavingCombined: _cardSavingCombined,
             onOpenLedger: _goToLedger,
@@ -978,32 +982,21 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  /// 절세 유형 찾기(페르소나 질문) 진입 — 결과로 유형 변경 시 반영.
-  Future<void> _openPersona() async {
-    final newUserType = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => TaxPersonaQuestionScreen(initialUserType: _userType)),
-    );
-    if (newUserType != null && newUserType is String && newUserType != _userType) {
-      _setUserType(newUserType);
-    }
-  }
-
   /// 유형 파악 온보딩 진입 — 결과로 user_type + type_identified 저장.
   Future<void> _openOnboarding() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const OnboardingScreen(returnResult: true)),
+      MaterialPageRoute(
+          builder: (_) => OnboardingScreen(
+              returnResult: true,
+              // 유형을 이미 아는 사람은 자기 유형이 체크된 채로 시작한다.
+              currentType: _isTypeIdentified ? _userType : null)),
     );
     if (result is String && mounted) {
-      setState(() {
-        _userType = result;
-        _isTypeIdentified = true;
-        _bannerIndex = 0;
-      });
-      await _loadTypeValues(result);
-      await _saveProfileToDB();
-      _startBannerRotation();
+      setState(() => _isTypeIdentified = true);
+      // 유형 탭을 눌렀을 때와 같은 경로로 넘긴다 — 가계부·수입·알림까지 다시 읽어야
+      // 유형이 바뀐 뒤 화면이 옛 유형의 숫자를 들고 있지 않는다.
+      _setUserType(result);
     }
   }
 
@@ -1206,7 +1199,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
 
     cards.add(BannerCardData(
-      label: s.label, headline: s.headline, action: s.action, glyph: s.glyph, onTap: _openPersona,
+      label: s.label, headline: s.headline, action: s.action, glyph: s.glyph, onTap: _openOnboarding,
     ));
 
     // 이달의 절세 팁을 상단 회전 배너에 합친다(별도 카드 제거).

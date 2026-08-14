@@ -279,7 +279,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     // 기존 평문 DB가 있고 아직 암호화 전이면: 먼저 평문 상태로 최신 스키마까지 정규화한 뒤
     // SQLCipher 암호화 DB로 1회 이전한다(S-2). 신규 설치는 곧장 암호화 DB로 생성된다.
     if (await File(path).exists() && !await _isAlreadyEncrypted(path, key)) {
-      final normalizeDb = await openDatabase(path, version: 42, onCreate: _onCreate, onUpgrade: _onUpgrade);
+      final normalizeDb = await openDatabase(path, version: 43, onCreate: _onCreate, onUpgrade: _onUpgrade);
       await normalizeDb.close();
       await _encryptExistingPlaintextDb(path, key);
     }
@@ -287,7 +287,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     _db = await openDatabase(
       path,
       password: key,
-      version: 42,
+      version: 43,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -328,7 +328,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     }
     await plainDb.close();
 
-    final encDb = await openDatabase(tempEncPath, password: key, version: 42, onCreate: _onCreate);
+    final encDb = await openDatabase(tempEncPath, password: key, version: 43, onCreate: _onCreate);
     var insertedRows = 0;
     await encDb.transaction((txn) async {
       for (final entry in dump.entries) {
@@ -852,6 +852,20 @@ class SqfliteDatabaseHelper implements DatabaseService {
             await db.execute('ALTER TABLE user_profile ADD COLUMN newborn_year INTEGER');
           } catch (e) {}
         }
+        // v43 — 저장이 미입력을 기본값(전세·자녀 0명·급여일 25일)으로 적어 왔다.
+        // 그 값들이 내 정보에서 "사용자가 고른 값"으로 보였다. 기본값 그대로인 칸만
+        // 비워 미설정으로 되돌린다 — 실제로 그 값을 고른 사람은 한 번 다시 고르면 된다.
+        if (oldVersion < 43) {
+          try {
+            await db.execute('UPDATE user_profile SET is_monthly_rent = NULL '
+                'WHERE is_monthly_rent = 0 AND owns_house IS NULL');
+            await db.execute('UPDATE user_profile SET children_count_total = NULL '
+                'WHERE children_count_total = 0');
+            await db.execute('UPDATE user_profile SET children_count_credit = NULL '
+                'WHERE children_count_credit = 0');
+            await db.execute('UPDATE user_profile SET pay_day = NULL WHERE pay_day = 25');
+          } catch (e) {}
+        }
   }
 
   @override
@@ -868,7 +882,9 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'dependents': profile['dependents'],
         'age': profile['age'],
         'military_months': profile['military_months'],
-        'is_monthly_rent': profile['is_monthly_rent'] == true ? 1 : 0,
+        // 미입력(null)은 null로 남긴다 — 0으로 적으면 "전세를 골랐다"가 되어
+        // 내 정보가 사용자가 안 고른 값을 고른 것처럼 보여준다.
+        'is_monthly_rent': profile['is_monthly_rent'] == null ? null : (profile['is_monthly_rent'] == true ? 1 : 0),
         'monthly_rent': profile['monthly_rent'],
         'decided_tax': profile['decided_tax'],
         'yellow_umbrella': profile['yellow_umbrella'],
@@ -887,13 +903,13 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'is_single_parent': profile['is_single_parent'] == true ? 1 : 0,
         'wedding_year': profile['wedding_year'],
         'deduction_picks': profile['deduction_picks'],
-        'children_count_credit': profile['children_count_credit'] ?? 0,
-        'children_count_total': profile['children_count_total'] ?? 0,
+        'children_count_credit': profile['children_count_credit'],
+        'children_count_total': profile['children_count_total'],
         'newborn_count': profile['newborn_count'] ?? 0,
         'newborn_year': profile['newborn_year'] ?? 0,
         'is_sme_employee': profile['is_sme_employee'] == true ? 1 : 0,
         'sme_start_year': profile['sme_start_year'],
-        'pay_day': profile['pay_day'] ?? 25,
+        'pay_day': profile['pay_day'],
         'type_identified': profile['type_identified'] == true ? 1 : 0,
         'owns_car': profile['owns_car'] == null ? null : (profile['owns_car'] == true ? 1 : 0),
         'owns_house': profile['owns_house'] == null ? null : (profile['owns_house'] == true ? 1 : 0),
@@ -954,7 +970,8 @@ class SqfliteDatabaseHelper implements DatabaseService {
       'dependents': map['dependents'],
       'age': map['age'] as int?,
       'military_months': map['military_months'] as int?,
-      'is_monthly_rent': map['is_monthly_rent'] == 1,
+      // 안 고른 값은 null로 돌려준다 — 화면이 "미설정"과 "전세"를 구분해야 한다.
+      'is_monthly_rent': map['is_monthly_rent'] == null ? null : map['is_monthly_rent'] == 1,
       'monthly_rent': map['monthly_rent'],
       'decided_tax': map['decided_tax'],
       'yellow_umbrella': map['yellow_umbrella'],
@@ -973,13 +990,13 @@ class SqfliteDatabaseHelper implements DatabaseService {
       'is_single_parent': map['is_single_parent'] == 1,
       'wedding_year': map['wedding_year'] as int?,
       'deduction_picks': map['deduction_picks'] as String?,
-      'children_count_credit': map['children_count_credit'] as int? ?? 0,
-      'children_count_total': map['children_count_total'] as int? ?? 0,
+      'children_count_credit': map['children_count_credit'] as int?,
+      'children_count_total': map['children_count_total'] as int?,
       'newborn_count': map['newborn_count'] as int? ?? 0,
       'newborn_year': map['newborn_year'] as int? ?? 0,
       'is_sme_employee': map['is_sme_employee'] == 1,
       'sme_start_year': map['sme_start_year'] as int?,
-      'pay_day': map['pay_day'] as int? ?? 25,
+      'pay_day': map['pay_day'] as int?,
       'type_identified': map['type_identified'] == 1,
       // null(마이그레이션 이전 기존 사용자, 미입력)은 그대로 null 유지 — 알림 필터링 쪽에서 "?? true"로 기본값 처리.
       'owns_car': map['owns_car'] == null ? null : map['owns_car'] == 1,
@@ -1002,15 +1019,21 @@ class SqfliteDatabaseHelper implements DatabaseService {
     final db = _db;
     if (db == null) return;
     final existing = await getProfileTypeValues(userType);
+    final gross = grossIncome ?? existing['gross_income'];
+    final target = expenseTarget ?? existing['expense_target'];
     await db.insert(
       'profile_type_values',
       {
         'user_type': userType,
-        'gross_income': grossIncome ?? existing['gross_income'],
-        'expense_target': expenseTarget ?? existing['expense_target'],
+        'gross_income': gross,
+        'expense_target': target,
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    // user_profile의 같은 두 칸은 **이 함수만** 쓴다(읽는 화면이 아홉이라 지울 수 없다).
+    // 예전엔 홈이 자기 메모리 값으로 따로 덮어썼는데, 그 값이 아직 안 읽힌 0이면
+    // 방금 저장한 연봉을 0으로 밀어 "설정해도 초기화"가 됐다.
+    await db.update('user_profile', {'gross_income': gross, 'expense_target': target});
   }
 
   @override
@@ -1860,6 +1883,9 @@ class InMemoryDatabaseHelper implements DatabaseService {
       'gross_income': grossIncome ?? existing['gross_income']!,
       'expense_target': expenseTarget ?? existing['expense_target']!,
     };
+    // sqflite 쪽과 같은 규칙 — user_profile의 두 칸은 여기서만 갱신한다.
+    _profile?['gross_income'] = _profileTypeValues[userType]!['gross_income'];
+    _profile?['expense_target'] = _profileTypeValues[userType]!['expense_target'];
   }
 
   @override

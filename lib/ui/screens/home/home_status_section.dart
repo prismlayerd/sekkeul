@@ -31,6 +31,11 @@ class HomeStatusSection extends StatefulWidget {
   final double creditCardYtdTotal;
   final double debitCashYtdTotal;
 
+  /// 올해 지출 중 카드 공제 문턱에 **안 들어간** 금액.
+  /// 결제수단이 '기타'이거나 비어 있는 기록이다(현금영수증 없는 지출로 본다).
+  /// 이게 크면 사용자는 "지출은 쌓이는데 문턱이 안 줄어든다"고 느낀다 — 이유를 말해준다.
+  final double excludedFromThresholdYtd;
+
   /// 프리랜서 '올해 쌓인 예상 환급'. null이면 계산 근거가 없어 노출하지 않는다.
   final RefundProgress? refundProgress;
 
@@ -63,6 +68,7 @@ class HomeStatusSection extends StatefulWidget {
     required this.debitCashTotal,
     required this.creditCardYtdTotal,
     required this.debitCashYtdTotal,
+    this.excludedFromThresholdYtd = 0.0,
     this.refundProgress,
     this.cardSavingCombined,
     required this.onOpenLedger,
@@ -304,9 +310,9 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
   Widget _buildExpensePromptOrInput(Color ink, Color sub, Color accent) {
     return _inlinePrompt(
       expanded: widget.showExpenseInput,
-      promptText: widget.isEmployee
-          ? '지출 목표를 설정하면 공제 기준을 잡아드려요'
-          : '지출 목표를 설정하면 지출 현황을 알려드려요',
+      // 지출 목표는 공제와 아무 상관이 없다 — 카드공제 문턱은 총급여의 25%로 정해져 있다
+      // (조특법 §126의2). "공제 기준을 잡아드려요"는 거짓말이었다.
+      promptText: '지출 목표를 설정하면 이번 달 지출 현황을 알려드려요',
       hintText: '이번 달 지출 목표',
       controller: widget.expenseTargetInlineCtrl,
       ink: ink, sub: sub, accent: accent,
@@ -504,7 +510,10 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         '${_toWon(remaining)} 남음',
         progress,
         accent,
-        '문턱을 넘으면 여기에 올해 예상 환급이 쌓이기 시작해요.',
+        widget.excludedFromThresholdYtd > 0
+            ? '결제수단이 «기타»인 ${_toWon(widget.excludedFromThresholdYtd)}은 문턱에 안 들어가요 '
+                '— 현금영수증 없는 지출은 공제 대상이 아니에요. 가계부에서 결제수단을 바꾸면 반영돼요.'
+            : '문턱을 넘으면 여기에 올해 예상 환급이 쌓이기 시작해요.',
       );
     }
 

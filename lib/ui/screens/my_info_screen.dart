@@ -83,25 +83,29 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   // ── 프로필 완성도 ───────────────────────────────────────────────
   /// 절세 진단에 직접 쓰이는 핵심 입력값들이 채워졌는지로 완성도를 읽는다.
   /// 프리랜서는 관련 없는 항목(예상 연봉·나이·급여일)을 완성도에서 뺀다.
+  /// 거주 형태는 두 칸(월세 여부·자가 여부)에 나뉘어 있다 — 둘 다 비어 있으면 미설정.
+  bool _hasResidence(Map<String, dynamic> p) =>
+      p['is_monthly_rent'] != null || p['owns_house'] != null;
+
   List<({String label, bool filled})> get _checklist {
     final p = _profile ?? const {};
     double d(String k) => (p[k] as num?)?.toDouble() ?? 0.0;
     int i(String k) => (p[k] as int?) ?? 0;
     if (_isFreelancer) {
       return [
-        (label: '부양가족', filled: p.containsKey('dependents')),
+        (label: '부양가족', filled: p['dependents'] != null),
         // 자녀세액공제는 종합소득자 전원 대상이라 프리랜서도 채워야 한다.
-        (label: '자녀', filled: p.containsKey('children_count_total')),
-        (label: '거주 형태', filled: p.containsKey('is_monthly_rent')),
+        (label: '자녀', filled: p['children_count_total'] != null),
+        (label: '거주 형태', filled: _hasResidence(p)),
       ];
     }
     return [
       (label: '예상 연봉', filled: d('gross_income') > 0),
       (label: '만 나이', filled: i('age') > 0),
-      (label: '부양가족', filled: p.containsKey('dependents')),
+      (label: '부양가족', filled: p['dependents'] != null),
       // 자녀 수는 카드공제 한도(자녀 1명당 +50만)와 자녀세액공제 양쪽에 쓰인다.
-      (label: '자녀', filled: p.containsKey('children_count_total')),
-      (label: '거주 형태', filled: p.containsKey('is_monthly_rent')),
+      (label: '자녀', filled: p['children_count_total'] != null),
+      (label: '거주 형태', filled: _hasResidence(p)),
       (label: '급여일', filled: i('pay_day') > 0),
     ];
   }
@@ -154,8 +158,10 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   /// 예상 연봉은 홈 화면이 읽는 유형별 독립 저장(profile_type_values)에도 함께 쓴다.
   Future<void> _saveGrossIncomeInline() async {
     final v = double.tryParse(_grossEditCtrl.text.replaceAll(',', '')) ?? 0.0;
-    await _updateProfileFields({'gross_income': v});
+    // 원본(유형별 값)을 먼저 적는다 — _updateProfileFields가 홈 리로드를 부르므로,
+    // 순서가 반대면 홈이 아직 옛 값(0)을 읽는다.
     await dbService.setProfileTypeValues(widget.userType, grossIncome: v);
+    await _updateProfileFields({'gross_income': v});
     if (mounted) setState(() => _editingKey = null);
   }
 
@@ -362,7 +368,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     final gross = (p['gross_income'] as num?)?.toDouble() ?? 0.0;
     final age = (p['age'] as int?) ?? 0;
     final dependents = p['dependents'] as int?;
-    final hasResidence = p.containsKey('is_monthly_rent');
+    final hasResidence = _hasResidence(p);
     // 전세·반전세는 저장상 구분되지 않아(둘 다 is_monthly_rent=false, owns_house=false) '전세'로 표시.
     final residence = p['owns_house'] == true ? '자가' : (p['is_monthly_rent'] == true ? '월세' : '전세');
     final payDay = (p['pay_day'] as int?) ?? 0;
@@ -424,7 +430,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       _infoRow(
         icon: Icons.child_care_outlined,
         label: '자녀',
-        value: _profile?.containsKey('children_count_total') == true
+        value: _profile?['children_count_total'] != null
             ? '$_childrenTotal명${_childrenForCredit > 0 ? ' (공제대상 $_childrenForCredit명)' : ''}'
             : null,
         valueExtra: _isFreelancer
@@ -437,7 +443,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
         placeholder: _isFreelancer
             ? '미설정 — 공제대상 자녀는 세금에서 바로 빠져요'
             : '미설정 — 카드공제 한도가 올라가요',
-        isSet: _profile?.containsKey('children_count_total') == true,
+        isSet: _profile?['children_count_total'] != null,
         editKey: 'children',
         ink: ink,
         sub: sub,

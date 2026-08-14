@@ -8,7 +8,12 @@ import '../theme/text_wrap.dart';
 /// 유형(직장인 · N잡러 · 프리랜서)을 실시간 판정한다.
 class OnboardingScreen extends StatefulWidget {
   final bool returnResult;
-  const OnboardingScreen({super.key, this.returnResult = false});
+
+  /// 지금 쓰고 있는 유형. 다시 들어왔을 때 자기 유형을 처음부터 다시 찾지 않도록
+  /// 해당하는 소득 항목을 미리 체크해 둔다. 처음 오는 사람(null)은 빈 상태로 시작한다.
+  final String? currentType;
+
+  const OnboardingScreen({super.key, this.returnResult = false, this.currentType});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -32,6 +37,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
+    // 저장돼 있는 건 유형뿐이라 어느 항목을 골랐었는지는 알 수 없다 —
+    // 그 유형이 되는 가장 흔한 조합(월급 / 3.3% 프리랜서 일)으로 채워 둔다.
+    if (widget.currentType == '직장인' || widget.currentType == 'N잡러') _selected[0] = true;
+    if (widget.currentType == '프리랜서' || widget.currentType == 'N잡러') _selected[1] = true;
     _scrollCtrl.addListener(_updateMoreBelow);
     // 첫 레이아웃 후 overflow 여부를 판정(작은 화면이면 즉시 화살표 노출)
     WidgetsBinding.instance.addPostFrameCallback((_) => _updateMoreBelow());
