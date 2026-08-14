@@ -40,15 +40,26 @@ Figures marked **확인필요** in the brief may not carry a confident sentence.
 
 Save to `산출물/YYYY-MM-DD-<채널>.md`, one file per channel.
 
-**For the card-news channel, do not invent a shape.** Copy
-`C:/Users/vedja/OneDrive/Desktop/work/marketing/_template/카드뉴스-템플릿.md` whole
-and fill only its §4 문안 slots. Everything above §4 is the design handoff — the human
-pastes that file into a separate design session that has none of this project's
-context, so it must travel intact. Pick each card's 장 유형 (A 표지 / B 본문 / C 수치 /
-D 마무리) from §3 and label the slot with the type you chose.
+**For the card-news channel you write the layout too, not just the words.** The md is
+rendered straight to PNG by `C:/src/project/sekkeul/design/make_card_news.py` — there is
+no design session downstream to fix your placement. Read that file's docstring for the
+exact format, and
+`C:/Users/vedja/OneDrive/Desktop/work/marketing/_template/카드뉴스-템플릿.md`
+for how to choose anchors.
 
-A **C 수치** card requires 출처 and 기준일 in its slot. If the brief does not carry
-them, use a B 본문 card instead — never a 수치 card without its source.
+Two things it is easy to get wrong:
+
+- **Move the anchors every card.** Same position on every card makes a slideshow. Varying
+  placement over a fixed palette is the whole design system.
+- **There is no auto-wrap.** Lines break exactly where you break them. Keep a headline
+  line short enough to sit in the left two-thirds of the canvas.
+
+The label layer (`%`) is Latin caps only — DM Sans has no Korean glyphs and the renderer
+has no fallback, so Korean there comes out as tofu. Korean belongs in the headline and
+the 보조 line.
+
+A card whose subject is an amount still needs its 출처 and 기준일 on that card. If the
+brief does not carry them, write a different card — never an amount without its source.
 
 **The draft file is the end of your job.** Publishing, uploading, and posting are out of scope for every agent in this workspace.
 

@@ -1,27 +1,38 @@
 """카드뉴스 PNG 렌더 — mktg-copy가 쓴 문안 md를 1080×1350 장당 한 장으로 뽑는다.
 
-Blueprint 규칙 그대로: 콘크리트 바탕, 헤어라인, 그림자 0, 라운드 최소.
+레퍼런스는 Zachary Winterton, "Micrographics Variations".
+고정: 종이·잉크·서체·타입 스케일.  변하는 것: 배치뿐.
+그래서 **색과 폰트는 이 파일이 쥐고, 좌표는 md가 지시한다.**
+매주 배치가 달라져도 색은 못 틀어진다.
+
 폰트는 앱이 번들하는 것을 그대로 쓴다 — 스토어·SNS와 앱이 다른 서체를 쓰면
 설치 직후 딴 앱처럼 보인다. 외부 디자인 도구를 안 쓰는 이유가 이것이다.
 
-입력 md (mktg-copy 산출물):
+입력 md:
 
-    # 제목은 안 쓰인다 — 장 구분은 `---` 이다
-    ## 후킹 문장          ← 1장. `##` 가 그 장의 큰 글자
-    보조 문장 한 줄       ← 없어도 된다
+    # 파일 제목은 안 쓰인다 — 장 구분은 `---` 이다
+
+    @ 0.30 0.44          ← 본문 덩어리 앵커(가로, 세로 비율). 생략하면 0.30 0.44
+    나는 환급일까,        ← 첫 문단이 큰 글자 (줄바꿈 그대로 나간다)
+    납부일까?
+                         ← 빈 줄 하나가 큰 글자와 보조 문장을 가른다
+    5월 종합소득세 신고
+
+    % 0.72 0.34          ← 라벨 덩어리 앵커. 우측 정렬, 극소 대문자. 생략 가능
+    ON_DEVICE
+    NO_NETWORK
     ---
-    ## 두 번째 장
     ...
 
 사용:
-    python design/make_card_news.py work/산출물/2026-08-14-카드뉴스.md
+    python design/make_card_news.py <문안.md>
     python design/make_card_news.py --demo        # 자체 점검
 """
 import re
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 
 # 윈도우 콘솔 기본이 cp949라 한글 파일명·메시지를 그냥 print하면 터진다.
 sys.stdout.reconfigure(encoding="utf-8")
@@ -33,93 +44,157 @@ SS = 2                     # 슈퍼샘플 — 블러 없이 가장자리를 매�
 BG = (0xF8, 0xF7, 0xF5)    # lightBackground
 INK = (0x16, 0x15, 0x13)   # lightInk
 SUB = (0x5E, 0x5C, 0x57)   # lightInkSecondary
-LINE = (0xDC, 0xD8, 0xD0)  # lightLine
-ACCENT = (0x1F, 0x5A, 0xE0)  # lightAccent
+ACCENT = (0x1F, 0x5A, 0xE0)  # lightAccent — 마지막 장에만
 
 ROOT = Path(__file__).resolve().parent.parent
 SERIF = str(ROOT / "assets/fonts/NotoSerifKR-Variable.ttf")
 SANS = str(ROOT / "assets/fonts/DMSans-Variable.ttf")
 
-MARGIN = 96                # 안전 여백 — 인스타가 미리보기에서 가장자리를 먹는다
 MAX_CARDS = 7              # 루틴-주간.md §3: 5~7장
-TITLE_PX = 58              # serifLG(28) 계열을 1080폭에 맞춰 올린 값
-BODY_PX = 30
+HEAD_PX = 46               # 레퍼런스는 작다. 여백이 주인공이고 글자는 손님이다
+BODY_PX = 24
+MICRO_PX = 15              # 라벨층 — 앱 테마의 11px/자간2.0 주석 라벨과 같은 장치
+MICRO_TRACK = 2.6          # 자간(px, 1x 기준)
+PAPER = 0.55               # 종이 세기. 눈으로 맞추는 값이니 손대도 된다 (0~1)
+
+ANCHOR_HEAD = (0.30, 0.44)
+ANCHOR_MICRO = (0.72, 0.34)
 
 
-def parse(md: str) -> list[tuple[str, str]]:
-    """`---` 로 나누고 각 장에서 (큰 글자, 보조 문장) 을 뽑는다."""
+def parse(md: str) -> list[dict]:
+    """`---` 로 나누고 각 장에서 앵커·큰 글자·보조·라벨을 뽑는다."""
     cards = []
     for chunk in re.split(r"^\s*---\s*$", md, flags=re.M):
-        lines = [ln.strip() for ln in chunk.strip().splitlines() if ln.strip()]
-        # `#` 한 개짜리 제목은 파일 제목이지 장이 아니다
-        lines = [ln for ln in lines if not re.match(r"^#\s", ln)]
-        if not lines:
+        head_at, micro_at = ANCHOR_HEAD, ANCHOR_MICRO
+        text, micro = [], []
+        into_micro = False
+        for raw in chunk.splitlines():
+            ln = raw.strip()
+            if re.match(r"^#\s", ln):          # 파일 제목은 장이 아니다
+                continue
+            m = re.match(r"^([@%])\s+([\d.]+)\s+([\d.]+)\s*$", ln)
+            if m:
+                at = (float(m.group(2)), float(m.group(3)))
+                if m.group(1) == "@":
+                    head_at, into_micro = at, False
+                else:
+                    micro_at, into_micro = at, True
+                continue
+            if ln == "%":                      # 좌표 없이 라벨층만 열 수도 있다
+                into_micro = True
+                continue
+            (micro if into_micro else text).append(ln)
+
+        # 빈 줄 하나가 큰 글자와 보조 문장을 가른다
+        while text and not text[0]:
+            text.pop(0)
+        head, body = [], []
+        for ln in text:
+            if not ln and head:
+                body = [x for x in text[len(head) + 1:] if x]
+                break
+            if ln:
+                head.append(ln)
+        micro = [x for x in micro if x]
+        if not head and not micro:
             continue
-        head = re.sub(r"^#+\s*", "", lines[0])
-        body = " ".join(re.sub(r"^[-*]\s*", "", ln) for ln in lines[1:])
-        cards.append((head, body))
+        cards.append({"head": head, "body": body,
+                      "micro": micro, "at": head_at, "micro_at": micro_at})
     return cards
 
 
-def wrap(draw, text, font, max_w):
-    """한글은 어절 단위로만 끊는다 — 음절 사이에서 끊으면 '2,000만원까 / 지'가 된다."""
-    if not text:
-        return []
-    lines, cur = [], ""
-    for word in text.split():
-        trial = f"{cur} {word}".strip()
-        if draw.textlength(trial, font=font) <= max_w or not cur:
-            cur = trial
-        else:
-            lines.append(cur)
-            cur = word
-    lines.append(cur)
-    return lines
+def track(d, xy, text, font, fill, spacing, right=False):
+    """자간 — Pillow에 없다. 글자 하나씩 그린다. 라벨층에만 쓴다."""
+    widths = [d.textlength(c, font=font) for c in text]
+    total = sum(widths) + spacing * max(len(text) - 1, 0)
+    x, y = xy
+    if right:
+        x -= total
+    for c, w in zip(text, widths):
+        d.text((x, y), c, font=font, fill=fill)
+        x += w + spacing
+    return total
 
 
-def render(head: str, body: str, idx: int, total: int) -> Image.Image:
+def _stretch(w, h, div, sigma, vertical):
+    """노이즈를 한 축으로만 눌러 만든 뒤 늘리면 '가닥'이 된다.
+
+    등방성 노이즈는 종이가 아니라 압축 아티팩트로 보인다. 종이는 펄프 섬유가
+    교차한 것이므로 가로 가닥과 세로 가닥을 겹쳐야 종이가 된다.
+    """
+    size = (w, max(h // div, 1)) if vertical else (max(w // div, 1), h)
+    return Image.effect_noise(size, sigma).resize((w, h), Image.BILINEAR)
+
+
+def paper(img):
+    """종이. Image.effect_noise가 Pillow 내장이라 새 의존성이 없다.
+
+    글자를 다 그린 뒤 마지막에 덮는다 — 그래야 잉크에도 결이 스쳐서
+    '인쇄된 것'으로 보인다. 글자를 갉아내지는 않는다(한글 받침이 뭉갠다).
+    """
+    w, h = img.size
+
+    # 얼룩 — 큰 결부터 잔 결까지 겹친다. 한 겹만 쓰면 뭉게구름이 된다
+    mottle = Image.new("L", (w, h), 128)
+    for div, amt in ((24, 0.55), (11, 0.4), (5, 0.3)):
+        n = Image.effect_noise((max(w // div, 1), max(h // div, 1)), 52)
+        mottle = Image.blend(mottle, n.resize((w, h), Image.BICUBIC), amt)
+
+    # 교차 섬유
+    fiber = ImageChops.blend(_stretch(w, h, 9, 70, True),
+                             _stretch(w, h, 9, 70, False), 0.5)
+
+    # 결 — 흐리게 하지 않는다. 1px 그대로 있어야 '번짐'이 아니라 '거칠기'로 읽힌다
+    tooth = Image.effect_noise((w, h), 26)
+    # 티끌 — 진짜 종이에는 어두운 점이 드문드문 있다
+    fleck = Image.effect_noise((w, h), 110).point(lambda v: 70 if v > 216 else 128)
+
+    tex = ImageChops.blend(mottle, fiber, 0.5)
+    tex = ImageChops.blend(tex, tooth, 0.45)
+    tex = ImageChops.blend(tex, fleck, 0.3)
+
+    # multiply 다. overlay 를 쓰면 안 된다 — 바탕이 #F8F7F5 라 거의 흰색이고,
+    # overlay 는 밝은 바탕에서 screen 으로 동작해 '더 밝게'만 간다. 그래서 아무것도
+    # 안 보였다. 섬유는 미세한 그림자이므로 어두워지는 쪽이어야 종이가 된다.
+    lut = tex.point(lambda v: max(0, min(255, int(252 + (v - 128) * PAPER))))
+    return ImageChops.multiply(img, lut.convert("RGB"))
+
+
+def render(card: dict, idx: int, total: int) -> Image.Image:
     img = Image.new("RGB", (W * SS, H * SS), BG)
     d = ImageDraw.Draw(img)
 
-    f_head = ImageFont.truetype(SERIF, TITLE_PX * SS)
-    # ponytail: 본문도 serif다. 앱은 DM Sans + fontFamilyFallback으로 한글을 시스템
+    f_head = ImageFont.truetype(SERIF, HEAD_PX * SS)
+    # ponytail: 보조도 serif다. 앱은 DM Sans + fontFamilyFallback으로 한글을 시스템
     # CJK에 넘기지만 Pillow에는 대체 장치가 없어 그대로 두부(□)가 된다. 번들 폰트 중
     # 한글이 있는 것은 NotoSerifKR뿐. 한글 sans를 번들하면 그때 SANS로 되돌린다.
     f_body = ImageFont.truetype(SERIF, BODY_PX * SS)
-    f_num = ImageFont.truetype(SANS, 22 * SS)  # 숫자·슬래시뿐이라 sans로 안전하다
+    f_micro = ImageFont.truetype(SANS, MICRO_PX * SS)   # 라틴 대문자·숫자뿐이라 안전
 
-    m = MARGIN * SS
-    inner = W * SS - m * 2
+    # 본문 덩어리 — 앵커가 왼쪽 위 모서리다
+    x = card["at"][0] * W * SS
+    y = card["at"][1] * H * SS
+    for ln in card["head"]:
+        d.text((x, y), ln, font=f_head, fill=INK)
+        y += HEAD_PX * 1.42 * SS
+    if card["body"]:
+        y += 26 * SS
+        for ln in card["body"]:
+            d.text((x, y), ln, font=f_body, fill=SUB)
+            y += BODY_PX * 1.7 * SS
 
-    # 상단 헤어라인 + 장 번호 — 도면 주석 자리
-    d.line((m, m, W * SS - m, m), fill=LINE, width=1 * SS)
-    d.text((m, m + 22 * SS), f"{idx:02d} / {total:02d}", font=f_num, fill=SUB)
+    # 라벨 덩어리 — 우측 정렬. 본문과 그리드를 공유하지 않는다(레퍼런스가 그렇다)
+    mx = card["micro_at"][0] * W * SS
+    my = card["micro_at"][1] * H * SS
+    for ln in card["micro"]:
+        track(d, (mx, my), ln.upper(), f_micro, SUB, MICRO_TRACK * SS, right=True)
+        my += MICRO_PX * 1.6 * SS
 
-    # 큰 글자는 세로 중앙. 보조 문장은 그 아래.
-    head_lines = wrap(d, head, f_head, inner)
-    body_lines = wrap(d, body, f_body, inner)
+    # 장 번호 — 레퍼런스의 `01 / 02` 자리. 마지막 장만 강조색
+    track(d, (mx, my + 22 * SS), f"{idx:02d} / {total:02d}", f_micro,
+          ACCENT if idx == total else SUB, MICRO_TRACK * SS, right=True)
 
-    lh_head = TITLE_PX * 1.35 * SS
-    lh_body = BODY_PX * 1.6 * SS
-    gap = 40 * SS if body_lines else 0
-    block = len(head_lines) * lh_head + gap + len(body_lines) * lh_body
-    y = (H * SS - block) / 2
-
-    for ln in head_lines:
-        d.text((m, y), ln, font=f_head, fill=INK)
-        y += lh_head
-    y += gap
-    for ln in body_lines:
-        d.text((m, y), ln, font=f_body, fill=SUB)
-        y += lh_body
-
-    # 마지막 장에만 accent 하단선 — 앱 유도 자리라는 표시
-    y_foot = H * SS - m
-    d.line((m, y_foot, W * SS - m, y_foot),
-           fill=ACCENT if idx == total else LINE,
-           width=(3 if idx == total else 1) * SS)
-
-    return img.resize((W, H), Image.LANCZOS)
+    return paper(img.resize((W, H), Image.LANCZOS))
 
 
 def build(md_path: Path, out_dir: Path) -> list[Path]:
@@ -130,35 +205,50 @@ def build(md_path: Path, out_dir: Path) -> list[Path]:
         raise SystemExit(f"{len(cards)}장이다. 루틴이 정한 상한은 {MAX_CARDS}장이다")
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    stem = md_path.stem
     written = []
-    for i, (head, body) in enumerate(cards, 1):
-        p = out_dir / f"{stem}-{i:02d}.png"
-        render(head, body, i, len(cards)).save(p)
+    for i, c in enumerate(cards, 1):
+        p = out_dir / f"{md_path.stem}-{i:02d}.png"
+        render(c, i, len(cards)).save(p)
         written.append(p)
     return written
 
 
 def demo():
-    """자체 점검 — 파서와 줄바꿈만 본다. 눈으로 볼 것은 눈으로 봐야 한다."""
-    md = "# 파일제목\n## 첫 장\n보조 문장\n---\n## 둘째 장\n- 목록도 본문이다\n---\n## 셋째 장\n"
+    """자체 점검 — 파서와 자간만 본다. 눈으로 볼 것은 눈으로 봐야 한다."""
+    md = (
+        "# 파일제목\n"
+        "@ 0.25 0.40\n한 줄\n두 줄\n\n보조 문장\n"
+        "% 0.70 0.30\non_device\n"
+        "---\n"
+        "그냥 큰 글자만\n"
+    )
     cards = parse(md)
-    assert len(cards) == 3, cards
-    assert cards[0] == ("첫 장", "보조 문장"), cards[0]
-    assert cards[1][1] == "목록도 본문이다", cards[1]
-    assert cards[2][1] == "", cards[2]           # 보조 문장 없는 장도 된다
-
-    img = Image.new("RGB", (10, 10))
-    d = ImageDraw.Draw(img)
-    f = ImageFont.truetype(SANS, 40)
-    lines = wrap(d, "월세로 살면 최대 백칠십만원을 돌려받습니다", f, 300)
-    assert len(lines) > 1, "안 끊겼다"
-    assert all(" " not in ln or True for ln in lines)
-    # 어절이 쪼개지지 않았는지 — 원문을 공백으로 이어붙이면 그대로여야 한다
-    assert " ".join(lines) == "월세로 살면 최대 백칠십만원을 돌려받습니다"
-
+    assert len(cards) == 2, cards
+    assert cards[0]["head"] == ["한 줄", "두 줄"], cards[0]
+    assert cards[0]["body"] == ["보조 문장"], cards[0]
+    assert cards[0]["micro"] == ["on_device"], cards[0]
+    assert cards[0]["at"] == (0.25, 0.40) and cards[0]["micro_at"] == (0.70, 0.30)
+    # 앵커를 안 쓴 장은 기본값을 받는다 — 배치가 비어도 그림은 나와야 한다
+    assert cards[1]["at"] == ANCHOR_HEAD, cards[1]
+    assert cards[1]["body"] == [] and cards[1]["micro"] == []
     assert parse("") == []
-    print("demo ok — 파싱 3장, 줄바꿈 어절 보존")
+
+    d = ImageDraw.Draw(Image.new("RGB", (10, 10)))
+    f = ImageFont.truetype(SANS, 20)
+    plain = d.textlength("ABCD", font=f)
+    assert abs(track(d, (0, 0), "ABCD", f, SUB, 5) - (plain + 15)) < 0.01, "자간이 안 먹었다"
+    assert track(d, (0, 0), "", f, SUB, 5) == 0, "빈 라벨에서 터지면 안 된다"
+
+    # 종이는 눈으로 볼 것이지만, 세기를 잘못 만지면 바탕이 통째로 회색이 된다.
+    # 그건 눈으로 보기 전에 잡는다.
+    flat = Image.new("RGB", (240, 300), BG)
+    out = paper(flat)
+    assert out.size == flat.size
+    lo, hi = out.convert("L").getextrema()
+    assert hi - lo > 12, f"종이가 안 보인다: {lo}~{hi}"
+    assert sum(out.convert("L").getdata()) / (240 * 300) > 210, "바탕이 너무 어두워졌다"
+
+    print("demo ok — 파싱 2장, 앵커 기본값, 자간 3칸, 종이 대비")
 
 
 if __name__ == "__main__":
