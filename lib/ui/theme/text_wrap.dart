@@ -6,6 +6,42 @@
 ///
 /// 어절 안의 글자 사이에 **U+2060 WORD JOINER**(폭 0, 보이지 않음)를 끼워 넣으면
 /// 그 자리에서는 줄이 바뀌지 않는다. 결과적으로 띄어쓰기에서만 줄이 바뀐다.
+/// 폭 0의 줄바꿈 **허용** 지점. 여기서는 끊어도 된다.
+const String _zwsp = '​';
+
+/// 보이는 공백이지만 줄이 안 바뀐다.
+const String _nbsp = ' ';
+
+/// 괄호를 한 덩이로 묶는다.
+///
+/// `폐지됐어요(한도 900만).`은 공백 기준으로 `폐지됐어요(한도` / `900만).` 두
+/// 토큰이라, 하필 괄호 **안**에서 줄이 바뀌어 `(한도` 만 앞줄에 남는다.
+///
+/// 규칙 둘이면 끝난다.
+///   • 괄호 안의 공백은 안 끊기는 공백으로 — 괄호가 쪼개지지 않는다.
+///   • 여는 괄호 **앞**에는 끊어도 되는 자리를 넣는다 — 통째로 다음 줄로 간다.
+String _bindParens(String s) {
+  final b = StringBuffer();
+  var depth = 0;
+  for (var i = 0; i < s.length; i++) {
+    final c = s[i];
+    if (c == '(' || c == '[') {
+      // 앞 글자가 공백이 아니면 여기서 끊을 수 있게 표시한다.
+      if (i > 0 && s[i - 1].trim().isNotEmpty) b.write(_zwsp);
+      depth++;
+      b.write(c);
+    } else if (c == ')' || c == ']') {
+      if (depth > 0) depth--;
+      b.write(c);
+    } else if (c == ' ' && depth > 0) {
+      b.write(_nbsp);
+    } else {
+      b.write(c);
+    }
+  }
+  return b.toString();
+}
+
 extension KeepWords on String {
   /// 어절 안에서는 줄이 바뀌지 않게 한 문자열.
   ///
@@ -14,9 +50,10 @@ extension KeepWords on String {
   String get keepWords {
     const maxToken = 14;
     if (isEmpty) return this;
+    final src = _bindParens(this);
     const joiner = '⁠';
     // 줄바꿈(\n)과 공백은 그대로 둔다 — 거기서 줄이 바뀌어야 하니까.
-    return splitMapJoin(
+    return src.splitMapJoin(
       RegExp(r'[^\s]+'),
       onMatch: (m) {
         final w = m[0]!;
@@ -25,7 +62,18 @@ extension KeepWords on String {
         // 잘못된 UTF-16 문자열이 된다 — 그리는 순간 렌더링이 예외로 죽는다.
         final runes = w.runes.toList();
         if (runes.length <= 1 || runes.length > maxToken) return w;
-        return runes.map(String.fromCharCode).join(joiner);
+        // 조이너를 넣되 **끊어도 되는 자리(_zwsp) 양옆은 건드리지 않는다** —
+        // 거기까지 붙여 버리면 괄호 앞에 열어 둔 줄바꿈 자리가 도로 막힌다.
+        final b = StringBuffer();
+        for (var i = 0; i < runes.length; i++) {
+          final cur = String.fromCharCode(runes[i]);
+          if (i > 0) {
+            final prev = String.fromCharCode(runes[i - 1]);
+            if (prev != _zwsp && cur != _zwsp) b.write(joiner);
+          }
+          b.write(cur);
+        }
+        return b.toString();
       },
       onNonMatch: (s) => s,
     );

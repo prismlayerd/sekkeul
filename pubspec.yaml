@@ -36,16 +36,28 @@ flutter:
   uses-material-design: true
   assets:
     - assets/forms/
+    - assets/textures/
+  # 영수증 테마는 전부 고정폭이다. 라틴·숫자는 IBM Plex Mono,
+  # 한글은 Nanum Gothic Coding으로 떨어진다(app_theme의 fontFamilyFallback).
+  # DM Serif / DM Sans / Noto Serif KR은 v5.1에서 뺐다 — NotoSerifKR 하나가
+  # 23MB였다. 파일은 design/make_feature_graphic.py가 아직 쓰므로 남겨 둔다.
   fonts:
-    - family: DM Serif Display
+    - family: IBM Plex Mono
       fonts:
-        - asset: assets/fonts/DMSerifDisplay-Regular.ttf
-    - family: DM Sans
+        - asset: assets/fonts/IBMPlexMono-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexMono-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexMono-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexMono-Bold.ttf
+          weight: 700
+    - family: Nanum Gothic Coding
       fonts:
-        - asset: assets/fonts/DMSans-Variable.ttf
-    - family: Noto Serif KR
-      fonts:
-        - asset: assets/fonts/NotoSerifKR-Variable.ttf
+        - asset: assets/fonts/NanumGothicCoding-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NanumGothicCoding-Bold.ttf
+          weight: 700
 
 # 앱 아이콘 — 블루프린트 정체성: '세' + 도면 치수선. 콘크리트 바탕 #F8F7F5.
 # 생성: dart run flutter_launcher_icons (원본: design/icon_final.png)
@@ -53,6 +65,8 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon/icon.png"
-  adaptive_icon_background: "#0A0A0B"
-  adaptive_icon_foreground: "assets/icon/icon.png"
+  # 적응형 아이콘: 잉크 바탕 + 종이 물결(전경). 전경의 띠는 안쪽 66%
+  # 안전 영역 안에 들어가 있어 어떤 기기 마스크로 잘려도 안 깎인다.
+  adaptive_icon_background: "#1F1F1F"
+  adaptive_icon_foreground: "assets/icon/icon_fg.png"
   remove_alpha_ios: true

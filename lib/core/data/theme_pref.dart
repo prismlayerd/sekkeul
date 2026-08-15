@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 
 /// 사용자가 고른 화면 테마(시스템/라이트/다크). 시작 시 DB(app_state 'theme_mode')에서
-/// 로드되고, 설정에서 바꾸면 갱신된다. 미설정 기본값은 시스템(OS 설정을 따라감).
+/// 로드되고, 설정에서 바꾸면 갱신된다.
+///
+/// **미설정 기본값은 라이트다.** 이 앱의 정체성은 종이 명세서라, 처음 여는 사람은
+/// 종이를 봐야 한다. OS가 다크라고 먹지부터 보여주면 앱이 무엇인지 설명이 안 된다.
+/// 시스템을 따르고 싶은 사람은 설정에서 '시스템'을 고르면 되고, 그 선택은 남는다.
 /// (전역 ValueNotifier 패턴 — 앱 전체가 구독한다)
-final ValueNotifier<ThemeMode> themeModeNotifier = ValueNotifier(ThemeMode.system);
+final ValueNotifier<ThemeMode> themeModeNotifier = ValueNotifier(ThemeMode.light);
 
-/// DB 문자열 → ThemeMode 복원 (미설정·미지값 시 시스템)
+/// DB 문자열 → ThemeMode 복원. 저장된 값이 없으면(첫 실행) 라이트.
 ThemeMode themeModeFromDb(String? value) {
   switch (value) {
     case 'light':
       return ThemeMode.light;
     case 'dark':
       return ThemeMode.dark;
-    default:
+    case 'system':
       return ThemeMode.system;
+    default:
+      return ThemeMode.light;
   }
 }
 
