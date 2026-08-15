@@ -8,6 +8,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../theme/app_theme.dart';
 import '../../core/update_service.dart';
 import '../components/reminder_card.dart';
+import '../components/section_accordion.dart';
 import '../components/update_card.dart';
 import 'onboarding_screen.dart';
 import 'my_info_screen.dart';
@@ -1278,34 +1279,38 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         pool[(_faqOffset + i) % pool.length],
     ];
 
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        iconColor: AppTheme.inkTertiary(context),
-        collapsedIconColor: AppTheme.inkTertiary(context),
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: const EdgeInsets.only(bottom: 16),
-        // 위의 절들과 같은 머리를 쓴다 — 하나만 다른 모양이면 그 줄이 문서 밖으로 보인다.
-        title: AppTheme.sectionHead(context, '05', '자주 묻는 질문'),
+    // 03·04와 같은 몸을 쓴다. 예전엔 여기만 Material ExpansionTile이었는데
+    // 그 타일은 최소 높이가 48dp라, 접힌 상태에서 05만 한 뼘 더 두꺼웠다.
+    return SectionAccordion(
+      no: '05',
+      title: '자주 묻는 질문',
+      expanded: (_) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ...shown.map((faq) => _buildFaqItem(faq['q']!, faq['a']!)),
           if (pool.length > 5)
             Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: GestureDetector(
-                onTap: () => setState(() => _faqOffset = (_faqOffset + 5) % pool.length),
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  alignment: Alignment.center,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.refresh_rounded, size: 15, color: AppTheme.inkSecondary(context)),
-                      const SizedBox(width: 6),
-                      Text('다른 질문 보기', style: AppTheme.sans(12, AppTheme.inkSecondary(context), weight: FontWeight.w600)),
-                    ],
+              child: Semantics(
+                button: true,
+                child: GestureDetector(
+                  onTap: () => setState(() => _faqOffset = (_faqOffset + 5) % pool.length),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.refresh_rounded,
+                            size: 15, color: AppTheme.inkSecondary(context)),
+                        const SizedBox(width: 6),
+                        Text('다른 질문 보기',
+                            style: AppTheme.sans(12, AppTheme.inkSecondary(context),
+                                weight: FontWeight.w600)),
+                      ],
+                    ),
                   ),
                 ),
               ),

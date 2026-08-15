@@ -252,8 +252,10 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         // 연봉 저장이 막히면 지출 목표를 영영 못 만드는 잠금이 됐다 (2026-08-10).
         // 대신 빈 상태에서 유도가 둘(연봉·지출 목표) 뜬다 — 그건 감수한다.
         if (needsBudget) ...[
-          const SizedBox(height: 12),
-          _expensePrompt(sub, accent),
+          // 위 연봉 유도와 **같은 간격**. 둘은 같은 종류의 줄이라 하나만
+          // 어긋나면 절이 삐뚤어 보인다.
+          const SizedBox(height: 14),
+          _expensePrompt(accent),
         ],
 
         // ── 카드 공제 → 올해 쌓인 예상 환급 (직장인 전용, A/B/C 3단계) ──
@@ -297,28 +299,28 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
   /// 예전엔 여기서 바로 적을 수 있었다(인라인 입력칸). 가계부 분석 탭에도
   /// 같은 입력이 있어서, 두 곳이 서로를 모르는 채로 같은 값을 고쳤다.
   /// 01의 '내 정보에서 연봉을…'과 같은 꼴 — 문장 한 줄과 화살표로 끝낸다.
-  Widget _expensePrompt(Color sub, Color accent) {
+  /// 위 연봉 유도와 **똑같이** 생겨야 한다 — 크기 12, 높이는 글자가 정한다.
+  /// 인라인 입력칸 시절의 높이 48은 입력 행과 배너의 높이를 맞추려던 것인데,
+  /// 입력칸이 사라진 뒤에도 남아서 아래 점선까지의 간격이 연봉 쪽보다 벌어졌다.
+  Widget _expensePrompt(Color accent) {
     return Semantics(
       button: true,
       child: GestureDetector(
         onTap: widget.onSetExpenseTarget,
         behavior: HitTestBehavior.opaque,
-        child: SizedBox(
-          height: 48,
-          child: Row(children: [
-            Expanded(
-              // 지출 목표는 공제와 아무 상관이 없다 — 카드공제 문턱은 총급여의
-              // 25%로 정해져 있다(조특법 §126의2). "공제 기준을 잡아드려요"는
-              // 거짓말이었다.
-              child: Text('목표를 정하면 남은 돈을 알려드려요'.keepWords,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTheme.sans(AppTheme.tsSM, accent, weight: FontWeight.w600)),
-            ),
-            const SizedBox(width: 8),
-            Icon(Icons.arrow_forward, size: 14, color: accent),
-          ]),
-        ),
+        child: Row(children: [
+          Expanded(
+            // 지출 목표는 공제와 아무 상관이 없다 — 카드공제 문턱은 총급여의
+            // 25%로 정해져 있다(조특법 §126의2). "공제 기준을 잡아드려요"는
+            // 거짓말이었다.
+            child: Text('목표를 정하면 남은 돈을 알려드려요'.keepWords,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTheme.sans(12, accent, weight: FontWeight.w600)),
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.arrow_forward, size: 14, color: accent),
+        ]),
       ),
     );
   }

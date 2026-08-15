@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
+import 'section_accordion.dart';
 import '../../core/notifications/reminder.dart';
 import '../../core/notifications/custom_reminder_service.dart';
 import '../../core/navigation/app_route_observer.dart';
@@ -20,8 +21,6 @@ class ReminderCard extends StatefulWidget {
 
 class _ReminderCardState extends State<ReminderCard> with RouteAware {
   List<Reminder> _reminders = [];
-  // 홈은 이미 길다. 리마인더는 접힌 채로 시작하고, 접힌 자리에는 한 줄만 남긴다.
-  bool _expanded = false;
 
   @override
   void initState() {
@@ -94,92 +93,57 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
     final tert = AppTheme.inkTertiary(context);
     final accent = AppTheme.accentColor(context);
 
+    // 머리와 여닫는 몸은 04·05와 같은 것을 쓴다.
+    return SectionAccordion(
+      no: '03',
+      title: '리마인더',
+      collapsed: Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Text('나만의 맞춤 알림 설정해보세요.'.keepWords,
+            style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5)),
+      ),
+      expanded: (_) => _expandedContent(ink, sub, tert, accent),
+    );
+  }
+
+  /// 위 여백은 [SectionAccordion]이 붙인다 — 여기서 또 주면 두 번 벌어진다.
+  Widget _expandedContent(Color ink, Color sub, Color tert, Color accent) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── 헤더: 절 머리 + 오른쪽 끝 펼침 화살표. 줄 전체가 토글이다. ──
-        Semantics(
-          button: true,
-          expanded: _expanded,
-          label: '리마인더',
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => setState(() => _expanded = !_expanded),
-            child: ExcludeSemantics(
-              child: Row(
-                children: [
-                  Expanded(child: AppTheme.sectionHead(context, '03', '리마인더')),
-                  const SizedBox(width: 8),
-                  AnimatedRotation(
-                    turns: _expanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutCubic,
-                    child: Icon(Icons.expand_more_rounded, size: 20, color: tert),
-                  ),
-                ],
-              ),
+        ..._reminders.take(3).map((r) => _reminderRow(r, ink, sub, tert, accent)),
+        if (_reminders.isNotEmpty) const SizedBox(height: 10),
+        // 추가는 목록의 **마지막 줄**이다 — 아직 안 채운 칸이라 점선으로 두른다
+        // (지출 목표 빈 칸과 같은 문법). 헤더에 두면 접힌 상태에서도 눌리는데,
+        // 안 보이는 목록에 항목을 더하라는 말은 이르다.
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _openManager,
+          child: AppTheme.dashedBox(
+            context,
+            child: SizedBox(
+              height: 44,
+              child: Row(children: [
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(_reminders.isEmpty ? '알림 추가하기' : '리마인더 관리',
+                      style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+                ),
+                const SizedBox(width: 8),
+                Text('＋', style: AppTheme.sans(AppTheme.tsLG, accent, weight: FontWeight.w600)),
+                const SizedBox(width: 14),
+              ]),
             ),
-          ),
-        ),
-        // ── 펼침 영역 — AnimatedSize로 높이 전환 ──
-        ClipRect(
-          child: AnimatedSize(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            alignment: Alignment.topCenter,
-            child: _expanded
-                ? _expandedContent(ink, sub, tert, accent)
-                : Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text('나만의 맞춤 알림 설정해보세요.'.keepWords,
-                        style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5)),
-                  ),
           ),
         ),
       ],
     );
   }
 
-  Widget _expandedContent(Color ink, Color sub, Color tert, Color accent) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ..._reminders.take(3).map((r) => _reminderRow(r, ink, sub, tert, accent)),
-          if (_reminders.isNotEmpty) const SizedBox(height: 10),
-          // 추가는 목록의 **마지막 줄**이다 — 아직 안 채운 칸이라 점선으로 두른다
-          // (지출 목표 빈 칸과 같은 문법). 헤더에 두면 접힌 상태에서도 눌리는데,
-          // 안 보이는 목록에 항목을 더하라는 말은 이르다.
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _openManager,
-            child: AppTheme.dashedBox(
-              context,
-              child: SizedBox(
-                height: 44,
-                child: Row(children: [
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Text(_reminders.isEmpty ? '알림 추가하기' : '리마인더 관리',
-                        style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
-                  ),
-                  const SizedBox(width: 8),
-                  Text('＋', style: AppTheme.sans(AppTheme.tsLG, accent, weight: FontWeight.w600)),
-                  const SizedBox(width: 14),
-                ]),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _openManager() async {
     // 복귀 시 리로드는 didPopNext(RouteObserver)가 처리.
-    await Navigator.push(context,
-        MaterialPageRoute(builder: (_) => ReminderListScreen(userType: widget.userType)));
+    await Navigator.push(
+        context, MaterialPageRoute(builder: (_) => ReminderListScreen(userType: widget.userType)));
   }
 
   Widget _reminderRow(Reminder r, Color ink, Color sub, Color tert, Color accent) {
@@ -205,8 +169,7 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
                 Text(r.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTheme.sans(13.5, r.enabled ? ink : tert,
-                        weight: FontWeight.w600)),
+                    style: AppTheme.sans(13.5, r.enabled ? ink : tert, weight: FontWeight.w600)),
                 const SizedBox(height: 2),
                 Text(_subtitle(r), style: AppTheme.sans(11.5, tert)),
               ],
