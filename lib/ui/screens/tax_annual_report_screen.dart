@@ -287,7 +287,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       return ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         children: [
-          Text('$_year년 귀속\n종합소득세 신고서', style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
+          Text('$_year년 귀속\n종합소득세 신고서', style: AppTheme.serif(AppTheme.serifXL, textColor, spacing: -0.5, height: 1.2)),
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(20),
@@ -323,7 +323,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       children: [
-        Text('$_year년 귀속\n종합소득세 신고서', style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
+        Text('$_year년 귀속\n종합소득세 신고서', style: AppTheme.serif(AppTheme.serifXL, textColor, spacing: -0.5, height: 1.2)),
         const SizedBox(height: 4),
         Text('①진단 결과를 홈택스 화면에 나오는 순서대로 안내해드려요.\n신고 기한: 매년 5월 1일 ~ 5월 31일'.keepWords,
             style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
@@ -388,7 +388,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           width: 22, height: 22,
           alignment: Alignment.center,
           decoration: BoxDecoration(color: highlight ? primary : subColor.withValues(alpha: 0.3), shape: BoxShape.circle),
-          child: Text('$n', style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 11, fontWeight: FontWeight.bold)),
+          child: Text('$n', style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 12, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -450,7 +450,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
         // ── 인트로 ──
         Text(
           '$_year년 귀속\n종합소득세 신고서',
-          style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2),
+          style: AppTheme.serif(AppTheme.serifXL, textColor, spacing: -0.5, height: 1.2),
         ),
         const SizedBox(height: 4),
         Text(
@@ -689,7 +689,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title, style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.w600)),
-            Text(subtitle, style: TextStyle(color: subColor, fontSize: 11)),
+            Text(subtitle, style: TextStyle(color: subColor, fontSize: 12)),
           ],
         )),
         Text(
@@ -760,7 +760,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title, style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.w600)),
-                  Text(subtitle, style: TextStyle(color: subColor, fontSize: 11)),
+                  Text(subtitle, style: TextStyle(color: subColor, fontSize: 12)),
                 ],
               )),
               if (resultAmount > 0) ...[
@@ -863,7 +863,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           keyboardType: TextInputType.number,
           textAlign: TextAlign.center,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(color: textColor, fontSize: 17, fontWeight: FontWeight.bold),
           decoration: InputDecoration(
             filled: true,
             fillColor: subColor.withValues(alpha: 0.08),
@@ -1017,7 +1017,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           width: 22, height: 22,
           alignment: Alignment.center,
           decoration: BoxDecoration(color: primary, shape: BoxShape.circle),
-          child: Text(num, style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 11, fontWeight: FontWeight.bold)),
+          child: Text(num, style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 12, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(width: 10),
         Expanded(child: Text(text, style: TextStyle(color: textColor, fontSize: 12, height: 1.5))),

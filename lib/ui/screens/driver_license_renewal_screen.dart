@@ -64,7 +64,7 @@ class _DriverLicenseRenewalScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text('운전면허 갱신 만료일',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -73,7 +73,7 @@ class _DriverLicenseRenewalScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('취득(또는 마지막 갱신) 날짜'.keepWords,
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(children: [
               Expanded(
@@ -86,19 +86,19 @@ class _DriverLicenseRenewalScreenState
             ]),
             const SizedBox(height: 16),
             Text('다음 갱신 시점의 만 나이'.keepWords,
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _ageAtRenewalCtrl,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.right,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: AppTheme.sans(14, ink),
+              style: AppTheme.sans(AppTheme.tsMD, ink),
               decoration: InputDecoration(
                 hintText: '40',
-                hintStyle: AppTheme.sans(14, sub),
+                hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 suffixText: '세',
-                suffixStyle: AppTheme.sans(14, sub),
+                suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
                     borderSide: BorderSide(color: line)),
@@ -127,13 +127,13 @@ class _DriverLicenseRenewalScreenState
                   children: [
                     Text('예상 다음 갱신 만료일'.keepWords,
                         style:
-                            AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                            AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     Text(
                         next != null
                             ? '${next.year}년 ${next.month}월 ${next.day}일'
                             : '날짜를 확인해주세요',
-                        style: AppTheme.sans(18, accent,
+                        style: AppTheme.sans(AppTheme.tsLG, accent,
                             weight: FontWeight.w700)),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
@@ -141,7 +141,7 @@ class _DriverLicenseRenewalScreenState
                     _row('적용 갱신주기', '$_cycleYears년', ink, sub),
                     const SizedBox(height: 8),
                     Text('* 갱신 기간은 생일 전후 6개월(총 1년)이며, 만료일 기준 안내입니다.'.keepWords,
-                        style: AppTheme.sans(11, sub)),
+                        style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
               ),
@@ -201,12 +201,12 @@ class _DriverLicenseRenewalScreenState
             else
               FilteringTextInputFormatter.digitsOnly,
           ],
-      style: AppTheme.sans(14, ink),
+      style: AppTheme.sans(AppTheme.tsMD, ink),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: AppTheme.sans(14, sub),
+        hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
         suffixText: suffix,
-        suffixStyle: AppTheme.sans(12, sub),
+        suffixStyle: AppTheme.sans(AppTheme.tsXS, sub),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(4),
             borderSide: BorderSide(color: line)),
@@ -226,8 +226,8 @@ class _DriverLicenseRenewalScreenState
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -243,16 +243,16 @@ class _DriverLicenseRenewalScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

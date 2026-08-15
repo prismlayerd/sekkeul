@@ -234,7 +234,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             child: Row(children: [
               Expanded(
                 child: Text('연봉을 넣으면 예상 환급을 계산해드려요'.keepWords,
-                    style: AppTheme.sans(12, accent, weight: FontWeight.w600)),
+                    style: AppTheme.sans(AppTheme.tsXS, accent, weight: FontWeight.w600)),
               ),
               Icon(Icons.arrow_forward, size: 14, color: accent),
             ]),
@@ -314,7 +314,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             child: Row(children: [
               Expanded(
                 child: Text('바뀐 내용이 있으면 내 정보에서 수정하세요'.keepWords,
-                    style: AppTheme.sans(12, tert)),
+                    style: AppTheme.sans(AppTheme.tsXS, tert)),
               ),
               Icon(Icons.chevron_right_rounded, size: 16, color: tert),
             ]),
@@ -347,7 +347,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             child: Text('목표를 정하면 남은 돈을 알려드려요'.keepWords,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: AppTheme.sans(12, accent, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, accent, weight: FontWeight.w600)),
           ),
           const SizedBox(width: 8),
           Icon(Icons.arrow_forward, size: 14, color: accent),
@@ -522,7 +522,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
                 child: Text(label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTheme.sans(12, AppTheme.inkSecondary(context),
+                    style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context),
                         weight: FontWeight.w500))),
             if (onEdit != null) ...[
               const SizedBox(width: 6),
@@ -537,13 +537,13 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             ],
           ])),
           const SizedBox(width: 8),
-          Text(value, style: AppTheme.sans(12, color, weight: FontWeight.w700)),
+          Text(value, style: AppTheme.sans(AppTheme.tsXS, color, weight: FontWeight.w700)),
         ]),
         const SizedBox(height: 8),
         // 진행은 인쇄된 블록으로 찍는다 — 둥근 진행바는 이 종이 위에 없다.
         AppTheme.printedBar(context, progress, color: color),
         const SizedBox(height: 8),
-        Text(note, style: AppTheme.sans(12, color, weight: FontWeight.w500, height: 1.4)),
+        Text(note, style: AppTheme.sans(AppTheme.tsXS, color, weight: FontWeight.w500, height: 1.4)),
       ],
     );
   }

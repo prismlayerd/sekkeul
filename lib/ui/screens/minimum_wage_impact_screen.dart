@@ -55,7 +55,7 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('최저임금 인상 영향',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -64,17 +64,17 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('주 근무시간',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _hoursCtrl,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.right,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: AppTheme.sans(14, ink),
+              style: AppTheme.sans(AppTheme.tsMD, ink),
               decoration: InputDecoration(
                 suffixText: '시간',
-                suffixStyle: AppTheme.sans(14, sub),
+                suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
                     borderSide: BorderSide(color: line)),
@@ -103,16 +103,16 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
                   children: [
                     Text('2025→2026 인상 영향'.keepWords,
                         style:
-                            AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                            AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('월 추가 수입',
-                            style: AppTheme.sans(14, ink,
+                            style: AppTheme.sans(AppTheme.tsMD, ink,
                                 weight: FontWeight.w700)),
                         Text('+${won(_monthlyExtra)}',
-                            style: AppTheme.sans(16, accent,
+                            style: AppTheme.sans(AppTheme.tsBase, accent,
                                 weight: FontWeight.w700)),
                       ],
                     ),
@@ -130,7 +130,7 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
                         _hasWeeklyHoliday
                             ? '* 주 15시간 이상 근무로 주휴수당이 포함된 계산입니다.'
                             : '* 주 15시간 미만은 주휴수당이 적용되지 않습니다.',
-                        style: AppTheme.sans(11, sub)),
+                        style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
               ),
@@ -176,8 +176,8 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -193,16 +193,16 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

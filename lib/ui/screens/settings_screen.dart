@@ -74,7 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           backgroundColor: Theme.of(ctx).cardColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
           title: Text('PIN 설정 (4~6자리 숫자)'.keepWords,
-              style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
+              style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx), weight: FontWeight.w700)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -94,14 +94,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               if (error != null) ...[
                 const SizedBox(height: 8),
-                Text(error!, style: AppTheme.sans(12, AppTheme.colorDanger)),
+                Text(error!, style: AppTheme.sans(AppTheme.tsXS, AppTheme.colorDanger)),
               ],
             ],
           ),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text('취소', style: AppTheme.sans(14, AppTheme.inkSecondary(ctx)))),
+                child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, AppTheme.inkSecondary(ctx)))),
             TextButton(
               onPressed: () {
                 final pin = pinController.text;
@@ -117,7 +117,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(ctx, pin);
               },
               child: Text('설정',
-                  style: AppTheme.sans(14, AppTheme.accentColor(ctx), weight: FontWeight.w700)),
+                  style: AppTheme.sans(AppTheme.tsMD, AppTheme.accentColor(ctx), weight: FontWeight.w700)),
             ),
           ],
         ),
@@ -163,17 +163,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('백업에서 복원할까요?',
-            style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
+            style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx), weight: FontWeight.w700)),
         content: Text('지금 기기에 있는 데이터는 백업 내용으로 덮어써져요.'.keepWords,
-            style: AppTheme.sans(14, AppTheme.inkSecondary(ctx), height: 1.45)),
+            style: AppTheme.sans(AppTheme.tsMD, AppTheme.inkSecondary(ctx), height: 1.45)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('취소', style: AppTheme.sans(14, AppTheme.inkSecondary(ctx)))),
+              child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, AppTheme.inkSecondary(ctx)))),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: Text('복원',
-                  style: AppTheme.sans(14, AppTheme.accentColor(ctx), weight: FontWeight.w700))),
+                  style: AppTheme.sans(AppTheme.tsMD, AppTheme.accentColor(ctx), weight: FontWeight.w700))),
         ],
       ),
     );
@@ -198,19 +198,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('개인정보처리방침',
-            style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
+            style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx), weight: FontWeight.w700)),
         content: Text(
           '세끌은 제1모드(완전 오프라인)로 운영됩니다.\n\n'
           '모든 납세자 정보·가계부·리마인더 데이터는 이 기기의 저장소에만 보관되며, '
           '외부 서버 전송·제3자 제공·광고 추적이 전혀 없습니다.\n\n'
           '데이터는 "개인 세무 데이터 영구 파기"로 언제든 완전히 삭제할 수 있습니다.'.keepWords,
-          style: AppTheme.sans(13, AppTheme.inkSecondary(ctx), height: 1.55),
+          style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(ctx), height: 1.55),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text('닫기',
-                  style: AppTheme.sans(14, AppTheme.accentColor(ctx), weight: FontWeight.w700))),
+                  style: AppTheme.sans(AppTheme.tsMD, AppTheme.accentColor(ctx), weight: FontWeight.w700))),
         ],
       ),
     );
@@ -223,19 +223,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('이용 안내 및 면책',
-            style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
+            style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx), weight: FontWeight.w700)),
         content: Text(
           '세끌이 제공하는 세액·환급액·수급액 계산은 법령·고시 정보를 바탕으로 한 참고용 추정치입니다.\n\n'
           '실제 세액·환급액·수급 여부는 개인 상황에 따라 달라질 수 있으며, 법적 효력이 없습니다. '
           '정확한 금액과 자격 요건은 홈택스·국세청·관할 기관 또는 세무사를 통해 반드시 확인하세요.\n\n'
           '세끌 이용에 따른 판단과 책임은 이용자 본인에게 있습니다.'.keepWords,
-          style: AppTheme.sans(13, AppTheme.inkSecondary(ctx), height: 1.55),
+          style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(ctx), height: 1.55),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text('닫기',
-                  style: AppTheme.sans(14, AppTheme.accentColor(ctx), weight: FontWeight.w700))),
+                  style: AppTheme.sans(AppTheme.tsMD, AppTheme.accentColor(ctx), weight: FontWeight.w700))),
         ],
       ),
     );
@@ -248,7 +248,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('설정', style: AppTheme.serif(22, ink, weight: FontWeight.w400, spacing: -0.3)),
+        title: Text('설정', style: AppTheme.serif(AppTheme.serifMD, ink, weight: FontWeight.w400, spacing: -0.3)),
         leading: IconButton(
           tooltip: '뒤로',
           icon: Icon(Icons.arrow_back_rounded, color: sub),
@@ -385,7 +385,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
             child: Row(
               children: [
-                Text('세끌', style: AppTheme.serif(19, ink, weight: FontWeight.w400, spacing: -0.3)),
+                Text('세끌', style: AppTheme.serif(AppTheme.tsXL, ink, weight: FontWeight.w400, spacing: -0.3)),
                 const Spacer(),
                 Text(versionText, style: AppTheme.sans(AppTheme.tsSM, tert)),
               ],
@@ -433,7 +433,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         border: Border.all(color: tert, width: 1),
         borderRadius: BorderRadius.circular(2),
       ),
-      child: Text(text, style: AppTheme.sans(10.5, tert, weight: FontWeight.w600)),
+      child: Text(text, style: AppTheme.sans(AppTheme.tsLane, tert, weight: FontWeight.w600)),
     );
   }
 
@@ -465,7 +465,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('화면 테마',
-            style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
+            style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx), weight: FontWeight.w700)),
         children: [
           for (final mode in ThemeMode.values)
             SimpleDialogOption(
@@ -481,7 +481,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       : AppTheme.inkTertiary(ctx),
                 ),
                 const SizedBox(width: 12),
-                Text(themeModeLabel(mode), style: AppTheme.sans(14, AppTheme.ink(ctx))),
+                Text(themeModeLabel(mode), style: AppTheme.sans(AppTheme.tsMD, AppTheme.ink(ctx))),
               ]),
             ),
         ],
@@ -512,7 +512,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Row(children: [
           Expanded(
             child: Text(title,
-                style: AppTheme.sans(15, titleColor, weight: FontWeight.w700, spacing: -0.2)),
+                style: AppTheme.sans(AppTheme.tsBase, titleColor, weight: FontWeight.w700, spacing: -0.2)),
           ),
           if (trailingTag != null) trailingTag,
           if (trailing != null)

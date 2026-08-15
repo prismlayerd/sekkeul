@@ -15,7 +15,7 @@ class NaeilChaeumScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('내일채움공제',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -33,11 +33,11 @@ class NaeilChaeumScreen extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('⚠️ ', style: AppTheme.sans(14, ink)),
+                  Text('⚠️ ', style: AppTheme.sans(AppTheme.tsMD, ink)),
                   Expanded(
                     child: Text(
                       '2024년부터 신규 가입이 종료되었습니다.\n기존 가입자만 만기까지 유지 가능합니다.'.keepWords,
-                      style: AppTheme.sans(13, ink, height: 1.6),
+                      style: AppTheme.sans(AppTheme.tsSM, ink, height: 1.6),
                     ),
                   ),
                 ],
@@ -85,16 +85,16 @@ class NaeilChaeumScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

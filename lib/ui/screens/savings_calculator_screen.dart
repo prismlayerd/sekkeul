@@ -94,7 +94,7 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
       appBar: AppBar(
         title: Text('예·적금 세후 수익',
             style: TextStyle(
-                color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+                color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
@@ -111,7 +111,7 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
             Text('이자소득세를 빼고\n실제 수령액을 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
-                    fontSize: 22,
+                    fontSize: 21,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
@@ -144,7 +144,7 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
                         : '매월 일정 금액을 납입하고 만기 시 이자를 받습니다.',
                     style: TextStyle(
                         color: subColor.withValues(alpha: 0.8),
-                        fontSize: 11,
+                        fontSize: 12,
                         height: 1.5),
                   ),
                 ],
@@ -214,7 +214,7 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
                     Text('농특세 1.4% 외 이자세 면제 (비과세종합저축 등)'.keepWords,
                         style: TextStyle(
                             color: subColor.withValues(alpha: 0.8),
-                            fontSize: 11)),
+                            fontSize: 12)),
                 ],
               ),
             ),
@@ -241,7 +241,7 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
                   Text(hasResult ? won(_maturityAmount) : '0원',
                       style: TextStyle(
                           color: primary,
-                          fontSize: 32,
+                          fontSize: 30,
                           fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   if (hasResult) ...[

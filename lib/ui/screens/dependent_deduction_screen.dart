@@ -146,7 +146,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('부양가족 공제 확인',
-            style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
@@ -161,7 +161,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('우리 가족,\n얼마나 공제받을 수 있을까요?'.keepWords,
-                style: TextStyle(color: textColor, fontSize: 22, fontWeight: FontWeight.bold, height: 1.4)),
+                style: TextStyle(color: textColor, fontSize: 21, fontWeight: FontWeight.bold, height: 1.4)),
             const SizedBox(height: 8),
             Text('부양가족 1명당 기본 150만원이 소득에서 공제됩니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
@@ -182,7 +182,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
                   ]),
                   const SizedBox(height: 12),
                   Text(_toManwon(totalIncomeDeduction),
-                      style: TextStyle(color: primary, fontSize: 32, fontWeight: FontWeight.w900)),
+                      style: TextStyle(color: primary, fontSize: 30, fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   _resultRow('기본공제 ($basicCount명 × 150만)', _toManwon(basicDeduction), subColor, textColor),
                   if (totalDisabled > 0) ...[
@@ -270,7 +270,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                 ),
                 child: Text('저장하기',
-                    style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 16, fontWeight: FontWeight.bold)),
+                    style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 15, fontWeight: FontWeight.bold)),
               ),
             ),
             const CalcDisclaimer(),
@@ -336,7 +336,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
             width: 36,
             child: Text('$value',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
           ),
           _stepBtn(Icons.add_rounded, () => onChanged(value + 1)),
         ],

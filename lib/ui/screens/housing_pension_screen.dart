@@ -81,7 +81,7 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('주택연금',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -93,19 +93,19 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
                 line),
             const SizedBox(height: 16),
             Text('주택 공시가격 (만원)'.keepWords,
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _priceCtrl,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.right,
               inputFormatters: const [ThousandsFormatter()],
-              style: AppTheme.sans(14, ink),
+              style: AppTheme.sans(AppTheme.tsMD, ink),
               decoration: InputDecoration(
                 hintText: '50,000',
-                hintStyle: AppTheme.sans(14, sub),
+                hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 suffixText: '만원',
-                suffixStyle: AppTheme.sans(14, sub),
+                suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
                     borderSide: BorderSide(color: line)),
@@ -143,19 +143,19 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
                   children: [
                     Text('예상 월지급금 (종신·정액형 기준)'.keepWords,
                         style:
-                            AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                            AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('월지급금',
-                            style: AppTheme.sans(14, ink,
+                            style: AppTheme.sans(AppTheme.tsMD, ink,
                                 weight: FontWeight.w700)),
                         Text(
                             _ageEligible && _priceEligible
                                 ? won(_monthlyPaymentWon)
                                 : '-',
-                            style: AppTheme.sans(16, accent,
+                            style: AppTheme.sans(AppTheme.tsBase, accent,
                                 weight: FontWeight.w700)),
                       ],
                     ),
@@ -164,13 +164,13 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
                     const SizedBox(height: 12),
                     if (!_ageEligible)
                       Text('* 만 55세 이상부터 가입 가능합니다.'.keepWords,
-                          style: AppTheme.sans(11, sub)),
+                          style: AppTheme.sans(AppTheme.tsXS, sub)),
                     if (!_priceEligible)
                       Text('* 공시가격 12억원(120,000만원) 이하만 가입 가능합니다(다주택 합산).'.keepWords,
-                          style: AppTheme.sans(11, sub)),
+                          style: AppTheme.sans(AppTheme.tsXS, sub)),
                     if (_ageEligible && _priceEligible)
                       Text('* HF 공시 월지급금표 기반 선형보간 참고 추정치이며 실제 신청 시 HF 공식 계산기·상담 결과와 다를 수 있습니다.'.keepWords,
-                          style: AppTheme.sans(11, sub)),
+                          style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
               ),
@@ -224,7 +224,7 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+        Text(label, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: ctrl,
@@ -236,12 +236,12 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
             else
               FilteringTextInputFormatter.digitsOnly,
           ],
-          style: AppTheme.sans(14, ink),
+          style: AppTheme.sans(AppTheme.tsMD, ink),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: AppTheme.sans(14, sub),
+            hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
             suffixText: suffix,
-            suffixStyle: AppTheme.sans(14, sub),
+            suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(4),
                 borderSide: BorderSide(color: line)),
@@ -271,16 +271,16 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

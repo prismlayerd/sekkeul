@@ -193,7 +193,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('아직 준비 중이에요.',
-              style: AppTheme.sans(13, AppTheme.backgroundColor(context))),
+              style: AppTheme.sans(AppTheme.tsSM, AppTheme.backgroundColor(context))),
           backgroundColor: AppTheme.ink(context),
           behavior: SnackBarBehavior.floating,
           shape:
@@ -217,7 +217,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         automaticallyImplyLeading: false,
         titleSpacing: 16,
         title: Text('계산기',
-            style: AppTheme.serif(17, ink,
+            style: AppTheme.serif(AppTheme.tsLG, ink,
                 weight: FontWeight.w400, spacing: -0.5)),
         actions: [
           IconButton(
@@ -330,11 +330,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                         const SizedBox(height: 5),
                       ],
                       Text(calc.name,
-                          style: AppTheme.sans(15, ink,
+                          style: AppTheme.sans(AppTheme.tsBase, ink,
                               weight: FontWeight.w600)),
                       const SizedBox(height: 3),
                       Text(calc.desc,
-                          style: AppTheme.sans(12, sub, height: 1.4)),
+                          style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4)),
                     ],
                   ),
                 ),
@@ -349,7 +349,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       border: Border.all(color: line),
                       borderRadius: BorderRadius.circular(3),
                     ),
-                    child: Text('준비 중', style: AppTheme.sans(11, tert)),
+                    child: Text('준비 중', style: AppTheme.sans(AppTheme.tsXS, tert)),
                   ),
               ],
             ),

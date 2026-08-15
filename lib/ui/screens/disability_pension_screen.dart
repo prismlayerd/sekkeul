@@ -45,7 +45,7 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('장애인연금·장애수당',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -54,7 +54,7 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('장애 정도',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -72,7 +72,7 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
             if (_severityIdx == 0) ...[
               const SizedBox(height: 16),
               Text('연령 구간',
-                  style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                  style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -89,7 +89,7 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
               ),
               const SizedBox(height: 16),
               Text('소득 구간',
-                  style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                  style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
               const SizedBox(height: 8),
               Container(
                 width: double.infinity,
@@ -101,7 +101,7 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
                   child: DropdownButton<int>(
                     value: _incomeIdx,
                     isExpanded: true,
-                    style: AppTheme.sans(14, ink),
+                    style: AppTheme.sans(AppTheme.tsMD, ink),
                     dropdownColor: AppTheme.backgroundColor(context),
                     items: const [
                       DropdownMenuItem(value: 0, child: Text('기초생활수급')),
@@ -126,16 +126,16 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
                 children: [
                   Text('월 예상 지원금',
                       style:
-                          AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                          AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(_severityIdx == 0 ? '장애인연금' : '장애수당',
-                          style: AppTheme.sans(14, ink,
+                          style: AppTheme.sans(AppTheme.tsMD, ink,
                               weight: FontWeight.w700)),
                       Text(won(_amount),
-                          style: AppTheme.sans(16, accent,
+                          style: AppTheme.sans(AppTheme.tsBase, accent,
                               weight: FontWeight.w700)),
                     ],
                   ),
@@ -144,7 +144,7 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
                       _severityIdx == 0
                           ? '* 기초급여+부가급여 합산 참고 추정치. 65세 이상 기초생활수급자는 기초연금 통합분 포함.'
                           : '* 재가 거주 기준. 보장시설 입소자는 월 2만원으로 낮아집니다.',
-                      style: AppTheme.sans(11, sub)),
+                      style: AppTheme.sans(AppTheme.tsXS, sub)),
                 ],
               ),
             ),
@@ -194,7 +194,7 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(label,
-            style: AppTheme.sans(13, selected ? accent : ink,
+            style: AppTheme.sans(AppTheme.tsSM, selected ? accent : ink,
                 weight: FontWeight.w600)),
       ),
     );
@@ -211,16 +211,16 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

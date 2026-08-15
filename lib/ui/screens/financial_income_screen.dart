@@ -104,7 +104,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('금융소득 종합과세 계산'.keepWords,
-            style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
@@ -119,7 +119,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('이자·배당이 많다면\n세금이 더 붙을 수 있어요'.keepWords,
-                style: TextStyle(color: textColor, fontSize: 22, fontWeight: FontWeight.bold, height: 1.4)),
+                style: TextStyle(color: textColor, fontSize: 21, fontWeight: FontWeight.bold, height: 1.4)),
             const SizedBox(height: 8),
             Text('연간 금융소득이 2,000만원을 넘으면 넘는 금액이 다른 소득과 합쳐져 더 높은 세율이 붙습니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
@@ -253,7 +253,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
           ]),
           const SizedBox(height: 12),
           Text(_toManwon(r.separateTaxAmount),
-              style: const TextStyle(color: AppTheme.colorSuccess, fontSize: 32, fontWeight: FontWeight.w900)),
+              style: const TextStyle(color: AppTheme.colorSuccess, fontSize: 30, fontWeight: FontWeight.w900)),
           const SizedBox(height: 12),
           _resultRow('적용 세율', '14% (분리과세)', subColor, textColor),
           const SizedBox(height: 6),
@@ -278,7 +278,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
           ]),
           const SizedBox(height: 12),
           Text('5월에 더 낼 세금 ${_toManwon(r.additionalTaxBurden)}',
-              style: const TextStyle(color: Colors.redAccent, fontSize: 28, fontWeight: FontWeight.w900)),
+              style: const TextStyle(color: Colors.redAccent, fontSize: 30, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
           Text('(지방소득세 10% 별도)'.keepWords,
               style: TextStyle(color: subColor, fontSize: 12)),
@@ -324,7 +324,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
         Text(label, style: TextStyle(color: subColor, fontSize: 14)),
         if (hint != null) ...[
           const SizedBox(height: 2),
-          Text(hint, style: TextStyle(color: subColor.withValues(alpha: 0.7), fontSize: 11)),
+          Text(hint, style: TextStyle(color: subColor.withValues(alpha: 0.7), fontSize: 12)),
         ],
         const SizedBox(height: 4),
         AmountField(controller: controller, expand: true, onChanged: (_) => setState(() {})),

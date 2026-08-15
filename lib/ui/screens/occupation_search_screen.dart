@@ -157,7 +157,7 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
                         controller: _searchController,
                         onChanged: _onSearch,
                         autofocus: true,
-                        style: AppTheme.sans(17, ink, weight: FontWeight.w600, spacing: -0.3),
+                        style: AppTheme.sans(AppTheme.tsLG, ink, weight: FontWeight.w600, spacing: -0.3),
                         decoration: InputDecoration(
                           isDense: true,
                           filled: false,
@@ -166,7 +166,7 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
                           enabledBorder: InputBorder.none,
                           focusedBorder: InputBorder.none,
                           hintText: '업종명(예: 프리랜서, 카페) 또는 6자리 코드',
-                          hintStyle: AppTheme.sans(15, AppTheme.inkTertiary(context)),
+                          hintStyle: AppTheme.sans(AppTheme.tsBase, AppTheme.inkTertiary(context)),
                         ),
                       ),
                     ),
@@ -178,7 +178,7 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
               child: _filteredList.isEmpty
                   ? Center(
                       child: Text('일치하는 업종이 없어요.\n다른 말로 검색해 보세요.'.keepWords,
-                          textAlign: TextAlign.center, style: AppTheme.sans(14, sub, height: 1.5)),
+                          textAlign: TextAlign.center, style: AppTheme.sans(AppTheme.tsMD, sub, height: 1.5)),
                     )
                   : ListView.separated(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -205,7 +205,7 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
                                         const SizedBox(height: 5),
                                       ],
                                       Text(detailName,
-                                          style: AppTheme.sans(15, ink, weight: FontWeight.w600, spacing: -0.2)),
+                                          style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w600, spacing: -0.2)),
                                     ],
                                   ),
                                 ),
@@ -218,7 +218,7 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
                                     borderRadius: BorderRadius.circular(2),
                                   ),
                                   child: Text(item.code,
-                                      style: AppTheme.sans(13, sub, weight: FontWeight.w700, spacing: 0.5)),
+                                      style: AppTheme.sans(AppTheme.tsSM, sub, weight: FontWeight.w700, spacing: 0.5)),
                                 ),
                               ],
                             ),

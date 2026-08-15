@@ -66,7 +66,7 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('본인부담상한제 환급',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -75,7 +75,7 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('소득분위',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -87,14 +87,14 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
                 child: DropdownButton<int>(
                   value: _tierIdx,
                   isExpanded: true,
-                  style: AppTheme.sans(14, ink),
+                  style: AppTheme.sans(AppTheme.tsMD, ink),
                   dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < outOfPocketCapTiers.length; i++)
                       DropdownMenuItem(
                           value: i,
                           child: Text(outOfPocketCapTiers[i].$1,
-                              style: AppTheme.sans(14, ink))),
+                              style: AppTheme.sans(AppTheme.tsMD, ink))),
                   ],
                   onChanged: (v) => setState(() => _tierIdx = v!),
                 ),
@@ -102,19 +102,19 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
             ),
             const SizedBox(height: 16),
             Text('연간 건강보험 본인부담금 총합'.keepWords,
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _amountCtrl,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.right,
               inputFormatters: const [ThousandsFormatter()],
-              style: AppTheme.sans(14, ink),
+              style: AppTheme.sans(AppTheme.tsMD, ink),
               decoration: InputDecoration(
                 hintText: '3,000,000',
-                hintStyle: AppTheme.sans(14, sub),
+                hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 suffixText: '원',
-                suffixStyle: AppTheme.sans(14, sub),
+                suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
                     borderSide: BorderSide(color: line)),
@@ -150,10 +150,10 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('요양병원 120일 초과 입원'.keepWords,
-                          style: AppTheme.sans(14, ink)),
+                          style: AppTheme.sans(AppTheme.tsMD, ink)),
                       Text('올해 요양병원 입원일수가 120일을 넘으면 상한액이 따로 적용돼요'.keepWords
                           .keepWords,
-                          style: AppTheme.sans(11, sub)),
+                          style: AppTheme.sans(AppTheme.tsXS, sub)),
                     ],
                   ),
                 ),
@@ -176,16 +176,16 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
                 children: [
                   Text('예상 환급 결과',
                       style:
-                          AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                          AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('예상 환급액',
-                          style: AppTheme.sans(14, ink,
+                          style: AppTheme.sans(AppTheme.tsMD, ink,
                               weight: FontWeight.w700)),
                       Text(_hasInput ? won(_refund) : '-',
-                          style: AppTheme.sans(16, accent,
+                          style: AppTheme.sans(AppTheme.tsBase, accent,
                               weight: FontWeight.w700)),
                     ],
                   ),
@@ -196,12 +196,12 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
                   const SizedBox(height: 8),
                   if (_hasInput && _refund <= 0)
                     Text('* 본인부담금이 상한액을 초과하지 않아 환급 대상이 아닙니다.'.keepWords,
-                        style: AppTheme.sans(11, sub)),
+                        style: AppTheme.sans(AppTheme.tsXS, sub)),
                   Text(
                       '* 2025년 기준 상한액'
                       '${_longTermCare ? ' (요양병원 120일 초과)' : ''}. '
                       '연도별 상한액은 매년 8월경 재고시됩니다.'.keepWords,
-                      style: AppTheme.sans(11, sub)),
+                      style: AppTheme.sans(AppTheme.tsXS, sub)),
                 ],
               ),
             ),
@@ -241,8 +241,8 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -258,16 +258,16 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

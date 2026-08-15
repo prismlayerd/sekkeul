@@ -84,9 +84,9 @@ class _AppLockScreenState extends State<AppLockScreen> {
                     children: [
                       Icon(Icons.lock_outline_rounded, size: 44, color: ink),
                       const SizedBox(height: 16),
-                      Text('세끌 잠금', style: AppTheme.serif(28, ink)),
+                      Text('세끌 잠금', style: AppTheme.serif(AppTheme.serifXL, ink)),
                       const SizedBox(height: 8),
-                      Text('PIN을 입력하세요', style: AppTheme.sans(13, sub)),
+                      Text('PIN을 입력하세요', style: AppTheme.sans(AppTheme.tsSM, sub)),
                       const SizedBox(height: 24),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -106,7 +106,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                       ),
                       if (_error != null) ...[
                         const SizedBox(height: 12),
-                        Text(_error!, style: AppTheme.sans(12, AppTheme.colorDanger)),
+                        Text(_error!, style: AppTheme.sans(AppTheme.tsXS, AppTheme.colorDanger)),
                       ],
                       const SizedBox(height: 28),
                       _buildKeypad(ink, sub),
@@ -120,7 +120,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                               Icon(Icons.fingerprint_rounded, size: 18, color: AppTheme.accentColor(context)),
                               const SizedBox(width: 8),
                               Text('생체 인증으로 잠금 해제'.keepWords,
-                                  style: AppTheme.sans(13, AppTheme.accentColor(context), weight: FontWeight.w600)),
+                                  style: AppTheme.sans(AppTheme.tsSM, AppTheme.accentColor(context), weight: FontWeight.w600)),
                             ],
                           ),
                         ),
@@ -156,7 +156,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                   child: Center(
                     child: key == '⌫'
                         ? Icon(Icons.backspace_outlined, size: 20, color: sub)
-                        : Text(key, style: AppTheme.serif(22, ink)),
+                        : Text(key, style: AppTheme.serif(AppTheme.serifMD, ink)),
                   ),
                 ),
               );

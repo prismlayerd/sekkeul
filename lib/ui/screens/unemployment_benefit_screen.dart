@@ -98,7 +98,7 @@ class _UnemploymentBenefitScreenState
         title: Text('실업급여 계산기',
             style: TextStyle(
                 color: textColor,
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
@@ -116,7 +116,7 @@ class _UnemploymentBenefitScreenState
             Text('실직 후 받을 수 있는\n구직급여를 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
-                    fontSize: 22,
+                    fontSize: 21,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
@@ -141,7 +141,7 @@ class _UnemploymentBenefitScreenState
                   Text('최근 3개월 합계를 3으로 나눈 월 평균'.keepWords,
                       style: TextStyle(
                           color: subColor.withValues(alpha: 0.7),
-                          fontSize: 11)),
+                          fontSize: 12)),
                   const SizedBox(height: 8),
                   AmountField(
                     controller: _wageController,
@@ -239,7 +239,7 @@ class _UnemploymentBenefitScreenState
                             : '0원',
                     style: TextStyle(
                         color: primary,
-                        fontSize: 32,
+                        fontSize: 30,
                         fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 16),
@@ -309,7 +309,7 @@ class _UnemploymentBenefitScreenState
                 child: Text(e.value,
                     style: TextStyle(
                         color: selected ? AppTheme.backgroundColor(context) : subColor,
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600)),
               ),
             );

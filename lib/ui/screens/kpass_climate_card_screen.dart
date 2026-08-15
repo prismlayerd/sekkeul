@@ -58,7 +58,7 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('K-패스 · 기후동행카드 비교'.keepWords,
-            style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),
+            style: AppTheme.serif(AppTheme.tsBase, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
@@ -69,7 +69,7 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
             const SizedBox(height: 16),
             _numField('1회 평균 요금', _fareCtrl, '원', ink, sub, line),
             const SizedBox(height: 20),
-            Text('K-패스 대상 유형', style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+            Text('K-패스 대상 유형', style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 6,
@@ -84,14 +84,14 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
                         border: Border.all(color: selected ? accent : line),
                         borderRadius: BorderRadius.circular(4)),
                     child: Text(_kpassLabels[i],
-                        style: AppTheme.sans(12, selected ? accent : ink,
+                        style: AppTheme.sans(AppTheme.tsXS, selected ? accent : ink,
                             weight: FontWeight.w600)),
                   ),
                 );
               }),
             ),
             const SizedBox(height: 20),
-            Text('기후동행카드 조건', style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+            Text('기후동행카드 조건', style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -114,7 +114,7 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
                   onChanged: (v) => setState(() => _ddareungi = v ?? false),
                   activeColor: accent,
                 ),
-                Text('따릉이 옵션 포함(+3,000원)'.keepWords, style: AppTheme.sans(13, ink)),
+                Text('따릉이 옵션 포함(+3,000원)'.keepWords, style: AppTheme.sans(AppTheme.tsSM, ink)),
               ],
             ),
             const SizedBox(height: 32),
@@ -129,15 +129,15 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('월 비용 비교', style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                    Text('월 비용 비교', style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('더 유리한 카드',
-                            style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
+                            style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700)),
                         Text(cheaper,
-                            style: AppTheme.sans(16, accent, weight: FontWeight.w700)),
+                            style: AppTheme.sans(AppTheme.tsBase, accent, weight: FontWeight.w700)),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -150,7 +150,7 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
                     _row('기후동행카드 월 금액', won(_climateFee), ink, sub),
                     const SizedBox(height: 12),
                     Text('* 두 제도는 중복 사용이 불가하며, 하나를 선택해야 합니다.'.keepWords,
-                        style: AppTheme.sans(11, sub)),
+                        style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
               ),
@@ -186,7 +186,7 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+        Text(label, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: ctrl,
@@ -198,10 +198,10 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
             else
               FilteringTextInputFormatter.digitsOnly,
           ],
-          style: AppTheme.sans(14, ink),
+          style: AppTheme.sans(AppTheme.tsMD, ink),
           decoration: InputDecoration(
             suffixText: suffix,
-            suffixStyle: AppTheme.sans(14, sub),
+            suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(4), borderSide: BorderSide(color: line)),
             enabledBorder: OutlineInputBorder(
@@ -227,7 +227,7 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
             border: Border.all(color: selected ? accent : line),
             borderRadius: BorderRadius.circular(4)),
         child: Text(label,
-            style: AppTheme.sans(12, selected ? accent : ink, weight: FontWeight.w600)),
+            style: AppTheme.sans(AppTheme.tsXS, selected ? accent : ink, weight: FontWeight.w600)),
       ),
     );
   }
@@ -236,8 +236,8 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -251,14 +251,14 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
-                Expanded(child: Text(item, style: AppTheme.sans(13, sub, height: 1.5))),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
+                Expanded(child: Text(item, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

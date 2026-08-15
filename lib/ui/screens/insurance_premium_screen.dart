@@ -67,7 +67,7 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('보험료 세액공제 계산기'.keepWords,
-            style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
@@ -82,7 +82,7 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('낸 보험료만큼\n세금을 돌려받아요'.keepWords,
-                style: TextStyle(color: textColor, fontSize: 22, fontWeight: FontWeight.bold, height: 1.4)),
+                style: TextStyle(color: textColor, fontSize: 21, fontWeight: FontWeight.bold, height: 1.4)),
             const SizedBox(height: 8),
             Text('실손·암·종신보험 등 보장성보험 납입액으로 받을 수 있는 세액공제를 계산합니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
@@ -119,7 +119,7 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
                   ]),
                   const SizedBox(height: 12),
                   Text(hasInput ? _toManwon(credit) : '0원',
-                      style: TextStyle(color: primary, fontSize: 32, fontWeight: FontWeight.w900)),
+                      style: TextStyle(color: primary, fontSize: 30, fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   if (hasInput) ...[
                     if (general > 0)
@@ -194,7 +194,7 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
         Text(label, style: TextStyle(color: subColor, fontSize: 14)),
         if (hint != null) ...[
           const SizedBox(height: 2),
-          Text(hint, style: TextStyle(color: subColor.withValues(alpha: 0.7), fontSize: 11)),
+          Text(hint, style: TextStyle(color: subColor.withValues(alpha: 0.7), fontSize: 12)),
         ],
         const SizedBox(height: 4),
         AmountField(controller: controller, expand: true, onChanged: (_) => setState(() {})),

@@ -40,7 +40,7 @@ class CheckRow extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(label.keepWords,
-                  style: AppTheme.sans(13, AppTheme.ink(context),
+                  style: AppTheme.sans(AppTheme.tsSM, AppTheme.ink(context),
                       weight: selected ? FontWeight.w700 : FontWeight.w500)),
             ),
           ],
@@ -77,7 +77,7 @@ class MortgageConditionRows extends StatelessWidget {
       children: [
         const SizedBox(height: 12),
         Text('대출 조건에 따라 한도가 달라져요 — 해당하는 것을 골라주세요.'.keepWords,
-            style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.45)),
+            style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context), height: 1.45)),
         const SizedBox(height: 8),
         CheckRow(
           label: '금리가 고정이에요',
@@ -92,7 +92,7 @@ class MortgageConditionRows extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text('지금 한도: 연 ${(limit / 10000).round()}만원',
-            style: AppTheme.sans(12, AppTheme.accentColor(context),
+            style: AppTheme.sans(AppTheme.tsXS, AppTheme.accentColor(context),
                 weight: FontWeight.w700)),
       ],
     );

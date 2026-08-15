@@ -18,7 +18,7 @@ class CalcDisclaimer extends StatelessWidget {
           Text(
             '이 결과는 참고용 추정치예요. 실제 세액·환급액·수급액은 개인 상황에 따라 달라질 수 있으니, '
             '정확한 금액은 홈택스나 관할 기관, 세무사를 통해 확인하세요.'.keepWords,
-            style: AppTheme.sans(11, AppTheme.inkTertiary(context), height: 1.5),
+            style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context), height: 1.5),
           ),
         ],
       ),

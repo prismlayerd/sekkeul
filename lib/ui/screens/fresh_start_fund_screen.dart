@@ -54,7 +54,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('새출발기금 채무조정',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -63,7 +63,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('현재 상황 (차주 분류)'.keepWords,
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -75,7 +75,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
                 child: DropdownButton<int>(
                   value: _statusIdx,
                   isExpanded: true,
-                  style: AppTheme.sans(14, ink),
+                  style: AppTheme.sans(AppTheme.tsMD, ink),
                   dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _statuses.length; i++)
@@ -90,19 +90,19 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
             ),
             const SizedBox(height: 16),
             Text('총 사업자 채무',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _debtCtrl,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.right,
               inputFormatters: const [ThousandsFormatter()],
-              style: AppTheme.sans(14, ink),
+              style: AppTheme.sans(AppTheme.tsMD, ink),
               decoration: InputDecoration(
                 hintText: '50,000,000',
-                hintStyle: AppTheme.sans(14, sub),
+                hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 suffixText: '원',
-                suffixStyle: AppTheme.sans(14, sub),
+                suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
                     borderSide: BorderSide(color: line)),
@@ -128,17 +128,17 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
             ),
             const SizedBox(height: 16),
             Text('분할 상환 기간',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _yearsCtrl,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.right,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: AppTheme.sans(14, ink),
+              style: AppTheme.sans(AppTheme.tsMD, ink),
               decoration: InputDecoration(
                 suffixText: '년 (최대 20년)',
-                suffixStyle: AppTheme.sans(14, sub),
+                suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
                     borderSide: BorderSide(color: line)),
@@ -167,10 +167,10 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
                   children: [
                     Text('예상 월 분할상환액',
                         style:
-                            AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                            AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     Text(won(_monthlyPayment),
-                        style: AppTheme.sans(20, accent,
+                        style: AppTheme.sans(AppTheme.tsXL, accent,
                             weight: FontWeight.w700)),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
@@ -180,7 +180,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
                     _row('감면 후 원금', won(_afterDebt), ink, sub),
                     const SizedBox(height: 12),
                     Text('* 무이자 분할 가정 단순 추정치. 약정 후 연 1~3%대 이자가 붙을 수 있습니다.'.keepWords,
-                        style: AppTheme.sans(11, sub)),
+                        style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
               ),
@@ -223,8 +223,8 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -240,16 +240,16 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

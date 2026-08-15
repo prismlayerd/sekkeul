@@ -254,10 +254,10 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
       children: [
         Text(label.toUpperCase(), style: AppTheme.label(context)),
         const SizedBox(height: 14),
-        Text(title, style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.25)),
+        Text(title, style: AppTheme.serif(AppTheme.serifXL, ink, spacing: -0.5, height: 1.25)),
         if (subtitle != null) ...[
           const SizedBox(height: 12),
-          Text(subtitle, style: AppTheme.sans(14, sub, height: 1.55)),
+          Text(subtitle, style: AppTheme.sans(AppTheme.tsMD, sub, height: 1.55)),
         ],
       ],
     );
@@ -305,11 +305,11 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
                     textAlign: TextAlign.right,
                     autofocus: true,
                     cursorColor: accent,
-                    style: AppTheme.serif(40, ink, spacing: -1.0, height: 1.0),
+                    style: AppTheme.serif(AppTheme.tsHero, ink, spacing: -1.0, height: 1.0),
                     decoration: InputDecoration(
                       isCollapsed: true,
                       hintText: '0',
-                      hintStyle: AppTheme.serif(40, AppTheme.inkTertiary(context), spacing: -1.0, height: 1.0),
+                      hintStyle: AppTheme.serif(AppTheme.tsHero, AppTheme.inkTertiary(context), spacing: -1.0, height: 1.0),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
@@ -319,7 +319,7 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
                 ),
                 if (suffix != null) ...[
                   const SizedBox(width: 10),
-                  Text(suffix, style: AppTheme.sans(18, AppTheme.inkSecondary(context), weight: FontWeight.w600)),
+                  Text(suffix, style: AppTheme.sans(AppTheme.tsLG, AppTheme.inkSecondary(context), weight: FontWeight.w600)),
                 ],
               ],
             ),
@@ -376,7 +376,7 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(text,
-            style: AppTheme.sans(15, selected ? AppTheme.backgroundColor(context) : ink,
+            style: AppTheme.sans(AppTheme.tsBase, selected ? AppTheme.backgroundColor(context) : ink,
                 weight: selected ? FontWeight.w700 : FontWeight.w500)),
       ),
     );
@@ -410,9 +410,9 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
-                    Text('$count', style: AppTheme.serif(48, ink, spacing: -1.5, height: 1.0)),
+                    Text('$count', style: AppTheme.serif(AppTheme.tsHero, ink, spacing: -1.5, height: 1.0)),
                     const SizedBox(width: 4),
-                    Text('명', style: AppTheme.sans(18, AppTheme.inkSecondary(context), weight: FontWeight.w600)),
+                    Text('명', style: AppTheme.sans(AppTheme.tsLG, AppTheme.inkSecondary(context), weight: FontWeight.w600)),
                   ],
                 ),
                 _stepperButton(Icons.add, true, () => onChanged(count + 1)),
@@ -469,7 +469,7 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('퇴사일', style: AppTheme.sans(15, AppTheme.ink(context), weight: FontWeight.w600)),
+                    Text('퇴사일', style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context), weight: FontWeight.w600)),
                     Row(children: [
                       _segCell('재직 중', _stillEmployed, () {
                         setState(() { _stillEmployed = true; _smeEndDate = null; });
@@ -491,8 +491,8 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
                         Text(
                           _smeEndDate == null ? '날짜 선택' : DateFormat('yyyy.MM.dd').format(_smeEndDate!),
                           style: _smeEndDate == null
-                              ? AppTheme.sans(15, AppTheme.inkTertiary(context))
-                              : AppTheme.sans(15, AppTheme.accentColor(context), weight: FontWeight.w700),
+                              ? AppTheme.sans(AppTheme.tsBase, AppTheme.inkTertiary(context))
+                              : AppTheme.sans(AppTheme.tsBase, AppTheme.accentColor(context), weight: FontWeight.w700),
                         ),
                         const SizedBox(width: 6),
                         Icon(Icons.chevron_right_rounded, size: 18, color: AppTheme.inkTertiary(context)),
@@ -522,12 +522,12 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: AppTheme.sans(15, ink, weight: FontWeight.w600)),
+            Text(label, style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w600)),
             Row(children: [
               Text(value ?? '선택해주세요',
                   style: value == null
-                      ? AppTheme.sans(15, tert)
-                      : AppTheme.sans(15, accent, weight: FontWeight.w700)),
+                      ? AppTheme.sans(AppTheme.tsBase, tert)
+                      : AppTheme.sans(AppTheme.tsBase, accent, weight: FontWeight.w700)),
               const SizedBox(width: 6),
               Icon(Icons.chevron_right_rounded, size: 18, color: tert),
             ]),
@@ -552,7 +552,7 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
           borderRadius: BorderRadius.circular(3),
         ),
         child: Text(text,
-            style: AppTheme.sans(12, selected ? AppTheme.backgroundColor(context) : AppTheme.inkSecondary(context),
+            style: AppTheme.sans(AppTheme.tsXS, selected ? AppTheme.backgroundColor(context) : AppTheme.inkSecondary(context),
                 weight: selected ? FontWeight.w700 : FontWeight.w500)),
       ),
     );
@@ -770,7 +770,7 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
                   children: [
                     Text('항목 ', style: AppTheme.label(context)),
                     Text('${step.toString().padLeft(2, '0')} / ${total.toString().padLeft(2, '0')}',
-                        style: AppTheme.sans(12, ink, weight: FontWeight.w700, spacing: 1.0)),
+                        style: AppTheme.sans(AppTheme.tsXS, ink, weight: FontWeight.w700, spacing: 1.0)),
                     const SizedBox(width: 14),
                     Expanded(
                       child: ClipRRect(
@@ -809,7 +809,7 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(isLast ? '프로필 완성' : '다음',
-                            style: AppTheme.sans(15, bg, weight: FontWeight.w700)),
+                            style: AppTheme.sans(AppTheme.tsBase, bg, weight: FontWeight.w700)),
                         const SizedBox(width: 8),
                         Icon(isLast ? Icons.check_rounded : Icons.arrow_forward, size: 16, color: bg),
                       ],
@@ -900,7 +900,7 @@ class _DateWheelSheetState extends State<_DateWheelSheet> {
           children: [
             Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: AppTheme.line(context), borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 16),
-            Text(widget.title, style: AppTheme.serif(22, ink)),
+            Text(widget.title, style: AppTheme.serif(AppTheme.serifMD, ink)),
             const SizedBox(height: 18),
             // 열 캡션
             Row(children: [
@@ -965,7 +965,7 @@ class _DateWheelSheetState extends State<_DateWheelSheet> {
                 height: 54,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(color: ink, borderRadius: BorderRadius.circular(4)),
-                child: Text('적용', style: AppTheme.sans(15, bg, weight: FontWeight.w700)),
+                child: Text('적용', style: AppTheme.sans(AppTheme.tsBase, bg, weight: FontWeight.w700)),
               ),
             ),
           ],
@@ -992,7 +992,7 @@ class _DateWheelSheetState extends State<_DateWheelSheet> {
       childDelegate: ListWheelChildBuilderDelegate(
         childCount: count,
         builder: (context, i) => Center(
-          child: Text(builder(i), style: AppTheme.serif(28, AppTheme.ink(context), spacing: 0, height: 1.0)),
+          child: Text(builder(i), style: AppTheme.serif(AppTheme.serifXL, AppTheme.ink(context), spacing: 0, height: 1.0)),
         ),
       ),
     );

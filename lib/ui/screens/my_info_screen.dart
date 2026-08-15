@@ -278,10 +278,10 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
             : ListView(
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
                 children: [
-                  Text('내 정보', style: AppTheme.serif(28, ink, spacing: -0.5)),
+                  Text('내 정보', style: AppTheme.serif(AppTheme.serifXL, ink, spacing: -0.5)),
                   const SizedBox(height: 10),
                   Text('정확한 절세 계산은 여기서 시작해요. 입력할수록 진단과 신고 준비가 정밀해져요.'.keepWords,
-                      style: AppTheme.sans(14, sub, height: 1.55)),
+                      style: AppTheme.sans(AppTheme.tsMD, sub, height: 1.55)),
                   const SizedBox(height: 24),
 
                   _profileBlock(ink, sub),
@@ -310,10 +310,10 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(widget.userType, style: AppTheme.serif(22, ink, spacing: -0.5)),
+                child: Text(widget.userType, style: AppTheme.serif(AppTheme.serifMD, ink, spacing: -0.5)),
               ),
               Text('$pct%',
-                  style: AppTheme.serif(28, done ? AppTheme.colorSuccess : accent, spacing: -1, height: 1.0)),
+                  style: AppTheme.serif(AppTheme.serifXL, done ? AppTheme.colorSuccess : accent, spacing: -1, height: 1.0)),
             ],
           ),
           const SizedBox(height: 14),
@@ -343,13 +343,13 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('더 많은 공제 항목 입력하기'.keepWords,
-                        style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+                        style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, spacing: -0.2)),
                     const SizedBox(height: 2),
                     Text(
                       _isFreelancer
                           ? '혼인·장애·경로우대 등 세부 공제를 확인해요'
                           : '군 감면·혼인·장애·경로우대 등 세부 공제를 확인해요',
-                      style: AppTheme.sans(12, sub),
+                      style: AppTheme.sans(AppTheme.tsXS, sub),
                     ),
                   ]),
                 ),
@@ -514,12 +514,12 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(label, style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+                  Text(label, style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, spacing: -0.2)),
                   const SizedBox(height: 2),
-                  Text(value ?? placeholder, style: AppTheme.sans(12, isSet ? sub : accent)),
+                  Text(value ?? placeholder, style: AppTheme.sans(AppTheme.tsXS, isSet ? sub : accent)),
                   if (valueExtra != null) ...[
                     const SizedBox(height: 1),
-                    Text(valueExtra, style: AppTheme.sans(12, sub)),
+                    Text(valueExtra, style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ]),
               ),
@@ -537,9 +537,9 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     final sub = AppTheme.inkSecondary(context);
     final accent = AppTheme.accentColor(context);
     return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-      TextButton(onPressed: onCancel, child: Text('취소', style: AppTheme.sans(13, sub))),
+      TextButton(onPressed: onCancel, child: Text('취소', style: AppTheme.sans(AppTheme.tsSM, sub))),
       const SizedBox(width: 4),
-      TextButton(onPressed: onSave, child: Text('저장', style: AppTheme.sans(13, accent, weight: FontWeight.w700))),
+      TextButton(onPressed: onSave, child: Text('저장', style: AppTheme.sans(AppTheme.tsSM, accent, weight: FontWeight.w700))),
     ]);
   }
 
@@ -580,7 +580,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
               ? '${TaxRates.childTaxCreditEligibilityLabel()} 자녀만 자녀세액공제에 쓰여요. 1명 25만·2명 55만·셋째부터 40만씩.'
               : '자녀 수는 카드공제 한도(1명 +50만·2명 이상 +100만), '
                   '${TaxRates.childTaxCreditEligibilityLabel()}는 자녀세액공제에 쓰여요.',
-          style: AppTheme.sans(11.5, AppTheme.inkTertiary(context), height: 1.4)),
+          style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context), height: 1.4)),
       const SizedBox(height: 10),
       _editActions(onCancel: () => setState(() => _editingKey = null), onSave: _saveChildrenInline),
     ]);
@@ -589,7 +589,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   Widget _stepperRow(String label, int value, Color ink,
       {VoidCallback? onMinus, VoidCallback? onPlus}) {
     return Row(children: [
-      Expanded(child: Text(label, style: AppTheme.sans(13, AppTheme.inkSecondary(context)))),
+      Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context)))),
       IconButton(
         onPressed: onMinus,
         icon: const Icon(Icons.remove_circle_outline_rounded, size: 22),
@@ -599,7 +599,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
         width: 52,
         child: Text('$value명',
             textAlign: TextAlign.center,
-            style: AppTheme.sans(15, ink, weight: FontWeight.w700)),
+            style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700)),
       ),
       IconButton(
         onPressed: onPlus,
@@ -619,11 +619,11 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
             autofocus: true,
             keyboardType: TextInputType.number,
             textAlign: TextAlign.right,
-            style: AppTheme.sans(16, ink, weight: FontWeight.w700),
+            style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700),
             decoration: InputDecoration(
               isDense: true,
               hintText: '0',
-              hintStyle: AppTheme.sans(16, AppTheme.inkTertiary(context)),
+              hintStyle: AppTheme.sans(AppTheme.tsBase, AppTheme.inkTertiary(context)),
               filled: true,
               fillColor: AppTheme.surface(context),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
@@ -637,7 +637,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        Text('세', style: AppTheme.sans(15, sub, weight: FontWeight.w600)),
+        Text('세', style: AppTheme.sans(AppTheme.tsBase, sub, weight: FontWeight.w600)),
       ]),
       const SizedBox(height: 10),
       _editActions(onCancel: () => setState(() => _editingKey = null), onSave: _saveAgeInline),
@@ -654,7 +654,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
         SizedBox(
           width: 60,
           child: Text('$_dependentsEditValue명',
-              textAlign: TextAlign.center, style: AppTheme.serif(22, ink, spacing: -0.5)),
+              textAlign: TextAlign.center, style: AppTheme.serif(AppTheme.serifMD, ink, spacing: -0.5)),
         ),
         IconButton(
           onPressed: () => setState(() => _dependentsEditValue++),
@@ -688,7 +688,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(type,
-                  style: AppTheme.sans(13, isSelected ? Theme.of(context).cardColor : ink,
+                  style: AppTheme.sans(AppTheme.tsSM, isSelected ? Theme.of(context).cardColor : ink,
                       weight: isSelected ? FontWeight.w700 : FontWeight.w500)),
             ),
           );
@@ -724,7 +724,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                 borderRadius: BorderRadius.circular(3),
               ),
               child: Text('$day',
-                  style: AppTheme.sans(13, isSelected ? AppTheme.backgroundColor(context) : ink,
+                  style: AppTheme.sans(AppTheme.tsSM, isSelected ? AppTheme.backgroundColor(context) : ink,
                       weight: isSelected ? FontWeight.w700 : FontWeight.w400)),
             ),
           );
@@ -756,10 +756,10 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('업종코드',
-                      style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+                      style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, spacing: -0.2)),
                   const SizedBox(height: 2),
                   Text(occ != null ? occ.name : '미설정 — 세금 적립액 정확도에 쓰여요',
-                      style: AppTheme.sans(12, occ != null ? sub : accent)),
+                      style: AppTheme.sans(AppTheme.tsXS, occ != null ? sub : accent)),
                 ]),
               ),
               Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.inkTertiary(context)),
@@ -778,13 +778,13 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('재산액(보증금 등)',
-                      style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+                      style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, spacing: -0.2)),
                   const SizedBox(height: 2),
-                  Text('건강보험료 부과점수 계산에 쓰여요'.keepWords, style: AppTheme.sans(12, sub)),
+                  Text('건강보험료 부과점수 계산에 쓰여요'.keepWords, style: AppTheme.sans(AppTheme.tsXS, sub)),
                 ]),
               ),
               Text(propertyValue > 0 ? '${comma(propertyValue.toInt())}원' : '설정',
-                  style: AppTheme.sans(15, propertyValue > 0 ? ink : accent, weight: FontWeight.w600)),
+                  style: AppTheme.sans(AppTheme.tsBase, propertyValue > 0 ? ink : accent, weight: FontWeight.w600)),
               const SizedBox(width: 4),
               Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.inkTertiary(context)),
             ]),
@@ -804,11 +804,11 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
               // 가입돼 있으니 당연히 켰고, 그러면 회사가 떼 가는 몫 위에 지역
               // 가입자 보험료를 또 얹어 적립액이 부풀었다.
               Text('보험료를 직접 내나요',
-                  style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+                  style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, spacing: -0.2)),
               const SizedBox(height: 2),
               Text('회사가 떼 가는 건 켜지 마세요 — 고지서로 직접 내는 것만 켭니다'
                       .keepWords,
-                  style: AppTheme.sans(12, sub)),
+                  style: AppTheme.sans(AppTheme.tsXS, sub)),
               const SizedBox(height: 6),
               _insuranceToggle('국민연금 (지역가입)', 'pension_enrolled', ink, sub, accent),
               _insuranceToggle('건강보험 (지역가입)', 'health_enrolled', ink, sub, accent),
@@ -828,7 +828,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(children: [
-        Expanded(child: Text(label, style: AppTheme.sans(14, ink))),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsMD, ink))),
         Switch(
           value: enabled,
           activeThumbColor: accent,
@@ -873,9 +873,9 @@ class _AmountDialogState extends State<_AmountDialog> {
       titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
       contentPadding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
       title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(widget.title, style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
+        Text(widget.title, style: AppTheme.serif(AppTheme.tsLG, ink, weight: FontWeight.w400, spacing: -0.3)),
         const SizedBox(height: 4),
-        Text(widget.subtitle, style: AppTheme.sans(12, sub, height: 1.4)),
+        Text(widget.subtitle, style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4)),
       ]),
       content: SizedBox(
         width: 280,
@@ -885,14 +885,14 @@ class _AmountDialogState extends State<_AmountDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('취소', style: AppTheme.sans(14, sub)),
+          child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, sub)),
         ),
         TextButton(
           onPressed: () {
             final value = double.tryParse(_ctrl.text.replaceAll(',', '')) ?? 0.0;
             Navigator.pop(context, value);
           },
-          child: Text('저장', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
+          child: Text('저장', style: AppTheme.sans(AppTheme.tsMD, accent, weight: FontWeight.w700)),
         ),
       ],
     );

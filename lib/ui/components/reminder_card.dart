@@ -160,7 +160,7 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
                 r.frequency == ReminderFrequency.once
                     ? _ddayFor(CustomReminderService.nextInstance(r))
                     : r.frequency.label,
-                style: AppTheme.serif(15, r.enabled ? ink : tert,
+                style: AppTheme.serif(AppTheme.tsBase, r.enabled ? ink : tert,
                     weight: FontWeight.w700, spacing: -0.5, height: 1.0)),
           ),
           const SizedBox(width: 12),
@@ -171,9 +171,9 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
                 Text(r.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTheme.sans(13.5, r.enabled ? ink : tert, weight: FontWeight.w600)),
+                    style: AppTheme.sans(AppTheme.tsSM, r.enabled ? ink : tert, weight: FontWeight.w600)),
                 const SizedBox(height: 2),
-                Text(_subtitle(r), style: AppTheme.sans(11.5, tert)),
+                Text(_subtitle(r), style: AppTheme.sans(AppTheme.tsXS, tert)),
               ],
             ),
           ),

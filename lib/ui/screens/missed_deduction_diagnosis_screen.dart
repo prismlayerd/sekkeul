@@ -194,7 +194,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
 
   Widget _kvRow(String label, TextEditingController ctrl) {
     return Row(children: [
-      Expanded(child: Text(label, style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700))),
+      Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsMD, AppTheme.ink(context), weight: FontWeight.w700))),
       AmountField(controller: ctrl, width: 150, onChanged: (_) => setState(() {})),
     ]);
   }
@@ -209,7 +209,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
         Icon(Icons.info_outline_rounded, size: 20, color: AppTheme.inkTertiary(context)),
         const SizedBox(width: 12),
         Expanded(child: Text(reason.keepWords,
-            style: AppTheme.sans(13.5, AppTheme.ink(context), height: 1.5))),
+            style: AppTheme.sans(AppTheme.tsSM, AppTheme.ink(context), height: 1.5))),
       ]),
     );
   }
@@ -222,7 +222,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
         Icon(Icons.checklist_rounded, size: 20, color: AppTheme.inkTertiary(context)),
         const SizedBox(width: 12),
         Expanded(child: Text('빠뜨린 공제를 골라보세요. 더 돌려받을 금액을 계산해드려요.'.keepWords,
-            style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w600, height: 1.4))),
+            style: AppTheme.sans(AppTheme.tsMD, AppTheme.ink(context), weight: FontWeight.w600, height: 1.4))),
       ]),
     );
   }
@@ -292,7 +292,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
         alignment: Alignment.center,
         decoration: BoxDecoration(color: AppTheme.ink(context), borderRadius: BorderRadius.circular(4)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(label, style: AppTheme.sans(15, bg, weight: FontWeight.w700)),
+          Text(label, style: AppTheme.sans(AppTheme.tsBase, bg, weight: FontWeight.w700)),
           const SizedBox(width: 8),
           Icon(Icons.arrow_forward, size: 16, color: bg),
         ]),

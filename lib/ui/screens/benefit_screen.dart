@@ -1396,7 +1396,7 @@ class _BenefitScreenState extends State<BenefitScreen> {
         automaticallyImplyLeading: false,
         titleSpacing: 16,
         title: Text('혜택',
-            style: AppTheme.serif(17, ink,
+            style: AppTheme.serif(AppTheme.tsLG, ink,
                 weight: FontWeight.w400, spacing: -0.5)),
         actions: [
           IconButton(
@@ -1500,10 +1500,10 @@ class _BenefitScreenState extends State<BenefitScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(benefit.name,
-                    style: AppTheme.sans(15, ink, weight: FontWeight.w600)),
+                    style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w600)),
                 const SizedBox(height: 2),
                 Text(benefit.amount,
-                    style: AppTheme.sans(12, accent, weight: FontWeight.w500)),
+                    style: AppTheme.sans(AppTheme.tsXS, accent, weight: FontWeight.w500)),
               ],
             ),
             children: [
@@ -1511,7 +1511,7 @@ class _BenefitScreenState extends State<BenefitScreen> {
                 Builder(builder: benefit.eligibilityBuilder!),
                 const SizedBox(height: 12),
               ],
-              Text(benefit.desc, style: AppTheme.sans(13, sub, height: 1.7)),
+              Text(benefit.desc, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.7)),
               if (benefit.calcBuilder != null) ...[
                 const SizedBox(height: 16),
                 GestureDetector(
@@ -1526,14 +1526,14 @@ class _BenefitScreenState extends State<BenefitScreen> {
                     ),
                     alignment: Alignment.center,
                     child: Text('계산해보기',
-                        style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+                        style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
                   ),
                 ),
               ],
               if (benefit.links != null && benefit.links!.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Text('관련 공식 사이트',
-                    style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                    style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                 const SizedBox(height: 4),
                 for (final (label, url) in benefit.links!)
                   GestureDetector(
@@ -1544,7 +1544,7 @@ class _BenefitScreenState extends State<BenefitScreen> {
                       child: Row(children: [
                         Expanded(
                             child: Text(label,
-                                style: AppTheme.sans(13, accent,
+                                style: AppTheme.sans(AppTheme.tsSM, accent,
                                     weight: FontWeight.w500))),
                         Icon(Icons.open_in_new, size: 12, color: accent),
                       ]),
@@ -1654,7 +1654,7 @@ class _SmeYouthEligibilityBannerState
         Expanded(
             child: Text(text,
                 style:
-                    AppTheme.sans(13, color, weight: FontWeight.w500))),
+                    AppTheme.sans(AppTheme.tsSM, color, weight: FontWeight.w500))),
       ]),
     );
   }

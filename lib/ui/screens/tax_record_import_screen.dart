@@ -190,12 +190,12 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
             Text('연말정산 기록'.toUpperCase(), style: AppTheme.label(context)),
             const SizedBox(height: 12),
             Text(_manualMode ? '연말정산 결과를\n기록해요' : '홈택스 PDF로\n한 번에 기록',
-                style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
+                style: AppTheme.serif(AppTheme.serifXL, ink, spacing: -0.5, height: 1.2)),
             const SizedBox(height: 10),
             Text(_manualMode
                 ? '총급여와 결정세액을 적어 이번 연말정산 결과를 남겨두세요. 빠진 공제는 다음 단계에서 찾아드려요. 모두 기기 안에서만 처리돼요.'
                 : '홈택스에서 받은 간소화 자료·원천징수영수증 PDF를 올리면 값을 자동으로 채워요. 모두 기기 안에서만 처리돼요.',
-                style: AppTheme.sans(14, sub, height: 1.55)),
+                style: AppTheme.sans(AppTheme.tsMD, sub, height: 1.55)),
             const SizedBox(height: 20),
 
             _modeToggle(),
@@ -221,11 +221,11 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
               AppTheme.hairline(context),
               if (_busy) ...[
                 const SizedBox(height: 20),
-                Center(child: Text('PDF 분석 중…', style: AppTheme.sans(13, sub))),
+                Center(child: Text('PDF 분석 중…', style: AppTheme.sans(AppTheme.tsSM, sub))),
               ],
               if (_error != null) ...[
                 const SizedBox(height: 16),
-                Text(_error!, style: AppTheme.sans(13, AppTheme.colorDanger, height: 1.45)),
+                Text(_error!, style: AppTheme.sans(AppTheme.tsSM, AppTheme.colorDanger, height: 1.45)),
               ],
               if (w != null && g != null) ...[
                 const SizedBox(height: 28),
@@ -275,15 +275,15 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+                  Text(label, style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, spacing: -0.2)),
                   const SizedBox(height: 3),
                   Text(summary ?? hint,
-                      style: AppTheme.sans(12, done ? accent : sub, height: 1.4)),
+                      style: AppTheme.sans(AppTheme.tsXS, done ? accent : sub, height: 1.4)),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            Text(done ? '다시' : 'PDF 선택', style: AppTheme.sans(12, tert, weight: FontWeight.w600)),
+            Text(done ? '다시' : 'PDF 선택', style: AppTheme.sans(AppTheme.tsXS, tert, weight: FontWeight.w600)),
           ],
         ),
       ),
@@ -330,7 +330,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(label,
-            style: AppTheme.sans(13, selected ? ink : sub,
+            style: AppTheme.sans(AppTheme.tsSM, selected ? ink : sub,
                 weight: selected ? FontWeight.w700 : FontWeight.w500)),
       ),
     );
@@ -345,7 +345,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
         Text('핵심 항목'.toUpperCase(), style: AppTheme.label(context)),
         const SizedBox(height: 8),
         Text('총급여와 결정세액은 원천징수영수증에서 확인할 수 있어요.'.keepWords,
-            style: AppTheme.sans(13, sub, height: 1.45)),
+            style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
         const SizedBox(height: 16),
         _manualRow('총급여', 'salary'),
         _manualRow('결정세액', 'decided'),
@@ -358,7 +358,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.line(context)))),
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(children: [
-        Expanded(child: Text(label, style: AppTheme.sans(14, AppTheme.ink(context)))),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsMD, AppTheme.ink(context)))),
         _amount(key, width: 150),
       ]),
     );
@@ -373,10 +373,10 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
       children: [
         Text('추출값 확인·보정'.toUpperCase(), style: AppTheme.label(context)),
         const SizedBox(height: 8),
-        Text('PDF에서 읽은 값이에요. 다르면 고쳐주세요.'.keepWords, style: AppTheme.sans(13, sub, height: 1.45)),
+        Text('PDF에서 읽은 값이에요. 다르면 고쳐주세요.'.keepWords, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
         const SizedBox(height: 16),
         Row(children: [
-          Expanded(child: Text('총급여', style: AppTheme.sans(14, ink, weight: FontWeight.w700))),
+          Expanded(child: Text('총급여', style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700))),
           _amount('salary', width: 150),
         ]),
         const SizedBox(height: 14),
@@ -403,7 +403,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.line(context)))),
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(children: [
-        Expanded(flex: 3, child: Text(label, style: AppTheme.sans(14, AppTheme.ink(context)))),
+        Expanded(flex: 3, child: Text(label, style: AppTheme.sans(AppTheme.tsMD, AppTheme.ink(context)))),
         Expanded(flex: 4, child: _amount(avKey, expand: true)),
         const SizedBox(width: 10),
         Expanded(flex: 4, child: _amount(clKey, expand: true)),
@@ -432,7 +432,7 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
         decoration: BoxDecoration(color: AppTheme.ink(context), borderRadius: BorderRadius.circular(4)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Text('연말정산 결과 저장',
-              style: AppTheme.sans(15, bg, weight: FontWeight.w700)),
+              style: AppTheme.sans(AppTheme.tsBase, bg, weight: FontWeight.w700)),
           const SizedBox(width: 8),
           Icon(Icons.arrow_forward, size: 16, color: bg),
         ]),

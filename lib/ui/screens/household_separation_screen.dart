@@ -61,7 +61,7 @@ class _HouseholdSeparationScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text('세대분리 가능여부 진단'.keepWords,
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -70,19 +70,19 @@ class _HouseholdSeparationScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('만 나이',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _ageCtrl,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.right,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: AppTheme.sans(14, ink),
+              style: AppTheme.sans(AppTheme.tsMD, ink),
               decoration: InputDecoration(
                 hintText: '28',
-                hintStyle: AppTheme.sans(14, sub),
+                hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 suffixText: '세',
-                suffixStyle: AppTheme.sans(14, sub),
+                suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
                     borderSide: BorderSide(color: line)),
@@ -99,7 +99,7 @@ class _HouseholdSeparationScreenState
             ),
             const SizedBox(height: 16),
             Text('혼인 상태',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -111,7 +111,7 @@ class _HouseholdSeparationScreenState
                 child: DropdownButton<int>(
                   value: _maritalIdx,
                   isExpanded: true,
-                  style: AppTheme.sans(14, ink),
+                  style: AppTheme.sans(AppTheme.tsMD, ink),
                   dropdownColor: AppTheme.backgroundColor(context),
                   // const 목록이 아니다 — .keepWords가 런타임 호출이라 상수로 못 접는다.
                   items: [
@@ -125,19 +125,19 @@ class _HouseholdSeparationScreenState
             ),
             const SizedBox(height: 16),
             Text('월 평균 소득',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _incomeCtrl,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.right,
               inputFormatters: const [ThousandsFormatter()],
-              style: AppTheme.sans(14, ink),
+              style: AppTheme.sans(AppTheme.tsMD, ink),
               decoration: InputDecoration(
                 hintText: '100',
-                hintStyle: AppTheme.sans(14, sub),
+                hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 suffixText: '만원',
-                suffixStyle: AppTheme.sans(14, sub),
+                suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
                     borderSide: BorderSide(color: line)),
@@ -154,7 +154,7 @@ class _HouseholdSeparationScreenState
             ),
             const SizedBox(height: 16),
             Text('별도 주거 확보 여부',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(children: [
               Expanded(
@@ -178,24 +178,24 @@ class _HouseholdSeparationScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('진단 결과',
-                        style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                        style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     Text(_eligible ? '세대분리 가능 (요건 충족)' : '세대분리 재검토 필요',
-                        style: AppTheme.sans(15, _eligible ? accent : ink,
+                        style: AppTheme.sans(AppTheme.tsBase, _eligible ? accent : ink,
                             weight: FontWeight.w700)),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
                     if (_basis != null)
                       Text('충족 요건: $_basis',
-                          style: AppTheme.sans(13, sub))
+                          style: AppTheme.sans(AppTheme.tsSM, sub))
                     else
                       Text('연령·혼인·소득 요건 중 하나도 충족하지 못했습니다.'.keepWords,
-                          style: AppTheme.sans(13, sub)),
+                          style: AppTheme.sans(AppTheme.tsSM, sub)),
                     const SizedBox(height: 8),
                     if (!_hasHousing)
                       Text('* 실제 별도 거주지가 없으면 위장전입으로 간주되어 분리가 불가합니다.'.keepWords,
-                          style: AppTheme.sans(11, sub)),
+                          style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
               ),
@@ -273,7 +273,7 @@ class _HouseholdSeparationScreenState
         ),
         child: Text(label,
             textAlign: TextAlign.center,
-            style: AppTheme.sans(12, selected ? accent : ink,
+            style: AppTheme.sans(AppTheme.tsXS, selected ? accent : ink,
                 weight: FontWeight.w600)),
       ),
     );
@@ -290,16 +290,16 @@ class _HouseholdSeparationScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

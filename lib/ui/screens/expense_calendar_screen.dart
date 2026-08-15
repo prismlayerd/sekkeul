@@ -370,16 +370,16 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        title: Text('세금 적립 카드가 생겼어요'.keepWords, style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
+        title: Text('세금 적립 카드가 생겼어요'.keepWords, style: AppTheme.serif(AppTheme.tsLG, ink, weight: FontWeight.w400, spacing: -0.3)),
         content: Text(
           '이번 달 수입에서 세금·4대보험으로 미리 떼어둬야 할 금액과, 지금 마음 놓고 써도 되는 금액을 매달 계산해서 보여드려요. '
           '업종코드를 설정하면 더 정확해져요 — 내 정보에서 언제든 설정할 수 있어요.'.keepWords,
-          style: AppTheme.sans(13, sub, height: 1.5),
+          style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('확인', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
+            child: Text('확인', style: AppTheme.sans(AppTheme.tsMD, accent, weight: FontWeight.w700)),
           ),
         ],
       ),
@@ -561,14 +561,14 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
               : widget.initialFocus == 'expense'
                   ? '지출 기록'
                   : '가계부',
-          style: AppTheme.serif(22, ink),
+          style: AppTheme.serif(AppTheme.serifMD, ink),
         ),
         actions: [
           if (_selected.isEmpty && _importOptions.isNotEmpty) _buildImportAction(),
           if (_selected.isNotEmpty)
             TextButton(
               onPressed: _deselect,
-              child: Text('취소', style: AppTheme.sans(14, AppTheme.accentColor(context))),
+              child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, AppTheme.accentColor(context))),
             ),
         ],
       ),
@@ -643,10 +643,10 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             children: [
               Icon(Icons.drive_file_move_outline, size: 14, color: accent),
               const SizedBox(width: 4),
-              Text('가져오기', style: AppTheme.sans(12, accent, weight: FontWeight.w700)),
+              Text('가져오기', style: AppTheme.sans(AppTheme.tsXS, accent, weight: FontWeight.w700)),
               if (count > 1) ...[
                 const SizedBox(width: 4),
-                Text('$count', style: AppTheme.sans(12, accent, weight: FontWeight.w700)),
+                Text('$count', style: AppTheme.sans(AppTheme.tsXS, accent, weight: FontWeight.w700)),
               ],
             ],
           ),
@@ -748,16 +748,16 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        title: Text(t.title, style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
-        content: Text(t.body, style: AppTheme.sans(13, sub, height: 1.5)),
+        title: Text(t.title, style: AppTheme.serif(AppTheme.tsLG, ink, weight: FontWeight.w400, spacing: -0.3)),
+        content: Text(t.body, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('취소', style: AppTheme.sans(14, sub)),
+            child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, sub)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('가져오기', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
+            child: Text('가져오기', style: AppTheme.sans(AppTheme.tsMD, accent, weight: FontWeight.w700)),
           ),
         ],
       ),
@@ -807,17 +807,17 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        title: Text('기타소득이 300만원을 넘었어요'.keepWords, style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
+        title: Text('기타소득이 300만원을 넘었어요'.keepWords, style: AppTheme.serif(AppTheme.tsLG, ink, weight: FontWeight.w400, spacing: -0.3)),
         content: Text(
           '올해 기록한 기타소득의 소득금액(필요경비 60% 제외 후)이 300만원을 넘었어요. '
           '근로소득과 합산해 5월에 종합소득세를 신고해야 해요. '
           'N잡러로 전환하면 소득 구분과 세금 적립을 더 정확히 안내받을 수 있어요.'.keepWords,
-          style: AppTheme.sans(13, sub, height: 1.5),
+          style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('나중에', style: AppTheme.sans(14, sub)),
+            child: Text('나중에', style: AppTheme.sans(AppTheme.tsMD, sub)),
           ),
           TextButton(
             onPressed: () async {
@@ -831,7 +831,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 SnackBar(content: Text('N잡러로 전환했어요. 기존 기록은 위 가져오기 배너로 옮길 수 있어요.'.keepWords)),
               );
             },
-            child: Text('N잡러로 전환', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
+            child: Text('N잡러로 전환', style: AppTheme.sans(AppTheme.tsMD, accent, weight: FontWeight.w700)),
           ),
         ],
       ),
@@ -920,7 +920,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(icon, size: 13, color: sub),
             const SizedBox(width: 4),
-            Text(label, style: AppTheme.sans(12, ink, weight: FontWeight.w600)),
+            Text(label, style: AppTheme.sans(AppTheme.tsXS, ink, weight: FontWeight.w600)),
           ]),
         ),
       ),
@@ -947,7 +947,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             ),
             titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
             contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            title: Text('월급날 설정', style: AppTheme.serif(17, ink)),
+            title: Text('월급날 설정', style: AppTheme.serif(AppTheme.tsLG, ink)),
             content: SizedBox(
               height: 120,
               child: ListWheelScrollView.useDelegate(
@@ -959,7 +959,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                   builder: (_, i) => Center(
                     child: Text('${i + 1}일',
                         style: AppTheme.sans(
-                            16,
+                            AppTheme.tsBase,
                             i + 1 == current ? ink : AppTheme.inkTertiary(ctx),
                             weight: i + 1 == current
                                 ? FontWeight.w700
@@ -973,7 +973,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 onTap: () => Navigator.pop(ctx),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(0, 0, 8, 12),
-                  child: Text('취소', style: AppTheme.sans(14, sub)),
+                  child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, sub)),
                 ),
               ),
               GestureDetector(
@@ -981,7 +981,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(0, 0, 12, 12),
                   child: Text('저장',
-                      style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
+                      style: AppTheme.sans(AppTheme.tsMD, accent, weight: FontWeight.w700)),
                 ),
               ),
             ],
@@ -1018,22 +1018,22 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             ),
             titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
             contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            title: Text('카드 결제일 추가', style: AppTheme.serif(17, ink)),
+            title: Text('카드 결제일 추가', style: AppTheme.serif(AppTheme.tsLG, ink)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('카드 이름',
-                    style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                    style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: nameCtrl,
                   autofocus: true,
-                  style: AppTheme.sans(15, ink),
+                  style: AppTheme.sans(AppTheme.tsBase, ink),
                   decoration: InputDecoration(
                     isDense: true,
                     hintText: '예: 신한카드',
-                    hintStyle: AppTheme.sans(15, AppTheme.inkTertiary(ctx)),
+                    hintStyle: AppTheme.sans(AppTheme.tsBase, AppTheme.inkTertiary(ctx)),
                     contentPadding: const EdgeInsets.symmetric(vertical: 8),
                     border: UnderlineInputBorder(
                         borderSide: BorderSide(color: line)),
@@ -1045,7 +1045,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 ),
                 const SizedBox(height: 16),
                 Text('결제일',
-                    style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                    style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                 const SizedBox(height: 6),
                 SizedBox(
                   height: 100,
@@ -1060,7 +1060,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                       builder: (_, i) => Center(
                         child: Text('${i + 1}일',
                             style: AppTheme.sans(
-                                14,
+                                AppTheme.tsMD,
                                 i + 1 == currentDay
                                     ? ink
                                     : AppTheme.inkTertiary(ctx),
@@ -1078,7 +1078,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 onTap: () => Navigator.pop(ctx),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(0, 0, 8, 12),
-                  child: Text('취소', style: AppTheme.sans(14, sub)),
+                  child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, sub)),
                 ),
               ),
               GestureDetector(
@@ -1091,7 +1091,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                   padding: const EdgeInsets.fromLTRB(0, 0, 12, 12),
                   child: Text('추가',
                       style:
-                          AppTheme.sans(14, accent, weight: FontWeight.w700)),
+                          AppTheme.sans(AppTheme.tsMD, accent, weight: FontWeight.w700)),
                 ),
               ),
             ],
@@ -1127,14 +1127,14 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
           contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           title: Text('${card['name']} ${card['day']}일',
-              style: AppTheme.serif(17, ink)),
+              style: AppTheme.serif(AppTheme.tsLG, ink)),
           content: GestureDetector(
             onTap: () => Navigator.pop(ctx, true),
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text('삭제',
-                  style: AppTheme.sans(15, AppTheme.colorDanger,
+                  style: AppTheme.sans(AppTheme.tsBase, AppTheme.colorDanger,
                       weight: FontWeight.w600)),
             ),
           ),
@@ -1143,7 +1143,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
               onTap: () => Navigator.pop(ctx),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(0, 0, 12, 12),
-                child: Text('취소', style: AppTheme.sans(14, sub)),
+                child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, sub)),
               ),
             ),
           ],
@@ -1179,7 +1179,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             Expanded(
               child: Text(
                 '내 정보를 설정하면 적립 계산이 정확해져요'.keepWords,
-                style: AppTheme.sans(13, accent, weight: FontWeight.w600),
+                style: AppTheme.sans(AppTheme.tsSM, accent, weight: FontWeight.w600),
               ),
             ),
             Icon(Icons.chevron_right_rounded, size: 18, color: accent),
@@ -1219,13 +1219,13 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 children: [
                   Text(
                     '고정 지출 확인 대기',
-                    style: AppTheme.sans(11, accent,
+                    style: AppTheme.sans(AppTheme.tsXS, accent,
                         weight: FontWeight.w600, spacing: 0.3),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '$_recurringPendingCount건 미처리',
-                    style: AppTheme.sans(14, accent, weight: FontWeight.w700),
+                    style: AppTheme.sans(AppTheme.tsMD, accent, weight: FontWeight.w700),
                   ),
                 ],
               ),
@@ -1237,7 +1237,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 borderRadius: BorderRadius.circular(3),
               ),
               child: Text('확인하기',
-                  style: AppTheme.sans(12, accent, weight: FontWeight.w700)),
+                  style: AppTheme.sans(AppTheme.tsXS, accent, weight: FontWeight.w700)),
             ),
           ],
         ),
@@ -1312,7 +1312,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             )),
             behavior: HitTestBehavior.opaque,
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Text('$_year. $_month', style: AppTheme.sans(18, ink, weight: FontWeight.w700)),
+              Text('$_year. $_month', style: AppTheme.sans(AppTheme.tsLG, ink, weight: FontWeight.w700)),
               const SizedBox(width: 4),
               Icon(Icons.expand_more_rounded, size: 18, color: AppTheme.inkSecondary(context)),
             ]),
@@ -1367,7 +1367,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text('이번 달 세금·보험 적립(예상)'.keepWords,
-                        style: AppTheme.sans(13, sub, weight: FontWeight.w600)),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, weight: FontWeight.w600)),
                   ),
                   if (!_reserveCardExpanded) ...[
                     // 업종 미설정이면 경비율을 몰라 세액이 과대 계상된다 — 요약값도 숨긴다.
@@ -1376,7 +1376,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                           ? range(r.minMonthlyTaxReserve + r.insuranceReserve,
                               r.maxMonthlyTaxReserve + r.insuranceReserve)
                           : '업종 설정 필요',
-                      style: AppTheme.sans(13, r.hasOccupationCode ? ink : AppTheme.accentColor(context),
+                      style: AppTheme.sans(AppTheme.tsSM, r.hasOccupationCode ? ink : AppTheme.accentColor(context),
                           weight: FontWeight.w800),
                     ),
                     const SizedBox(width: 4),
@@ -1403,10 +1403,10 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('세금으로 미리 모아둘 돈'.keepWords, style: AppTheme.sans(13, sub)),
+                          Text('세금으로 미리 모아둘 돈'.keepWords, style: AppTheme.sans(AppTheme.tsSM, sub)),
                           Row(mainAxisSize: MainAxisSize.min, children: [
                             Text('업종 설정 시',
-                                style: AppTheme.sans(13, AppTheme.accentColor(context), weight: FontWeight.w700)),
+                                style: AppTheme.sans(AppTheme.tsSM, AppTheme.accentColor(context), weight: FontWeight.w700)),
                             Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.accentColor(context)),
                           ]),
                         ],
@@ -1417,7 +1417,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                     if (r.minMonthlyTaxReserve.round() != r.maxMonthlyTaxReserve.round()) ...[
                       const SizedBox(height: 4),
                       Text('단순경비율(최소)~기준경비율(최대) 두 가정 중 어디에 해당할지 몰라 범위로 보여드려요'.keepWords,
-                          style: AppTheme.sans(11, AppTheme.inkTertiary(context), height: 1.4)),
+                          style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context), height: 1.4)),
                     ],
                   ],
                   const SizedBox(height: 6),
@@ -1430,10 +1430,10 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('보험료로 대비할 돈', style: AppTheme.sans(13, sub)),
+                          Text('보험료로 대비할 돈', style: AppTheme.sans(AppTheme.tsSM, sub)),
                           Row(mainAxisSize: MainAxisSize.min, children: [
                             Text('프로필 설정 시',
-                                style: AppTheme.sans(13, AppTheme.accentColor(context), weight: FontWeight.w700)),
+                                style: AppTheme.sans(AppTheme.tsSM, AppTheme.accentColor(context), weight: FontWeight.w700)),
                             Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.accentColor(context)),
                           ]),
                         ],
@@ -1474,7 +1474,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text('업종코드를 설정하면 더 정확해져요'.keepWords,
-                              style: AppTheme.sans(12, AppTheme.accentColor(context), weight: FontWeight.w600)),
+                              style: AppTheme.sans(AppTheme.tsXS, AppTheme.accentColor(context), weight: FontWeight.w600)),
                         ),
                         Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.accentColor(context)),
                       ]),
@@ -1487,7 +1487,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Icon(Icons.tune_rounded, size: 13, color: sub),
                         const SizedBox(width: 6),
-                        Text('내 정보 수정', style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                        Text('내 정보 수정', style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                       ]),
                     ),
                   ],
@@ -1519,7 +1519,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             const SizedBox(width: 6),
             Expanded(
               child: Text('위 적립액에 무기장가산세 20%가 들어 있어요'.keepWords,
-                  style: AppTheme.sans(13, ink, weight: FontWeight.w700)),
+                  style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w700)),
             ),
             Icon(Icons.chevron_right_rounded, size: 18, color: sub),
           ]),
@@ -1529,7 +1529,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 ? '${j!.reason} 장부를 갖추면 이 20%가 빠져요.'
                 : '직전연도 수입이 4,800만원을 넘어, 장부 없이 신고하면 산출세액의 20%가 더 붙어요. '
                     '가계부 기록으로 간편장부를 만들면 빠집니다.',
-            style: AppTheme.sans(12, sub, height: 1.4),
+            style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4),
           ),
         ],
       ),
@@ -1563,7 +1563,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             p.noTaxEitherWay
                 ? '지금 소득에선 어느 쪽으로 신고해도 낼 세금이 없어요'
                 : '공제를 빼면 낼 세금이 거의 없어서, 경비를 더 찾아도 돌려받을 게 적어요',
-            style: AppTheme.sans(12, sub, height: 1.4),
+            style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4),
           ),
         ],
       );
@@ -1578,7 +1578,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           _reserveRow('올해 적은 경비', won(p.recordedExpense), ink, sub),
           const SizedBox(height: 4),
           Text('${won(p.shortfall)}을 더 찾으면 환급이 쌓이기 시작해요 (최대 ${won(p.maxGain)})',
-              style: AppTheme.sans(12, sub, height: 1.4)),
+              style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4)),
         ],
       );
     }
@@ -1589,10 +1589,10 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text('올해 쌓인 예상 환급', style: AppTheme.sans(12, tert)),
+          Text('올해 쌓인 예상 환급', style: AppTheme.sans(AppTheme.tsXS, tert)),
           const SizedBox(height: 4),
           Text(won(p.refundGain),
-              style: AppTheme.serif(26, accent,
+              style: AppTheme.serif(AppTheme.serifLG, accent,
                   weight: FontWeight.w700, spacing: -0.8, height: 1.0)),
           const SizedBox(height: 6),
           Text(
@@ -1600,7 +1600,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 // 사업 3.3%+기타 8.8% 원천징수를 합쳐 말해야 정확하다 — "3.3%"로 좁히지 않는다.
                 ? '올해 원천징수된 세금을 다 돌려받는 상태예요 · 더 적어도 환급은 안 늘어요'
                 : '경비를 더 찾을수록 늘어요 · 예상',
-            style: AppTheme.sans(11, p.isCapped ? sub : tert),
+            style: AppTheme.sans(AppTheme.tsXS, p.isCapped ? sub : tert),
             textAlign: TextAlign.right,
           ),
         ],
@@ -1612,7 +1612,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: AppTheme.sans(13, sub)),
+        Text(label, style: AppTheme.sans(AppTheme.tsSM, sub)),
         Text(value,
             style: AppTheme.sans(emphasize ? 15 : 13, ink, weight: emphasize ? FontWeight.w800 : FontWeight.w700)),
       ],
@@ -2273,18 +2273,18 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           ),
           titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
           contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          title: Text('이달 지출 목표', style: AppTheme.serif(17, ink)),
+          title: Text('이달 지출 목표', style: AppTheme.serif(AppTheme.tsLG, ink)),
           content: TextField(
             controller: ctrl,
             autofocus: true,
             keyboardType: TextInputType.number,
             inputFormatters: const [ThousandsFormatter()],
             textAlign: TextAlign.right,
-            style: AppTheme.sans(15, ink),
+            style: AppTheme.sans(AppTheme.tsBase, ink),
             decoration: InputDecoration(
               isDense: true,
               hintText: '예: 1,500,000',
-              hintStyle: AppTheme.sans(15, AppTheme.inkTertiary(ctx)),
+              hintStyle: AppTheme.sans(AppTheme.tsBase, AppTheme.inkTertiary(ctx)),
               suffixText: '원',
               contentPadding: const EdgeInsets.symmetric(vertical: 8),
               border: UnderlineInputBorder(borderSide: BorderSide(color: line)),
@@ -2302,14 +2302,14 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
               onTap: () => Navigator.pop(ctx),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(0, 0, 8, 12),
-                child: Text('취소', style: AppTheme.sans(14, sub)),
+                child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, sub)),
               ),
             ),
             GestureDetector(
               onTap: () => Navigator.pop(ctx, true),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(0, 0, 12, 12),
-                child: Text('저장', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
+                child: Text('저장', style: AppTheme.sans(AppTheme.tsMD, accent, weight: FontWeight.w700)),
               ),
             ),
           ],
@@ -2422,7 +2422,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
               Icon(Icons.tune_rounded, size: 13, color: accent),
               const SizedBox(width: 4),
               Text(_expenseTarget > 0 ? '수정' : '설정',
-                  style: AppTheme.sans(12, accent, weight: FontWeight.w600)),
+                  style: AppTheme.sans(AppTheme.tsXS, accent, weight: FontWeight.w600)),
             ]),
           ),
         ]),
@@ -2442,7 +2442,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           )
         else
           Text('이달 지출 목표를 설정하면 달성률을 여기서 확인할 수 있어요.'.keepWords,
-              style: AppTheme.sans(13, tert, height: 1.5)),
+              style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5)),
         const SizedBox(height: 20),
         AppTheme.dashRule(context),
 
@@ -2490,7 +2490,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           const SizedBox(height: 10),
           if (totalBusinessExp == 0)
             Text('지출 입력 시 "사업경비로 인정"을 체크하면 여기에 합산돼요.'.keepWords,
-                style: AppTheme.sans(13, tert, height: 1.5))
+                style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5))
           else
             _analysisSimpleBar(
               label: '사업경비 처리',
@@ -2533,7 +2533,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         const SizedBox(height: 10),
         if (totalTaxDeduct == 0)
           Text('의료비·교육비·보험료·기부금을 입력하면 공제 예상액을 볼 수 있어요.'.keepWords,
-              style: AppTheme.sans(13, tert, height: 1.5))
+              style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5))
         else
           for (final entry in taxCatAmounts.entries) ...[
             _taxDeductRow(entry.key, entry.value, ink, sub),
@@ -2686,9 +2686,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final pct = max > 0 ? (amount / max).clamp(0.0, 1.0) : 0.0;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, ink, weight: FontWeight.w600))),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600))),
         Text(trailText ?? '${comma(amount)}원  ${(pct * 100).round()}%',
-            style: AppTheme.sans(12, sub)),
+            style: AppTheme.sans(AppTheme.tsXS, sub)),
       ]),
       const SizedBox(height: 6),
       AppTheme.printedBar(context, pct, color: color),
@@ -2703,10 +2703,10 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       Icon(cat.icon, size: 13, color: AppTheme.inkTertiary(context)),
       const SizedBox(width: 6),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(cat.label, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
-        Text(hint, style: AppTheme.sans(11, AppTheme.inkTertiary(context))),
+        Text(cat.label, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
+        Text(hint, style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context))),
       ])),
-      Text('${comma(amount)}원', style: AppTheme.sans(13, sub, weight: FontWeight.w600)),
+      Text('${comma(amount)}원', style: AppTheme.sans(AppTheme.tsSM, sub, weight: FontWeight.w600)),
     ]);
   }
 
@@ -2719,7 +2719,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final noData = prevTotal == 0 && curTotal == 0;
 
     if (noData) {
-      return Text('전월 데이터가 없어요.'.keepWords, style: AppTheme.sans(13, tert));
+      return Text('전월 데이터가 없어요.'.keepWords, style: AppTheme.sans(AppTheme.tsSM, tert));
     }
 
     // 가장 많이 증가한 카테고리
@@ -2735,13 +2735,13 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
-        Text('전체 지출 ', style: AppTheme.sans(13, sub)),
+        Text('전체 지출 ', style: AppTheme.sans(AppTheme.tsSM, sub)),
         Text('$overallSign${comma(diff.abs())}원',
-            style: AppTheme.sans(13, overallColor, weight: FontWeight.w700)),
+            style: AppTheme.sans(AppTheme.tsSM, overallColor, weight: FontWeight.w700)),
         Text(prevTotal > 0
             ? '  (${((diff.abs() / prevTotal) * 100).round()}%)'
             : '',
-            style: AppTheme.sans(12, tert)),
+            style: AppTheme.sans(AppTheme.tsXS, tert)),
       ]),
       if (topIncrCat != null) ...[
         const SizedBox(height: 6),
@@ -2751,7 +2751,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           const SizedBox(width: 5),
           Text('${expenseCategoryById(topIncrCat).label} 지출이 가장 많이 늘었어요 '
               '(+${comma(topIncrDiff)}원)',
-              style: AppTheme.sans(12, sub, height: 1.4)),
+              style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4)),
         ]),
       ],
     ]);
@@ -2769,15 +2769,15 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             const SizedBox(width: 6),
             Expanded(
               child: Text(cat.label,
-                  style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+                  style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
             ),
             Text('${comma(amount)}원',
-                style: AppTheme.sans(13, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsSM, sub, weight: FontWeight.w600)),
             const SizedBox(width: 8),
             SizedBox(
               width: 38,
               child: Text('${(pct * 100).round()}%',
-                  style: AppTheme.sans(12, AppTheme.inkTertiary(context)),
+                  style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context)),
                   textAlign: TextAlign.right),
             ),
           ],
@@ -2869,7 +2869,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         const SizedBox(height: 10),
         if (yearTotalTaxDeduct == 0)
           Text('의료비·교육비·보험료·기부금을 기록하면 1년 합계를 여기서 볼 수 있어요.'.keepWords,
-              style: AppTheme.sans(13, tert, height: 1.5))
+              style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5))
         else
           for (final entry in yearTaxCatAmounts.entries) ...[
             _taxDeductRow(entry.key, entry.value, ink, sub),
@@ -2877,7 +2877,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           ],
         const SizedBox(height: 8),
         Text('가계부 기록 기준 참고값이에요. 실제 공제액은 홈택스 간소화 자료로 확인하세요.'.keepWords,
-            style: AppTheme.sans(11.5, tert, height: 1.4)),
+            style: AppTheme.sans(AppTheme.tsXS, tert, height: 1.4)),
         const SizedBox(height: 20),
         AppTheme.dashRule(context),
 
@@ -2912,9 +2912,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           const SizedBox(height: 10),
           if (yearBusinessExp == 0)
             Text('지출 입력 시 "사업경비로 인정"을 체크하면 여기에 합산돼요.'.keepWords,
-                style: AppTheme.sans(13, tert, height: 1.5))
+                style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5))
           else
-            Text('${comma(yearBusinessExp)}원', style: AppTheme.sans(20, ink, weight: FontWeight.w700)),
+            Text('${comma(yearBusinessExp)}원', style: AppTheme.sans(AppTheme.tsXL, ink, weight: FontWeight.w700)),
           const SizedBox(height: 20),
           AppTheme.dashRule(context),
         ],
@@ -2923,7 +2923,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         const SizedBox(height: 20),
         AppTheme.sectionHead(context, null, '$_year년 순수익'),
         const SizedBox(height: 4),
-        Text('수입 − 지출', style: AppTheme.sans(12, tert)),
+        Text('수입 − 지출', style: AppTheme.sans(AppTheme.tsXS, tert)),
         const SizedBox(height: 16),
         for (int m = 1; m <= 12; m++) ...[
           _annualMonthRow(m, monthNet[m] ?? 0, maxAbs, ink, sub),
@@ -2960,7 +2960,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           SizedBox(
             width: 34,
             child: Text('$month월',
-                style: AppTheme.sans(13, labelColor,
+                style: AppTheme.sans(AppTheme.tsSM, labelColor,
                     weight: isCurrent ? FontWeight.w800 : FontWeight.w500)),
           ),
           Expanded(
@@ -2978,7 +2978,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             width: 96,
             child: Text(
               net == 0 ? '—' : '${isPositive ? '+' : '-'}${comma(netAbs)}원',
-              style: AppTheme.sans(12,
+              style: AppTheme.sans(AppTheme.tsXS,
                   net == 0
                       ? AppTheme.inkTertiary(context)
                       : isPositive ? AppTheme.ink(context) : AppTheme.colorDanger,

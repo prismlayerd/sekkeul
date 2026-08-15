@@ -37,14 +37,14 @@ class UpdateCard extends StatelessWidget {
               children: [
                 Text(
                   ready ? '새 버전을 받았어요' : '세법·복지 기준이 바뀐 버전이 있어요',
-                  style: AppTheme.sans(14, ink, weight: FontWeight.w700),
+                  style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   ready
                       ? '다시 시작하면 새 기준으로 계산해요.'
                       : '지금 보시는 값은 ${DataVintage.label} 기준이에요.',
-                  style: AppTheme.sans(12, sub, height: 1.5),
+                  style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.5),
                 ),
                 const SizedBox(height: 12),
                 GestureDetector(
@@ -73,7 +73,7 @@ class UpdateCard extends StatelessWidget {
                                 ? '다시 시작하기 →'
                                 : '지금 받기 →',
                         style:
-                            AppTheme.sans(12, accent, weight: FontWeight.w600),
+                            AppTheme.sans(AppTheme.tsXS, accent, weight: FontWeight.w600),
                       ),
                     ],
                   ),

@@ -43,7 +43,7 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('노인 틀니·임플란트',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -52,13 +52,13 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('시술 종류',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             _dropdown(_procIdx, _procs.map((e) => e.$1).toList(),
                 (v) => setState(() => _procIdx = v), ink, line, context),
             const SizedBox(height: 16),
             Text('보험 종별',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             _dropdown(_insIdx, _insurers.map((e) => e.$1).toList(),
                 (v) => setState(() => _insIdx = v), ink, line, context),
@@ -75,16 +75,16 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
                 children: [
                   Text('예상 본인부담금',
                       style:
-                          AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                          AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('본인부담금',
-                          style: AppTheme.sans(14, ink,
+                          style: AppTheme.sans(AppTheme.tsMD, ink,
                               weight: FontWeight.w700)),
                       Text(won(_copay),
-                          style: AppTheme.sans(16, accent,
+                          style: AppTheme.sans(AppTheme.tsBase, accent,
                               weight: FontWeight.w700)),
                     ],
                   ),
@@ -96,7 +96,7 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
                   _row('건강보험·의료급여 부담', won(_covered), ink, sub),
                   const SizedBox(height: 12),
                   Text('* 2024년 표준 보험가 참고치 기반 단순 추정이며, 실제 진료비는 치과·지역별로 다를 수 있습니다.'.keepWords,
-                      style: AppTheme.sans(11, sub)),
+                      style: AppTheme.sans(AppTheme.tsXS, sub)),
                 ],
               ),
             ),
@@ -144,12 +144,12 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
         child: DropdownButton<int>(
           value: value,
           isExpanded: true,
-          style: AppTheme.sans(14, ink),
+          style: AppTheme.sans(AppTheme.tsMD, ink),
           dropdownColor: AppTheme.backgroundColor(context),
           items: [
             for (int i = 0; i < items.length; i++)
               DropdownMenuItem(
-                  value: i, child: Text(items[i], style: AppTheme.sans(14, ink))),
+                  value: i, child: Text(items[i], style: AppTheme.sans(AppTheme.tsMD, ink))),
           ],
           onChanged: (v) => onChanged(v!),
         ),
@@ -161,8 +161,8 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -178,16 +178,16 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

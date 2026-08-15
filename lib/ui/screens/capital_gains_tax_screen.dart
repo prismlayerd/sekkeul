@@ -121,7 +121,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
       appBar: AppBar(
         title: Text('양도소득세',
             style: TextStyle(
-                color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+                color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
@@ -138,7 +138,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
             Text('부동산 양도 시\n납부할 세금을 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
-                    fontSize: 22,
+                    fontSize: 21,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
@@ -200,7 +200,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
                           Text('3년 이상부터 장기보유특별공제 적용'.keepWords,
                               style: TextStyle(
                                   color: subColor.withValues(alpha: 0.8),
-                                  fontSize: 11)),
+                                  fontSize: 12)),
                         ],
                       ),
                     ),
@@ -224,7 +224,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
                             Text('보유+거주 3년↑, 공제율 연 8% (최대 80%)'.keepWords,
                                 style: TextStyle(
                                     color: subColor.withValues(alpha: 0.8),
-                                    fontSize: 11)),
+                                    fontSize: 12)),
                           ],
                         ),
                       ),
@@ -268,7 +268,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
                   Text(result != null ? won(result.total) : '0원',
                       style: TextStyle(
                           color: primary,
-                          fontSize: 32,
+                          fontSize: 30,
                           fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   if (result != null) ...[

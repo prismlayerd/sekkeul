@@ -60,7 +60,7 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('6+6 부모육아휴직급여'.keepWords,
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -85,7 +85,7 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
                   children: [
                     Text('첫 6개월 급여 합계 (부모 각각)'.keepWords,
                         style:
-                            AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                            AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     _row('부모 A 6개월 합계', _manwon(_p1Total), ink, sub),
                     const SizedBox(height: 8),
@@ -97,16 +97,16 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('부부 합산 (첫 6개월)'.keepWords,
-                            style: AppTheme.sans(14, ink,
+                            style: AppTheme.sans(AppTheme.tsMD, ink,
                                 weight: FontWeight.w700)),
                         Text(_manwon(_combined),
-                            style: AppTheme.sans(16, accent,
+                            style: AppTheme.sans(AppTheme.tsBase, accent,
                                 weight: FontWeight.w700)),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Text('* 통상임금 100%, 월 상한 1→6개월차 200만~450만원 단계 적용. 7개월차부터는 일반 육아휴직급여로 전환.'.keepWords,
-                        style: AppTheme.sans(11, sub)),
+                        style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
               ),
@@ -150,7 +150,7 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+        Text(label, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: ctrl,
@@ -162,12 +162,12 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
             else
               FilteringTextInputFormatter.digitsOnly,
           ],
-          style: AppTheme.sans(14, ink),
+          style: AppTheme.sans(AppTheme.tsMD, ink),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: AppTheme.sans(14, sub),
+            hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
             suffixText: suffix,
-            suffixStyle: AppTheme.sans(14, sub),
+            suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(4),
                 borderSide: BorderSide(color: line)),
@@ -190,8 +190,8 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -207,16 +207,16 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

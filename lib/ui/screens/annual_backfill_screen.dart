@@ -118,10 +118,10 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
           decoration: InputDecoration(
             isDense: true,
             labelText: label,
-            labelStyle: AppTheme.sans(11, AppTheme.inkTertiary(context)),
+            labelStyle: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context)),
             border: const OutlineInputBorder(),
           ),
-          style: AppTheme.sans(13, AppTheme.ink(context)),
+          style: AppTheme.sans(AppTheme.tsSM, AppTheme.ink(context)),
           onChanged: (v) {
             final n = v.replaceAll(',', '');
             if (n.isEmpty) return;
@@ -149,7 +149,7 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),
           onPressed: () => Navigator.pop(context, false),
         ),
-        title: Text('올해 간단 입력', style: AppTheme.sans(16, ink, weight: FontWeight.w700)),
+        title: Text('올해 간단 입력', style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700)),
       ),
       body: _loading
           ? const SizedBox.shrink()
@@ -160,14 +160,14 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
                   Text(
                     '연초부터 기록이 없으면 이번 달 판정이 부정확해질 수 있어요. '
                     '간단하게 달마다 수입·지출 총액만 입력해두면 정확도가 올라가요. 몰라도 건너뛰어도 괜찮아요.'.keepWords,
-                    style: AppTheme.sans(13, sub),
+                    style: AppTheme.sans(AppTheme.tsSM, sub),
                   ),
                   const SizedBox(height: 20),
                   for (final row in _rows) ...[
                     if (row.hasData)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Text('${row.month}월 — 이미 기록 있음', style: AppTheme.sans(13, tert)),
+                        child: Text('${row.month}월 — 이미 기록 있음', style: AppTheme.sans(AppTheme.tsSM, tert)),
                       )
                     else
                       Padding(
@@ -175,7 +175,7 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('${row.month}월', style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
+                            Text('${row.month}월', style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700)),
                             const SizedBox(height: 6),
                             Row(children: [
                               _field('급여수입', row.labor),
@@ -201,7 +201,7 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(color: ink, borderRadius: BorderRadius.circular(4)),
                       child: Text('저장',
-                          style: AppTheme.sans(14, AppTheme.backgroundColor(context), weight: FontWeight.w700)),
+                          style: AppTheme.sans(AppTheme.tsMD, AppTheme.backgroundColor(context), weight: FontWeight.w700)),
                     ),
                   ),
                 ],

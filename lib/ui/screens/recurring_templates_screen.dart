@@ -95,9 +95,9 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
           }) =>
               InputDecoration(
                 hintText: hint,
-                hintStyle: AppTheme.sans(14, tert),
+                hintStyle: AppTheme.sans(AppTheme.tsMD, tert),
                 suffixText: suffix,
-                suffixStyle: AppTheme.sans(13, sub),
+                suffixStyle: AppTheme.sans(AppTheme.tsSM, sub),
                 filled: true,
                 fillColor: bg,
                 enabledBorder: outlineBorder(line),
@@ -124,7 +124,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
             actionsPadding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
             title: Text(
               existing == null ? '항목 추가' : '항목 편집',
-              style: AppTheme.serif(17, ink),
+              style: AppTheme.serif(AppTheme.tsLG, ink),
             ),
             content: SizedBox(
               width: double.maxFinite,
@@ -139,7 +139,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                       sectionLabel('항목명'),
                       TextFormField(
                         controller: nameCtrl,
-                        style: AppTheme.sans(15, ink),
+                        style: AppTheme.sans(AppTheme.tsBase, ink),
                         decoration: fieldDeco(hint: '예: 월세, 넷플릭스'),
                         validator: (v) =>
                             (v == null || v.trim().isEmpty) ? '항목명을 입력하세요' : null,
@@ -172,7 +172,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                                       color: c.color, shape: BoxShape.circle),
                                 ),
                                 const SizedBox(width: 9),
-                                Text(c.label, style: AppTheme.sans(14, ink)),
+                                Text(c.label, style: AppTheme.sans(AppTheme.tsMD, ink)),
                                 const Spacer(),
                                 Icon(Icons.expand_more_rounded,
                                     size: 18, color: sub),
@@ -207,7 +207,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                                 child: Text(
                                   pm,
                                   style: AppTheme.sans(
-                                      13, paymentMethod == pm ? accent : sub),
+                                      AppTheme.tsSM, paymentMethod == pm ? accent : sub),
                                 ),
                               ),
                             ),
@@ -219,7 +219,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                       sectionLabel('빠져나가는 날'),
                       TextFormField(
                         controller: dayCtrl,
-                        style: AppTheme.sans(15, ink),
+                        style: AppTheme.sans(AppTheme.tsBase, ink),
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.right,
                         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -238,7 +238,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                       sectionLabel('예상 금액'),
                       TextFormField(
                         controller: amountCtrl,
-                        style: AppTheme.sans(15, ink),
+                        style: AppTheme.sans(AppTheme.tsBase, ink),
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.right,
                         inputFormatters: const [ThousandsFormatter()],
@@ -261,7 +261,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text('사업경비로 인정 (기본값)'.keepWords,
-                                    style: AppTheme.sans(14,
+                                    style: AppTheme.sans(AppTheme.tsMD,
                                         isBusiness ? ink : sub,
                                         weight: FontWeight.w600)),
                               ),
@@ -278,7 +278,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: Text('취소', style: AppTheme.sans(14, sub)),
+                child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, sub)),
               ),
               TextButton(
                 onPressed: () async {
@@ -303,7 +303,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                 },
                 child: Text(
                   existing == null ? '추가' : '저장',
-                  style: AppTheme.sans(14, accent, weight: FontWeight.w600),
+                  style: AppTheme.sans(AppTheme.tsMD, accent, weight: FontWeight.w600),
                 ),
               ),
             ],
@@ -331,7 +331,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
           ),
           titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
           contentPadding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-          title: Text('카테고리', style: AppTheme.serif(17, ink)),
+          title: Text('카테고리', style: AppTheme.serif(AppTheme.tsLG, ink)),
           content: Wrap(
             spacing: 6,
             runSpacing: 6,
@@ -354,7 +354,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                     Icon(cat.icon, size: 13, color: sel ? cat.color : sub),
                     const SizedBox(width: 4),
                     Text(cat.label,
-                        style: AppTheme.sans(12, sel ? ink : sub,
+                        style: AppTheme.sans(AppTheme.tsXS, sel ? ink : sub,
                             weight: sel ? FontWeight.w700 : FontWeight.w500)),
                   ]),
                 ),
@@ -381,20 +381,20 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
           borderRadius: BorderRadius.circular(4),
           side: BorderSide(color: line),
         ),
-        title: Text('항목 삭제', style: AppTheme.serif(17, ink)),
+        title: Text('항목 삭제', style: AppTheme.serif(AppTheme.tsLG, ink)),
         content: Text(
           '"${t.name}"을 삭제하면 이번 달 확인 기록도 함께 사라져요.',
-          style: AppTheme.sans(14, sub),
+          style: AppTheme.sans(AppTheme.tsMD, sub),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('취소', style: AppTheme.sans(14, sub)),
+            child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, sub)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text('삭제',
-                style: AppTheme.sans(14, AppTheme.colorDanger,
+                style: AppTheme.sans(AppTheme.tsMD, AppTheme.colorDanger,
                     weight: FontWeight.w600)),
           ),
         ],
@@ -415,7 +415,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('고정 지출', style: AppTheme.serif(22, ink)),
+        title: Text('고정 지출', style: AppTheme.serif(AppTheme.serifMD, ink)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: AppTheme.hairline(context),
@@ -456,7 +456,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                           Icon(Icons.add, size: 17, color: bg),
                           const SizedBox(width: 7),
                           Text('항목 추가',
-                              style: AppTheme.sans(14, bg,
+                              style: AppTheme.sans(AppTheme.tsMD, bg,
                                   weight: FontWeight.w700)),
                         ],
                       ),
@@ -493,11 +493,11 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
             child: Icon(Icons.event_repeat_outlined, size: 36, color: tert),
           ),
           const SizedBox(height: 20),
-          Text('매월 빠져나가는 돈', style: AppTheme.serif(22, ink)),
+          Text('매월 빠져나가는 돈', style: AppTheme.serif(AppTheme.serifMD, ink)),
           const SizedBox(height: 8),
           Text(
             '월세, 구독료, 보험료 등\n자동으로 챙겨드려요.'.keepWords,
-            style: AppTheme.sans(14, sub),
+            style: AppTheme.sans(AppTheme.tsMD, sub),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -517,7 +517,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                   Icon(Icons.add, size: 16, color: accent),
                   const SizedBox(width: 6),
                   Text('첫 항목 추가하기',
-                      style: AppTheme.sans(14, accent,
+                      style: AppTheme.sans(AppTheme.tsMD, accent,
                           weight: FontWeight.w600)),
                 ],
               ),
@@ -542,9 +542,9 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text('$day', style: AppTheme.serif(22, ink, height: 1.0)),
+          Text('$day', style: AppTheme.serif(AppTheme.serifMD, ink, height: 1.0)),
           const SizedBox(height: 1),
-          Text('일', style: AppTheme.sans(11, AppTheme.inkTertiary(context),
+          Text('일', style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context),
               weight: FontWeight.w600, spacing: 1)),
         ],
       ),
@@ -575,7 +575,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                 children: [
                   Text(
                     t.name,
-                    style: AppTheme.sans(14, ink, weight: FontWeight.w600),
+                    style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w600),
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 3),
@@ -587,10 +587,10 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                             color: cat.color, shape: BoxShape.circle),
                       ),
                       const SizedBox(width: 5),
-                      Text(cat.label, style: AppTheme.sans(12, tert)),
-                      Text('  ·  ', style: AppTheme.sans(12, tert)),
+                      Text(cat.label, style: AppTheme.sans(AppTheme.tsXS, tert)),
+                      Text('  ·  ', style: AppTheme.sans(AppTheme.tsXS, tert)),
                       Text(t.paymentMethod,
-                          style: AppTheme.sans(12, pmColor,
+                          style: AppTheme.sans(AppTheme.tsXS, pmColor,
                               weight: FontWeight.w600)),
                       if (t.isBusiness) ...[
                         const SizedBox(width: 6),
@@ -600,7 +600,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                             border: Border.all(color: AppTheme.line(context)),
                             borderRadius: BorderRadius.circular(3),
                           ),
-                          child: Text('사업경비', style: AppTheme.sans(10, tert, weight: FontWeight.w600)),
+                          child: Text('사업경비', style: AppTheme.sans(AppTheme.tsLane, tert, weight: FontWeight.w600)),
                         ),
                       ],
                     ],
@@ -612,9 +612,9 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
             // 예상 금액 — 세리프 숫자, 미정이면 흐리게
             if (t.amountHint > 0)
               Text('${_fmt(t.amountHint)}원',
-                  style: AppTheme.serif(17, ink, height: 1.0))
+                  style: AppTheme.serif(AppTheme.tsLG, ink, height: 1.0))
             else
-              Text('미정', style: AppTheme.sans(12, tert)),
+              Text('미정', style: AppTheme.sans(AppTheme.tsXS, tert)),
             const SizedBox(width: 6),
             // 삭제 (편집은 행 전체 탭)
             GestureDetector(

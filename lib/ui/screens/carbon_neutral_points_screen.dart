@@ -74,7 +74,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('탄소중립포인트',
-            style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),
+            style: AppTheme.serif(AppTheme.tsBase, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
@@ -100,7 +100,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
                 ),
                 Expanded(
                     child:
-                        Text('가정용 베란다 태양광 설치(연 1회)'.keepWords, style: AppTheme.sans(13, ink))),
+                        Text('가정용 베란다 태양광 설치(연 1회)'.keepWords, style: AppTheme.sans(AppTheme.tsSM, ink))),
               ],
             ),
             Row(
@@ -110,7 +110,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
                   onChanged: (v) => setState(() => _greenBuy = v ?? false),
                   activeColor: accent,
                 ),
-                Expanded(child: Text('친환경제품 구매(매월 1건)'.keepWords, style: AppTheme.sans(13, ink))),
+                Expanded(child: Text('친환경제품 구매(매월 1건)'.keepWords, style: AppTheme.sans(AppTheme.tsSM, ink))),
               ],
             ),
             const SizedBox(height: 32),
@@ -125,15 +125,15 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('연간 예상 포인트', style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                    Text('연간 예상 포인트', style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('연간 총 포인트',
-                            style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
+                            style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700)),
                         Text(won(_total),
-                            style: AppTheme.sans(16, accent, weight: FontWeight.w700)),
+                            style: AppTheme.sans(AppTheme.tsBase, accent, weight: FontWeight.w700)),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -155,7 +155,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
                     if (_isCapped) ...[
                       const SizedBox(height: 12),
                       Text('* 1인당 연간 지급 한도 7만원을 초과하여 상한으로 산정되었습니다.'.keepWords,
-                          style: AppTheme.sans(11, sub)),
+                          style: AppTheme.sans(AppTheme.tsXS, sub)),
                     ],
                   ],
                 ),
@@ -186,7 +186,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+        Text(label, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: ctrl,
@@ -198,10 +198,10 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
             else
               FilteringTextInputFormatter.digitsOnly,
           ],
-          style: AppTheme.sans(14, ink),
+          style: AppTheme.sans(AppTheme.tsMD, ink),
           decoration: InputDecoration(
             suffixText: suffix,
-            suffixStyle: AppTheme.sans(14, sub),
+            suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(4), borderSide: BorderSide(color: line)),
             enabledBorder: OutlineInputBorder(
@@ -220,8 +220,8 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -235,14 +235,14 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
-                Expanded(child: Text(item, style: AppTheme.sans(13, sub, height: 1.5))),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
+                Expanded(child: Text(item, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

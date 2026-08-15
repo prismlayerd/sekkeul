@@ -43,17 +43,17 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('알림 기록을 모두 지울까요?'.keepWords,
-            style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
+            style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx), weight: FontWeight.w700)),
         content: Text('지워진 기록은 복구할 수 없어요.'.keepWords,
-            style: AppTheme.sans(13, AppTheme.inkSecondary(ctx), height: 1.45)),
+            style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(ctx), height: 1.45)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('취소', style: AppTheme.sans(14, AppTheme.inkSecondary(ctx)))),
+              child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, AppTheme.inkSecondary(ctx)))),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: Text('지우기',
-                  style: AppTheme.sans(14, AppTheme.colorDanger, weight: FontWeight.w700))),
+                  style: AppTheme.sans(AppTheme.tsMD, AppTheme.colorDanger, weight: FontWeight.w700))),
         ],
       ),
     );
@@ -83,7 +83,7 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('알림함', style: AppTheme.serif(22, ink, weight: FontWeight.w400, spacing: -0.3)),
+        title: Text('알림함', style: AppTheme.serif(AppTheme.serifMD, ink, weight: FontWeight.w400, spacing: -0.3)),
         leading: IconButton(
           tooltip: '뒤로',
           icon: Icon(Icons.arrow_back_rounded, color: sub),
@@ -94,7 +94,7 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
             TextButton(
               onPressed: _clearAll,
               child: Text('모두 지우기',
-                  style: AppTheme.sans(13, AppTheme.colorDanger, weight: FontWeight.w600)),
+                  style: AppTheme.sans(AppTheme.tsSM, AppTheme.colorDanger, weight: FontWeight.w600)),
             ),
           const SizedBox(width: 4),
         ],
@@ -122,10 +122,10 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
           Icon(Icons.notifications_none_rounded, size: 48, color: tert),
           const SizedBox(height: 16),
           Text('받은 알림이 없어요',
-              style: AppTheme.sans(15, tert, weight: FontWeight.w600)),
+              style: AppTheme.sans(AppTheme.tsBase, tert, weight: FontWeight.w600)),
           const SizedBox(height: 6),
           Text('공제 문턱·예산 초과·세무 일정 알림이\n여기에 기록돼요.'.keepWords,
-              style: AppTheme.sans(13, tert, height: 1.5),
+              style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5),
               textAlign: TextAlign.center),
         ]),
       ),
@@ -159,14 +159,14 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
                 Row(children: [
                   Expanded(
                     child: Text(title,
-                        style: AppTheme.sans(14, ink, weight: FontWeight.w700, spacing: -0.1)),
+                        style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700, spacing: -0.1)),
                   ),
                   const SizedBox(width: 8),
-                  Text(firedAt, style: AppTheme.sans(12, tert)),
+                  Text(firedAt, style: AppTheme.sans(AppTheme.tsXS, tert)),
                 ]),
                 if (body.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(body, style: AppTheme.sans(13, sub, height: 1.45)),
+                  Text(body, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
                 ],
               ],
             ),

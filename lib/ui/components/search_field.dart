@@ -52,11 +52,11 @@ class SearchField extends StatelessWidget {
                 autofocus: autofocus,
                 cursorColor: AppTheme.accentColor(context),
                 textInputAction: TextInputAction.search,
-                style: AppTheme.sans(15, ink, weight: FontWeight.w600),
+                style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w600),
                 decoration: InputDecoration(
                   isCollapsed: true,
                   hintText: hint,
-                  hintStyle: AppTheme.sans(15, tert),
+                  hintStyle: AppTheme.sans(AppTheme.tsBase, tert),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -104,11 +104,11 @@ class SearchEmptyState extends StatelessWidget {
       child: Column(
         children: [
           Text('‘$query’',
-              style: AppTheme.serif(22, AppTheme.ink(context), spacing: -0.5)),
+              style: AppTheme.serif(AppTheme.serifMD, AppTheme.ink(context), spacing: -0.5)),
           const SizedBox(height: 10),
           Text(suggestion,
               textAlign: TextAlign.center,
-              style: AppTheme.sans(13, AppTheme.inkSecondary(context), height: 1.6)),
+              style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context), height: 1.6)),
         ],
       ),
     );

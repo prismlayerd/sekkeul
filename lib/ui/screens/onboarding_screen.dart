@@ -122,10 +122,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   Text('소득 유형 점검'.toUpperCase(), style: AppTheme.label(context)),
                   const SizedBox(height: 14),
                   Text('어떤 소득이\n있으신가요?'.keepWords,
-                      style: AppTheme.serif(34, ink, spacing: -0.5, height: 1.2)),
+                      style: AppTheme.serif(AppTheme.serifXL, ink, spacing: -0.5, height: 1.2)),
                   const SizedBox(height: 12),
                   Text('해당하는 항목을 모두 골라주세요. 아래 표제란이 유형을 판정해드려요.'.keepWords,
-                      style: AppTheme.sans(13, sub, height: 1.5)),
+                      style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5)),
                 ],
               ),
             ),
@@ -231,11 +231,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(src.text,
-                      style: AppTheme.sans(15, ink,
+                      style: AppTheme.sans(AppTheme.tsBase, ink,
                           weight: on ? FontWeight.w700 : FontWeight.w500, spacing: -0.2)),
                   const SizedBox(height: 3),
                   Text(src.detail,
-                      style: AppTheme.sans(12, tert, height: 1.35),
+                      style: AppTheme.sans(AppTheme.tsXS, tert, height: 1.35),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis),
                 ],
@@ -244,7 +244,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(width: 12),
             // 분류 주석 (근로 / 사업)
             Text(src.cat == _Cat.labor ? '근로' : '사업',
-                style: AppTheme.sans(12, on ? sub : tert,
+                style: AppTheme.sans(AppTheme.tsXS, on ? sub : tert,
                     weight: FontWeight.w600, spacing: 1.0)),
           ],
         ),
@@ -299,16 +299,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: verdict == null
                       ? Text('항목을 선택하면\n유형이 표시돼요'.keepWords,
                           key: const ValueKey('empty'),
-                          style: AppTheme.sans(13, tert, height: 1.45))
+                          style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.45))
                       : Column(
                           key: ValueKey(verdict),
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(verdict, style: AppTheme.serif(34, ink, spacing: -0.8, height: 1.0)),
+                            Text(verdict, style: AppTheme.serif(AppTheme.serifXL, ink, spacing: -0.8, height: 1.0)),
                             const SizedBox(height: 5),
                             Text(_verdictNote(verdict),
-                                style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.4)),
+                                style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context), height: 1.4)),
                           ],
                         ),
                 ),
@@ -338,7 +338,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
         const SizedBox(width: 8),
         Text(label,
-            style: AppTheme.sans(13, on ? ink : tert,
+            style: AppTheme.sans(AppTheme.tsSM, on ? ink : tert,
                 weight: on ? FontWeight.w700 : FontWeight.w500)),
       ],
     );
@@ -374,7 +374,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('유형 확정하기',
-                style: AppTheme.sans(15, enabled ? bg : AppTheme.inkTertiary(context),
+                style: AppTheme.sans(AppTheme.tsBase, enabled ? bg : AppTheme.inkTertiary(context),
                     weight: FontWeight.w700)),
             const SizedBox(width: 8),
             Icon(Icons.arrow_forward,

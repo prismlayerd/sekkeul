@@ -100,11 +100,11 @@ class AmountField extends StatelessWidget {
       keyboardType: TextInputType.number,
       textAlign: TextAlign.right,
       inputFormatters: const [ThousandsFormatter()],
-      style: AppTheme.sans(16, ink, weight: FontWeight.w700),
+      style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700),
       decoration: InputDecoration(
         isDense: true,
         hintText: '0',
-        hintStyle: AppTheme.sans(16, AppTheme.inkTertiary(context)),
+        hintStyle: AppTheme.sans(AppTheme.tsBase, AppTheme.inkTertiary(context)),
         filled: true,
         fillColor: AppTheme.surface(context),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
@@ -129,7 +129,7 @@ class AmountField extends StatelessWidget {
       children: [
         expand ? Expanded(child: field) : SizedBox(width: width, child: field),
         const SizedBox(width: 8),
-        Text('원', style: AppTheme.sans(15, AppTheme.inkSecondary(context), weight: FontWeight.w600)),
+        Text('원', style: AppTheme.sans(AppTheme.tsBase, AppTheme.inkSecondary(context), weight: FontWeight.w600)),
       ],
     );
   }

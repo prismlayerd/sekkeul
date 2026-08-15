@@ -43,7 +43,7 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('자동차세 연납 할인',
-            style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),
+            style: AppTheme.serif(AppTheme.tsBase, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
@@ -52,7 +52,7 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
           children: [
             _amountField('연간 자동차세 (본세+지방교육세)', _taxCtrl, ink, sub, line),
             const SizedBox(height: 20),
-            Text('신청 시기', style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+            Text('신청 시기', style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(
               children: _rates.keys
@@ -77,14 +77,14 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('$_month월 연납 시', style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                    Text('$_month월 연납 시', style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('절감액', style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
+                        Text('절감액', style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700)),
                         Text('-${won(_discount)}',
-                            style: AppTheme.sans(16, accent, weight: FontWeight.w700)),
+                            style: AppTheme.sans(AppTheme.tsBase, accent, weight: FontWeight.w700)),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -125,17 +125,17 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+        Text(label, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
           textAlign: TextAlign.right,
           inputFormatters: const [ThousandsFormatter()],
-          style: AppTheme.sans(14, ink),
+          style: AppTheme.sans(AppTheme.tsMD, ink),
           decoration: InputDecoration(
             suffixText: '원',
-            suffixStyle: AppTheme.sans(14, sub),
+            suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(4), borderSide: BorderSide(color: line)),
             enabledBorder: OutlineInputBorder(
@@ -168,7 +168,7 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
             border: Border.all(color: selected ? accent : line),
             borderRadius: BorderRadius.circular(4)),
         child: Text(label,
-            style: AppTheme.sans(12, selected ? accent : ink, weight: FontWeight.w600)),
+            style: AppTheme.sans(AppTheme.tsXS, selected ? accent : ink, weight: FontWeight.w600)),
       ),
     );
   }
@@ -177,8 +177,8 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -192,14 +192,14 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
-                Expanded(child: Text(item, style: AppTheme.sans(13, sub, height: 1.5))),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
+                Expanded(child: Text(item, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

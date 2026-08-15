@@ -130,10 +130,10 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                   Text('리마인더'.toUpperCase(), style: AppTheme.label(context)),
                   const SizedBox(height: 12),
                   Text('챙길 알림',
-                      style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
+                      style: AppTheme.serif(AppTheme.serifXL, ink, spacing: -0.5, height: 1.2)),
                   const SizedBox(height: 10),
                   Text('직접 만들거나 앱이 챙겨주는 것들을 여기서 관리해요.'.keepWords,
-                      style: AppTheme.sans(14, sub, height: 1.55)),
+                      style: AppTheme.sans(AppTheme.tsMD, sub, height: 1.55)),
                   const SizedBox(height: 18),
 
                   // ── 내가 만든 (CRUD) ──
@@ -182,7 +182,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
   Widget _muted(String t) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Text(t,
-            style: AppTheme.sans(12, AppTheme.inkTertiary(context),
+            style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context),
                 height: 1.45)),
       );
 
@@ -204,10 +204,10 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                   Text(r.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTheme.sans(15, r.enabled ? ink : tert,
+                      style: AppTheme.sans(AppTheme.tsBase, r.enabled ? ink : tert,
                           weight: FontWeight.w700)),
                   const SizedBox(height: 3),
-                  Text(_userSubtitle(r), style: AppTheme.sans(12, tert)),
+                  Text(_userSubtitle(r), style: AppTheme.sans(AppTheme.tsXS, tert)),
                 ],
               ),
             ),
@@ -244,7 +244,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        title: Text('알릴 시각', style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
+        title: Text('알릴 시각', style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx), weight: FontWeight.w700)),
         content: SizedBox(
           height: 140,
           width: 200,
@@ -257,11 +257,11 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                   onSelectedItemChanged: (i) => hour = i,
                   children: [
                     for (int i = 0; i < 24; i++)
-                      Center(child: Text(i.toString().padLeft(2, '0'), style: AppTheme.sans(16, AppTheme.ink(ctx))))
+                      Center(child: Text(i.toString().padLeft(2, '0'), style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx))))
                   ],
                 ),
               ),
-              Text(':', style: AppTheme.sans(16, AppTheme.ink(ctx))),
+              Text(':', style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx))),
               Expanded(
                 child: CupertinoPicker(
                   itemExtent: 36,
@@ -269,7 +269,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                   onSelectedItemChanged: (i) => minute = i,
                   children: [
                     for (int i = 0; i < 60; i++)
-                      Center(child: Text(i.toString().padLeft(2, '0'), style: AppTheme.sans(16, AppTheme.ink(ctx))))
+                      Center(child: Text(i.toString().padLeft(2, '0'), style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx))))
                   ],
                 ),
               ),
@@ -278,9 +278,9 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false),
-              child: Text('취소', style: AppTheme.sans(14, AppTheme.inkSecondary(ctx)))),
+              child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, AppTheme.inkSecondary(ctx)))),
           TextButton(onPressed: () => Navigator.pop(ctx, true),
-              child: Text('저장', style: AppTheme.sans(14, AppTheme.accentColor(ctx), weight: FontWeight.w700))),
+              child: Text('저장', style: AppTheme.sans(AppTheme.tsMD, AppTheme.accentColor(ctx), weight: FontWeight.w700))),
         ],
       ),
     );
@@ -310,7 +310,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                   Text(title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTheme.sans(15, pref.enabled ? ink : tert,
+                      style: AppTheme.sans(AppTheme.tsBase, pref.enabled ? ink : tert,
                           weight: FontWeight.w700)),
                   const SizedBox(height: 3),
                   // 시각은 눌러서 고칠 수 있다 — 연필을 붙여야 그게 보인다.
@@ -350,7 +350,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        title: Text('알릴 시각', style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
+        title: Text('알릴 시각', style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx), weight: FontWeight.w700)),
         content: SizedBox(
           height: 140,
           width: 200,
@@ -363,11 +363,11 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                   onSelectedItemChanged: (i) => hour = i,
                   children: [
                     for (int i = 0; i < 24; i++)
-                      Center(child: Text(i.toString().padLeft(2, '0'), style: AppTheme.sans(16, AppTheme.ink(ctx))))
+                      Center(child: Text(i.toString().padLeft(2, '0'), style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx))))
                   ],
                 ),
               ),
-              Text(':', style: AppTheme.sans(16, AppTheme.ink(ctx))),
+              Text(':', style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx))),
               Expanded(
                 child: CupertinoPicker(
                   itemExtent: 36,
@@ -375,7 +375,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                   onSelectedItemChanged: (i) => minute = i,
                   children: [
                     for (int i = 0; i < 60; i++)
-                      Center(child: Text(i.toString().padLeft(2, '0'), style: AppTheme.sans(16, AppTheme.ink(ctx))))
+                      Center(child: Text(i.toString().padLeft(2, '0'), style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx))))
                   ],
                 ),
               ),
@@ -384,9 +384,9 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false),
-              child: Text('취소', style: AppTheme.sans(14, AppTheme.inkSecondary(ctx)))),
+              child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, AppTheme.inkSecondary(ctx)))),
           TextButton(onPressed: () => Navigator.pop(ctx, true),
-              child: Text('저장', style: AppTheme.sans(14, AppTheme.accentColor(ctx), weight: FontWeight.w700))),
+              child: Text('저장', style: AppTheme.sans(AppTheme.tsMD, AppTheme.accentColor(ctx), weight: FontWeight.w700))),
         ],
       ),
     );
@@ -415,7 +415,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.add_rounded, size: 18, color: bg),
           const SizedBox(width: 6),
-          Text('알림 추가', style: AppTheme.sans(15, bg, weight: FontWeight.w700)),
+          Text('알림 추가', style: AppTheme.sans(AppTheme.tsBase, bg, weight: FontWeight.w700)),
         ]),
       ),
     );

@@ -45,9 +45,9 @@ class TaxToolsScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 4, 24, 32),
           children: [
-            Text('세무 도구', style: AppTheme.serif(28, ink, spacing: -0.5)),
+            Text('세무 도구', style: AppTheme.serif(AppTheme.serifXL, ink, spacing: -0.5)),
             const SizedBox(height: 10),
-            Text(_pipelineIntroFor(userType), style: AppTheme.sans(14, sub, height: 1.55)),
+            Text(_pipelineIntroFor(userType), style: AppTheme.sans(AppTheme.tsMD, sub, height: 1.55)),
             const SizedBox(height: 28),
             TaxToolsMenu(userType: userType),
           ],
@@ -142,7 +142,7 @@ class _TaxToolsMenuState extends State<TaxToolsMenu> {
                     border: Border.all(color: line, width: 1),
                     borderRadius: BorderRadius.circular(3),
                   ),
-                  child: Text('$n', style: AppTheme.serif(17, ink, spacing: 0, height: 1.0)),
+                  child: Text('$n', style: AppTheme.serif(AppTheme.tsLG, ink, spacing: 0, height: 1.0)),
                 ),
                 if (!isLast)
                   Expanded(child: Container(width: 1, color: line)),
@@ -157,14 +157,14 @@ class _TaxToolsMenuState extends State<TaxToolsMenu> {
                   children: [
                     Row(children: [
                       Flexible(child: Text(stage.title,
-                          style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2))),
+                          style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, spacing: -0.2))),
                       if (stage.badge != null) ...[
                         const SizedBox(width: 8),
                         AppTheme.blueprintBadge(context, stage.badge!),
                       ],
                     ]),
                     const SizedBox(height: 5),
-                    Text(stage.subtitle, style: AppTheme.sans(13, sub, height: 1.45)),
+                    Text(stage.subtitle, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
                   ],
                 ),
               ),
@@ -194,14 +194,14 @@ class _TaxToolsMenuState extends State<TaxToolsMenu> {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
-                Flexible(child: Text(stage.title, style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2))),
+                Flexible(child: Text(stage.title, style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, spacing: -0.2))),
                 if (stage.badge != null) ...[
                   const SizedBox(width: 8),
                   AppTheme.blueprintBadge(context, stage.badge!),
                 ],
               ]),
               const SizedBox(height: 3),
-              Text(stage.subtitle, style: AppTheme.sans(12, sub, height: 1.4)),
+              Text(stage.subtitle, style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4)),
             ]),
           ),
           const SizedBox(width: 8),
@@ -224,10 +224,10 @@ class _TaxToolsMenuState extends State<TaxToolsMenu> {
         child: Row(children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('양식 ${allTaxForms.length}종', style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+              Text('양식 ${allTaxForms.length}종', style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, spacing: -0.2)),
               const SizedBox(height: 3),
               Text('연말정산·종소세·경정청구 등 자주 쓰는 양식 모음'.keepWords,
-                  style: AppTheme.sans(12, sub, height: 1.4)),
+                  style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4)),
             ]),
           ),
           const SizedBox(width: 8),
@@ -251,10 +251,10 @@ class _TaxToolsMenuState extends State<TaxToolsMenu> {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('서류 체크리스트',
-                  style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+                  style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, spacing: -0.2)),
               const SizedBox(height: 3),
               Text('홈택스 간소화에 없는 서류만 모아 보여줘요'.keepWords,
-                  style: AppTheme.sans(12, sub, height: 1.4)),
+                  style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4)),
             ]),
           ),
           const SizedBox(width: 8),
@@ -280,10 +280,10 @@ class _TaxToolsMenuState extends State<TaxToolsMenu> {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('장부 만들기',
-                  style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+                  style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, spacing: -0.2)),
               const SizedBox(height: 3),
               Text('내 기장의무 확인 + 가계부 기록으로 간편장부 생성'.keepWords,
-                  style: AppTheme.sans(12, sub, height: 1.4)),
+                  style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4)),
             ]),
           ),
           const SizedBox(width: 8),

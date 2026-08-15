@@ -68,7 +68,7 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('연봉 실수령액',
-            style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
@@ -84,7 +84,7 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
           children: [
             Text('세전 연봉으로\n실제 수령액을 계산해요'.keepWords,
                 style: TextStyle(
-                    color: textColor, fontSize: 22, fontWeight: FontWeight.bold, height: 1.4)),
+                    color: textColor, fontSize: 21, fontWeight: FontWeight.bold, height: 1.4)),
             const SizedBox(height: 8),
             Text('4대보험 + 근로소득세 + 지방소득세를 제외한 금액입니다.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
@@ -127,7 +127,7 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
                   const SizedBox(height: 4),
                   Text('세액공제 적용 인원 수입니다.'.keepWords,
                       style: TextStyle(
-                          color: subColor.withValues(alpha: 0.7), fontSize: 11)),
+                          color: subColor.withValues(alpha: 0.7), fontSize: 12)),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -175,7 +175,7 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
                   const SizedBox(height: 12),
                   Text(hasInput ? _manwon(monthlyNet) : '0원',
                       style: TextStyle(
-                          color: primary, fontSize: 32, fontWeight: FontWeight.w900)),
+                          color: primary, fontSize: 30, fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   if (hasInput && ins != null) ...[
                     _row('세전 월급', _won(monthly), subColor, textColor),

@@ -38,7 +38,7 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('보육료 · 가정양육 비교'.keepWords,
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -47,7 +47,7 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('아동 연령',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -59,14 +59,14 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
                 child: DropdownButton<int>(
                   value: _ageIdx,
                   isExpanded: true,
-                  style: AppTheme.sans(14, ink),
+                  style: AppTheme.sans(AppTheme.tsMD, ink),
                   dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _ages.length; i++)
                       DropdownMenuItem(
                           value: i,
                           child: Text(_ages[i].$1,
-                              style: AppTheme.sans(14, ink))),
+                              style: AppTheme.sans(AppTheme.tsMD, ink))),
                   ],
                   onChanged: (v) => setState(() => _ageIdx = v!),
                 ),
@@ -84,25 +84,25 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('월 지원액 비교 (택일)'.keepWords,
-                      style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                      style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text('어린이집 이용 (보육료 지원)'.keepWords,
-                            style: AppTheme.sans(13, ink,
+                            style: AppTheme.sans(AppTheme.tsSM, ink,
                                 weight: FontWeight.w600)),
                       ),
                       const SizedBox(width: 8),
                       Text(won(_daycare),
-                          style: AppTheme.sans(14, accent,
+                          style: AppTheme.sans(AppTheme.tsMD, accent,
                               weight: FontWeight.w700)),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text('어린이집에 직접 지급 (부모 현금 아님)'.keepWords,
-                      style: AppTheme.sans(11, sub)),
+                      style: AppTheme.sans(AppTheme.tsXS, sub)),
                   const SizedBox(height: 12),
                   Divider(height: 1, color: line),
                   const SizedBox(height: 12),
@@ -110,19 +110,19 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('가정양육 ($_homeLabel)',
-                          style: AppTheme.sans(13, ink,
+                          style: AppTheme.sans(AppTheme.tsSM, ink,
                               weight: FontWeight.w600)),
                       Text(won(_homeCash),
-                          style: AppTheme.sans(14, accent,
+                          style: AppTheme.sans(AppTheme.tsMD, accent,
                               weight: FontWeight.w700)),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text('보호자에게 현금 지급',
-                      style: AppTheme.sans(11, sub)),
+                      style: AppTheme.sans(AppTheme.tsXS, sub)),
                   const SizedBox(height: 12),
                   Text('* 보육료와 가정양육 현금은 중복 수급 불가, 둘 중 하나만 선택합니다.'.keepWords,
-                      style: AppTheme.sans(11, sub)),
+                      style: AppTheme.sans(AppTheme.tsXS, sub)),
                 ],
               ),
             ),
@@ -169,16 +169,16 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

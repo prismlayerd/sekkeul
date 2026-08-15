@@ -48,11 +48,11 @@ class TaxPipelineRail extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
-        Text('0$n', style: AppTheme.serif(14, color, weight: FontWeight.w400, spacing: 0)),
+        Text('0$n', style: AppTheme.serif(AppTheme.tsMD, color, weight: FontWeight.w400, spacing: 0)),
         const SizedBox(width: 5),
         Text(
           label,
-          style: AppTheme.sans(12, color,
+          style: AppTheme.sans(AppTheme.tsXS, color,
               weight: active ? FontWeight.w700 : FontWeight.w500, spacing: -0.2),
         ),
       ],

@@ -67,7 +67,7 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('청년 주택드림 청약통장'.keepWords,
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -92,7 +92,7 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
                   children: [
                     Text('이자 비교 (단리 추정)'.keepWords,
                         style:
-                            AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                            AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     _row('드림 통장 (연 4.5%)', _manwon(_dreamTotal), ink, sub),
                     const SizedBox(height: 8),
@@ -104,10 +104,10 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('드림 통장 추가 이익',
-                            style: AppTheme.sans(14, ink,
+                            style: AppTheme.sans(AppTheme.tsMD, ink,
                                 weight: FontWeight.w700)),
                         Text(_manwon(_diff),
-                            style: AppTheme.sans(16, accent,
+                            style: AppTheme.sans(AppTheme.tsBase, accent,
                                 weight: FontWeight.w700)),
                       ],
                     ),
@@ -122,17 +122,17 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('연 세금 환급 추정 (16.5%)'.keepWords,
-                            style: AppTheme.sans(13, ink,
+                            style: AppTheme.sans(AppTheme.tsSM, ink,
                                 weight: FontWeight.w700)),
                         Text(won(_taxRefund),
-                            style: AppTheme.sans(13, accent,
+                            style: AppTheme.sans(AppTheme.tsSM, accent,
                                 weight: FontWeight.w700)),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Text(
                         '* 소득공제 한도 연 240만원. 세율 16.5%(소득세 15%+지방세 1.5%) 기준.'.keepWords,
-                        style: AppTheme.sans(11, sub)),
+                        style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
               ),
@@ -175,7 +175,7 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+        Text(label, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: ctrl,
@@ -187,12 +187,12 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
             else
               FilteringTextInputFormatter.digitsOnly,
           ],
-          style: AppTheme.sans(14, ink),
+          style: AppTheme.sans(AppTheme.tsMD, ink),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: AppTheme.sans(14, sub),
+            hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
             suffixText: suffix,
-            suffixStyle: AppTheme.sans(14, sub),
+            suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(4),
                 borderSide: BorderSide(color: line)),
@@ -215,8 +215,8 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -232,16 +232,16 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

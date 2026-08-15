@@ -49,7 +49,7 @@ class _DocumentChecklistScreenState extends State<DocumentChecklistScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('서류 체크리스트',
-            style: AppTheme.serif(22, ink, weight: FontWeight.w400, spacing: -0.3)),
+            style: AppTheme.serif(AppTheme.serifMD, ink, weight: FontWeight.w400, spacing: -0.3)),
         leading: IconButton(
           tooltip: '뒤로',
           icon: Icon(Icons.arrow_back_rounded, color: sub),
@@ -67,7 +67,7 @@ class _DocumentChecklistScreenState extends State<DocumentChecklistScreen> {
                   const SizedBox(height: 4),
                   Text(
                     '홈택스 간소화에서 자동 수집되지 않아 직접 준비해야 하는 서류만 모았어요.'.keepWords,
-                    style: AppTheme.sans(13, sub, height: 1.5),
+                    style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5),
                   ),
                   const SizedBox(height: 20),
                   if (manualItems.isEmpty)
@@ -138,14 +138,14 @@ class _DocumentChecklistScreenState extends State<DocumentChecklistScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(item.title,
-                      style: AppTheme.sans(14, checked ? AppTheme.inkTertiary(context) : ink,
+                      style: AppTheme.sans(AppTheme.tsMD, checked ? AppTheme.inkTertiary(context) : ink,
                           weight: FontWeight.w700,
                           spacing: -0.1).copyWith(
                         decoration: checked ? TextDecoration.lineThrough : null,
                       )),
                   const SizedBox(height: 3),
                   Text(item.subtitle,
-                      style: AppTheme.sans(12, tert, height: 1.45)),
+                      style: AppTheme.sans(AppTheme.tsXS, tert, height: 1.45)),
                 ],
               ),
             ),
@@ -168,7 +168,7 @@ class _DocumentChecklistScreenState extends State<DocumentChecklistScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(item.subtitle,
-                style: AppTheme.sans(13, sub, height: 1.5)),
+                style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5)),
           ),
         ],
       ),
@@ -182,10 +182,10 @@ class _DocumentChecklistScreenState extends State<DocumentChecklistScreen> {
         Icon(Icons.task_alt_rounded, size: 40, color: tert),
         const SizedBox(height: 12),
         Text('별도로 준비할 서류가 없어요'.keepWords,
-            style: AppTheme.sans(15, tert, weight: FontWeight.w600)),
+            style: AppTheme.sans(AppTheme.tsBase, tert, weight: FontWeight.w600)),
         const SizedBox(height: 6),
         Text('홈택스 간소화 서비스에서 자동으로 수집돼요.'.keepWords,
-            style: AppTheme.sans(13, tert, height: 1.5),
+            style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5),
             textAlign: TextAlign.center),
       ]),
     );

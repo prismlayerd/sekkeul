@@ -61,7 +61,7 @@ class _SevereDiseaseCopaymentScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text('중증질환 산정특례',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -70,7 +70,7 @@ class _SevereDiseaseCopaymentScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('질환군',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -82,14 +82,14 @@ class _SevereDiseaseCopaymentScreenState
                 child: DropdownButton<int>(
                   value: _diseaseIdx,
                   isExpanded: true,
-                  style: AppTheme.sans(14, ink),
+                  style: AppTheme.sans(AppTheme.tsMD, ink),
                   dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _diseases.length; i++)
                       DropdownMenuItem(
                           value: i,
                           child: Text(_diseases[i].$1,
-                              style: AppTheme.sans(14, ink))),
+                              style: AppTheme.sans(AppTheme.tsMD, ink))),
                   ],
                   onChanged: (v) => setState(() => _diseaseIdx = v!),
                 ),
@@ -97,7 +97,7 @@ class _SevereDiseaseCopaymentScreenState
             ),
             const SizedBox(height: 16),
             Text('진료 유형',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -109,14 +109,14 @@ class _SevereDiseaseCopaymentScreenState
                 child: DropdownButton<int>(
                   value: _typeIdx,
                   isExpanded: true,
-                  style: AppTheme.sans(14, ink),
+                  style: AppTheme.sans(AppTheme.tsMD, ink),
                   dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _types.length; i++)
                       DropdownMenuItem(
                           value: i,
                           child: Text(_types[i].$1,
-                              style: AppTheme.sans(14, ink))),
+                              style: AppTheme.sans(AppTheme.tsMD, ink))),
                   ],
                   onChanged: (v) => setState(() => _typeIdx = v!),
                 ),
@@ -124,19 +124,19 @@ class _SevereDiseaseCopaymentScreenState
             ),
             const SizedBox(height: 16),
             Text('총 진료비',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _costCtrl,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.right,
               inputFormatters: const [ThousandsFormatter()],
-              style: AppTheme.sans(14, ink),
+              style: AppTheme.sans(AppTheme.tsMD, ink),
               decoration: InputDecoration(
                 hintText: '5,000,000',
-                hintStyle: AppTheme.sans(14, sub),
+                hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 suffixText: '원',
-                suffixStyle: AppTheme.sans(14, sub),
+                suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
                     borderSide: BorderSide(color: line)),
@@ -173,16 +173,16 @@ class _SevereDiseaseCopaymentScreenState
                 children: [
                   Text('예상 절감액',
                       style:
-                          AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                          AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('절감액',
-                          style: AppTheme.sans(14, ink,
+                          style: AppTheme.sans(AppTheme.tsMD, ink,
                               weight: FontWeight.w700)),
                       Text(_hasInput ? won(_saved) : '-',
-                          style: AppTheme.sans(16, accent,
+                          style: AppTheme.sans(AppTheme.tsBase, accent,
                               weight: FontWeight.w700)),
                     ],
                   ),
@@ -195,7 +195,7 @@ class _SevereDiseaseCopaymentScreenState
                   _row('산정특례 본인부담 (5%)', won(_specialCopay), ink, sub),
                   const SizedBox(height: 12),
                   Text('* 암·희귀난치·중증화상 등 대부분 5% 적용, 결핵은 0%(면제)입니다.'.keepWords,
-                      style: AppTheme.sans(11, sub)),
+                      style: AppTheme.sans(AppTheme.tsXS, sub)),
                 ],
               ),
             ),
@@ -236,8 +236,8 @@ class _SevereDiseaseCopaymentScreenState
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -253,16 +253,16 @@ class _SevereDiseaseCopaymentScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

@@ -113,11 +113,11 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        title: Text('알림을 삭제할까요?', style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
-        content: Text('이 알림과 예약된 알림이 함께 사라져요.'.keepWords, style: AppTheme.sans(14, AppTheme.inkSecondary(ctx), height: 1.45)),
+        title: Text('알림을 삭제할까요?', style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx), weight: FontWeight.w700)),
+        content: Text('이 알림과 예약된 알림이 함께 사라져요.'.keepWords, style: AppTheme.sans(AppTheme.tsMD, AppTheme.inkSecondary(ctx), height: 1.45)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('취소', style: AppTheme.sans(14, AppTheme.inkSecondary(ctx)))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('삭제', style: AppTheme.sans(14, AppTheme.colorDanger, weight: FontWeight.w700))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, AppTheme.inkSecondary(ctx)))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('삭제', style: AppTheme.sans(AppTheme.tsMD, AppTheme.colorDanger, weight: FontWeight.w700))),
         ],
       ),
     );
@@ -144,7 +144,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
           if (_isEdit && widget.existing?.kind == 'custom')
             TextButton(
               onPressed: _confirmDelete,
-              child: Text('삭제', style: AppTheme.sans(14, AppTheme.colorDanger, weight: FontWeight.w700)),
+              child: Text('삭제', style: AppTheme.sans(AppTheme.tsMD, AppTheme.colorDanger, weight: FontWeight.w700)),
             ),
         ],
       ),
@@ -156,17 +156,17 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
             Text((_isEdit ? '알림 수정' : '새 알림').toUpperCase(), style: AppTheme.label(context)),
             const SizedBox(height: 12),
             Text(_isEdit ? '알림을\n다듬어요' : '챙길 일을\n알림으로',
-                style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
+                style: AppTheme.serif(AppTheme.serifXL, ink, spacing: -0.5, height: 1.2)),
 
             if (_isFixedKind) ...[
               // ── 기본 제공 리마인더 — 제목·주기 고정, 안내만 ──
               const SizedBox(height: 26),
               Text('무엇을 알릴까요?'.toUpperCase(), style: AppTheme.label(context)),
               const SizedBox(height: 12),
-              Text(_titleCtrl.text, style: AppTheme.sans(15, ink, weight: FontWeight.w700)),
+              Text(_titleCtrl.text, style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700)),
               const SizedBox(height: 8),
               Text('기본 제공 알림은 시각만 바꿀 수 있어요.'.keepWords,
-                  style: AppTheme.sans(12, AppTheme.inkTertiary(context), height: 1.45)),
+                  style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context), height: 1.45)),
             ] else ...[
               // ── 제목 ──
               const SizedBox(height: 26),
@@ -200,10 +200,10 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
     return TextField(
       controller: _titleCtrl,
       onChanged: (_) => setState(() {}),
-      style: AppTheme.sans(15, ink, weight: FontWeight.w600),
+      style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w600),
       decoration: InputDecoration(
         hintText: '예: 가계부 기록, 월세 이체, 건강검진 예약',
-        hintStyle: AppTheme.sans(14, AppTheme.inkTertiary(context)),
+        hintStyle: AppTheme.sans(AppTheme.tsMD, AppTheme.inkTertiary(context)),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         filled: true,
@@ -243,7 +243,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(label,
-            style: AppTheme.sans(14, selected ? ink : sub, weight: selected ? FontWeight.w700 : FontWeight.w500)),
+            style: AppTheme.sans(AppTheme.tsMD, selected ? ink : sub, weight: selected ? FontWeight.w700 : FontWeight.w500)),
       ),
     );
   }
@@ -263,7 +263,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
   }
 
   Widget _hint(String t) =>
-      Text(t, style: AppTheme.sans(12, AppTheme.inkTertiary(context), height: 1.45));
+      Text(t, style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context), height: 1.45));
 
   Widget _dateRow(Color ink, Color sub) {
     final accent = AppTheme.accentColor(context);
@@ -281,9 +281,9 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
           Icon(Icons.event_rounded, size: 16, color: accent),
           const SizedBox(width: 10),
           Text('${DateFormat('yyyy년 M월 d일').format(_onceDate)} (${kWeekdayLabels[(_onceDate.weekday - 1) % 7]})',
-              style: AppTheme.sans(14, ink, weight: FontWeight.w600)),
+              style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w600)),
           const Spacer(),
-          Text('변경', style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text('변경', style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
         ]),
       ),
     );
@@ -360,7 +360,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(label,
-            style: AppTheme.sans(14, selected ? AppTheme.backgroundColor(context) : base,
+            style: AppTheme.sans(AppTheme.tsMD, selected ? AppTheme.backgroundColor(context) : base,
                 weight: selected ? FontWeight.w700 : FontWeight.w500)),
       ),
     );
@@ -473,7 +473,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
               alignment: Alignment.center,
               decoration: BoxDecoration(color: AppTheme.ink(context)),
               child: Text(_isEdit ? '저장' : '알림 만들기',
-                  style: AppTheme.sans(15, bg, weight: FontWeight.w700)),
+                  style: AppTheme.sans(AppTheme.tsBase, bg, weight: FontWeight.w700)),
             ),
           ),
         ),

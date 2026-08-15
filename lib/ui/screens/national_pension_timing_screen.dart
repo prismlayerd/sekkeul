@@ -55,7 +55,7 @@ class _NationalPensionTimingScreenState
       appBar: AppBar(
         title: Text('국민연금 조기·연기',
             style: TextStyle(
-                color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+                color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
@@ -72,7 +72,7 @@ class _NationalPensionTimingScreenState
             Text('수령 시기에 따른\n연금액 변화를 비교해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
-                    fontSize: 22,
+                    fontSize: 21,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
@@ -94,7 +94,7 @@ class _NationalPensionTimingScreenState
                   const SizedBox(height: 4),
                   Text('정상 수령 시 예상 월 연금액을 입력하세요.'.keepWords,
                       style: TextStyle(
-                          color: subColor.withValues(alpha: 0.7), fontSize: 11)),
+                          color: subColor.withValues(alpha: 0.7), fontSize: 12)),
                   const SizedBox(height: 8),
                   AmountField(
                     controller: _baseController,
@@ -239,7 +239,7 @@ class _NationalPensionTimingScreenState
                               style: TextStyle(
                                   color:
                                       isEarly ? Colors.orange : primary,
-                                  fontSize: 11)),
+                                  fontSize: 12)),
                         ],
                       )),
                   Expanded(
@@ -250,7 +250,7 @@ class _NationalPensionTimingScreenState
                             : breakEven,
                         textAlign: TextAlign.right,
                         style: TextStyle(
-                            color: subColor, fontSize: 11, height: 1.4),
+                            color: subColor, fontSize: 12, height: 1.4),
                       )),
                 ]),
               ),

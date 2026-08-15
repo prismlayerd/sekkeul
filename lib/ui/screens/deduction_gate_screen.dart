@@ -98,13 +98,13 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
                 children: [
                   Text('공제 고르기'.toUpperCase(), style: AppTheme.label(context)),
                   const SizedBox(height: 12),
-                  Text('해당되는 것만\n골라주세요'.keepWords, style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
+                  Text('해당되는 것만\n골라주세요'.keepWords, style: AppTheme.serif(AppTheme.serifXL, ink, spacing: -0.5, height: 1.2)),
                   const SizedBox(height: 10),
                   Text(
                     _gross > 0
                         ? '고른 것만 입력창이 열려요. 금액은 총급여 ${won(_gross)} 기준이에요.'
                         : '고른 것만 입력창이 열려요. 금액은 총급여 4,500만원 기준 예시예요.',
-                    style: AppTheme.sans(14, sub, height: 1.55),
+                    style: AppTheme.sans(AppTheme.tsMD, sub, height: 1.55),
                   ),
                   const SizedBox(height: 28),
                   _sectionTitle('돈을 쓴 곳', '고르면 금액을 물어봐요'),
@@ -115,7 +115,7 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
                   const SizedBox(height: 24),
                   Text(
                     '고르지 않아도 나중에 계산기에서 직접 열 수 있어요.'.keepWords,
-                    style: AppTheme.sans(12, AppTheme.inkTertiary(context), height: 1.5),
+                    style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context), height: 1.5),
                   ),
                 ],
               ),
@@ -133,9 +133,9 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Text(title, style: AppTheme.sans(15, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
+            Text(title, style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
             const SizedBox(width: 8),
-            Expanded(child: Text(hint, style: AppTheme.sans(12, AppTheme.inkTertiary(context)))),
+            Expanded(child: Text(hint, style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context)))),
           ],
         ),
       );
@@ -180,11 +180,11 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(item.label.keepWords,
-                        style: AppTheme.sans(14.5, AppTheme.ink(context),
+                        style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context),
                             weight: FontWeight.w700, spacing: -0.2)),
                     const SizedBox(height: 3),
                     Text(item.basis.keepWords,
-                        style: AppTheme.sans(12, AppTheme.inkTertiary(context), height: 1.4)),
+                        style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context), height: 1.4)),
                   ],
                 ),
               ),
@@ -196,9 +196,9 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
                   textBaseline: TextBaseline.alphabetic,
                   children: [
                     Text('최대 ',
-                        style: AppTheme.sans(11, AppTheme.inkTertiary(context))),
+                        style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context))),
                     Text(won(item.maxCredit),
-                        style: AppTheme.sans(13,
+                        style: AppTheme.sans(AppTheme.tsSM,
                             on ? accent : AppTheme.inkSecondary(context),
                             weight: FontWeight.w600)),
                   ],
@@ -232,14 +232,14 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
             children: [
               Expanded(
                 child: Text(n == 0 ? '아직 고른 항목이 없어요' : '고른 $n개를 한도까지 채우면',
-                    style: AppTheme.sans(12, AppTheme.inkSecondary(context))),
+                    style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context))),
               ),
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: _total, end: _total),
                 duration: Duration(milliseconds: reduceMotion ? 0 : 260),
                 curve: Curves.easeOutCubic,
                 builder: (_, v, __) => Text(won(v),
-                    style: AppTheme.serif(34, n == 0 ? AppTheme.inkTertiary(context) : ink,
+                    style: AppTheme.serif(AppTheme.serifXL, n == 0 ? AppTheme.inkTertiary(context) : ink,
                         spacing: -1)),
               ),
             ],
@@ -258,7 +258,7 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
               ),
               child: Center(
                 child: Text(n == 0 ? '건너뛰고 계산기 열기' : '$n개 입력하러 가기',
-                    style: AppTheme.sans(15, n == 0 ? ink : AppTheme.backgroundColor(context),
+                    style: AppTheme.sans(AppTheme.tsBase, n == 0 ? ink : AppTheme.backgroundColor(context),
                         weight: FontWeight.w700, spacing: -0.2)),
               ),
             ),

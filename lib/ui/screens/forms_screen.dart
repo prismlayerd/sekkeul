@@ -175,7 +175,7 @@ class _TaxFormsBodyState extends State<TaxFormsBody> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('아직 PDF를 준비 중이에요.'.keepWords,
-              style: AppTheme.sans(13, AppTheme.backgroundColor(context))),
+              style: AppTheme.sans(AppTheme.tsSM, AppTheme.backgroundColor(context))),
           backgroundColor: AppTheme.ink(context),
           behavior: SnackBarBehavior.floating,
           shape:
@@ -250,7 +250,7 @@ class _TaxFormsBodyState extends State<TaxFormsBody> {
                 child: Text(
                   t,
                   style: AppTheme.sans(
-                    13,
+                    AppTheme.tsSM,
                     sel
                         ? AppTheme.backgroundColor(context)
                         : AppTheme.inkSecondary(context),
@@ -280,12 +280,12 @@ class _TaxFormsBodyState extends State<TaxFormsBody> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(form.name,
-                      style: AppTheme.sans(15, AppTheme.ink(context),
+                      style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context),
                           weight: FontWeight.w600)),
                   const SizedBox(height: 4),
                   Text(form.desc,
                       style: AppTheme.sans(
-                          12, AppTheme.inkSecondary(context),
+                          AppTheme.tsXS, AppTheme.inkSecondary(context),
                           height: 1.4)),
                   const SizedBox(height: 8),
                   Wrap(
@@ -309,7 +309,7 @@ class _TaxFormsBodyState extends State<TaxFormsBody> {
                 ),
                 child: Text('준비 중',
                     style:
-                        AppTheme.sans(11, AppTheme.inkTertiary(context))),
+                        AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context))),
               ),
           ],
         ),
@@ -326,7 +326,7 @@ class _TaxFormsBodyState extends State<TaxFormsBody> {
         borderRadius: BorderRadius.circular(2),
       ),
       child:
-          Text(label, style: AppTheme.sans(10, AppTheme.inkTertiary(context))),
+          Text(label, style: AppTheme.sans(AppTheme.tsLane, AppTheme.inkTertiary(context))),
     );
   }
 
@@ -340,7 +340,7 @@ class _TaxFormsBodyState extends State<TaxFormsBody> {
                 size: 36, color: AppTheme.inkTertiary(context)),
             const SizedBox(height: 12),
             Text('해당 유형의 양식이 없어요'.keepWords,
-                style: AppTheme.sans(14, AppTheme.inkSecondary(context))),
+                style: AppTheme.sans(AppTheme.tsMD, AppTheme.inkSecondary(context))),
           ],
         ),
       ),
@@ -366,7 +366,7 @@ class FormsScreen extends StatelessWidget {
         ),
         titleSpacing: 16,
         title: Text('양식',
-            style: AppTheme.serif(17, AppTheme.ink(context),
+            style: AppTheme.serif(AppTheme.tsLG, AppTheme.ink(context),
                 weight: FontWeight.w400, spacing: -0.5)),
       ),
       body: SingleChildScrollView(

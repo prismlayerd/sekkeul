@@ -59,7 +59,7 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('청년도약계좌',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -68,7 +68,7 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('소득 구간',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -80,14 +80,14 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
                 child: DropdownButton<int>(
                   value: _incomeIdx,
                   isExpanded: true,
-                  style: AppTheme.sans(14, ink),
+                  style: AppTheme.sans(AppTheme.tsMD, ink),
                   dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _brackets.length; i++)
                       DropdownMenuItem(
                           value: i,
                           child: Text(_brackets[i].$1,
-                              style: AppTheme.sans(14, ink))),
+                              style: AppTheme.sans(AppTheme.tsMD, ink))),
                   ],
                   onChanged: (v) => setState(() => _incomeIdx = v!),
                 ),
@@ -95,19 +95,19 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
             ),
             const SizedBox(height: 20),
             Text('월 납입액 (최대 700,000원)'.keepWords,
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _ctrl,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.right,
               inputFormatters: const [ThousandsFormatter()],
-              style: AppTheme.sans(14, ink),
+              style: AppTheme.sans(AppTheme.tsMD, ink),
               decoration: InputDecoration(
                 hintText: '700,000',
-                hintStyle: AppTheme.sans(14, sub),
+                hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 suffixText: '원',
-                suffixStyle: AppTheme.sans(14, sub),
+                suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
                     borderSide: BorderSide(color: line)),
@@ -136,7 +136,7 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
                   children: [
                     Text('5년 만기 예상',
                         style:
-                            AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                            AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     _row('본인 납입 합계', _manwon(_totalSelf), ink, sub),
                     const SizedBox(height: 8),
@@ -153,21 +153,21 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('예상 만기액',
-                            style: AppTheme.sans(14, ink,
+                            style: AppTheme.sans(AppTheme.tsMD, ink,
                                 weight: FontWeight.w700)),
                         Text(_manwon(_total),
-                            style: AppTheme.sans(16, accent,
+                            style: AppTheme.sans(AppTheme.tsBase, accent,
                                 weight: FontWeight.w700)),
                       ],
                     ),
                     if (_monthlyGov == 0) ...[
                       const SizedBox(height: 8),
                       Text('해당 소득 구간은 비과세 혜택만 적용됩니다.'.keepWords,
-                          style: AppTheme.sans(11, sub)),
+                          style: AppTheme.sans(AppTheme.tsXS, sub)),
                     ],
                     const SizedBox(height: 8),
                     Text('* 이자는 연 6% 단리 기준 추정값. 실제 은행 금리에 따라 상이.'.keepWords,
-                        style: AppTheme.sans(11, sub)),
+                        style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
               ),
@@ -210,8 +210,8 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -228,16 +228,16 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+              style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

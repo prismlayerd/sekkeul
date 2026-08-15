@@ -40,7 +40,7 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('여권 발급 수수료',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -49,7 +49,7 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('여권 종류',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -61,14 +61,14 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
                 child: DropdownButton<int>(
                   value: _idx,
                   isExpanded: true,
-                  style: AppTheme.sans(14, ink),
+                  style: AppTheme.sans(AppTheme.tsMD, ink),
                   dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _types.length; i++)
                       DropdownMenuItem(
                           value: i,
                           child: Text(_types[i].$1,
-                              style: AppTheme.sans(14, ink))),
+                              style: AppTheme.sans(AppTheme.tsMD, ink))),
                   ],
                   onChanged: (v) => setState(() => _idx = v!),
                 ),
@@ -87,17 +87,17 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
                 children: [
                   Text('발급 수수료',
                       style:
-                          AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                          AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                   const SizedBox(height: 12),
                   Text(won(selected.$3),
-                      style: AppTheme.sans(20, accent, weight: FontWeight.w700)),
+                      style: AppTheme.sans(AppTheme.tsXL, accent, weight: FontWeight.w700)),
                   const SizedBox(height: 12),
                   Divider(height: 1, color: line),
                   const SizedBox(height: 12),
                   _row('유효기간', selected.$2, ink, sub),
                   const SizedBox(height: 8),
                   Text('* 2026.3.1부터 재외공관 발급 여권 수수료는 USD 2 인상되었습니다.'.keepWords,
-                      style: AppTheme.sans(11, sub)),
+                      style: AppTheme.sans(AppTheme.tsXS, sub)),
                 ],
               ),
             ),
@@ -137,8 +137,8 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -154,16 +154,16 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

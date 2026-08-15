@@ -106,7 +106,7 @@ class _NewlywedSpecialSupplyScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text('신혼특공 자격진단',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -119,7 +119,7 @@ class _NewlywedSpecialSupplyScreenState
             _numField('미성년 자녀 수 (태아 포함)', _childrenCtrl, '1', '명', ink, sub, line),
             const SizedBox(height: 16),
             Text('무주택 여부',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(children: [
               Expanded(
@@ -132,7 +132,7 @@ class _NewlywedSpecialSupplyScreenState
             ]),
             const SizedBox(height: 16),
             Text('맞벌이 여부',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(children: [
               Expanded(
@@ -145,7 +145,7 @@ class _NewlywedSpecialSupplyScreenState
             ]),
             const SizedBox(height: 16),
             Text('가구원수',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -157,14 +157,14 @@ class _NewlywedSpecialSupplyScreenState
                 child: DropdownButton<int>(
                   value: _householdIdx,
                   isExpanded: true,
-                  style: AppTheme.sans(14, ink),
+                  style: AppTheme.sans(AppTheme.tsMD, ink),
                   dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _householdLabels.length; i++)
                       DropdownMenuItem(
                           value: i,
                           child: Text(_householdLabels[i],
-                              style: AppTheme.sans(14, ink))),
+                              style: AppTheme.sans(AppTheme.tsMD, ink))),
                   ],
                   onChanged: (v) => setState(() => _householdIdx = v!),
                 ),
@@ -192,10 +192,10 @@ class _NewlywedSpecialSupplyScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('진단 결과',
-                        style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                        style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     Text(_resultText,
-                        style: AppTheme.sans(15, _eligible ? accent : ink,
+                        style: AppTheme.sans(AppTheme.tsBase, _eligible ? accent : ink,
                             weight: FontWeight.w700)),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
@@ -268,7 +268,7 @@ class _NewlywedSpecialSupplyScreenState
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(label,
-            style: AppTheme.sans(13, selected ? accent : ink,
+            style: AppTheme.sans(AppTheme.tsSM, selected ? accent : ink,
                 weight: FontWeight.w600)),
       ),
     );
@@ -279,7 +279,7 @@ class _NewlywedSpecialSupplyScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+        Text(label, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: ctrl,
@@ -291,12 +291,12 @@ class _NewlywedSpecialSupplyScreenState
             else
               FilteringTextInputFormatter.digitsOnly,
           ],
-          style: AppTheme.sans(14, ink),
+          style: AppTheme.sans(AppTheme.tsMD, ink),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: AppTheme.sans(14, sub),
+            hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
             suffixText: suffix,
-            suffixStyle: AppTheme.sans(14, sub),
+            suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(4),
                 borderSide: BorderSide(color: line)),
@@ -319,8 +319,8 @@ class _NewlywedSpecialSupplyScreenState
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -336,16 +336,16 @@ class _NewlywedSpecialSupplyScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

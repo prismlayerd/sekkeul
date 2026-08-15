@@ -117,7 +117,7 @@ class _NotificationSettingsScreenState
         ),
         titleSpacing: 0,
         title: Text('알림 설정',
-            style: AppTheme.sans(17, ink, weight: FontWeight.w700)),
+            style: AppTheme.sans(AppTheme.tsLG, ink, weight: FontWeight.w700)),
       ),
       body: _loading
           ? const SizedBox.shrink()
@@ -146,7 +146,7 @@ class _NotificationSettingsScreenState
   Widget _catHeader(String title) => Padding(
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
         child: Text(title,
-            style: AppTheme.sans(12, AppTheme.inkTertiary(context),
+            style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context),
                 weight: FontWeight.w600)),
       );
 
@@ -175,7 +175,7 @@ class _NotificationSettingsScreenState
                   children: [
                     Row(children: [
                       Text(label,
-                          style: AppTheme.sans(15, on ? ink : tert,
+                          style: AppTheme.sans(AppTheme.tsBase, on ? ink : tert,
                               weight: FontWeight.w700)),
                       if (count > 1) ...[
                         const SizedBox(width: 6),
@@ -188,13 +188,13 @@ class _NotificationSettingsScreenState
                             borderRadius: BorderRadius.circular(2),
                           ),
                           child: Text('$count건',
-                              style: AppTheme.sans(11, on ? accent : tert,
+                              style: AppTheme.sans(AppTheme.tsXS, on ? accent : tert,
                                   weight: FontWeight.w600)),
                         ),
                       ],
                     ]),
                     const SizedBox(height: 3),
-                    Text(schedule, style: AppTheme.sans(12, tert)),
+                    Text(schedule, style: AppTheme.sans(AppTheme.tsXS, tert)),
                   ],
                 ),
               ),
@@ -230,10 +230,10 @@ class _NotificationSettingsScreenState
                     Text(s.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTheme.sans(15, on ? ink : tert,
+                        style: AppTheme.sans(AppTheme.tsBase, on ? ink : tert,
                             weight: FontWeight.w700)),
                     const SizedBox(height: 3),
-                    Text(s.scheduleLabel, style: AppTheme.sans(12, tert)),
+                    Text(s.scheduleLabel, style: AppTheme.sans(AppTheme.tsXS, tert)),
                   ],
                 ),
               ),

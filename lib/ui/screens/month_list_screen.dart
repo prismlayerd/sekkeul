@@ -56,7 +56,7 @@ class MonthListScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('$year년 $month월 기록', style: AppTheme.serif(22, ink)),
+        title: Text('$year년 $month월 기록', style: AppTheme.serif(AppTheme.serifMD, ink)),
       ),
       body: SafeArea(
         child: sortedDays.isEmpty
@@ -65,10 +65,10 @@ class MonthListScreen extends StatelessWidget {
                   Icon(Icons.receipt_long_outlined, size: 36, color: AppTheme.inkTertiary(context)),
                   const SizedBox(height: 12),
                   Text('이번 달 기록이 없어요'.keepWords,
-                      style: AppTheme.sans(15, AppTheme.inkTertiary(context), weight: FontWeight.w600)),
+                      style: AppTheme.sans(AppTheme.tsBase, AppTheme.inkTertiary(context), weight: FontWeight.w600)),
                   const SizedBox(height: 6),
                   Text('달력에서 날짜를 탭해 입력하세요.'.keepWords,
-                      style: AppTheme.sans(13, AppTheme.inkTertiary(context))),
+                      style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkTertiary(context))),
                 ]),
               )
             : _buildList(context, sortedDays, allUniqueExp, allUniqueInc, ink, sub, fmt),
@@ -106,9 +106,9 @@ class MonthListScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Text('${day.month}월 ${day.day}일',
-                      style: AppTheme.sans(13, ink, weight: FontWeight.w700)),
+                      style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w700)),
                   const SizedBox(width: 6),
-                  Text('(${wd[day.weekday - 1]})', style: AppTheme.sans(12, tert)),
+                  Text('(${wd[day.weekday - 1]})', style: AppTheme.sans(AppTheme.tsXS, tert)),
                 ],
               ),
             ),
@@ -138,7 +138,7 @@ class MonthListScreen extends StatelessWidget {
             child: Row(
               children: [
                 Text(_incomeTypeLabel(entry.incomeType),
-                    style: AppTheme.sans(14, ink, weight: FontWeight.w600)),
+                    style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w600)),
                 if (entry.isWithheld) ...[
                   const SizedBox(width: 6),
                   _miniTag(context, entry.incomeType == '기타소득' ? '8.8%' : '3.3%', sub),
@@ -173,19 +173,19 @@ class MonthListScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(cat.label, style: AppTheme.sans(14, ink, weight: FontWeight.w600)),
+                    Text(cat.label, style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w600)),
                     if (exp.isBusiness) ...[
                       const SizedBox(width: 6),
                       _miniTag(context, '사업경비', sub),
                     ],
                   ],
                 ),
-                Text(exp.paymentMethod, style: AppTheme.sans(12, tert)),
+                Text(exp.paymentMethod, style: AppTheme.sans(AppTheme.tsXS, tert)),
               ],
             ),
           ),
           Text('-${fmt.format(exp.amount)}원',
-              style: AppTheme.sans(14, sub, weight: FontWeight.w700)),
+              style: AppTheme.sans(AppTheme.tsMD, sub, weight: FontWeight.w700)),
         ],
       ),
     );
@@ -197,7 +197,7 @@ class MonthListScreen extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border.all(color: AppTheme.line(context)),
       ),
-      child: Text(text, style: AppTheme.sans(10, sub, weight: FontWeight.w600)),
+      child: Text(text, style: AppTheme.sans(AppTheme.tsLane, sub, weight: FontWeight.w600)),
     );
   }
 }

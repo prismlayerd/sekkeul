@@ -84,7 +84,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
       appBar: AppBar(
         title: Text('취득세',
             style: TextStyle(
-                color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+                color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
@@ -101,7 +101,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
             Text('부동산 취득 시\n납부할 세금을 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
-                    fontSize: 22,
+                    fontSize: 21,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
@@ -163,7 +163,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
                           Text('서울 전역·과천·성남·하남 등'.keepWords,
                               style: TextStyle(
                                   color: subColor.withValues(alpha: 0.8),
-                                  fontSize: 11)),
+                                  fontSize: 12)),
                         ],
                       ),
                       Switch(
@@ -198,7 +198,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
                   Text(hasResult ? won(_totalTax) : '0원',
                       style: TextStyle(
                           color: primary,
-                          fontSize: 32,
+                          fontSize: 30,
                           fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   if (hasResult) ...[

@@ -70,7 +70,7 @@ class _HousingSubscriptionScreenState
       appBar: AppBar(
         title: Text('청약가점',
             style: TextStyle(
-                color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+                color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
@@ -87,7 +87,7 @@ class _HousingSubscriptionScreenState
             Text('청약가점을\n계산해요',
                 style: TextStyle(
                     color: textColor,
-                    fontSize: 22,
+                    fontSize: 21,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
@@ -199,7 +199,7 @@ class _HousingSubscriptionScreenState
                       Text('$total',
                           style: TextStyle(
                               color: primary,
-                              fontSize: 48,
+                              fontSize: 36,
                               fontWeight: FontWeight.w900,
                               height: 1)),
                       const SizedBox(width: 4),
@@ -208,7 +208,7 @@ class _HousingSubscriptionScreenState
                         child: Text('/ 84점',
                             style: TextStyle(
                                 color: subColor,
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w500)),
                       ),
                       const Spacer(),
@@ -293,7 +293,7 @@ class _HousingSubscriptionScreenState
                       Text(subtitle,
                           style: TextStyle(
                               color: subColor.withValues(alpha: 0.8),
-                              fontSize: 11)),
+                              fontSize: 12)),
                     ],
                   ),
                 ),

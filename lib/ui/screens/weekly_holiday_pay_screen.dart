@@ -75,7 +75,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
         title: Text('주휴수당 · 최저임금',
             style: TextStyle(
                 color: textColor,
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
@@ -93,7 +93,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
             Text('아르바이트 급여,\n주휴수당까지 확인해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
-                    fontSize: 22,
+                    fontSize: 21,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
@@ -190,7 +190,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                           borderSide:
                               BorderSide(color: primary, width: 1.5)),
                     ),
-                    style: TextStyle(color: textColor, fontSize: 16),
+                    style: TextStyle(color: textColor, fontSize: 15),
                   ),
                   const SizedBox(height: 20),
                   Text('주 근무일수',
@@ -250,7 +250,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                   Text(hasInput ? _won(weeklyPay) : '0원',
                       style: TextStyle(
                           color: primary,
-                          fontSize: 32,
+                          fontSize: 30,
                           fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   if (hasInput) ...[

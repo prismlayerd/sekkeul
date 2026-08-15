@@ -42,7 +42,7 @@ class _EmploymentSupportProgramScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text('국민취업지원제도',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -51,7 +51,7 @@ class _EmploymentSupportProgramScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('유형',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(children: [
               Expanded(
@@ -65,7 +65,7 @@ class _EmploymentSupportProgramScreenState
             if (_typeIdx == 0) ...[
               const SizedBox(height: 16),
               Text('부양가족 수',
-                  style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                  style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
               const SizedBox(height: 8),
               Container(
                 width: double.infinity,
@@ -77,7 +77,7 @@ class _EmploymentSupportProgramScreenState
                   child: DropdownButton<int>(
                     value: _dependents,
                     isExpanded: true,
-                    style: AppTheme.sans(14, ink),
+                    style: AppTheme.sans(AppTheme.tsMD, ink),
                     dropdownColor: AppTheme.backgroundColor(context),
                     items: [
                       for (int i = 0; i <= 4; i++)
@@ -89,7 +89,7 @@ class _EmploymentSupportProgramScreenState
               ),
               const SizedBox(height: 16),
               Text('취업성공수당 포함',
-                  style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                  style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
               const SizedBox(height: 8),
               Row(children: [
                 Expanded(
@@ -117,10 +117,10 @@ class _EmploymentSupportProgramScreenState
                 children: [
                   Text('예상 총 수령액',
                       style:
-                          AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                          AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                   const SizedBox(height: 12),
                   Text(_typeIdx == 0 ? won(_typeITotal) : won(_typeIIAmount),
-                      style: AppTheme.sans(20, accent, weight: FontWeight.w700)),
+                      style: AppTheme.sans(AppTheme.tsXL, accent, weight: FontWeight.w700)),
                   const SizedBox(height: 12),
                   if (_typeIdx == 0) ...[
                     Divider(height: 1, color: line),
@@ -138,7 +138,7 @@ class _EmploymentSupportProgramScreenState
                   ],
                   const SizedBox(height: 12),
                   Text('* 실지급액은 참여자 상황·출석·구직활동 이행 여부에 따라 달라지는 추정치입니다.'.keepWords,
-                      style: AppTheme.sans(11, sub)),
+                      style: AppTheme.sans(AppTheme.tsXS, sub)),
                 ],
               ),
             ),
@@ -188,7 +188,7 @@ class _EmploymentSupportProgramScreenState
         ),
         child: Text(label,
             textAlign: TextAlign.center,
-            style: AppTheme.sans(12, selected ? accent : ink,
+            style: AppTheme.sans(AppTheme.tsXS, selected ? accent : ink,
                 weight: FontWeight.w600)),
       ),
     );
@@ -208,7 +208,7 @@ class _EmploymentSupportProgramScreenState
         ),
         child: Text(label,
             textAlign: TextAlign.center,
-            style: AppTheme.sans(12, selected ? accent : ink,
+            style: AppTheme.sans(AppTheme.tsXS, selected ? accent : ink,
                 weight: FontWeight.w600)),
       ),
     );
@@ -218,8 +218,8 @@ class _EmploymentSupportProgramScreenState
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -235,16 +235,16 @@ class _EmploymentSupportProgramScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

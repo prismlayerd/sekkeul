@@ -72,7 +72,7 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('리스 · 구매 · 렌트 비교'.keepWords,
-            style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),
+            style: AppTheme.serif(AppTheme.tsBase, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
@@ -81,7 +81,7 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
           children: [
             _amountField('차량 가격', _priceCtrl, ink, sub, line),
             const SizedBox(height: 16),
-            Text('이용 기간', style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+            Text('이용 기간', style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(
               children: [36, 48, 60]
@@ -95,19 +95,19 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
                   .toList(),
             ),
             const SizedBox(height: 20),
-            Text('리스', style: AppTheme.sans(13, ink, weight: FontWeight.w700)),
+            Text('리스', style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w700)),
             const SizedBox(height: 8),
             _amountField('보증금', _leaseDepositCtrl, ink, sub, line),
             const SizedBox(height: 12),
             _amountField('월 납입금', _leaseMonthlyCtrl, ink, sub, line),
             const SizedBox(height: 20),
-            Text('장기렌트', style: AppTheme.sans(13, ink, weight: FontWeight.w700)),
+            Text('장기렌트', style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w700)),
             const SizedBox(height: 8),
             _amountField('보증금', _rentDepositCtrl, ink, sub, line),
             const SizedBox(height: 12),
             _amountField('월 납입금', _rentMonthlyCtrl, ink, sub, line),
             const SizedBox(height: 20),
-            Text('구매(대출)', style: AppTheme.sans(13, ink, weight: FontWeight.w700)),
+            Text('구매(대출)', style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w700)),
             const SizedBox(height: 8),
             _percentField('대출 비율', _loanRatioCtrl, ink, sub, line),
             const SizedBox(height: 12),
@@ -127,7 +127,7 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('$_months개월 총 지출 비교',
-                        style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                        style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     _resultRow('리스', _leaseTotal, ink, sub, accent),
                     const SizedBox(height: 8),
@@ -136,7 +136,7 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
                     _resultRow('구매(대출)', _buyTotal, ink, sub, accent),
                     const SizedBox(height: 12),
                     Text('* 보증금은 환급 여부와 무관하게 총 지출액에 포함한 단순 비교치입니다.'.keepWords,
-                        style: AppTheme.sans(11, sub)),
+                        style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
               ),
@@ -159,17 +159,17 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+        Text(label, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
           textAlign: TextAlign.right,
           inputFormatters: const [ThousandsFormatter()],
-          style: AppTheme.sans(14, ink),
+          style: AppTheme.sans(AppTheme.tsMD, ink),
           decoration: InputDecoration(
             suffixText: '원',
-            suffixStyle: AppTheme.sans(14, sub),
+            suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(4), borderSide: BorderSide(color: line)),
             enabledBorder: OutlineInputBorder(
@@ -195,17 +195,17 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+        Text(label, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: ctrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           textAlign: TextAlign.right,
           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-          style: AppTheme.sans(14, ink),
+          style: AppTheme.sans(AppTheme.tsMD, ink),
           decoration: InputDecoration(
             suffixText: '%',
-            suffixStyle: AppTheme.sans(14, sub),
+            suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(4), borderSide: BorderSide(color: line)),
             enabledBorder: OutlineInputBorder(
@@ -232,7 +232,7 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
             border: Border.all(color: selected ? accent : line),
             borderRadius: BorderRadius.circular(4)),
         child: Text(label,
-            style: AppTheme.sans(13, selected ? accent : ink, weight: FontWeight.w600)),
+            style: AppTheme.sans(AppTheme.tsSM, selected ? accent : ink, weight: FontWeight.w600)),
       ),
     );
   }
@@ -241,8 +241,8 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
-        Text(won(value), style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
+        Text(label, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
+        Text(won(value), style: AppTheme.sans(AppTheme.tsMD, accent, weight: FontWeight.w700)),
       ],
     );
   }
@@ -256,14 +256,14 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
-                Expanded(child: Text(item, style: AppTheme.sans(13, sub, height: 1.5))),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
+                Expanded(child: Text(item, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

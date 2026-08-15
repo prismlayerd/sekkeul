@@ -193,7 +193,7 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('$monthLabel 고정 지출', style: AppTheme.serif(22, ink)),
+        title: Text('$monthLabel 고정 지출', style: AppTheme.serif(AppTheme.serifMD, ink)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: AppTheme.hairline(context),
@@ -265,10 +265,10 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
           Icon(Icons.event_repeat_outlined, size: 36, color: tert),
           const SizedBox(height: 12),
           Text('확인할 항목이 없어요',
-              style: AppTheme.sans(15, tert, weight: FontWeight.w600)),
+              style: AppTheme.sans(AppTheme.tsBase, tert, weight: FontWeight.w600)),
           const SizedBox(height: 6),
           Text('고정 지출 항목을 먼저 등록해두세요.'.keepWords,
-              style: AppTheme.sans(13, sub)),
+              style: AppTheme.sans(AppTheme.tsSM, sub)),
         ],
       ),
     );
@@ -294,9 +294,9 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
             children: [
               Text('확인 완료', style: AppTheme.label(context)),
               const Spacer(),
-              Text('$count', style: AppTheme.serif(22, accent)),
-              Text(' / $total', style: AppTheme.serif(22, tert)),
-              Text('  건', style: AppTheme.sans(12, tert)),
+              Text('$count', style: AppTheme.serif(AppTheme.serifMD, accent)),
+              Text(' / $total', style: AppTheme.serif(AppTheme.serifMD, tert)),
+              Text('  건', style: AppTheme.sans(AppTheme.tsXS, tert)),
             ],
           ),
           const SizedBox(height: 12),
@@ -314,7 +314,7 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
             count == total
                 ? '모두 확인했어요. 아래 완료를 눌러 저장하세요.'
                 : '항목을 탭해 확인 · 건너뜀을 정하세요.',
-            style: AppTheme.sans(12, tert),
+            style: AppTheme.sans(AppTheme.tsXS, tert),
           ),
         ],
       ),
@@ -336,9 +336,9 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text('$day', style: AppTheme.serif(22, active ? accent : ink, height: 1.0)),
+          Text('$day', style: AppTheme.serif(AppTheme.serifMD, active ? accent : ink, height: 1.0)),
           const SizedBox(height: 1),
-          Text('일', style: AppTheme.sans(11, AppTheme.inkTertiary(context),
+          Text('일', style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context),
               weight: FontWeight.w600, spacing: 1)),
         ],
       ),
@@ -366,12 +366,12 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
       // 이미 등록된 확정 금액 (읽기 전용)
       amountWidget = Text(
         '${comma(item['actual_amount'] as int? ?? 0)}원',
-        style: AppTheme.serif(17, accent, height: 1.0),
+        style: AppTheme.serif(AppTheme.tsLG, accent, height: 1.0),
         textAlign: TextAlign.right,
       );
     } else if (isSkipped) {
       amountWidget = Text('건너뜀',
-          style: AppTheme.sans(12, tert, weight: FontWeight.w500));
+          style: AppTheme.sans(AppTheme.tsXS, tert, weight: FontWeight.w500));
     } else {
       // 미확인 / 확인 — 금액 입력 (밑줄형, 가벼운 도면 입력)
       amountWidget = SizedBox(
@@ -382,15 +382,15 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
           inputFormatters: const [ThousandsFormatter()],
           textAlign: TextAlign.right,
           cursorColor: accent,
-          style: AppTheme.serif(17, isConfirmed ? accent : ink, height: 1.0),
+          style: AppTheme.serif(AppTheme.tsLG, isConfirmed ? accent : ink, height: 1.0),
           onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
             isDense: true,
             contentPadding: const EdgeInsets.only(bottom: 5),
             suffixText: '원',
-            suffixStyle: AppTheme.sans(11, tert),
+            suffixStyle: AppTheme.sans(AppTheme.tsXS, tert),
             hintText: '금액',
-            hintStyle: AppTheme.sans(13, tert),
+            hintStyle: AppTheme.sans(AppTheme.tsSM, tert),
             enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: AppTheme.line(context))),
             focusedBorder: UnderlineInputBorder(
@@ -437,7 +437,7 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(t.name,
-                        style: AppTheme.sans(14, ink, weight: FontWeight.w600)),
+                        style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w600)),
                     const SizedBox(height: 3),
                     Row(
                       children: [
@@ -447,10 +447,10 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
                               color: cat.color, shape: BoxShape.circle),
                         ),
                         const SizedBox(width: 5),
-                        Text(cat.label, style: AppTheme.sans(12, tert)),
-                        Text('  ·  ', style: AppTheme.sans(12, tert)),
+                        Text(cat.label, style: AppTheme.sans(AppTheme.tsXS, tert)),
+                        Text('  ·  ', style: AppTheme.sans(AppTheme.tsXS, tert)),
                         Text(t.paymentMethod,
-                            style: AppTheme.sans(12, pmColor,
+                            style: AppTheme.sans(AppTheme.tsXS, pmColor,
                                 weight: FontWeight.w600)),
                       ],
                     ),
@@ -474,7 +474,7 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
                             ),
                             const SizedBox(width: 4),
                             Text('사업경비로 인정',
-                                style: AppTheme.sans(11, tert, weight: FontWeight.w600)),
+                                style: AppTheme.sans(AppTheme.tsXS, tert, weight: FontWeight.w600)),
                           ],
                         ),
                       ),
@@ -513,11 +513,11 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text('이번 달 확인 합계', style: AppTheme.sans(13, sub)),
+                  Text('이번 달 확인 합계', style: AppTheme.sans(AppTheme.tsSM, sub)),
                   const Spacer(),
                   Text(comma(_confirmedTotal),
-                      style: AppTheme.serif(22, ink, height: 1.0)),
-                  Text(' 원', style: AppTheme.sans(13, sub)),
+                      style: AppTheme.serif(AppTheme.serifMD, ink, height: 1.0)),
+                  Text(' 원', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 ],
               ),
               const SizedBox(height: 14),
@@ -539,7 +539,7 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
                               strokeWidth: 2, color: bg),
                         )
                       : Text('완료',
-                          style: AppTheme.sans(15, bg, weight: FontWeight.w700)),
+                          style: AppTheme.sans(AppTheme.tsBase, bg, weight: FontWeight.w700)),
                 ),
               ),
             ],

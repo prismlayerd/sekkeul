@@ -88,7 +88,7 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
       appBar: AppBar(
         title: Text('전세 vs 월세 비교',
             style: TextStyle(
-                color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+                color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
@@ -105,7 +105,7 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
             Text('전세·월세의 실질 비용을\n비교해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
-                    fontSize: 22,
+                    fontSize: 21,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
@@ -189,7 +189,7 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
                         Text('예금금리 또는 대출금리를 입력하세요.'.keepWords,
                             style: TextStyle(
                                 color: subColor.withValues(alpha: 0.8),
-                                fontSize: 11)),
+                                fontSize: 12)),
                       ],
                     ),
                   ),
@@ -228,7 +228,7 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
                       jeonseIsBetter ? '전세가 유리합니다' : '월세가 유리합니다',
                       style: TextStyle(
                           color: primary,
-                          fontSize: 24,
+                          fontSize: 25,
                           fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 4),
@@ -388,7 +388,7 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
         children: [
           Flexible(
               child: Text(label,
-                  style: TextStyle(color: labelColor, fontSize: 11))),
+                  style: TextStyle(color: labelColor, fontSize: 12))),
           const SizedBox(width: 4),
           Text(value,
               style: TextStyle(

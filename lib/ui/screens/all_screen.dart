@@ -25,7 +25,7 @@ class AllScreen extends StatelessWidget {
         automaticallyImplyLeading: false,
         titleSpacing: 16,
         title: Text('전체',
-            style: AppTheme.serif(17, AppTheme.ink(context),
+            style: AppTheme.serif(AppTheme.tsLG, AppTheme.ink(context),
                 weight: FontWeight.w400, spacing: -0.5)),
       ),
       body: ListView(
@@ -97,7 +97,7 @@ class AllScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 6),
       child: Text(title,
-          style: AppTheme.sans(12, AppTheme.inkTertiary(context),
+          style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context),
               weight: FontWeight.w500)),
     );
   }
@@ -122,7 +122,7 @@ class AllScreen extends StatelessWidget {
             const SizedBox(width: 14),
             Expanded(
               child: Text(label,
-                  style: AppTheme.sans(15, AppTheme.ink(context))),
+                  style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context))),
             ),
             Icon(Icons.chevron_right,
                 size: 18, color: AppTheme.inkTertiary(context)),

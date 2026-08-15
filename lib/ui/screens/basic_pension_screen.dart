@@ -53,7 +53,7 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('기초연금 계산기',
-            style: AppTheme.serif(16, ink,
+            style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -62,7 +62,7 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('가구 구분',
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -75,19 +75,19 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
             _inputField('만 나이', _ageCtrl, '65', '세', ink, sub, line, isDecimal: false),
             const SizedBox(height: 16),
             Text('월 소득인정액 (만원)'.keepWords,
-                style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+                style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: _incomeCtrl,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.right,
               inputFormatters: const [ThousandsFormatter()],
-              style: AppTheme.sans(14, ink),
+              style: AppTheme.sans(AppTheme.tsMD, ink),
               decoration: InputDecoration(
                 hintText: '150',
-                hintStyle: AppTheme.sans(14, sub),
+                hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 suffixText: '만원',
-                suffixStyle: AppTheme.sans(14, sub),
+                suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
                     borderSide: BorderSide(color: line)),
@@ -115,16 +115,16 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('수급 가능 여부',
-                        style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                        style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(_eligible ? '수급 가능' : '수급 불가',
-                            style: AppTheme.sans(16, ink,
+                            style: AppTheme.sans(AppTheme.tsBase, ink,
                                 weight: FontWeight.w700)),
                         Text(_eligible ? won(_monthlyAmount) : '-',
-                            style: AppTheme.sans(16, accent,
+                            style: AppTheme.sans(AppTheme.tsBase, accent,
                                 weight: FontWeight.w700)),
                       ],
                     ),
@@ -133,14 +133,14 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
                     const SizedBox(height: 12),
                     if (!_ageEligible)
                       Text('* 만 65세 이상부터 신청 가능합니다.'.keepWords,
-                          style: AppTheme.sans(11, sub)),
+                          style: AppTheme.sans(AppTheme.tsXS, sub)),
                     if (_ageEligible && !_incomeEligible)
                       Text(
                           '* 소득인정액이 선정기준액(${_thresholdManwon[_householdIdx]}만원)을 초과했습니다.',
-                          style: AppTheme.sans(11, sub)),
+                          style: AppTheme.sans(AppTheme.tsXS, sub)),
                     if (_eligible)
                       Text('* 국민연금 연계감액·부부감액·소득역전방지감액 적용 전 기준연금액입니다.'.keepWords,
-                          style: AppTheme.sans(11, sub)),
+                          style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
               ),
@@ -202,7 +202,7 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(label,
-            style: AppTheme.sans(13, selected ? accent : ink,
+            style: AppTheme.sans(AppTheme.tsSM, selected ? accent : ink,
                 weight: FontWeight.w600)),
       ),
     );
@@ -214,7 +214,7 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+        Text(label, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: ctrl,
@@ -228,12 +228,12 @@ inputFormatters: [
                   ? FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
                   : FilteringTextInputFormatter.digitsOnly,
           ],
-          style: AppTheme.sans(14, ink),
+          style: AppTheme.sans(AppTheme.tsMD, ink),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: AppTheme.sans(14, sub),
+            hintStyle: AppTheme.sans(AppTheme.tsMD, sub),
             suffixText: suffix,
-            suffixStyle: AppTheme.sans(14, sub),
+            suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(4),
                 borderSide: BorderSide(color: line)),
@@ -263,16 +263,16 @@ inputFormatters: [
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
                 Expanded(
                     child: Text(item,
-                        style: AppTheme.sans(13, sub, height: 1.5))),
+                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),

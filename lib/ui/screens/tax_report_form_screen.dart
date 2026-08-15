@@ -68,7 +68,7 @@ class TaxReportFormScreen extends StatelessWidget {
             // ── 표제 ──
             Text('가상 신고서 · ${reportType.toUpperCase()}', style: AppTheme.label(context)),
             const SizedBox(height: 12),
-            Text(_officialName, style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
+            Text(_officialName, style: AppTheme.serif(AppTheme.serifXL, ink, spacing: -0.5, height: 1.2)),
             const SizedBox(height: 22),
 
             // ── 열 캡션 ──
@@ -95,7 +95,7 @@ class TaxReportFormScreen extends StatelessWidget {
               const SizedBox(height: 18),
               Text(
                 '※ 세끌 계산 결과로 만든 가상 양식이에요. 실제 신고 시 금액이 달라질 수 있어요.'.keepWords,
-                style: AppTheme.sans(12, tert, height: 1.5),
+                style: AppTheme.sans(AppTheme.tsXS, tert, height: 1.5),
               ),
               // 주 CTA — 파이프라인 ③홈택스 가이드로. 위 숫자를 홈택스 화면 순서대로 안내.
               // (경정청구는 세무 도구 메뉴의 "경정청구 준비하기"로 분리 — 5월 정기 신고
@@ -149,7 +149,7 @@ class TaxReportFormScreen extends StatelessWidget {
               width: 38,
               decoration: BoxDecoration(border: Border(right: BorderSide(color: line, width: 1))),
               alignment: Alignment.center,
-              child: Text(op, style: AppTheme.serif(17, ghost, spacing: 0, height: 1.0)),
+              child: Text(op, style: AppTheme.serif(AppTheme.tsLG, ghost, spacing: 0, height: 1.0)),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -166,7 +166,7 @@ class TaxReportFormScreen extends StatelessWidget {
             const SizedBox(width: 12),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text('—', style: AppTheme.serif(17, ghost, spacing: 0, height: 1.0)),
+              child: Text('—', style: AppTheme.serif(AppTheme.tsLG, ghost, spacing: 0, height: 1.0)),
             ),
           ],
         ),
@@ -190,10 +190,10 @@ class TaxReportFormScreen extends StatelessWidget {
           Text('아직 계산 전이에요', style: AppTheme.label(context)),
           const SizedBox(height: 10),
           Text('진단을 마치면 이 신고서가\n자동으로 채워져요.'.keepWords,
-              style: AppTheme.sans(14, ink, weight: FontWeight.w600, height: 1.4)),
+              style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w600, height: 1.4)),
           const SizedBox(height: 6),
           Text('②단계에서 소득·공제를 넣으면 위 항목이 숫자로 채워집니다.'.keepWords,
-              style: AppTheme.sans(12, sub, height: 1.45)),
+              style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.45)),
           const SizedBox(height: 16),
           GestureDetector(
             onTap: () => Navigator.pushReplacement(context,
@@ -206,7 +206,7 @@ class TaxReportFormScreen extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('진단하기', style: AppTheme.sans(15, bg, weight: FontWeight.w700)),
+                  Text('진단하기', style: AppTheme.sans(AppTheme.tsBase, bg, weight: FontWeight.w700)),
                   const SizedBox(width: 8),
                   Icon(Icons.arrow_forward, size: 16, color: bg),
                 ],
@@ -268,8 +268,8 @@ class TaxReportFormScreen extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: milestone ? 15 : 13),
                 child: Text(parsed.label,
                     style: milestone
-                        ? AppTheme.sans(14, ink, weight: FontWeight.w700, spacing: -0.2)
-                        : AppTheme.sans(14, sub, height: 1.3)),
+                        ? AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700, spacing: -0.2)
+                        : AppTheme.sans(AppTheme.tsMD, sub, height: 1.3)),
               ),
             ),
             const SizedBox(width: 12),
@@ -284,7 +284,7 @@ class TaxReportFormScreen extends StatelessWidget {
                   Text(comma(amount),
                       style: AppTheme.serif(milestone ? 21 : 16.5, ink, spacing: -0.5, height: 1.0)),
                   const SizedBox(width: 3),
-                  Text('원', style: AppTheme.sans(12, tert)),
+                  Text('원', style: AppTheme.sans(AppTheme.tsXS, tert)),
                 ],
               ),
             ),
@@ -319,7 +319,7 @@ class TaxReportFormScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
               child: Text(isRefund ? '환급' : '추가납부',
-                  style: AppTheme.sans(11, accent, weight: FontWeight.w700, spacing: 0.5)),
+                  style: AppTheme.sans(AppTheme.tsXS, accent, weight: FontWeight.w700, spacing: 0.5)),
             ),
           ]),
           const SizedBox(height: 12),
@@ -327,15 +327,15 @@ class TaxReportFormScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(comma(abs), style: AppTheme.serif(36, accent, spacing: -1.2, height: 1.0)),
+              Text(comma(abs), style: AppTheme.serif(AppTheme.tsHero, accent, spacing: -1.2, height: 1.0)),
               const SizedBox(width: 5),
-              Text('원', style: AppTheme.sans(15, sub, weight: FontWeight.w600)),
+              Text('원', style: AppTheme.sans(AppTheme.tsBase, sub, weight: FontWeight.w600)),
             ],
           ),
           const SizedBox(height: 6),
           Text(
             isRefund ? '원천징수로 낸 세금이 결정세액보다 많아 돌려받아요.' : '결정세액이 기납부세액보다 많아 더 내야 해요.',
-            style: AppTheme.sans(12, sub, height: 1.45),
+            style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.45),
           ),
         ],
       ),

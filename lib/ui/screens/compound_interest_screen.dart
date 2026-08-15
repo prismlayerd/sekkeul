@@ -89,7 +89,7 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
       appBar: AppBar(
         title: Text('복리 계산기',
             style: TextStyle(
-                color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+                color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
@@ -106,7 +106,7 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
             Text('복리의 마법으로\n자산 성장을 확인해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
-                    fontSize: 22,
+                    fontSize: 21,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
@@ -194,7 +194,7 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
                     Text(_manwon(finalBalance),
                         style: TextStyle(
                             color: primary,
-                            fontSize: 32,
+                            fontSize: 30,
                             fontWeight: FontWeight.w900)),
                     const SizedBox(height: 16),
                     _row('총 투자원금', _manwon(finalInvested), subColor, textColor),
@@ -223,28 +223,28 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
                             child: Text('년차',
                                 style: TextStyle(
                                     color: subColor,
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w600))),
                         Expanded(
                             child: Text('납입원금',
                                 textAlign: TextAlign.right,
                                 style: TextStyle(
                                     color: subColor,
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w600))),
                         Expanded(
                             child: Text('평가금액',
                                 textAlign: TextAlign.right,
                                 style: TextStyle(
                                     color: subColor,
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w600))),
                         Expanded(
                             child: Text('수익',
                                 textAlign: TextAlign.right,
                                 style: TextStyle(
                                     color: subColor,
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w600))),
                       ]),
                     ),

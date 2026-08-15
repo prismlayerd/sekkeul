@@ -159,7 +159,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
       appBar: AppBar(
         title: Text('종부세·재산세',
             style: TextStyle(
-                color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+                color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
@@ -176,7 +176,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
             Text('주택 보유 중\n매년 낼 보유세를 계산해요'.keepWords,
                 style: TextStyle(
                     color: textColor,
-                    fontSize: 22,
+                    fontSize: 21,
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
@@ -251,17 +251,21 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('도시지역',
-                              style:
-                                  TextStyle(color: textColor, fontSize: 14)),
-                          Text('재산세 도시지역분 0.14% 추가'.keepWords,
-                              style: TextStyle(
-                                  color: subColor.withValues(alpha: 0.8),
-                                  fontSize: 11)),
-                        ],
+                      // 아래 '1주택' 줄과 같이 Expanded로 둔다 — 여기만 빠져
+                      // 있어서 설명이 한 자만 길어져도 스위치를 밀어냈다.
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('도시지역',
+                                style:
+                                    TextStyle(color: textColor, fontSize: 14)),
+                            Text('재산세 도시지역분 0.14% 추가'.keepWords,
+                                style: TextStyle(
+                                    color: subColor.withValues(alpha: 0.8),
+                                    fontSize: 12)),
+                          ],
+                        ),
                       ),
                       Switch(
                         value: _urbanArea,
@@ -285,7 +289,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                               Text('종부세 공제 9억×2인 대신 세액공제 미적용'.keepWords,
                                   style: TextStyle(
                                       color: subColor.withValues(alpha: 0.8),
-                                      fontSize: 11)),
+                                      fontSize: 12)),
                             ],
                           ),
                         ),
@@ -320,7 +324,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                     Text('고령자·장기보유 공제 합산 최대 80%'.keepWords,
                         style: TextStyle(
                             color: subColor.withValues(alpha: 0.8),
-                            fontSize: 11)),
+                            fontSize: 12)),
                     const SizedBox(height: 12),
                     Row(children: [
                       Expanded(
@@ -372,7 +376,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                   Text(hasResult ? won(_grandTotal) : '0원',
                       style: TextStyle(
                           color: primary,
-                          fontSize: 32,
+                          fontSize: 30,
                           fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   if (hasResult) ...[

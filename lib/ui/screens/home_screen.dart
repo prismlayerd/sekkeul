@@ -402,9 +402,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('지난 달 기록이 비어있어요'.keepWords, style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
+                Text('지난 달 기록이 비어있어요'.keepWords, style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text('간단히 채우면 올해 판정이 더 정확해져요 →'.keepWords, style: AppTheme.sans(12, accent)),
+                Text('간단히 채우면 올해 판정이 더 정확해져요 →'.keepWords, style: AppTheme.sans(AppTheme.tsXS, accent)),
               ],
             ),
           ),
@@ -1310,7 +1310,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                             size: 15, color: AppTheme.inkSecondary(context)),
                         const SizedBox(width: 6),
                         Text('다른 질문 보기',
-                            style: AppTheme.sans(12, AppTheme.inkSecondary(context),
+                            style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context),
                                 weight: FontWeight.w600)),
                       ],
                     ),
@@ -1403,7 +1403,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         childrenPadding: const EdgeInsets.only(bottom: 14),
         iconColor: AppTheme.inkTertiary(context),
         collapsedIconColor: AppTheme.inkTertiary(context),
-        title: Text('Q. $question', style: AppTheme.sans(12, AppTheme.ink(context), weight: FontWeight.w600, height: 1.4)),
+        title: Text('Q. $question', style: AppTheme.sans(AppTheme.tsXS, AppTheme.ink(context), weight: FontWeight.w600, height: 1.4)),
         children: [
           Container(
             width: double.infinity,
@@ -1411,7 +1411,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             decoration: BoxDecoration(
               border: Border(left: BorderSide(color: AppTheme.accentColor(context), width: 2)),
             ),
-            child: Text(answer, style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.55)),
+            child: Text(answer, style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context), height: 1.55)),
           ),
         ],
       ),

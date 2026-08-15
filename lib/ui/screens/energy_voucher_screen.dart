@@ -37,7 +37,7 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('에너지바우처 예상액',
-            style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),
+            style: AppTheme.serif(AppTheme.tsBase, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
@@ -53,11 +53,11 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
                 ),
                 Expanded(
                     child: Text('생계·의료·주거·교육급여 수급자 또는 차상위계층에 해당'.keepWords,
-                        style: AppTheme.sans(13, ink))),
+                        style: AppTheme.sans(AppTheme.tsSM, ink))),
               ],
             ),
             const SizedBox(height: 16),
-            Text('가구원 수', style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+            Text('가구원 수', style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(
               children: List.generate(_sizeLabels.length, (i) {
@@ -82,15 +82,15 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('예상 지원액', style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
+                    Text('예상 지원액', style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('연간 합계',
-                            style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
+                            style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700)),
                         Text(won(_annualTotal),
-                            style: AppTheme.sans(16, accent, weight: FontWeight.w700)),
+                            style: AppTheme.sans(AppTheme.tsBase, accent, weight: FontWeight.w700)),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -110,7 +110,7 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
                 decoration: BoxDecoration(
                     border: Border.all(color: line), borderRadius: BorderRadius.circular(4)),
                 child: Text('가구원 구성 요건(65세 이상·영유아·임산부·장애인·한부모·희귀난치질환자 등)을 충족하는지 먼저 확인하세요.'.keepWords,
-                    style: AppTheme.sans(13, sub, height: 1.5)),
+                    style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5)),
               ),
               const SizedBox(height: 24),
             ],
@@ -152,7 +152,7 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
             border: Border.all(color: selected ? accent : line),
             borderRadius: BorderRadius.circular(4)),
         child: Text(label,
-            style: AppTheme.sans(12, selected ? accent : ink, weight: FontWeight.w600)),
+            style: AppTheme.sans(AppTheme.tsXS, selected ? accent : ink, weight: FontWeight.w600)),
       ),
     );
   }
@@ -161,8 +161,8 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(label, style: AppTheme.sans(13, sub))),
-        Text(value, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
+        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
+        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
       ],
     );
   }
@@ -176,14 +176,14 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
+          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final item in items) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('· ', style: AppTheme.sans(13, sub)),
-                Expanded(child: Text(item, style: AppTheme.sans(13, sub, height: 1.5))),
+                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
+                Expanded(child: Text(item, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
               ],
             ),
             const SizedBox(height: 4),
