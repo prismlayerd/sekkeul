@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../../core/tax_engine/insurance_engine.dart';
 import '../../core/tax_engine/employee_tax.dart';
 import '../theme/text_wrap.dart';
@@ -205,32 +206,11 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
             ),
             const SizedBox(height: 20),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded, color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor, fontSize: 13, fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 근로소득세는 간이세액표 근사값으로 연말정산 결과와 다를 수 있습니다.\n'
-                    '• 지방소득세는 근로소득세의 10%입니다.\n'
-                    '• 식대 비과세(월 20만원) 등은 반영되지 않았습니다.\n'
-                    '• 비과세 수당 적용 시 실수령액이 늘어날 수 있습니다.'.keepWords,
-                    style: TextStyle(color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 근로소득세는 간이세액표 근사값으로 연말정산 결과와 다를 수 있습니다.\n'
+              '• 지방소득세는 근로소득세의 10%입니다.\n'
+              '• 식대 비과세(월 20만원) 등은 반영되지 않았습니다.\n'
+              '• 비과세 수당 적용 시 실수령액이 늘어날 수 있습니다.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],

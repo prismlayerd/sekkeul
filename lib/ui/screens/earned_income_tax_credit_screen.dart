@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../theme/text_wrap.dart';
 
 enum _HouseholdType { single, oneEarner, dualEarner }
@@ -300,36 +301,11 @@ class _EarnedIncomeTaxCreditScreenState
             ),
             const SizedBox(height: 20),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded,
-                        color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 재산 합계 2억 원 미만인 경우에만 신청 가능합니다.\n'
-                    '• 자녀장려금 소득상한은 부부합산 4,000만원입니다.\n'
-                    '• 매년 5월 1일~31일 홈택스·모바일에서 신청합니다.\n'
-                    '• 소득·재산 기준은 전년도(과세기간) 기준입니다.'.keepWords,
-                    style:
-                        TextStyle(color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 재산 합계 2억 원 미만인 경우에만 신청 가능합니다.\n'
+              '• 자녀장려금 소득상한은 부부합산 4,000만원입니다.\n'
+              '• 매년 5월 1일~31일 홈택스·모바일에서 신청합니다.\n'
+              '• 소득·재산 기준은 전년도(과세기간) 기준입니다.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],

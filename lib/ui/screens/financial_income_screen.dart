@@ -3,6 +3,7 @@ import '../components/amount_field.dart';
 
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/tax_engine/combined_tax.dart';
 import '../../core/tax_engine/employee_tax.dart';
@@ -223,31 +224,12 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
             if (isOverHealthThreshold) const SizedBox(height: 16),
 
             // 안내 박스
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded, color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기', style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 이자·배당 합산이 연 2,000만원 이하면 14% 원천징수로 완납됩니다.\n'
-                    '• 2,000만원을 넘으면 5월에 신고해야 합니다. 다만 2,000만원까지는 그대로 14%가 붙고, '
-                    '넘는 금액만 다른 소득과 합쳐 누진세율이 붙습니다.\n'
-                    '• 비교과세: 그렇게 계산한 세액과 전액 14%로 계산한 세액 중 큰 쪽이 산출세액입니다.\n'
-                    '• 배당 Gross-up(귀속법인세 가산) 효과는 이 계산기에 미반영됩니다.'.keepWords,
-                    style: TextStyle(color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 이자·배당 합산이 연 2,000만원 이하면 14% 원천징수로 완납됩니다.\n'
+              '• 2,000만원을 넘으면 5월에 신고해야 합니다. 다만 2,000만원까지는 그대로 14%가 붙고, '
+              '넘는 금액만 다른 소득과 합쳐 누진세율이 붙습니다.\n'
+              '• 비교과세: 그렇게 계산한 세액과 전액 14%로 계산한 세액 중 큰 쪽이 산출세액입니다.\n'
+              '• 배당 Gross-up(귀속법인세 가산) 효과는 이 계산기에 미반영됩니다.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],

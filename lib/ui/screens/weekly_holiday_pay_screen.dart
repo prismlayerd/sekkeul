@@ -3,6 +3,7 @@ import '../../core/tax_engine/tax_rates.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../theme/text_wrap.dart';
 
 /// 주휴수당 · 최저임금 계산기 (2026년 기준)
@@ -284,36 +285,11 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
             ),
             const SizedBox(height: 20),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded,
-                        color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 주 15시간 이상 근무 시 주휴수당이 발생합니다.\n'
-                    '• 주휴수당 = (주 근로시간 ÷ 40) × 8 × 시급\n'
-                    '• 최저임금 미달 시 사업주가 법적 책임을 집니다.\n'
-                    '• 하루 근무시간 8시간 초과분은 계산에서 제외했습니다.'.keepWords,
-                    style: TextStyle(
-                        color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 주 15시간 이상 근무 시 주휴수당이 발생합니다.\n'
+              '• 주휴수당 = (주 근로시간 ÷ 40) × 8 × 시급\n'
+              '• 최저임금 미달 시 사업주가 법적 책임을 집니다.\n'
+              '• 하루 근무시간 8시간 초과분은 계산에서 제외했습니다.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],

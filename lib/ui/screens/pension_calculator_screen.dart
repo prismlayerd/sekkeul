@@ -3,6 +3,7 @@ import '../components/amount_field.dart';
 
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/tax_engine/employee_tax.dart';
 import '../theme/text_wrap.dart';
@@ -193,29 +194,10 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
             const SizedBox(height: 20),
 
             // 안내 박스
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded, color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기', style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 근로소득 5,500만원, 종합소득 4,500만원 이하는 16.5%, 초과는 13.2%입니다 (지방소득세 포함).\n'
-                    '• 연금저축은 연 600만원, IRP 포함 합산 900만원까지 공제 대상입니다.\n'
-                    '• 세액공제는 결정세액에서 직접 차감되어 환급으로 돌아옵니다.'.keepWords,
-                    style: TextStyle(color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 근로소득 5,500만원, 종합소득 4,500만원 이하는 16.5%, 초과는 13.2%입니다 (지방소득세 포함).\n'
+              '• 연금저축은 연 600만원, IRP 포함 합산 900만원까지 공제 대상입니다.\n'
+              '• 세액공제는 결정세액에서 직접 차감되어 환급으로 돌아옵니다.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/calc_note.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
@@ -264,36 +265,11 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
             ),
             const SizedBox(height: 20),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded,
-                        color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 이자소득세 = 소득세 14% + 지방소득세 1.4% = 15.4%\n'
-                    '• 비과세종합저축(장애인·65세 이상 등 5천만원 한도) 해당 시 비과세.\n'
-                    '• ISA·IRP·연금저축 등은 별도 절세 혜택이 있습니다.\n'
-                    '• 적금 이자는 납입 순서별 기간에 따라 복잡하게 산정될 수 있습니다.'.keepWords,
-                    style:
-                        TextStyle(color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 이자소득세 = 소득세 14% + 지방소득세 1.4% = 15.4%\n'
+              '• 비과세종합저축(장애인·65세 이상 등 5천만원 한도) 해당 시 비과세.\n'
+              '• ISA·IRP·연금저축 등은 별도 절세 혜택이 있습니다.\n'
+              '• 적금 이자는 납입 순서별 기간에 따라 복잡하게 산정될 수 있습니다.'.keepWords,
             ),
           ],
         ),

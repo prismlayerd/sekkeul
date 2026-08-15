@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../../core/tax_engine/insurance_engine.dart';
 import '../theme/text_wrap.dart';
 
@@ -149,37 +150,12 @@ class _FourInsuranceScreenState extends State<FourInsuranceScreen> {
             ),
             const SizedBox(height: 20),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded,
-                        color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 국민연금 상한 월 ${comma(InsuranceEngine.pensionUpperBound.round())}원 / '
-                    '하한 ${comma(InsuranceEngine.pensionLowerBound.round())}원 적용됩니다.\n'
-                    '• 건강보험료 기준으로 장기요양보험료가 산정됩니다.\n'
-                    '• 사업주도 동일 금액을 부담합니다 (산재는 전액 사업주 부담).\n'
-                    '• 소득세·지방소득세는 별도 세율표에 따라 추가 공제됩니다.'.keepWords,
-                    style: TextStyle(
-                        color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 국민연금 상한 월 ${comma(InsuranceEngine.pensionUpperBound.round())}원 / '
+              '하한 ${comma(InsuranceEngine.pensionLowerBound.round())}원 적용됩니다.\n'
+              '• 건강보험료 기준으로 장기요양보험료가 산정됩니다.\n'
+              '• 사업주도 동일 금액을 부담합니다 (산재는 전액 사업주 부담).\n'
+              '• 소득세·지방소득세는 별도 세율표에 따라 추가 공제됩니다.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],

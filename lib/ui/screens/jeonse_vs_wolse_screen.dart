@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/calc_note.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
@@ -341,36 +342,11 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
               ),
 
             const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded,
-                        color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 전세: 보증금을 은행에 예치했을 때 받을 수 있는 이자가 기회비용입니다.\n'
-                    '• 월세: 월 임차료 + 보증금의 기회비용을 합산한 연간 비용입니다.\n'
-                    '• 손익분기 전환율: 이 금리보다 높으면 월세, 낮으면 전세가 유리합니다.\n'
-                    '• 전세 레버리지·갱신 리스크 등 질적 요소는 반영되지 않습니다.'.keepWords,
-                    style:
-                        TextStyle(color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 전세: 보증금을 은행에 예치했을 때 받을 수 있는 이자가 기회비용입니다.\n'
+              '• 월세: 월 임차료 + 보증금의 기회비용을 합산한 연간 비용입니다.\n'
+              '• 손익분기 전환율: 이 금리보다 높으면 월세, 낮으면 전세가 유리합니다.\n'
+              '• 전세 레버리지·갱신 리스크 등 질적 요소는 반영되지 않습니다.'.keepWords,
             ),
           ],
         ),

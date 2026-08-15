@@ -3,6 +3,7 @@ import '../../core/tax_engine/tax_rates.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../theme/text_wrap.dart';
 
 /// 실업급여(구직급여) 계산기
@@ -267,36 +268,11 @@ class _UnemploymentBenefitScreenState
             _benefitTable(context, textColor, subColor, primary),
             const SizedBox(height: 16),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded,
-                        color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 비자발적 이직(권고사직·계약만료 등)이어야 수급 가능합니다.\n'
-                    '• 구직급여 일액 하한: ${comma(_minDailyLimit.round())}원, 상한: ${comma(_maxDailyLimit.round())}원 (2026년)\n'
-                    '• 실제 지급은 고용센터 신청·실업인정일 기준입니다.\n'
-                    '• 이직 전 18개월 중 피보험단위기간 180일 이상 필요합니다.'.keepWords,
-                    style: TextStyle(
-                        color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 비자발적 이직(권고사직·계약만료 등)이어야 수급 가능합니다.\n'
+              '• 구직급여 일액 하한: ${comma(_minDailyLimit.round())}원, 상한: ${comma(_maxDailyLimit.round())}원 (2026년)\n'
+              '• 실제 지급은 고용센터 신청·실업인정일 기준입니다.\n'
+              '• 이직 전 18개월 중 피보험단위기간 180일 이상 필요합니다.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],

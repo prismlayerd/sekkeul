@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../theme/text_wrap.dart';
 
 enum _TaxType { inheritance, gift }
@@ -304,36 +305,11 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
             ),
             const SizedBox(height: 12),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded,
-                        color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 상속: 배우자 공제 최소 5억(실제 취득재산 기준 최대 30억), 일괄공제 5억.\n'
-                    '• 증여: 배우자 6억, 성인자녀 5천만, 미성년 2천만, 기타친족 1천만원 (10년 합산).\n'
-                    '• 신고세액공제 3%·세대생략 할증(30~40%)은 반영되지 않았습니다.\n'
-                    '• 영농상속공제 등 개별 특례는 세무사 상담을 권장합니다.'.keepWords,
-                    style:
-                        TextStyle(color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 상속: 배우자 공제 최소 5억(실제 취득재산 기준 최대 30억), 일괄공제 5억.\n'
+              '• 증여: 배우자 6억, 성인자녀 5천만, 미성년 2천만, 기타친족 1천만원 (10년 합산).\n'
+              '• 신고세액공제 3%·세대생략 할증(30~40%)은 반영되지 않았습니다.\n'
+              '• 영농상속공제 등 개별 특례는 세무사 상담을 권장합니다.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],

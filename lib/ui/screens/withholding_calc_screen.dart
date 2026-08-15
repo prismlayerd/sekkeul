@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../theme/text_wrap.dart';
 
 /// 프리랜서 3.3% 원천징수 계산기 — 계약금액(세전) → 원천징수세액·실수령액(세후).
@@ -139,36 +140,11 @@ class _WithholdingCalcScreenState extends State<WithholdingCalcScreen> {
             ),
             const SizedBox(height: 20),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded,
-                        color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 원천징수는 지급자가 미리 떼고 주는 세금으로, 최종 세액이 아니에요.\n'
-                    '• 5월 종합소득세 신고 때 실제 소득·경비 기준으로 정산돼요.\n'
-                    '• 가계부에 수익을 기록할 때 "3.3% 원천징수"를 켜면 실수령액 입력만으로 '
-                    '세전 금액을 자동으로 보여줘요.'.keepWords,
-                    style:
-                        TextStyle(color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 원천징수는 지급자가 미리 떼고 주는 세금으로, 최종 세액이 아니에요.\n'
+              '• 5월 종합소득세 신고 때 실제 소득·경비 기준으로 정산돼요.\n'
+              '• 가계부에 수익을 기록할 때 "3.3% 원천징수"를 켜면 실수령액 입력만으로 '
+              '세전 금액을 자동으로 보여줘요.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],

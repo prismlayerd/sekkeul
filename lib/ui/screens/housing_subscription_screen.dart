@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../components/calc_note.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
 
@@ -248,36 +249,11 @@ class _HousingSubscriptionScreenState
             ),
             const SizedBox(height: 20),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded,
-                        color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 무주택기간은 만 30세 또는 혼인 시점부터 산정됩니다.\n'
-                    '• 부양가족은 세대원(배우자·직계존비속 등) 기준입니다.\n'
-                    '• 청약통장은 가입일 기준, 최대 15년+에 17점이 부여됩니다.\n'
-                    '• 분양 시 당첨자 발표일 기준으로 가점이 산정됩니다.'.keepWords,
-                    style:
-                        TextStyle(color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 무주택기간은 만 30세 또는 혼인 시점부터 산정됩니다.\n'
+              '• 부양가족은 세대원(배우자·직계존비속 등) 기준입니다.\n'
+              '• 청약통장은 가입일 기준, 최대 15년+에 17점이 부여됩니다.\n'
+              '• 분양 시 당첨자 발표일 기준으로 가점이 산정됩니다.'.keepWords,
             ),
           ],
         ),

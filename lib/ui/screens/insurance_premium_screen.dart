@@ -3,6 +3,7 @@ import '../components/amount_field.dart';
 
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../../core/tax_engine/employee_tax.dart';
 import '../theme/text_wrap.dart';
 
@@ -161,30 +162,11 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
             const SizedBox(height: 20),
 
             // 안내 박스
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded, color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기', style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 보장성보험(실손·암·종신)은 연 100만원 한도로 12% 공제됩니다.\n'
-                    '• 장애인전용보장성보험은 별도 연 100만원 한도로 15% 공제됩니다.\n'
-                    '• 저축성 보험(연금보험, 저축보험 등)은 이 공제 대상이 아닙니다.\n'
-                    '• 연말정산 시 보험료 납입증명서를 회사에 제출하세요.'.keepWords,
-                    style: TextStyle(color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 보장성보험(실손·암·종신)은 연 100만원 한도로 12% 공제됩니다.\n'
+              '• 장애인전용보장성보험은 별도 연 100만원 한도로 15% 공제됩니다.\n'
+              '• 저축성 보험(연금보험, 저축보험 등)은 이 공제 대상이 아닙니다.\n'
+              '• 연말정산 시 보험료 납입증명서를 회사에 제출하세요.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],

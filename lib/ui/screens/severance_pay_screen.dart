@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../theme/text_wrap.dart';
 
 /// 퇴직금 계산기
@@ -277,36 +278,11 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
             ),
             const SizedBox(height: 20),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded,
-                        color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 퇴직금 = 평균임금 × 30 × (재직일수 ÷ 365)\n'
-                    '• 1년 이상 근무 + 주 15시간 이상이어야 발생합니다.\n'
-                    '• 평균임금이 통상임금보다 낮으면 통상임금이 적용됩니다.\n'
-                    '• IRP 계좌 수령 시 퇴직소득세 과세이연 혜택이 있습니다.'.keepWords,
-                    style: TextStyle(
-                        color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 퇴직금 = 평균임금 × 30 × (재직일수 ÷ 365)\n'
+              '• 1년 이상 근무 + 주 15시간 이상이어야 발생합니다.\n'
+              '• 평균임금이 통상임금보다 낮으면 통상임금이 적용됩니다.\n'
+              '• IRP 계좌 수령 시 퇴직소득세 과세이연 혜택이 있습니다.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],

@@ -3,6 +3,7 @@ import '../../core/tax_engine/tax_rates.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../theme/text_wrap.dart';
 
 class _TaxResult {
@@ -333,36 +334,11 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
             ),
             const SizedBox(height: 12),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded,
-                        color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 취득세·중개수수료·필요경비는 취득가액에 포함해 입력하세요.\n'
-                    '• 1세대 1주택 비과세(9억원 이하)·고가주택 특례는 별도 확인.\n'
-                    '• 다주택·단기보유(1년 미만 40%, 2년 미만 30%) 중과는 미반영.\n'
-                    '• 지방소득세 10%는 양도소득세액 기준으로 추가됩니다.'.keepWords,
-                    style:
-                        TextStyle(color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 취득세·중개수수료·필요경비는 취득가액에 포함해 입력하세요.\n'
+              '• 1세대 1주택 비과세(9억원 이하)·고가주택 특례는 별도 확인.\n'
+              '• 다주택·단기보유(1년 미만 40%, 2년 미만 30%) 중과는 미반영.\n'
+              '• 지방소득세 10%는 양도소득세액 기준으로 추가됩니다.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],

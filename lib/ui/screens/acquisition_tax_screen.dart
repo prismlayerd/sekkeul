@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../theme/text_wrap.dart';
 
 class AcquisitionTaxScreen extends StatefulWidget {
@@ -246,36 +247,11 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
             ),
             const SizedBox(height: 12),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded,
-                        color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 주택 수는 취득 후 1세대 합산 기준입니다.\n'
-                    '• 농어촌특별세: 1주택 9억 이하 제외, 나머지 취득가×0.2%.\n'
-                    '• 일시적 2주택(3년 내 기존주택 처분 등) 감면 별도 확인.\n'
-                    '• 오피스텔·상가 등 비주택 취득세(4.6%)는 별도 계산.'.keepWords,
-                    style:
-                        TextStyle(color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 주택 수는 취득 후 1세대 합산 기준입니다.\n'
+              '• 농어촌특별세: 1주택 9억 이하 제외, 나머지 취득가×0.2%.\n'
+              '• 일시적 2주택(3년 내 기존주택 처분 등) 감면 별도 확인.\n'
+              '• 오피스텔·상가 등 비주택 취득세(4.6%)는 별도 계산.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],

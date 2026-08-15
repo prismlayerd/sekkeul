@@ -702,14 +702,21 @@ class AppTheme {
   // 공통 유틸 (하위호환 — 기존 화면이 참조)
   // ──────────────────────────────────────────────
 
-  /// 기본 표면 — 에디토리얼: 그림자 0, 1px 헤어라인, 거의 직각
+  /// 기입란 — 1px 헤어라인으로 두르기만 한다. **채우지 않는다.**
+  ///
+  /// 예전에는 [surface]로 채웠다. 그 색이 종이 사진 위에 회색 판을 덮어서,
+  /// 홈·가계부에는 종이 결이 비치는데 계산기 30여 화면만 판때기가 깔렸다.
+  /// 영수증에 상자는 없지만 선으로 두른 **기입란**은 있다 — 경계는 선이
+  /// 만들고 바탕은 종이 그대로 둔다.
+  ///
+  /// 입력창·버튼은 여전히 채운다(inputDecorationTheme). 글자를 적거나 누르는
+  /// 자리 위로는 결이 지나가면 안 된다.
   static BoxDecoration getCardDecoration(
     BuildContext context, {
     double borderRadius = 2.0,
     bool elevated = false,
   }) {
     return BoxDecoration(
-      color: surface(context),
       borderRadius: BorderRadius.circular(borderRadius.clamp(0.0, 4.0)),
       border: Border.all(color: line(context), width: 1),
     );

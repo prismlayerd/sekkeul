@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_note.dart';
 import '../theme/text_wrap.dart';
 
 class NationalPensionTimingScreen extends StatefulWidget {
@@ -126,35 +127,11 @@ class _NationalPensionTimingScreenState
               ),
 
             const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline_rounded,
-                        color: subColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text('알아두기',
-                        style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 조기수령: 최대 5년 앞당겨 받으며 1년당 6% 감액됩니다.\n'
-                    '• 연기수령: 최대 5년 늦춰 받으며 1년당 7.2% 증액됩니다.\n'
-                    '• 손익분기점은 정상수령 개시 시점 이후 기준입니다.\n'
-                    '• 실제 수령 조건은 국민연금공단에 문의하세요.'.keepWords,
-                    style: TextStyle(color: subColor, fontSize: 12, height: 1.6),
-                  ),
-                ],
-              ),
+            CalcNote(
+              '• 조기수령: 최대 5년 앞당겨 받으며 1년당 6% 감액됩니다.\n'
+              '• 연기수령: 최대 5년 늦춰 받으며 1년당 7.2% 증액됩니다.\n'
+              '• 손익분기점은 정상수령 개시 시점 이후 기준입니다.\n'
+              '• 실제 수령 조건은 국민연금공단에 문의하세요.'.keepWords,
             ),
             const CalcDisclaimer(),
           ],
