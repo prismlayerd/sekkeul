@@ -130,7 +130,7 @@ String won(num v) {
 }
 
 void main() {
-  final year = TaxYear.reference;
+  const year = TaxYear.reference;
   const months = 3; // 5·6·7월 3개월 입력
 
   test('프리랜서 12인 — 추계 종소세가 조문 검산과 일치한다', () async {

@@ -199,7 +199,7 @@ class _UnemploymentBenefitScreenState
                             color: Colors.orange, size: 16),
                         const SizedBox(width: 8),
                         Text('피보험기간 12개월 미만 — 수급 자격 없음'.keepWords,
-                            style: TextStyle(
+                            style: const TextStyle(
                                 color: Colors.orange,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600)),
@@ -358,7 +358,7 @@ class _UnemploymentBenefitScreenState
       Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: Theme.of(context).primaryColor,
+        activeThumbColor: Theme.of(context).primaryColor,
       ),
     ]);
   }

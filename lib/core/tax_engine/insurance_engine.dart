@@ -146,7 +146,7 @@ class InsuranceEngine {
     
     // 고용/산재는 상하한액 없음 (무제한)
     final double employmentInsurance = TaxRates.truncateWon(monthlyGrossIncome * empEmploymentInsuranceRate);
-    final double industrialAccident = 0.0;
+    const double industrialAccident = 0.0;
 
     final double total = nationalPension + healthInsurance + longTermCare + employmentInsurance + industrialAccident;
 

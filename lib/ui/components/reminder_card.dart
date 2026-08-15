@@ -208,7 +208,7 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
           // on/off 스위치 (기존 알림 끄고 켜기는 가능)
           Switch(
             value: r.enabled,
-            activeColor: accent,
+            activeThumbColor: accent,
             onChanged: (v) async {
               await customReminderService.toggle(r, v);
               await _load();

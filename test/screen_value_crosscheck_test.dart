@@ -57,7 +57,7 @@ void expectShown(WidgetTester t, num value, String what) {
 }
 
 void main() {
-  final year = TaxYear.reference;
+  const year = TaxYear.reference;
   final month = DateTime.now().month;
   // 카드 공제 연 누적은 **오늘까지**의 지출만 센다(미래 예약분을 넣으면 과대).
   // 시드 날짜가 오늘을 넘지 않게 잡는다.
@@ -211,7 +211,7 @@ void main() {
             ? 6590000.0
             : (monthly < 410000 ? 410000.0 : monthly)) *
         0.0475);
-    final rawHi = monthly * 0.03595;
+    const rawHi = monthly * 0.03595;
     final hi = trunc10(rawHi < 20160 / 2
         ? 20160 / 2
         : (rawHi > 9183480 / 2 ? 9183480 / 2 : rawHi));

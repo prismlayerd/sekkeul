@@ -222,7 +222,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
             const SizedBox(width: 4),
             Switch(
               value: r.enabled,
-              activeColor: accent,
+              activeThumbColor: accent,
               onChanged: (v) async {
                 if (v && !kIsWeb) await notificationHelper.ensurePermissionIfNeeded();
                 await customReminderService.toggle(r, v);
@@ -324,7 +324,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
             const SizedBox(width: 8),
             Switch(
               value: pref.enabled,
-              activeColor: accent,
+              activeThumbColor: accent,
               onChanged: (v) async {
                 if (v && !kIsWeb) await notificationHelper.ensurePermissionIfNeeded();
                 await dbService.setEventReminderPref(key,

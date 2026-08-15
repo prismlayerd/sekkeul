@@ -62,7 +62,9 @@ class NotificationHistory {
       if (s.isEvent) continue; // 이벤트형(문턱 등)은 즉시 알림이라 이미 기록됨.
       if (!s.appliesTo(userType,
               ownsCar: ownsCar, ownsHouse: ownsHouse, isVatExempt: isVatExempt) ||
-          !isOn(s.key)) continue;
+          !isOn(s.key)) {
+        continue;
+      }
       for (final when in _systemOccurrences(s, from, to)) {
         await dbService.insertNotificationLog(
           title: s.title,

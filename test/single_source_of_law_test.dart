@@ -93,7 +93,7 @@ void main() {
     expect(m, isNotNull, reason: 'unemploymentDailyFloor 정의를 못 찾았다');
     final rhs = m!.group(1)!.trim();
     // ignore: avoid_print
-    print('  unemploymentDailyFloor = ' + rhs);
+    print('  unemploymentDailyFloor = $rhs');
     expect(rhs.contains('minimumHourlyWage'), isTrue,
         reason: '구직급여 하한이 최저임금에서 파생되지 않고 리터럴로 박혀 있다 — '
             '오늘은 값이 같아도 최저임금이 바뀌면 어긋난다');

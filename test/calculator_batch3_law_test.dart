@@ -46,7 +46,7 @@ void main() {
       for (var year = 1; year <= 5; year++) {
         final exact = year * 7.2;
         expect(exact.round(), shownRates[year - 1],
-            reason: '연기 $year년 증액률은 ${exact}%다');
+            reason: '연기 $year년 증액률은 $exact%다');
         expectToken(t, '+${shownRates[year - 1]}%', '연기 $year년 증액률');
       }
     });
@@ -97,7 +97,7 @@ void main() {
       //   추적: test/notice_expiry_test.dart (1차 미확인)
       const annual = 520000.0;
       const rate = 4.57;
-      final discount = annual * rate / 100;
+      const discount = annual * rate / 100;
       // ignore: avoid_print
       print('연세액 ${comma(annual)} × $rate% = 공제 ${comma(discount)}'
           ' → 납부 ${comma(annual - discount)}');

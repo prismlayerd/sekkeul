@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -345,7 +344,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: '앱 잠금',
                 trailing: Switch(
                   value: _appLockEnabled,
-                  activeColor: AppTheme.accentColor(context),
+                  activeThumbColor: AppTheme.accentColor(context),
                   onChanged: _toggleAppLock,
                 ),
                 onTap: () => _toggleAppLock(!_appLockEnabled),
@@ -488,7 +487,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       title: '세금·가계부 알림',
       trailing: Switch(
         value: _notificationsEnabled,
-        activeColor: AppTheme.accentColor(context),
+        activeThumbColor: AppTheme.accentColor(context),
         onChanged: (v) async {
           setState(() => _notificationsEnabled = v);
           await widget.onNotificationsChanged(v);

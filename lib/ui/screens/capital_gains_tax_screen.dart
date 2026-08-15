@@ -229,7 +229,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
                       ),
                       Switch(
                         value: _oneHousehold,
-                        activeColor: primary,
+                        activeThumbColor: primary,
                         onChanged: (v) => setState(() => _oneHousehold = v),
                       ),
                     ],

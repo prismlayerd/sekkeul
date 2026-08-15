@@ -100,7 +100,9 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
     final terms = <String, double>{q: 0};
     _synonyms.forEach((k, syns) {
       if (q == k || q.contains(k)) {
-        for (final s in syns) terms[s] = 20;
+        for (final s in syns) {
+          terms[s] = 20;
+        }
       }
     });
 

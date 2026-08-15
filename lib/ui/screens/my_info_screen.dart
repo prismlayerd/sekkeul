@@ -821,7 +821,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
         Expanded(child: Text(label, style: AppTheme.sans(14, ink))),
         Switch(
           value: enabled,
-          activeColor: accent,
+          activeThumbColor: accent,
           onChanged: (v) => _updateProfileFields({key: v}),
         ),
       ]),

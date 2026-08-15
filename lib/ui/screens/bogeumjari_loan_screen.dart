@@ -48,7 +48,9 @@ class _BogeumjariLoanScreenState extends State<BogeumjariLoanScreen> {
     final r = _rate / 100 / 12;
     final n = _years * 12;
     double pow1 = 1.0;
-    for (int i = 0; i < n; i++) pow1 *= (1 + r);
+    for (int i = 0; i < n; i++) {
+      pow1 *= (1 + r);
+    }
     final monthly = p * r * pow1 / (pow1 - 1);
     final totalPayment = monthly * n;
     return (

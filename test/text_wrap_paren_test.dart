@@ -27,6 +27,6 @@ void main() {
     final out = '월세 세액공제'.keepWords;
     expect(out.contains(zwsp), isFalse);
     expect(out.contains(nbsp), isFalse);
-    expect(out.contains('월${wj}세'), isTrue);
+    expect(out.contains('월$wj세'), isTrue);
   });
 }

@@ -264,14 +264,14 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Icon(Icons.check_circle_rounded, color: AppTheme.colorSuccess, size: 20),
+            const Icon(Icons.check_circle_rounded, color: AppTheme.colorSuccess, size: 20),
             const SizedBox(width: 8),
             Text('분리과세 완납 — 신고 불필요'.keepWords,
                 style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 12),
           Text(_toManwon(r.separateTaxAmount),
-              style: TextStyle(color: AppTheme.colorSuccess, fontSize: 32, fontWeight: FontWeight.w900)),
+              style: const TextStyle(color: AppTheme.colorSuccess, fontSize: 32, fontWeight: FontWeight.w900)),
           const SizedBox(height: 12),
           _resultRow('적용 세율', '14% (분리과세)', subColor, textColor),
           const SizedBox(height: 6),
@@ -289,14 +289,14 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Icon(Icons.assignment_rounded, color: Colors.redAccent, size: 20),
+            const Icon(Icons.assignment_rounded, color: Colors.redAccent, size: 20),
             const SizedBox(width: 8),
             Text('종합과세 대상 — 5월 신고 필요'.keepWords,
                 style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 12),
           Text('5월에 더 낼 세금 ${_toManwon(r.additionalTaxBurden)}',
-              style: TextStyle(color: Colors.redAccent, fontSize: 28, fontWeight: FontWeight.w900)),
+              style: const TextStyle(color: Colors.redAccent, fontSize: 28, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
           Text('(지방소득세 10% 별도)'.keepWords,
               style: TextStyle(color: subColor, fontSize: 12)),
@@ -316,7 +316,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.event_note_rounded, color: Colors.redAccent, size: 14),
               const SizedBox(width: 6),
-              Text('5월 종합소득세 신고 대상'.keepWords, style: TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600)),
+              Text('5월 종합소득세 신고 대상'.keepWords, style: const TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600)),
             ]),
           ),
         ],

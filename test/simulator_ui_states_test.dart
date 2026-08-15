@@ -95,8 +95,8 @@ void main() {
       'newborn_count': 2,
       'newborn_year': kReferenceTaxYear - 1,
     });
-    await t.pumpWidget(MaterialApp(
-        home: TaxSimulatorScreen(key: const ValueKey('again'), userType: '직장인')));
+    await t.pumpWidget(const MaterialApp(
+        home: TaxSimulatorScreen(key: ValueKey('again'), userType: '직장인')));
     await t.pumpAndSettle();
     final fields = t
         .widgetList<EditableText>(find.byType(EditableText))

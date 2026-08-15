@@ -138,8 +138,8 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
     );
 
     if (!_loaded) {
-      return Scaffold(
-        body: const Center(child: CircularProgressIndicator()),
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -318,7 +318,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Theme.of(context).primaryColor,
+            activeThumbColor: Theme.of(context).primaryColor,
           ),
         ],
       ),

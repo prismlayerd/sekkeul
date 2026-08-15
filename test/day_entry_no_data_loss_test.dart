@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:secul/core/data/expense_item.dart';
 import 'package:secul/ui/screens/day_entry_screen.dart';
 import 'package:secul/ui/theme/app_theme.dart';
 

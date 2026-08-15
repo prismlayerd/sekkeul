@@ -137,7 +137,7 @@ String won(num v) {
 }
 
 void main() {
-  final year = TaxYear.reference;
+  const year = TaxYear.reference;
 
   test('직장인 12인 — 엔진 값이 조문 검산과 일치한다', () async {
     for (final p in employees) {

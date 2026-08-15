@@ -51,14 +51,14 @@ List<DeductionOption> deductionOptions({
         10000000 * rentRate),
     DeductionOption('pension', '연금저축이나 IRP에 넣어요',
         '연 900만원까지 ${(pensionRate * 100).round()}%', 9000000 * pensionRate),
-    DeductionOption('medical', '병원비를 많이 썼어요', '총급여 3% 넘는 금액부터 15%', 7000000 * 0.15),
-    DeductionOption('education', '학비를 냈어요', '대학 900만·초중고 300만까지 15%', 9000000 * 0.15),
-    DeductionOption('insurance', '보장성보험료를 내요', '연 100만원까지 12%', 1000000 * 0.12),
+    const DeductionOption('medical', '병원비를 많이 썼어요', '총급여 3% 넘는 금액부터 15%', 7000000 * 0.15),
+    const DeductionOption('education', '학비를 냈어요', '대학 900만·초중고 300만까지 15%', 9000000 * 0.15),
+    const DeductionOption('insurance', '보장성보험료를 내요', '연 100만원까지 12%', 1000000 * 0.12),
     if (isEmployee)
       DeductionOption('mortgage', '주택담보대출 이자를 내요',
           '15년 이상이면 800만원부터, 고정금리·비거치식이면 2,000만원까지 과세표준에서 빼요',
           20000000 * marginal),
-    DeductionOption('donation', '기부했어요', '1,000만원까지 15%, 넘으면 30%', 10000000 * 0.15),
+    const DeductionOption('donation', '기부했어요', '1,000만원까지 15%, 넘으면 30%', 10000000 * 0.15),
     DeductionOption('hometown', '고향사랑기부를 했어요', '10만원 내면 소득세에서 9만 909원 (지방소득세까지 합치면 10만원)',
         EmployeeTaxCalculator.calculateHometownDonationTaxCredit(100000)),
 
@@ -79,7 +79,7 @@ List<DeductionOption> deductionOptions({
         1000000 * marginal,
         isSpending: false),
     if (isEmployee)
-      DeductionOption('sme', '중소기업에 다녀요', '청년은 5년간 소득세 90%를 깎아줘요', 2000000,
+      const DeductionOption('sme', '중소기업에 다녀요', '청년은 5년간 소득세 90%를 깎아줘요', 2000000,
           isSpending: false),
   ];
 }

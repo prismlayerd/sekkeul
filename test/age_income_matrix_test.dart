@@ -145,7 +145,7 @@ void main() {
           }
 
           out.add(Persona(
-            name: '$userType ${age}세 ${manwon}만',
+            name: '$userType $age세 $manwon만',
             userType: userType,
             age: age,
             gross: gross,

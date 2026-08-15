@@ -194,8 +194,9 @@ class EmployeeTaxCalculator {
     // 기본 자녀(공제대상 연령)
     if (childrenCount > 0) {
       for (int i = 0; i < childrenCount; i++) {
-        if (i == 0) credit += 250000.0;        // 첫째: 25만
-        else if (i == 1) credit += 300000.0;   // 둘째: 30만
+        if (i == 0) {
+          credit += 250000.0;        // 첫째: 25만
+        } else if (i == 1) credit += 300000.0;   // 둘째: 30만
         else credit += 400000.0;                // 셋째이상: 40만/명
       }
     }
@@ -203,8 +204,9 @@ class EmployeeTaxCalculator {
     // 출산·입양 자녀 (신생아 공제, 기본 자녀와 합산)
     if (newbornCount > 0) {
       for (int i = 0; i < newbornCount; i++) {
-        if (i == 0) credit += 300000.0;        // 첫째: 30만
-        else if (i == 1) credit += 500000.0;   // 둘째: 50만
+        if (i == 0) {
+          credit += 300000.0;        // 첫째: 30만
+        } else if (i == 1) credit += 500000.0;   // 둘째: 50만
         else credit += 700000.0;                // 셋째이상: 70만/명
       }
     }

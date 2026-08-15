@@ -146,9 +146,9 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(Icons.check_circle_rounded, color: AppTheme.colorSuccess, size: 14),
+                          const Icon(Icons.check_circle_rounded, color: AppTheme.colorSuccess, size: 14),
                           const SizedBox(width: 6),
-                          Text('최대 공제 달성 (27만원)'.keepWords, style: TextStyle(color: AppTheme.colorSuccess, fontSize: 12, fontWeight: FontWeight.w600)),
+                          Text('최대 공제 달성 (27만원)'.keepWords, style: const TextStyle(color: AppTheme.colorSuccess, fontSize: 12, fontWeight: FontWeight.w600)),
                         ]),
                       ),
                     ],

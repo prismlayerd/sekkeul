@@ -55,7 +55,7 @@ void main() {
       await open(t, const LoanScheduleScreen(), ['100000000', '4.0', '30']);
 
       final m = refAnnuity(principal: 100000000, annualRate: 0.04, months: 30);
-      final firstInterest = 100000000 * 0.04 / 12;
+      const firstInterest = 100000000 * 0.04 / 12;
       final firstPrincipal = m - firstInterest;
       // ignore: avoid_print
       print('1억 · 4% · 30개월 → 월 ${comma(m)}'

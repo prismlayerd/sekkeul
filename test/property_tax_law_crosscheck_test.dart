@@ -100,7 +100,7 @@ void main() {
 
   testWidgets('종부세 — 1주택 공제 12억, 그 아래는 0원', (t) async {
     await open(t, [1100000000]); // 11억 — 공제 12억 미만
-    final base = 0.0;
+    const base = 0.0;
     expect(refComprehensiveTax(base), 0.0);
     // 종부세가 0이어야 하므로 큰 금액이 뜨면 안 된다.
     // 재산세는 나오므로 재산세 값만 확인한다.
@@ -112,7 +112,7 @@ void main() {
     await open(t, [price]);
 
     const deduction = 1200000000.0; // 1주택 공제 (종부세법 §8①)
-    final base = (price - deduction) * 0.6; // 공정시장가액비율 60%
+    const base = (price - deduction) * 0.6; // 공정시장가액비율 60%
     final tax = refComprehensiveTax(base);
     // ignore: avoid_print
     print('공시가 ${comma(price)} − 공제 ${comma(deduction)} → 과세표준 ${comma(base)}'
@@ -127,7 +127,7 @@ void main() {
     await open(t, [700000000, 500000000]);
 
     const deduction = 900000000.0; // 2주택 이상 (종부세법 §8①)
-    final base = (1200000000 - deduction) * 0.6;
+    const base = (1200000000 - deduction) * 0.6;
     final tax = refComprehensiveTax(base);
     // ignore: avoid_print
     print('2주택 합산 ${comma(1200000000)} − 공제 ${comma(deduction)}'
@@ -144,7 +144,7 @@ void main() {
     await t.tap(find.byType(Switch).first);
     await t.pump(const Duration(milliseconds: 300));
 
-    final urban = 500000000 * 0.60 * 0.0014;
+    const urban = 500000000 * 0.60 * 0.0014;
     // ignore: avoid_print
     print('도시지역분 ${comma(urban)}');
     expect(before, isNot(contains(manwon(urban))));

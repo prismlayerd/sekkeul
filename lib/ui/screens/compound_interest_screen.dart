@@ -183,7 +183,7 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
                       Icon(Icons.trending_up_rounded,
                           color: primary, size: 20),
                       const SizedBox(width: 8),
-                      Text('${_years}년 후 예상 자산',
+                      Text('$_years년 후 예상 자산',
                           style: TextStyle(
                               color: textColor,
                               fontSize: 14,

@@ -75,8 +75,8 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
     final sub = AppTheme.inkSecondary(context);
 
     if (!_loaded) {
-      return Scaffold(
-        body: const SizedBox.shrink(),
+      return const Scaffold(
+        body: SizedBox.shrink(),
       );
     }
 

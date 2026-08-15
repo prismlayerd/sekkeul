@@ -656,7 +656,7 @@ class _ExpenseFormState extends State<_ExpenseForm> {
 
   @override
   Widget build(BuildContext context) {
-    final cats = kExpenseCategories;
+    const cats = kExpenseCategories;
     return _FormBlock(
       title: widget.onDelete == null ? '지출 추가' : '지출 수정',
       note: widget.dayCount > 1 ? '고른 ${widget.dayCount}일에 각각 기록됩니다.' : null,

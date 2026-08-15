@@ -200,7 +200,7 @@ class _NotificationSettingsScreenState
               const SizedBox(width: 8),
               Switch(
                 value: on,
-                activeColor: accent,
+                activeThumbColor: accent,
                 onChanged: kIsWeb ? null : (v) => _toggleGroup(items, v),
               ),
             ],
@@ -239,7 +239,7 @@ class _NotificationSettingsScreenState
               const SizedBox(width: 8),
               Switch(
                 value: on,
-                activeColor: accent,
+                activeThumbColor: accent,
                 onChanged: kIsWeb ? null : (v) => _toggleItem(s, v),
               ),
             ],

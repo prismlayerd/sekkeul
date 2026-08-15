@@ -24,7 +24,7 @@ class _EmploymentSupportProgramScreenState
   static const int _typeIIAmount = 1954000;
 
   int get _typeITotal {
-    final base = _monthlyAllowance * _months;
+    const base = _monthlyAllowance * _months;
     final dependentBonus = _dependentBonusPerPerson * _dependents * _months;
     final success = _includeSuccessBonus ? _successBonus : 0;
     return base + dependentBonus + success;

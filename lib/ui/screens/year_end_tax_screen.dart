@@ -243,7 +243,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                   title: Text(fileName, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14)),
                   trailing: Icon(Icons.chevron_right_rounded, color: Theme.of(context).textTheme.labelMedium!.color!),
                   onTap: () => Navigator.pop(context, fileName),
-                )).toList(),
+                )),
                 const SizedBox(height: 12),
               ],
             ),
@@ -477,17 +477,17 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         if (_isMarried)
           Container(
             margin: const EdgeInsets.only(bottom: 24),
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.3)),
+              border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.3)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(Icons.tips_and_updates_rounded, color: Theme.of(context).primaryColor, size: 20),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     '신혼이시라면 올해 혼인신고 시\n결혼특별세액공제(50만 원)를 받을 수 있는지 꼭 확인해 보세요!'.keepWords,
@@ -516,7 +516,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                   child: Column(
                     children: [
                       Icon(Icons.picture_as_pdf_rounded, color: Theme.of(context).primaryColor, size: 36),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text('PDF 파일 가져오기', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 13, fontWeight: FontWeight.bold)),
                     ],
                   ),
@@ -534,7 +534,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                   child: Column(
                     children: [
                       Icon(Icons.grid_on_rounded, color: Theme.of(context).textTheme.bodyLarge!.color!, size: 36),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text('엑셀 파일 가져오기', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 13, fontWeight: FontWeight.bold)),
                     ],
                   ),
@@ -545,12 +545,12 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         ),
         
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 24.0),
+          padding: const EdgeInsets.symmetric(vertical: 24.0),
           child: Row(
             children: [
               Expanded(child: Divider(color: Theme.of(context).dividerColor)),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text('또는 수기 입력', style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
               ),
               Expanded(child: Divider(color: Theme.of(context).dividerColor)),
@@ -615,21 +615,21 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: isRefund ? Theme.of(context).primaryColor.withOpacity(0.3) : Color(0xFFFF4D4D).withOpacity(0.3),
+              color: isRefund ? Theme.of(context).primaryColor.withValues(alpha: 0.3) : const Color(0xFFFF4D4D).withValues(alpha: 0.3),
             ),
           ),
           child: Column(
             children: [
               Icon(
                 isRefund ? Icons.savings_rounded : Icons.warning_amber_rounded,
-                color: isRefund ? Theme.of(context).primaryColor : Color(0xFFFF4D4D),
+                color: isRefund ? Theme.of(context).primaryColor : const Color(0xFFFF4D4D),
                 size: 48,
               ),
               const SizedBox(height: 12),
               Text(
                 isRefund ? '예상 환급액' : '예상 추가납부액',
                 style: TextStyle(
-                  color: isRefund ? Theme.of(context).primaryColor : Color(0xFFFF4D4D),
+                  color: isRefund ? Theme.of(context).primaryColor : const Color(0xFFFF4D4D),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -662,7 +662,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           child: Column(
             children: [
               _buildDeductionRow('총급여', comma(salary.toInt()), false),
-              Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
+              Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
               _buildDeductionRow('근로소득공제', '-${comma(_laborDeduction.toInt())}', true),
               // 라벨은 본인을 포함해 센다. `_dependentCount`는 부양가족(본인 제외)이고
               // 공제액은 150만 × (본인 + 부양가족)이라, 그냥 "1인"이라 쓰면
@@ -671,25 +671,25 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                   '-${comma(_personalExemption.toInt())}', true),
               _buildDeductionRow('4대보험 소득공제', '-${comma(_insuranceDeduction.toInt())}', true),
               _buildDeductionRow('신용카드 소득공제', '-${comma(_cardDeduction.toInt())}', true),
-              Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
+              Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
               _buildDeductionRow('과세표준', comma(_taxableIncome.toInt()), false),
               _buildDeductionRow('산출세액', comma(_calculatedTax.toInt()), false),
-              Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
+              Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
               if (_smeExemption > 0)
                 _buildDeductionRow('중소기업취업자 감면', '-${comma(_smeExemption.toInt())}', true),
               _buildDeductionRow('근로소득세액공제', '-${comma(_laborTaxCredit.toInt())}', true),
               if (_rentRefund > 0)
                 _buildDeductionRow('월세 세액공제', '-${comma(_rentRefund.toInt())}', true),
-              Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
+              Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
               _buildDeductionRow('결정세액', '${comma(_decidedTax.toInt())}원', false, isBold: true),
               _buildDeductionRow('기납부세액', '${comma(_paidTax.toInt())}원', false),
-              Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
+              Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
               _buildDeductionRow(
                 isRefund ? '예상 환급' : '추가 납부',
                 '${comma(absAmount)}원',
                 false,
                 isBold: true,
-                highlightColor: isRefund ? Theme.of(context).primaryColor : Color(0xFFFF4D4D),
+                highlightColor: isRefund ? Theme.of(context).primaryColor : const Color(0xFFFF4D4D),
               ),
             ],
           ),
@@ -800,9 +800,9 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withOpacity(0.08),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.2)),
+            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -812,7 +812,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               Text(item['desc']!, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.4)),
             ],
           ),
-        )).toList(),
+        )),
       ],
     );
   }
@@ -873,14 +873,14 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).primaryColor.withOpacity(0.15),
-            Theme.of(context).primaryColor.withOpacity(0.05),
+            Theme.of(context).primaryColor.withValues(alpha: 0.15),
+            Theme.of(context).primaryColor.withValues(alpha: 0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.3)),
+        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1003,7 +1003,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '누락 공제 확인 ${_wizardStep + 1}/${_totalWizardSteps} — ${stepLabels[_wizardStep]}',
+                  '누락 공제 확인 ${_wizardStep + 1}/$_totalWizardSteps — ${stepLabels[_wizardStep]}',
                   style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12),
                 ),
                 const SizedBox(height: 6),
@@ -1117,7 +1117,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -1203,9 +1203,9 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withOpacity(0.08),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.25)),
+            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.25)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1540,7 +1540,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.35)),
+            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.35)),
           ),
           child: Column(
             children: [
@@ -1601,7 +1601,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text('추가 공제 항목이 없습니다.'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 14)),
                 ),
-              Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
+              Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
               _buildDeductionRow(
                 '추가 환급 합계',
                 '+${comma(_additionalTaxCredit.toInt())}원',
@@ -1617,7 +1617,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withOpacity(0.07),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Row(

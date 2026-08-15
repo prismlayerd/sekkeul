@@ -255,7 +255,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
                   ),
                   if (severance != null && workDays != null && workDays < 365)
                     Text('1년 미만 — 퇴직금 미발생'.keepWords,
-                        style: TextStyle(color: Colors.orange, fontSize: 12)),
+                        style: const TextStyle(color: Colors.orange, fontSize: 12)),
                   const SizedBox(height: 16),
                   if (severance != null && avgDailyWage != null) ...[
                     _row('1일 평균임금', _won(avgDailyWage), subColor, textColor),

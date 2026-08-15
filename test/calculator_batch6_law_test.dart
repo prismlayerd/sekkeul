@@ -149,8 +149,7 @@ void main() {
           [(0, '300'), (1, '300'), (2, '300'), (3, '300'), (4, '300')]);
       final shown = tokens(t);
       // ignore: avoid_print
-      print('전 항목 최대 입력 → 총 포인트: '
-          + shown.where((s) => s.endsWith(String.fromCharCode(0xC6D0))).join(' / '));
+      print('전 항목 최대 입력 → 총 포인트: ${shown.where((s) => s.endsWith(String.fromCharCode(0xC6D0))).join(' / ')}');
       expect(shown.contains('70,000원') || shown.contains('7만원'), isTrue,
           reason: '연간 총 한도 7만원이 안 걸린다');
     });

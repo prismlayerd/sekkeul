@@ -264,7 +264,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                       ),
                       Switch(
                         value: _urbanArea,
-                        activeColor: primary,
+                        activeThumbColor: primary,
                         onChanged: (v) => setState(() => _urbanArea = v),
                       ),
                     ],
@@ -290,7 +290,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                         ),
                         Switch(
                           value: _jointOwnership,
-                          activeColor: primary,
+                          activeThumbColor: primary,
                           onChanged: (v) =>
                               setState(() => _jointOwnership = v),
                         ),

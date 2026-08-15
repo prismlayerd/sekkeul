@@ -80,7 +80,7 @@ class _BenefitCategory {
 
 final _categories = <_BenefitCategory>[
   _BenefitCategory(label: '세금·연금·환급', items: [
-    _Benefit(
+    const _Benefit(
       name: '근로·자녀장려금',
       verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-08-02'),
       amount: '근로 최대 330만원 / 자녀 1인당 최대 100만원',
@@ -106,7 +106,7 @@ final _categories = <_BenefitCategory>[
           '신청 방법\n'
           '홈택스(온라인) · 손택스(앱) · ARS 1544-9944 · 세무서 방문\n'
           '자영업자는 5월 종합소득세 신고와 동시 신청 가능',
-      links: const [
+      links: [
         ('국세청 홈택스', 'https://www.hometax.go.kr'),
         ('국세청 장려금 안내', 'https://www.nts.go.kr'),
       ],
@@ -170,7 +170,7 @@ final _categories = <_BenefitCategory>[
       ],
       calcBuilder: (_) => const DependentDeductionScreen(),
     ),
-    _Benefit(
+    const _Benefit(
       name: '결혼세액공제',
       verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-08-02'),
       amount: '부부 합산 최대 100만원',
@@ -184,7 +184,7 @@ final _categories = <_BenefitCategory>[
           '2. 해당 연도 연말정산 또는 종합소득세 신고 시 결혼세액공제 항목 체크\n'
           '3. 홈택스에 혼인 정보 자동 반영, 배우자 주민등록번호 입력\n'
           '4. 누락 시 5년 내 경정청구로 소급 환급 가능',
-      links: const [
+      links: [
         ('국세청 홈택스', 'https://www.hometax.go.kr'),
         ('국세청', 'https://www.nts.go.kr'),
         ('정부24', 'https://www.gov.kr'),
@@ -192,7 +192,7 @@ final _categories = <_BenefitCategory>[
         ('여성가족부', 'https://www.mogef.go.kr'),
       ],
     ),
-    _Benefit(
+    const _Benefit(
       name: 'ISA 비과세 혜택',
       verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-08-02'),
       amount: '200~400만원 비과세',
@@ -209,13 +209,13 @@ final _categories = <_BenefitCategory>[
           '· 연 납입한도 2,000만원 (미사용분 다음 해 이월)\n'
           '· 누적 한도 최대 1억원, 의무 가입기간 3년\n'
           '· 만기 해지 후 60일 내 연금계좌 이체 시 전환액의 10%(최대 300만원) 별도 세액공제',
-      links: const [
+      links: [
         ('금융위원회 ISA 안내', 'https://www.fsc.go.kr'),
         ('금융감독원 파인', 'https://fine.fss.or.kr'),
         ('국세청 홈택스', 'https://www.hometax.go.kr'),
       ],
     ),
-    _Benefit(
+    const _Benefit(
       name: '숨은 환급금·휴면예금 조회',
       verified: (source: 'https://www.kinfa.or.kr/financialProduct/dormantAccount.do', on: '2026-08-02'),
       amount: '조회 후 즉시 지급',
@@ -236,7 +236,7 @@ final _categories = <_BenefitCategory>[
           '3. 50만원 이하 — 온라인 즉시 신청\n'
           '4. 50만원 초과 — 지점 방문 또는 서민금융통합지원센터\n'
           '5. 대상: 5년 이상 미거래 예금, 만기 후 3년 이상 미청구 보험금',
-      links: const [
+      links: [
         ('내보험찾아줌', 'https://cont.insure.or.kr'),
         ('휴면예금 찾아줌', 'https://sleepmoney.kinfa.or.kr'),
         ('서민금융진흥원', 'https://kinfa.or.kr'),
@@ -373,7 +373,7 @@ final _categories = <_BenefitCategory>[
       ],
       calcBuilder: (_) => const YouthHousingDreamScreen(),
     ),
-    _Benefit(
+    const _Benefit(
       name: '청년 월세 지원',
       verified: (source: 'https://www.molit.go.kr/USR/NEWS/m_71/dtl.jsp?id=95087080', on: '2026-08-02'),
       amount: '월 최대 20만원 / 연 최대 240만원',
@@ -392,13 +392,13 @@ final _categories = <_BenefitCategory>[
           '· 타 주거지원 중복 수령자\n\n'
           '신청\n'
           '복지로(bokjiro.go.kr), 마이홈(myhome.go.kr), 주민센터 상시 접수',
-      links: const [
+      links: [
         ('복지로', 'https://www.bokjiro.go.kr'),
         ('마이홈포털', 'https://www.myhome.go.kr'),
         ('국토교통부', 'https://www.molit.go.kr'),
       ],
     ),
-    _Benefit(
+    const _Benefit(
       name: '문화예술패스',
       verified: (source: 'https://www.korea.kr/news/policyNewsView.do?newsId=148959296', on: '2026-08-02'),
       amount: '수도권 15만원 · 비수도권 20만원',
@@ -411,11 +411,11 @@ final _categories = <_BenefitCategory>[
           '주의사항\n'
           '· 신청: youthpass.kr (선착순)\n'
           '· 연말 소멸, 문화누리카드 중복 사용 불가',
-      links: const [
+      links: [
         ('청년문화예술패스', 'https://www.youthpass.kr'),
       ],
     ),
-    _Benefit(
+    const _Benefit(
       name: '장병내일적금',
       verified: (source: 'https://www.mma.go.kr/board/boardView.do?gesipan_id=2&gsgeul_no=1518778&mc=usr0000379', on: '2026-08-02'),
       amount: '이율 최대 9.0% / 예상 약 1,900만원',
@@ -431,7 +431,7 @@ final _categories = <_BenefitCategory>[
           '· 2026.12.31까지 가입 시 이자 비과세\n\n'
           '주의\n'
           '· 중도해지 시 매칭지원금·이자지원 미지급',
-      links: const [
+      links: [
         ('나라사랑포털', 'https://www.narasarang.or.kr'),
       ],
     ),
@@ -463,7 +463,7 @@ final _categories = <_BenefitCategory>[
       amount: '0세 월 100만 / 1세 월 50만',
       desc: '출생 후 자동 신청, 소득·재산 무관 전 가구 지급',
     ),
-    _Benefit(
+    const _Benefit(
       name: '첫만남이용권',
       verified: (source: 'https://www.bokjiro.go.kr/ssis-tbu/twataa/wlfareInfo/moveTWAT52011M.do?wlfareInfoId=WLF00004656', on: '2026-08-02'),
       amount: '첫째 200만원 / 둘째 이상 300만원',
@@ -479,7 +479,7 @@ final _categories = <_BenefitCategory>[
           '신청 방법\n'
           '· 주민센터 방문 또는 복지로·정부24 온라인\n'
           '· 출생신고 시 행복출산 원스톱 서비스로 통합신청 가능',
-      links: const [
+      links: [
         ('복지로', 'https://www.bokjiro.go.kr'),
         ('정부24', 'https://www.gov.kr'),
       ],
@@ -502,7 +502,7 @@ final _categories = <_BenefitCategory>[
       ],
       calcBuilder: (_) => const ParentalLeave6Plus6Screen(),
     ),
-    _Benefit(
+    const _Benefit(
       name: '아동수당',
       verified: (source: 'https://www.mohw.go.kr/board.es?mid=a10503010100&bid=0027&act=view&list_no=1490257', on: '2026-08-02'),
       amount: '월 10만~12만원(거주지역별)',
@@ -520,7 +520,7 @@ final _categories = <_BenefitCategory>[
           '신청 방법\n'
           '· 복지로·주민센터 신청\n'
           '· 출생신고 시 행복출산 원스톱으로 통합신청 가능',
-      links: const [
+      links: [
         ('복지로', 'https://www.bokjiro.go.kr'),
         ('정부24', 'https://www.gov.kr'),
       ],
@@ -556,7 +556,7 @@ final _categories = <_BenefitCategory>[
       ],
       calcBuilder: (_) => const DependentDeductionScreen(),
     ),
-    _Benefit(
+    const _Benefit(
       name: '산모·신생아 건강관리 (산후조리 바우처)',
       verified: (source: 'https://www.mohw.go.kr/board.es?mid=a10409020000&bid=0026&list_no=1488490&act=view', on: '2026-08-02'),
       amount: '건강관리사 방문 서비스 지원',
@@ -570,12 +570,12 @@ final _categories = <_BenefitCategory>[
           '· 본인부담금: 소득구간·서비스기간별 차등\n\n'
           '신청 방법\n'
           '· 복지로·보건소 신청, 바우처 유효기간은 출산일로부터 80일 이내(60일에서 연장)',
-      links: const [
+      links: [
         ('복지로', 'https://www.bokjiro.go.kr'),
         ('보건복지부', 'https://www.mohw.go.kr'),
       ],
     ),
-    _Benefit(
+    const _Benefit(
       name: '임신·출산 진료비 바우처',
       verified: (source: 'https://www.nhis.or.kr/static/html/wbma/c/wbmac0212.html', on: '2026-08-02'),
       amount: '임신 1회당 100만원 (다태아 140만원)',
@@ -589,7 +589,7 @@ final _categories = <_BenefitCategory>[
           '신청 방법\n'
           '· 국민행복카드 발급 후 자동 이용\n'
           '· 요양기관·정부24·복지로·카드사에서 신청',
-      links: const [
+      links: [
         ('정부24', 'https://www.gov.kr'),
         ('복지로', 'https://www.bokjiro.go.kr'),
       ],
@@ -635,7 +635,7 @@ final _categories = <_BenefitCategory>[
     ),
   ]),
   _BenefitCategory(label: '의료·어르신', items: [
-    _Benefit(
+    const _Benefit(
       name: '국가건강검진',
       verified: (source: 'https://www.nhis.or.kr/nhis/healthin/wbhaea01000m01.do', on: '2026-08-02'),
       amount: '일반검진 무료 · 암검진 10%',
@@ -654,12 +654,12 @@ final _categories = <_BenefitCategory>[
           '2. 공단 지정 검진기관(전국 약 22,000개소) 조회·예약(1~2개월 전 권장)\n'
           '3. 검진 전날 저녁 9시 이후 금식, 당일 신분증 지참\n'
           '4. 결과는 2~4주 후 우편·카카오톡·앱으로 통지',
-      links: const [
+      links: [
         ('국민건강보험공단', 'https://www.nhis.or.kr'),
         ('건강iN', 'https://hi.nhis.or.kr'),
       ],
     ),
-    _Benefit(
+    const _Benefit(
       name: '의료급여',
       verified: (source: 'https://www.mohw.go.kr/menu.es?mid=a10708030100', on: '2026-08-02'),
       amount: '1종 입원 0원 · 2종 입원 10%',
@@ -680,7 +680,7 @@ final _categories = <_BenefitCategory>[
           '· 휠체어·전동스쿠터·의수·보청기 등 보장구 무료/저가 지원\n\n'
           '신청 방법\n'
           '거주지 주민센터 방문 또는 복지로 온라인, 신분증·소득재산 증빙 제출 → 시군구 심사(30~60일) → 의료급여증 발급',
-      links: const [
+      links: [
         ('복지로', 'https://www.bokjiro.go.kr'),
         ('보건복지부', 'https://www.mohw.go.kr'),
         ('국민건강보험공단', 'https://www.nhis.or.kr'),
@@ -996,7 +996,7 @@ final _categories = <_BenefitCategory>[
       ],
       calcBuilder: (_) => const HouseholdSeparationScreen(),
     ),
-    _Benefit(
+    const _Benefit(
       name: '주거급여',
       verified: (source: 'https://www.myhome.go.kr/hws/portal/cont/selectRentalHouseholdSupView.do', on: '2026-08-02'),
       amount: '가구원수·급지별 월 기준임대료',
@@ -1015,7 +1015,7 @@ final _categories = <_BenefitCategory>[
           '2. 지자체 소득 조사, LH의 자가가구 주택상태 조사\n'
           '3. 임차가구는 매월 20일 계좌 입금, 자가가구는 수선 완료 후 지급\n'
           '4. 소득·가족구성 변경 시 14일 내 신고 의무',
-      links: const [
+      links: [
         ('복지로', 'https://www.bokjiro.go.kr'),
         ('마이홈포털', 'https://www.myhome.go.kr'),
       ],
@@ -1044,7 +1044,7 @@ final _categories = <_BenefitCategory>[
       ],
       calcBuilder: (_) => const EmploymentSupportProgramScreen(),
     ),
-    _Benefit(
+    const _Benefit(
       name: '청년창업사관학교',
       verified: (source: 'https://www.mss.go.kr/site/smba/ex/bbs/View.do?cbIdx=310&bcIdx=1056086', on: '2026-08-02'),
       amount: '사업화자금 최대 1억원',
@@ -1064,13 +1064,13 @@ final _categories = <_BenefitCategory>[
           '4. 발표평가(IR 피칭 5~10분 + 질의응답) + 현장실사\n'
           '5. 협약 체결 → 사업비 교부·멘토 배정·교육 참여\n\n'
           '인건비·임차료·재료비 등 사전 승인 항목만 사용 가능하며, 중도 탈락 시 지원금 전액 환수됩니다.',
-      links: const [
+      links: [
         ('K-Startup', 'https://www.k-startup.go.kr'),
         ('창업진흥원', 'https://www.kised.or.kr'),
         ('중소벤처기업진흥공단', 'https://www.kosmes.or.kr'),
       ],
     ),
-    _Benefit(
+    const _Benefit(
       name: 'K-Move 해외취업',
       verified: (source: 'https://www.worldjob.or.kr/ovsea/sdytrn.do', on: '2026-08-02'),
       amount: '정착지원금 최대 500만원',
@@ -1088,7 +1088,7 @@ final _categories = <_BenefitCategory>[
           '신청 절차\n'
           '월드잡플러스 회원가입·구직 프로필 등록 → 연 2~3회 모집공고 지원 → 서류·면접 → 연수 완료 및 기업 인터뷰·채용 → 취업 후 정착지원금 신청\n\n'
           '허위 취업 신고·조기 퇴사 시 지원금 전액 환수 및 향후 참여가 제한됩니다.',
-      links: const [
+      links: [
         ('월드잡플러스', 'https://www.worldjob.or.kr'),
         ('한국산업인력공단', 'https://www.hrdkorea.or.kr'),
       ],
@@ -1630,7 +1630,7 @@ class _SmeYouthEligibilityBannerState
         final remaining = yearsWorked >= 0 ? 5 - yearsWorked : 5;
         return _banner(context,
             icon: Icons.check_circle_outline,
-            text: '감면 대상 · 90% 감면 · 잔여 ${remaining}년',
+            text: '감면 대상 · 90% 감면 · 잔여 $remaining년',
             color: accent,
             borderColor: accent);
       },

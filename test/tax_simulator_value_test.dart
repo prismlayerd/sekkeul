@@ -338,9 +338,9 @@ void main() {
     expect(decided, closeTo(refDecided, 0.01), reason: '신고서 결정세액이 조문 검산과 다르다');
 
     // ── ③ 홈택스 가이드가 같은 draft를 읽는가 ──
-    await t.pumpWidget(MaterialApp(
-        key: const ValueKey('report'),
-        home: const TaxAnnualReportScreen(userType: '프리랜서')));
+    await t.pumpWidget(const MaterialApp(
+        key: ValueKey('report'),
+        home: TaxAnnualReportScreen(userType: '프리랜서')));
     for (int i = 0; i < 6; i++) {
       await t.pump(const Duration(milliseconds: 300));
       t.takeException();

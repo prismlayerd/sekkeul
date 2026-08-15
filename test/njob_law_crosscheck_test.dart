@@ -130,7 +130,7 @@ String won(num v) {
 }
 
 void main() {
-  final year = TaxYear.reference;
+  const year = TaxYear.reference;
   const months = 3;
 
   test('N잡러 12인 — 합산 종소세가 조문 검산과 일치한다', () async {

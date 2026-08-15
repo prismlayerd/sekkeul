@@ -304,7 +304,7 @@ void main() {
     // 경비율 고시는 귀속연도 다음 해에 나온다 — 2026 귀속 계산에 2025 귀속 고시를
     // 쓰는 것은 정상이다. 두 해 이상 벌어지면 갱신을 놓친 것이다.
     expect(TaxRates.incomeTaxBrackets.isNotEmpty, isTrue);
-    final gap = 2026 - noticeYear; // TaxYear.reference − 고시 귀속연도
+    const gap = 2026 - noticeYear; // TaxYear.reference − 고시 귀속연도
     expect(gap, lessThanOrEqualTo(1),
         reason: '경비율 고시가 기준 귀속연도보다 2년 이상 낡았다 — '
             '국세청 경비율 고시를 새로 받아 test/fixtures에 넣을 것');

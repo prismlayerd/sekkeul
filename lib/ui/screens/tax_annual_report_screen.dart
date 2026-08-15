@@ -282,7 +282,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       return ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         children: [
-          Text('${_year}년 귀속\n종합소득세 신고서', style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
+          Text('$_year년 귀속\n종합소득세 신고서', style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(20),
@@ -318,7 +318,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       children: [
-        Text('${_year}년 귀속\n종합소득세 신고서', style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
+        Text('$_year년 귀속\n종합소득세 신고서', style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
         const SizedBox(height: 4),
         Text('①진단 결과를 홈택스 화면에 나오는 순서대로 안내해드려요.\n신고 기한: 매년 5월 1일 ~ 5월 31일'.keepWords,
             style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
@@ -327,9 +327,9 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: primary.withOpacity(0.06),
+            color: primary.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: primary.withOpacity(0.2)),
+            border: Border.all(color: primary.withValues(alpha: 0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,7 +351,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           decoration: BoxDecoration(
             color: cardColor,
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: primary.withOpacity(0.35), width: 1.5),
+            border: Border.all(color: primary.withValues(alpha: 0.35), width: 1.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,7 +382,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
         Container(
           width: 22, height: 22,
           alignment: Alignment.center,
-          decoration: BoxDecoration(color: highlight ? primary : subColor.withOpacity(0.3), shape: BoxShape.circle),
+          decoration: BoxDecoration(color: highlight ? primary : subColor.withValues(alpha: 0.3), shape: BoxShape.circle),
           child: Text('$n', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(width: 10),
@@ -401,9 +401,9 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: primary.withOpacity(0.06),
+        color: primary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: primary.withOpacity(0.2)),
+        border: Border.all(color: primary.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -423,13 +423,13 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+            decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Icon(Icons.schedule_rounded, color: Colors.orange, size: 16),
+              const Icon(Icons.schedule_rounded, color: Colors.orange, size: 16),
               const SizedBox(width: 8),
               Expanded(child: Text(
                 '신고 기한: 매년 5월 1일 ~ 5월 31일\n기한 초과 시 무신고 가산세 20% + 납부 지연 가산세 발생'.keepWords,
-                style: TextStyle(color: Colors.orange, fontSize: 12, height: 1.5),
+                style: const TextStyle(color: Colors.orange, fontSize: 12, height: 1.5),
               )),
             ]),
           ),
@@ -444,7 +444,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       children: [
         // ── 인트로 ──
         Text(
-          '${_year}년 귀속\n종합소득세 신고서',
+          '$_year년 귀속\n종합소득세 신고서',
           style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2),
         ),
         const SizedBox(height: 4),
@@ -463,7 +463,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
         const SizedBox(height: 10),
         _buildAutoItem('근로소득공제', '총급여 구간별 자동 계산', _laborDeduction, primary, textColor, subColor, cardColor),
         const SizedBox(height: 8),
-        _buildAutoItem('인적공제 $_dependentCount인', '1인당 150만원 × ${_dependentCount}인', _personalExemption, primary, textColor, subColor, cardColor),
+        _buildAutoItem('인적공제 $_dependentCount인', '1인당 150만원 × $_dependentCount인', _personalExemption, primary, textColor, subColor, cardColor),
         const SizedBox(height: 8),
         _buildAutoItem('4대보험 소득공제', '연금·건강·고용보험 자동 계산', _insuranceDeduction, primary, textColor, subColor, cardColor),
         const SizedBox(height: 8),
@@ -598,9 +598,9 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: primary.withOpacity(0.06),
+        color: primary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: primary.withOpacity(0.2)),
+        border: Border.all(color: primary.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -625,7 +625,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           if (gross <= 0) ...[
             const SizedBox(height: 8),
             Text('총급여를 입력해야 계산이 시작됩니다.'.keepWords,
-                style: TextStyle(color: Colors.orange, fontSize: 12)),
+                style: const TextStyle(color: Colors.orange, fontSize: 12)),
           ],
         ],
       ),
@@ -636,7 +636,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(children: [
-        Icon(Icons.check_circle_rounded, color: Colors.green, size: 15),
+        const Icon(Icons.check_circle_rounded, color: Colors.green, size: 15),
         const SizedBox(width: 8),
         Expanded(child: Text(label, style: TextStyle(color: subColor, fontSize: 13))),
         const SizedBox(width: 8),
@@ -678,7 +678,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
-        Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
+        const Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
         const SizedBox(width: 12),
         Expanded(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -730,13 +730,16 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: hasValue ? Border.all(color: primary.withOpacity(0.5), width: 1.2) : null,
+        border: hasValue ? Border.all(color: primary.withValues(alpha: 0.5), width: 1.2) : null,
       ),
       child: Column(children: [
         InkWell(
           onTap: () => setState(() {
-            if (isExpanded) _expanded.remove(id);
-            else _expanded.add(id);
+            if (isExpanded) {
+              _expanded.remove(id);
+            } else {
+              _expanded.add(id);
+            }
           }),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
@@ -770,7 +773,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           ),
         ),
         if (isExpanded) ...[
-          Divider(height: 1, color: subColor.withOpacity(0.15)),
+          Divider(height: 1, color: subColor.withValues(alpha: 0.15)),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
             child: Column(
@@ -790,7 +793,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: primary.withOpacity(0.06),
+                    color: primary.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(note, style: TextStyle(color: textColor, fontSize: 12, height: 1.5)),
@@ -858,7 +861,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold),
           decoration: InputDecoration(
             filled: true,
-            fillColor: subColor.withOpacity(0.08),
+            fillColor: subColor.withValues(alpha: 0.08),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(4),
               borderSide: BorderSide.none,
@@ -898,7 +901,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: primary.withOpacity(0.35), width: 1.5),
+        border: Border.all(color: primary.withValues(alpha: 0.35), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -959,9 +962,9 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: primary.withOpacity(0.06),
+        color: primary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: primary.withOpacity(0.2)),
+        border: Border.all(color: primary.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -984,15 +987,15 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
+              color: Colors.orange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Icon(Icons.schedule_rounded, color: Colors.orange, size: 16),
+              const Icon(Icons.schedule_rounded, color: Colors.orange, size: 16),
               const SizedBox(width: 8),
               Expanded(child: Text(
                 '신고 기한: 매년 5월 1일 ~ 5월 31일\n기한 초과 시 무신고 가산세 20% + 납부 지연 가산세 발생'.keepWords,
-                style: TextStyle(color: Colors.orange, fontSize: 12, height: 1.5),
+                style: const TextStyle(color: Colors.orange, fontSize: 12, height: 1.5),
               )),
             ]),
           ),

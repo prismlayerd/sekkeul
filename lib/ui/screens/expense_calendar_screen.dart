@@ -1441,7 +1441,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   /// 이 블록은 그 밖의 사업자에게만 뜬다. 복식부기의무자만의 문제가 아니라,
   /// 간편장부대상자도 4,800만을 넘으면 장부 없이 신고할 때 똑같이 맞는다.
   Widget _noBookkeepingWarning(BookkeepingJudgment? j, Color ink, Color sub) {
-    final danger = AppTheme.colorDanger;
+    const danger = AppTheme.colorDanger;
     final isDouble = j?.isDoubleEntry ?? false;
     return GestureDetector(
       onTap: _openBookkeepingGuide,
@@ -1450,7 +1450,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Icon(Icons.error_outline_rounded, size: 14, color: danger),
+            const Icon(Icons.error_outline_rounded, size: 14, color: danger),
             const SizedBox(width: 6),
             Expanded(
               child: Text('위 적립액에 무기장가산세 20%가 들어 있어요'.keepWords,
@@ -1689,7 +1689,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         // 절취선(5px)이 행 사이에 끼므로 높이를 실제 자식 수로 센다.
         final weekRows = (rows.length + 1) ~/ 2;
         final sectionHeight = weekRows * ch + (weekRows - 1) * 5;
-        final g = Container(
+        final g = SizedBox(
           // 왼쪽 테두리 1px은 Container 폭 **안쪽**에 그려진다. totalW로 두면
           // 7칸(각 w/7)이 들어갈 자리가 1px 모자라 매번 오버플로가 난다.
           width: totalW + 1,
@@ -2234,8 +2234,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     // 결제수단별
     final pmTotals = <String, int>{'신용카드': 0, '체크+현금': 0, '기타': 0};
     for (final e in allExps) {
-      if (e.paymentMethod == _catCredit)      pmTotals['신용카드'] = pmTotals['신용카드']! + e.amount;
-      else if (e.paymentMethod == _catDebit)  pmTotals['체크+현금'] = pmTotals['체크+현금']! + e.amount;
+      if (e.paymentMethod == _catCredit) {
+        pmTotals['신용카드'] = pmTotals['신용카드']! + e.amount;
+      } else if (e.paymentMethod == _catDebit)  pmTotals['체크+현금'] = pmTotals['체크+현금']! + e.amount;
       else                                    pmTotals['기타'] = pmTotals['기타']! + e.amount;
     }
 
@@ -2838,7 +2839,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         children: [
           SizedBox(
             width: 34,
-            child: Text('${month}월',
+            child: Text('$month월',
                 style: AppTheme.sans(13, labelColor,
                     weight: isCurrent ? FontWeight.w800 : FontWeight.w500)),
           ),

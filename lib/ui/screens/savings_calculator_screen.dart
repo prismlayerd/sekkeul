@@ -204,7 +204,7 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
                           style: TextStyle(color: textColor, fontSize: 14)),
                       Switch(
                         value: _taxExempt,
-                        activeColor: primary,
+                        activeThumbColor: primary,
                         onChanged: (v) => setState(() => _taxExempt = v),
                       ),
                     ],

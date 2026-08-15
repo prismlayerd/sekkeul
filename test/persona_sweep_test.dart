@@ -77,9 +77,9 @@ void main() {
         print('$name 총급여 ${won(salary)} · 카드공제 ${won(card2.finalDeduction)}'
             ' · 낸 세금 ${won(decided)} · 환급 ${won(est.refund)}');
 
-        expect(est.refund, lessThanOrEqualTo(est.cap + 1), reason: '$name');
-        expect(est.refund, greaterThanOrEqualTo(0), reason: '$name');
-        expect(card2.finalDeduction, greaterThanOrEqualTo(0), reason: '$name');
+        expect(est.refund, lessThanOrEqualTo(est.cap + 1), reason: name);
+        expect(est.refund, greaterThanOrEqualTo(0), reason: name);
+        expect(card2.finalDeduction, greaterThanOrEqualTo(0), reason: name);
         // 카드공제 한도 — 기본(자녀 없음) + 추가한도.
         final maxCard = EmployeeTaxCalculator.creditCardBaseLimit(grossIncome: salary) +
             (salary <= 70000000 ? 3000000.0 : 2000000.0);
@@ -138,8 +138,8 @@ void main() {
             ' · ${r.expectedRefundOrPayment >= 0 ? '환급' : '납부'} '
             '${won(r.expectedRefundOrPayment.abs())}');
 
-        expect(r.annualTotalTax, greaterThanOrEqualTo(0), reason: '$name');
-        expect(r.taxBase, greaterThanOrEqualTo(0), reason: '$name');
+        expect(r.annualTotalTax, greaterThanOrEqualTo(0), reason: name);
+        expect(r.taxBase, greaterThanOrEqualTo(0), reason: name);
         expect(r.estimatedExpense, lessThanOrEqualTo(r.annualEstimatedIncome + 1),
             reason: '$name: 경비가 수입보다 클 수 없다');
         expect(r.yellowUmbrellaDeduction, lessThanOrEqualTo(r.yellowUmbrellaLimit + 1),
@@ -284,8 +284,8 @@ void main() {
             ' · ${r.expectedRefundOrPayment >= 0 ? '환급' : '납부'} '
             '${won(r.expectedRefundOrPayment.abs())}');
 
-        expect(r.annualTotalTax, greaterThanOrEqualTo(0), reason: '$name');
-        expect(r.taxBase, greaterThanOrEqualTo(0), reason: '$name');
+        expect(r.annualTotalTax, greaterThanOrEqualTo(0), reason: name);
+        expect(r.taxBase, greaterThanOrEqualTo(0), reason: name);
         expect(r.annualLocalTax, closeTo(TaxRates.truncateWon(r.annualIncomeTax * 0.1), 10),
             reason: '$name: 지방소득세는 소득세의 10%');
         final gross = salary + r.estimatedFreelancerBusinessIncome;

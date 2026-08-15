@@ -137,7 +137,7 @@ class TaxReportFormScreen extends StatelessWidget {
   Widget _ghostRow(BuildContext context, String op) {
     final line = AppTheme.line(context);
     final tert = AppTheme.inkTertiary(context);
-    final ghost = tert.withOpacity(0.45);
+    final ghost = tert.withValues(alpha: 0.45);
     return Container(
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: line, width: 1))),
       child: IntrinsicHeight(
@@ -370,8 +370,8 @@ class _ReportFormLoaderState extends State<ReportFormLoader> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(
-        body: const SizedBox.shrink(),
+      return const Scaffold(
+        body: SizedBox.shrink(),
       );
     }
     final d = _draft;

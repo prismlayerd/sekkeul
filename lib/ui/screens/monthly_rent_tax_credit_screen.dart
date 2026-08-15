@@ -107,7 +107,7 @@ class _MonthlyRentTaxCreditScreenState
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(children: [
-                  Icon(Icons.info_outline_rounded,
+                  const Icon(Icons.info_outline_rounded,
                       size: 16, color: AppTheme.colorDanger),
                   const SizedBox(width: 8),
                   Expanded(

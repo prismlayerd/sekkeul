@@ -558,7 +558,7 @@ class CombinedTaxCalculator {
     required double annualFinancialIncome,
     required double otherTaxableIncome,
   }) {
-    final double threshold = TaxRates.financialIncomeThreshold;
+    const double threshold = TaxRates.financialIncomeThreshold;
     final bool isSeparateTax = annualFinancialIncome <= threshold;
     final bool isHealthImpacted = annualFinancialIncome > TaxRates.financialIncomeHealthThreshold;
 

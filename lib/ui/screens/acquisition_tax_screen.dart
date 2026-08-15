@@ -167,7 +167,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
                       ),
                       Switch(
                         value: _adjusted,
-                        activeColor: primary,
+                        activeThumbColor: primary,
                         onChanged: (v) => setState(() => _adjusted = v),
                       ),
                     ],

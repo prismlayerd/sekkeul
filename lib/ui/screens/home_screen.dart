@@ -654,7 +654,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('특허 기술을 통해 로컬 세무 정보가 복구 불가능하게 완전 파기되었습니다.'.keepWords),
-                      backgroundColor: Color(0xFFFF4D4D),
+                      backgroundColor: const Color(0xFFFF4D4D),
                     ),
                   );
                 }
@@ -950,7 +950,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   /// 명세서 머리줄 — 발행 시각과 귀속연도. 종이 영수증이 맨 위에 찍는 것.
   Widget _slipMeta() {
     final now = DateTime.now();
-    final two = (int v) => v.toString().padLeft(2, '0');
+    String two(int v) => v.toString().padLeft(2, '0');
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 5),
       // 자간 2.0인 label 스타일을 그대로 쓰면 360px에서 두 칸이 부딪힌다.

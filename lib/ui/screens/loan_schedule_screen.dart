@@ -49,7 +49,9 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
 
     if (_method == 0) {
       double pow1 = 1.0;
-      for (int i = 0; i < n; i++) pow1 *= (1 + r);
+      for (int i = 0; i < n; i++) {
+        pow1 *= (1 + r);
+      }
       final pmt = p * r * pow1 / (pow1 - 1);
       double balance = p;
       for (int m = 1; m <= n && balance > 0.5; m++) {

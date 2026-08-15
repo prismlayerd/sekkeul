@@ -156,7 +156,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                         Text(
                             '최저임금 미달 (${won(_minimumWage2026)} 이상이어야 합니다)'
                                 .keepWords,
-                            style: TextStyle(
+                            style: const TextStyle(
                                 color: Colors.redAccent,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500)),
