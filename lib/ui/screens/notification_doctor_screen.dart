@@ -118,7 +118,9 @@ class _NotificationDoctorScreenState extends State<NotificationDoctorScreen> {
                     '두 발을 보냅니다 — 지금 하나, 10초 뒤 하나.\n'
                     '· 둘 다 안 오면 → 권한이나 방해금지 문제\n'
                     '· 즉시만 오면 → 예약(알람)이 막힌 것, 기기 절전 설정을 보세요\n'
-                    '· 둘 다 오면 → 알림은 살아 있고 리마인더 설정 쪽 문제'
+                    '· 소리 없이 상단 줄에만 뜨면 → 채널 중요도가 낮아진 것,\n'
+                    '  안드로이드 설정 > 앱 > 세끌 > 알림에서 되돌립니다\n'
+                    '· 둘 다 배너로 오면 → 알림은 살아 있고 리마인더 설정 쪽 문제'
                         .keepWords,
                     style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.6),
                   ),

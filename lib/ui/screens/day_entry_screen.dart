@@ -57,7 +57,13 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
   /// 한 번에 하나만 연다 — 둘이 열려 있으면 어느 쪽을 저장하는지 알 수 없다.
   String? _open;
   QuickEntryPreset? _pendingPreset;
-  final _openKey = GlobalKey();
+
+  /// 열려 있는 편집 칸. 화면 **아래 버튼**이 여기로 저장을 부른다 —
+  /// 버튼이 칸 안에 있으면 목록을 스크롤할 때 같이 밀려 올라가 사라진다.
+  final _expKey = GlobalKey<_ExpenseFormState>();
+  final _incKey = GlobalKey<_IncomeFormState>();
+
+  BuildContext? get _openCtx => _expKey.currentContext ?? _incKey.currentContext;
 
   final List<IncomeEntry> _incomes = [];
   final List<ExpenseItem> _expenses = [];
@@ -186,7 +192,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
     });
     // 펼친 자리가 키보드에 가리지 않게 스크롤을 붙여 준다.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final ctx = _openKey.currentContext;
+      final ctx = _openCtx;
       if (ctx != null) {
         Scrollable.ensureVisible(ctx, duration: const Duration(milliseconds: 220), alignment: 0.1);
       }
@@ -210,6 +216,9 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(title)),
+      // 웹에서 bottomNavigationBar에 Row+Expanded를 바로 넣으면 body까지
+      // 안 보인다 — SizedBox로 높이를 못박아 감싼다.
+      bottomNavigationBar: SizedBox(height: 64, child: _bottomBar()),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
@@ -295,7 +304,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
   Widget _expenseForm({ExpenseItem? edit}) {
     final preset = _pendingPreset;
     return _ExpenseForm(
-      key: _openKey,
+      key: _expKey,
       profile: _profile,
       initial: edit == null
           ? _ExpenseDraft(
@@ -333,7 +342,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
   /// 목록 안에서 펼쳐지는 수익 편집기.
   Widget _incomeForm({IncomeEntry? edit}) {
     return _IncomeForm(
-      key: _openKey,
+      key: _incKey,
       profile: _profile,
       initial: edit == null
           ? _IncomeDraft(
@@ -364,6 +373,92 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
         _closeEditor();
       },
     );
+  }
+
+  /// 화면 맨 아래 버튼 줄.
+  ///
+  /// 적고 나서 나가는 길이 **뒤로가기밖에** 없었다. 뒤로가기는 "그만두기"로
+  /// 읽히지 "다 됐다"로 읽히지 않는다 — 방금 적은 게 저장됐는지 알 수 없다.
+  ///
+  /// 편집 중이면 삭제·취소·저장, 아니면 완료. 항목은 저장할 때 바로 쓰이므로
+  /// 완료는 화면을 닫기만 한다.
+  Widget _bottomBar() {
+    final editing = _open != null && _open != 'inc' && _open != 'exp';
+
+    if (_open == null) {
+      return _barShell([
+        Expanded(child: _barButton('완료', filled: true, onTap: () => Navigator.pop(context))),
+      ]);
+    }
+
+    return _barShell([
+      if (editing) _barButton('삭제', danger: true, onTap: _deleteOpen),
+      const Spacer(),
+      _barButton('취소', onTap: _closeEditor),
+      const SizedBox(width: 8),
+      SizedBox(
+        width: 108,
+        child: _barButton('저장', filled: true, onTap: _submitOpen),
+      ),
+    ]);
+  }
+
+  Widget _barShell(List<Widget> children) => Container(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: AppTheme.line(context))),
+          color: AppTheme.backgroundColor(context),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+        child: Row(children: children),
+      );
+
+  Widget _barButton(
+    String label, {
+    required VoidCallback onTap,
+    bool filled = false,
+    bool danger = false,
+  }) {
+    final ink = AppTheme.ink(context);
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          height: 44,
+          alignment: Alignment.center,
+          padding: filled ? null : const EdgeInsets.symmetric(horizontal: 12),
+          color: filled ? ink : null,
+          child: Text(label,
+              style: AppTheme.sans(
+                  AppTheme.tsBase,
+                  filled
+                      ? AppTheme.backgroundColor(context)
+                      : danger
+                          ? AppTheme.colorDanger
+                          : AppTheme.inkSecondary(context),
+                  weight: filled || danger ? FontWeight.w700 : FontWeight.w400)),
+        ),
+      ),
+    );
+  }
+
+  void _submitOpen() {
+    _expKey.currentState?.submit();
+    _incKey.currentState?.submit();
+  }
+
+  Future<void> _deleteOpen() async {
+    final id = _open;
+    if (id == null) return;
+    final inc = _incomes.where((e) => e.id == id).firstOrNull;
+    if (inc != null) {
+      await _deleteIncome(inc);
+    } else {
+      final exp = _expenses.where((e) => e.id == id).firstOrNull;
+      if (exp != null) await _deleteExpense(exp);
+    }
+    _closeEditor();
   }
 
   /// 기록 한 줄 — 이름, 그 밑에 부속 정보, 오른쪽 끝에 금액. 누르면 고친다.
@@ -491,16 +586,10 @@ class _FormBlock extends StatelessWidget {
   const _FormBlock({
     required this.title,
     required this.children,
-    required this.onSave,
-    required this.onCancel,
-    this.onDelete,
     this.note,
   });
   final String title;
   final List<Widget> children;
-  final VoidCallback onSave;
-  final VoidCallback onCancel;
-  final Future<void> Function()? onDelete;
   final String? note;
 
   @override
@@ -510,7 +599,7 @@ class _FormBlock extends StatelessWidget {
       child: AppTheme.dashedBox(
         context,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -522,52 +611,6 @@ class _FormBlock extends StatelessWidget {
               ],
               const SizedBox(height: 14),
               ...children,
-              Row(children: [
-                if (onDelete != null)
-                  Semantics(
-                    button: true,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => onDelete!(),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-                        child: Text('삭제',
-                            style: AppTheme.sans(AppTheme.tsSM, AppTheme.colorDanger,
-                                weight: FontWeight.w600)),
-                      ),
-                    ),
-                  ),
-                const Spacer(),
-                Semantics(
-                  button: true,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: onCancel,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                      child: Text('취소',
-                          style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Semantics(
-                  button: true,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: onSave,
-                    child: Container(
-                      height: 40,
-                      padding: const EdgeInsets.symmetric(horizontal: 22),
-                      alignment: Alignment.center,
-                      color: AppTheme.ink(context),
-                      child: Text('저장',
-                          style: AppTheme.sans(AppTheme.tsSM, AppTheme.backgroundColor(context),
-                              weight: FontWeight.w700)),
-                    ),
-                  ),
-                ),
-              ]),
             ],
           ),
         ),
@@ -665,21 +708,23 @@ class _ExpenseFormState extends State<_ExpenseForm> {
     super.dispose();
   }
 
+  _ExpenseDraft get _draft => _ExpenseDraft(
+        amount: int.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0,
+        content: _contentCtrl.text.trim(),
+        category: _category,
+        paymentMethod: _payment,
+        isBusiness: _isBusiness,
+      );
+
+  /// 화면 아래 버튼이 부른다 — 저장 버튼은 폼 안이 아니라 화면 밑에 있다.
+  void submit() => widget.onSave(_draft);
+
   @override
   Widget build(BuildContext context) {
     const cats = kExpenseCategories;
     return _FormBlock(
       title: widget.onDelete == null ? '지출 추가' : '지출 수정',
       note: widget.dayCount > 1 ? '고른 ${widget.dayCount}일에 각각 기록됩니다.' : null,
-      onDelete: widget.onDelete,
-      onCancel: widget.onCancel,
-      onSave: () => widget.onSave(_ExpenseDraft(
-        amount: int.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0,
-        content: _contentCtrl.text.trim(),
-        category: _category,
-        paymentMethod: _payment,
-        isBusiness: _isBusiness,
-      )),
       children: [
         _Field('금액', AmountField(controller: _amountCtrl, expand: true, autofocus: true)),
         _Field(
@@ -756,19 +801,21 @@ class _IncomeFormState extends State<_IncomeForm> {
     super.dispose();
   }
 
+  _IncomeDraft get _draft => _IncomeDraft(
+        amount: int.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0,
+        memo: _memoCtrl.text.trim(),
+        incomeType: _type,
+        isWithheld: _isWithheld,
+      );
+
+  /// 화면 아래 버튼이 부른다.
+  void submit() => widget.onSave(_draft);
+
   @override
   Widget build(BuildContext context) {
     return _FormBlock(
       title: widget.onDelete == null ? '수익 추가' : '수익 수정',
       note: widget.dayCount > 1 ? '고른 ${widget.dayCount}일에 각각 기록됩니다.' : null,
-      onDelete: widget.onDelete,
-      onCancel: widget.onCancel,
-      onSave: () => widget.onSave(_IncomeDraft(
-        amount: int.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0,
-        memo: _memoCtrl.text.trim(),
-        incomeType: _type,
-        isWithheld: _isWithheld,
-      )),
       children: [
         _Field('금액', AmountField(controller: _amountCtrl, expand: true, autofocus: true)),
         _Field(

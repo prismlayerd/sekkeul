@@ -38,7 +38,77 @@ class NotificationHelper {
         debugPrint('Notification tapped: ${response.payload}');
       },
     );
+
+    await _createChannels();
   }
+
+  // ── 알림 채널 ──────────────────────────────────────────────────────
+  //
+  // 안드로이드 8부터 **채널이 알림의 성격을 정한다.** 소리를 낼지, 화면 위로
+  // 배너를 띄울지(헤드업), 잠금화면에 보일지 전부 채널에 달렸다. 코드의
+  // importance는 채널을 **만들 때 한 번만** 반영되고, 그 뒤로는 사용자
+  // 설정에만 따른다 — 값을 고쳐도 이미 만들어진 채널에는 안 먹는다.
+  //
+  // 그래서 두 가지를 한다.
+  // 1) 첫 알림을 기다리지 않고 **켤 때 미리** 만든다. 예전에는 플러그인이
+  //    첫 발화 때 알아서 만들게 뒀는데, 그러면 어떤 성격으로 만들어졌는지
+  //    확인할 방법이 없었다.
+  // 2) 성격을 바꿀 때는 **id를 올린다**(v2 → v3). 안 올리면 옛 채널이 그대로
+  //    남아 조용한 알림이 계속 나간다.
+  static const String reminderChannelId = 'sekkeul_reminder_v3';
+  static const String nudgeChannelId = 'sekkeul_nudge_v3';
+
+  Future<void> _createChannels() async {
+    final android = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (android == null) return;
+    try {
+      for (final c in const [
+        AndroidNotificationChannel(
+          reminderChannelId,
+          '리마인더',
+          description: '신고 기한·가계부 기록 등 내가 정한 알림',
+          importance: Importance.max, // 화면 위 배너 + 소리
+          playSound: true,
+          enableVibration: true,
+        ),
+        AndroidNotificationChannel(
+          nudgeChannelId,
+          '절세 안내',
+          description: '공제 문턱 도달·지출 목표 초과 등 상황 알림',
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+        ),
+      ]) {
+        await android.createNotificationChannel(c);
+      }
+    } catch (e) {
+      debugPrint('알림 채널을 못 만들었다: $e');
+    }
+  }
+
+  /// 채널 밖에서 매번 같이 넘기는 표시 설정.
+  ///
+  /// 채널이 성격을 정하지만, 잠금화면 공개 범위와 분류는 알림마다 준다.
+  static AndroidNotificationDetails _android(String channelId, String channelName,
+          {required String body}) =>
+      AndroidNotificationDetails(
+        channelId,
+        channelName,
+        importance: Importance.max,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+        playSound: true,
+        enableVibration: true,
+        // 잠금화면에도 내용을 보여준다 — 가릴 만한 개인정보를 담지 않는다.
+        visibility: NotificationVisibility.public,
+        category: AndroidNotificationCategory.reminder,
+        // 긴 문구가 배너에서 잘리지 않게 펼침 형태를 같이 준다.
+        // 본문이 없는 알림(리마인더는 제목만 있다)에 붙이면 빈 줄이 생긴다.
+        styleInformation:
+            body.trim().isEmpty ? null : BigTextStyleInformation(body),
+      );
 
   Future<void> requestPermissions() async {
     // Android 13+ 알림 표시 권한만 요청(정확 알람은 사용하지 않음).
@@ -62,18 +132,13 @@ class NotificationHelper {
     } catch (_) {
       // 기록에 실패해도 알림은 띄운다 — 알림이 본체고 기록은 부산물이다.
     }
-    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      'tax_nudge_channel',
-      '세금·절세 알림',
-      channelDescription: '공제 문턱 도달 등 절세 가이드 알림',
-      importance: Importance.max,
-      priority: Priority.high,
-      ticker: 'ticker',
-      icon: '@mipmap/ic_launcher',
-    );
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-      iOS: DarwinNotificationDetails(),
+    final platformChannelSpecifics = NotificationDetails(
+      android: _android(nudgeChannelId, '절세 안내', body: body),
+      iOS: const DarwinNotificationDetails(
+        presentAlert: true,
+        presentSound: true,
+        presentBanner: true,
+      ),
     );
 
     // 즉시 알림도 홈에서 await 없이 던져진다(문턱 돌파·예산 초과 안내).
@@ -107,19 +172,9 @@ class NotificationHelper {
     required DateTime when,
     DateTimeComponents? matchComponents,
   }) async {
-    // 알람처럼 화면 배너+소리로 뜨도록 max 중요도. 채널 중요도는 생성 후 고정이라
-    // 새 채널 ID(_v2)로 바꿔 기존 조용한 채널을 대체한다.
-    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      'sekkeul_reminder_v2',
-      '리마인더',
-      channelDescription: '신고 기한·가계부 기록 등 예약 알림',
-      importance: Importance.max,
-      priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
-    );
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-      iOS: DarwinNotificationDetails(
+    final platformChannelSpecifics = NotificationDetails(
+      android: _android(reminderChannelId, '리마인더', body: body),
+      iOS: const DarwinNotificationDetails(
         presentAlert: true,
         presentSound: true,
         presentBanner: true,

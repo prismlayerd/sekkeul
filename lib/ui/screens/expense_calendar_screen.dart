@@ -171,6 +171,19 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   /// [_cellKeys]가 어느 달의 것인지. 달이 바뀌면 비운다.
   String? _cellKeysMonth;
 
+  /// 확대 단계별 **한 칸이 차지하는 날짜칸 수**.
+  ///
+  /// 1단계는 한 달을 한눈에, 2단계는 금액을 읽을 수 있게, 3단계는 금액이
+  /// 여덟 자리여도 줄지 않고 들어가게. 실기기에서 2단계로도 숫자가 칸을
+  /// 넘는다는 제보를 받아 한 단계를 더 뒀다.
+  static const List<double> _zoomSpans = [1, 2, 3.4];
+
+  double get _colSpan => _zoomSpans[_zoomLevel - 1];
+
+  /// 칸 안 금액 글자. 칸이 넓어진 만큼 키운다 — 3단계에서까지 10픽셀로 두면
+  /// 넓힌 보람이 없다.
+  double get _laneFont => _zoomLevel >= 3 ? AppTheme.tsSM : AppTheme.tsLane;
+
   /// 여러 날 선택이 시작되는 최소 이동 거리(논리 픽셀).
   /// 안드로이드 기본 터치 슬롭(18)보다 조금 크게 — 달력 칸이 좁아서
   /// 톡 누르는 손이 한 칸을 쉽게 넘어간다.
@@ -425,8 +438,12 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       (_incomesByDay[key] ?? const []).fold(0, (s, e) => s + e.amount);
 
   // 결제수단별 합계 (카테고리 점 표시·prefill용)
-  /// 확대(2단계) 칸 한 줄의 높이 — laneBar의 Container(height:15) + margin 1.
-  static const double _laneH = 16;
+  /// 칸 안 금액 한 줄이 차지하는 높이 — laneBar의 Container + margin.
+  /// 글자를 키운 3단계에서는 줄도 같이 커져야 글자가 줄에 눌리지 않는다.
+  double get _laneH => _zoomLevel >= 3 ? 22 : 16;
+
+  /// laneBar의 Container 높이(= [_laneH] - margin).
+  double get _laneBoxH => _laneH - (_zoomLevel >= 3 ? 2 : 1);
 
   /// 날짜 숫자와 위아래 여백 — 줄이 시작되기 전까지 칸이 쓰는 높이.
   /// Padding(4,·,·,3) + dayNumber(21) + SizedBox(3).
@@ -1645,7 +1662,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         ),
       );
     }
-    final cellW = vp.width / 7 * 2; // 2단계: 한 칸 = 날짜칸 2개 폭
+    final cellW = vp.width / 7 * _colSpan;
     return SizedBox(
       height: 28,
       width: double.infinity,
@@ -1671,10 +1688,11 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
 
   /// 핀치를 놓을 때 손가락 벌어짐/오므림으로 단계 결정.
   void _resolvePinch() {
-    if (_pinchRatio > 1.18 && _zoomLevel == 1) {
-      _setZoom(2);
-    } else if (_pinchRatio < 0.85 && _zoomLevel == 2) {
-      _setZoom(1);
+    // 한 번에 한 단계씩 오르내린다.
+    if (_pinchRatio > 1.18 && _zoomLevel < _zoomSpans.length) {
+      _setZoom(_zoomLevel + 1);
+    } else if (_pinchRatio < 0.85 && _zoomLevel > 1) {
+      _setZoom(_zoomLevel - 1);
     }
     _pinchBaseDist = null;
     _pinchRatio = 1.0;
@@ -1716,7 +1734,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       _vp = Size(constraints.maxWidth, constraints.maxHeight);
       final w = constraints.maxWidth;
       final zoomed = _zoomLevel > 1;
-      final cw = zoomed ? w / 7 * 2 : w / 7;
+      final cw = w / 7 * _colSpan;
       // 확대하면 칸에 금액 줄이 들어간다. 화면 높이만 나누면 줄이 칸을 넘으므로
       // **가장 빽빽한 날이 들어갈 만큼**은 확보한다(세로 스크롤 안이라 커져도 된다).
       final ch = _zoomLevel == 1
@@ -2041,8 +2059,8 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       final subC = AppTheme.inkSecondary(context);
       final showText = (!range || start) && amt > 0;
       return Container(
-        height: 15,
-        margin: const EdgeInsets.only(bottom: 1),
+        height: _laneBoxH,
+        margin: EdgeInsets.only(bottom: _laneH - _laneBoxH),
         alignment: Alignment.centerLeft,
         decoration: range
             ? BoxDecoration(
@@ -2053,11 +2071,17 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 _MarkShape(mark, size: 6, color: inkC),
                 const SizedBox(width: 3),
                 Expanded(
-                  child: Text(comma(amt),
-                      style: AppTheme.sans(AppTheme.tsLane,
-                          isIncome ? inkC : subC,
-                          weight: isIncome ? FontWeight.w700 : FontWeight.w500),
-                      softWrap: false, overflow: TextOverflow.clip),
+                  // 칸을 넘으면 **잘리지 않고 줄어든다.** 예전에는 clip이라
+                  // 금액이 자릿수 중간에서 뭉텅 잘려 나갔다 — 850,000이
+                  // 850,0으로 보이면 틀린 숫자를 읽게 된다.
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(comma(amt),
+                        style: AppTheme.sans(_laneFont, isIncome ? inkC : subC,
+                            weight: isIncome ? FontWeight.w700 : FontWeight.w500),
+                        softWrap: false),
+                  ),
                 ),
               ])
             : null,
