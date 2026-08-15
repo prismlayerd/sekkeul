@@ -796,13 +796,22 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('4대보험 가입여부', style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+              // 묻는 건 "가입했는가"가 아니라 **"보험료를 직접 내는가"**다.
+              // 계산이 쓰는 값이 그것이다(freelancer_tax의 paysNationalPension =
+              // 지역가입자 납부액을 연금보험료공제로 뺀다).
+              //
+              // 예전 라벨은 그냥 '4대보험 가입여부'였다. N잡러는 직장에서 이미
+              // 가입돼 있으니 당연히 켰고, 그러면 회사가 떼 가는 몫 위에 지역
+              // 가입자 보험료를 또 얹어 적립액이 부풀었다.
+              Text('보험료를 직접 내나요',
+                  style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
               const SizedBox(height: 2),
-              Text('실제로 가입한 것만 켜두세요 — 나중에 언제든 바꿀 수 있어요'.keepWords,
+              Text('회사가 떼 가는 건 켜지 마세요 — 고지서로 직접 내는 것만 켭니다'
+                      .keepWords,
                   style: AppTheme.sans(12, sub)),
               const SizedBox(height: 6),
-              _insuranceToggle('국민연금', 'pension_enrolled', ink, sub, accent),
-              _insuranceToggle('건강보험', 'health_enrolled', ink, sub, accent),
+              _insuranceToggle('국민연금 (지역가입)', 'pension_enrolled', ink, sub, accent),
+              _insuranceToggle('건강보험 (지역가입)', 'health_enrolled', ink, sub, accent),
               if (isSpecialWorker) ...[
                 _insuranceToggle('고용보험', 'employment_enrolled', ink, sub, accent),
                 _insuranceToggle('산재보험', 'industrial_accident_enrolled', ink, sub, accent),

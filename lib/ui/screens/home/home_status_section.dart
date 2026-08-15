@@ -89,6 +89,31 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
   bool _showGrossIncome = false;
   bool _showOtherIncomeGross = false;
 
+  /// 세전 환산이 세후와 **다른 숫자**가 되는가.
+  ///
+  /// 원천징수를 뗀 기록이 없으면 역산할 게 없어 두 값이 같다. 그때 "탭해서
+  /// 세전 보기"라고 적으면 눌러도 안 바뀌는 것처럼 보인다.
+  /// 역산되는 건 급여가 아닌 소득뿐이라, 차이는 그 둘 사이에서만 난다.
+  ///
+  /// 유형은 따지지 않는다 — 프리랜서의 수입 헤드라인과 N잡러의 다른소득
+  /// 헤드라인이 같은 질문을 하고, 부르는 쪽이 이미 유형으로 갈라져 있다.
+  /// (N잡러는 isEmployee가 참이라 여기서 유형을 보면 그쪽 탭이 죽는다.)
+  bool get _grossDiffers =>
+      widget.otherIncome > 0 &&
+      (widget.otherIncomeGrossEstimate - widget.otherIncome).abs() >= 1;
+
+  /// 헤드라인에 찍을 금액.
+  ///
+  /// 세전 환산은 **급여가 아닌 소득만** 역산한 값이다(근로소득은 간이세액표라
+  /// 역산이 안 된다). 프리랜서가 '급여'로 적은 기록이 섞여 있으면 그 금액이
+  /// 빠진 채로 "세전"이라 찍혀 세후보다 작아졌다 — 빠진 만큼 그대로 더한다.
+  double get _headlineIncome {
+    if (widget.userType == 'N잡러') return widget.laborIncome;
+    if (!_showGrossIncome) return widget.monthlyIncome;
+    final notReversible = widget.monthlyIncome - widget.otherIncome;
+    return widget.otherIncomeGrossEstimate + notReversible;
+  }
+
   /// 원 단위 표기 ("36,000,000원")
   String _toWon(double won) {
     if (won <= 0) return '0원';
@@ -157,17 +182,27 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         // 사업/기타소득은 고정 비율이라 정확히 역산 가능).
         // N잡러는 헤드라인이 근로소득만 반영해야 하므로(라벨과 실제 값이 어긋나면 안 됨),
         // income_entries 합산인 monthlyIncome 대신 laborIncome을 쓴다.
+        // 세전 환산은 **원천징수를 뗀 기록이 있을 때만** 뜻이 있다.
+        //
+        // 예전에는 기록이 하나도 없어도 "탭해서 세전 보기"라고 적어 뒀다.
+        // 눌러도 아무 일이 없었고(onTap이 null), 원천징수를 안 뗀 기록만 있으면
+        // 세전과 세후가 같은 숫자라 역시 아무 일이 없어 보였다.
+        // 실제로 달라질 때만 그렇게 말한다.
         Text(
           userType == 'N잡러'
               ? '이번 달 근로소득 (세전)'
               : isEmployee
                   ? '이번 달 수령액 (세전)'
-                  : (_showGrossIncome ? '이번 달 수입 (세전 환산 · 탭해서 되돌리기)' : '이번 달 수입 (세후 · 탭해서 세전 보기)'),
+                  : !_grossDiffers
+                      ? '이번 달 수입'
+                      : (_showGrossIncome
+                          ? '이번 달 수입 (세전 환산 · 탭해서 되돌리기)'
+                          : '이번 달 수입 (세후 · 탭해서 세전 보기)'),
           style: AppTheme.sans(AppTheme.tsSM, sub),
         ),
         const SizedBox(height: 4),
         GestureDetector(
-          onTap: !isEmployee && monthlyIncome > 0
+          onTap: _grossDiffers
               ? () => setState(() => _showGrossIncome = !_showGrossIncome)
               : null,
           behavior: HitTestBehavior.opaque,
@@ -176,11 +211,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             child: (userType == 'N잡러' ? widget.laborIncome : monthlyIncome) > 0
                 ? KeyedSubtree(
                     key: ValueKey(_showGrossIncome),
-                    child: _rightAmount(
-                      comma(!isEmployee && _showGrossIncome
-                          ? widget.otherIncomeGrossEstimate
-                          : (userType == 'N잡러' ? widget.laborIncome : monthlyIncome)),
-                    ),
+                    child: _rightAmount(comma(_headlineIncome)),
                   )
                 : _rightEmpty(tert, const ValueKey('empty')),
           ),
@@ -337,7 +368,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          !hasOther
+          !hasOther || !_grossDiffers
               ? '이번 달 다른소득'
               : _showOtherIncomeGross
                   ? '이번 달 다른소득 (세전 환산 · 탭해서 되돌리기)'
@@ -346,7 +377,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         ),
         const SizedBox(height: 4),
         GestureDetector(
-          onTap: hasOther
+          onTap: hasOther && _grossDiffers
               ? () => setState(() => _showOtherIncomeGross = !_showOtherIncomeGross)
               : null,
           behavior: HitTestBehavior.opaque,

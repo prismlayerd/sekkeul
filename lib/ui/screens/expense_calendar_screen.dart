@@ -132,10 +132,21 @@ class ExpenseCalendarScreen extends StatefulWidget {
   final String? initialFocus;
 
   /// 어느 뷰로 열지 — 0=달력(기본) · 1=분석 · 2=연간.
-  /// 홈의 '지출 목표를 정하세요'가 분석 탭으로 곧장 들어온다.
   final int initialView;
 
-  const ExpenseCalendarScreen({super.key, this.initialFocus, this.initialView = 0});
+  /// 열자마자 지출 목표 입력을 띄운다.
+  ///
+  /// 홈의 '지출 목표를 정해보세요'가 이걸 켜고 들어온다. 분석 탭만 열어 주면
+  /// 목표 칸이 그 탭 **맨 아래**에 있어서, 누른 사람은 차트가 깔린 낯선 화면에
+  /// 떨어진다 — 길이 끊긴 것처럼 보인다.
+  final bool openExpenseTarget;
+
+  const ExpenseCalendarScreen({
+    super.key,
+    this.initialFocus,
+    this.initialView = 0,
+    this.openExpenseTarget = false,
+  });
 
   @override
   State<ExpenseCalendarScreen> createState() => _ExpenseCalendarScreenState();
@@ -229,6 +240,13 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         if (clamped == _minPanX || clamped == 0.0) _panFlingCtrl.stop();
       });
     _load();
+    // 목표를 정하러 들어온 사람에게는 그 칸을 바로 띄운다 — 분석 탭만 열어
+    // 주면 목표 칸이 맨 아래라 낯선 화면에 떨어진다.
+    if (widget.openExpenseTarget) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showExpenseTargetDialog();
+      });
+    }
   }
 
   @override

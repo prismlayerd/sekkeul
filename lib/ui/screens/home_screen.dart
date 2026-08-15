@@ -819,10 +819,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 
   /// 가계부로 이동 후 복귀 — 분석탭에서 바뀌었을 수 있는 유형별 지출 목표를 다시 읽어온다.
-  Future<void> _goToLedger({int view = 0}) async {
+  Future<void> _goToLedger({int view = 0, bool openExpenseTarget = false}) async {
     // 복귀 시 리로드는 didPopNext(RouteObserver)가 처리.
-    await Navigator.push(context,
-        MaterialPageRoute(builder: (_) => ExpenseCalendarScreen(initialView: view)));
+    await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => ExpenseCalendarScreen(
+                initialView: view, openExpenseTarget: openExpenseTarget)));
   }
 
   /// 절세 팁 액션 키 → 화면 이동.
@@ -917,7 +920,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             cardSavingCombined: _cardSavingCombined,
             onOpenLedger: _goToLedger,
             onOpenMyInfo: _openProfile,
-            onSetExpenseTarget: () => _goToLedger(view: 1),
+            onSetExpenseTarget: () => _goToLedger(view: 1, openExpenseTarget: true),
           ),
           // 상태 카드에 아직 유도가 떠 있으면 백필 유도는 뒤로 미룬다 —
           // 요청은 한 번에 하나여야 눈에 들어온다(2026-07-25).
