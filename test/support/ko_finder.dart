@@ -7,9 +7,16 @@ import 'package:flutter_test/flutter_test.dart';
 /// 그래서 `find.textContaining('월세로 살아요')`는 그 위젯을 못 찾는다. 그렇다고
 /// 찾는 쪽에만 워드조이너를 넣으면, 이번엔 `keepWords`를 안 쓴 위젯을 못 찾는다.
 /// **양쪽 다 조이너를 지우고 비교**해야 어느 쪽이든 걸린다.
-const String _joiner = '⁠';
+const String _joiner = '⁠'; // 낱말 안을 붙이는 조이너
+const String _zwsp = '​';   // 끊어도 되는 자리(괄호 앞)
+const String _nbsp = ' ';   // 안 끊기는 공백(괄호 안)
 
-String _strip(String s) => s.replaceAll(_joiner, '');
+/// 보이지 않는 줄바꿈 표식을 걷어내고 비교한다. 화면에 찍힌 글자는 같은데
+/// 표식 때문에 안 잡히면, 고칠 곳은 화면이 아니라 **찾는 쪽**이다.
+String _strip(String s) => s
+    .replaceAll(_joiner, '')
+    .replaceAll(_zwsp, '')
+    .replaceAll(_nbsp, ' ');
 
 /// Text만 본다. Text는 내부에 RichText를 하나 더 만들기 때문에, 둘 다 세면
 /// 같은 문구가 늘 2건으로 잡혀 `findsOneWidget`이 통과할 수 없다.

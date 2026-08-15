@@ -14,6 +14,9 @@ import 'support/screen_registry.dart';
 /// 스크린샷 한 장은 화면 하나만 말한다. 여기서는 등록된 화면을 전부 세워
 /// 앱바가 실제로 칠한 색을 읽는다. 앱 테마를 걸고 띄우는 게 핵심이다
 /// (다른 테스트들은 맨 MaterialApp으로 띄워서 이걸 못 본다).
+///
+/// 보는 것은 "특정 색"이 아니라 **테마 값과 같은가**다. v5.2에서 앱바 배경이
+/// 투명이 됐지만(뒤에 깔린 종이 결이 비쳐야 한다) 이 규칙은 그대로다.
 void main() {
   /// 앱바가 실제로 칠한 배경색 — AppBar가 안쪽에 세우는 Material이 들고 있다.
   Color paintedBarColor(WidgetTester t) {
@@ -33,7 +36,10 @@ void main() {
       dbService = InMemoryDatabaseHelper();
       await dbService.initDatabase();
 
-      final expectedBg = isDark ? AppTheme.darkBackground : AppTheme.lightBackground;
+      // 기대값은 테마에서 읽는다 — 상수를 여기 베껴 두면 팔레트를 바꿀 때마다
+      // 테스트가 같이 틀어진다. 지금은 투명이다(종이 결 한 장이 뒤에서 비친다).
+      final expectedBg =
+          (isDark ? AppTheme.darkTheme : AppTheme.lightTheme).appBarTheme.backgroundColor!;
       final expectedInk = isDark ? AppTheme.darkInk : AppTheme.lightInk;
 
       final screens = <(String, Widget Function())>[
