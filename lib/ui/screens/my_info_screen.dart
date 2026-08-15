@@ -790,6 +790,8 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
             ]),
           ),
         ),
+        // 물어볼 게 하나도 없으면 제목만 남는다 — 블록째 감춘다.
+        if (_isFreelancer || isSpecialWorker) ...[
         AppTheme.hairline(context),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -800,9 +802,15 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
               // 계산이 쓰는 값이 그것이다(freelancer_tax의 paysNationalPension =
               // 지역가입자 납부액을 연금보험료공제로 뺀다).
               //
-              // 예전 라벨은 그냥 '4대보험 가입여부'였다. N잡러는 직장에서 이미
-              // 가입돼 있으니 당연히 켰고, 그러면 회사가 떼 가는 몫 위에 지역
-              // 가입자 보험료를 또 얹어 적립액이 부풀었다.
+              // **지역가입 두 줄은 N잡러에게 묻지 않는다.** 근로소득이 있으면
+              // 직장가입자라 지역가입 보험료를 내지 않는다. 엔진 두 곳 모두
+              // 이미 N잡러를 걸러내고 있어서(reserve_estimator의 N잡러 분기,
+              // tax_simulator의 _isFreelancer && !_isEmployee) 켜도 아무 일이
+              // 안 일어났다 — 값이 틀리는 게 아니라 **아무 데도 안 쓰이는 질문**
+              // 이었다. 답이 쓰이지 않는 질문은 묻지 않는다.
+              //
+              // 고용·산재는 다르다. 특고(노무제공자)면 N잡러도 직접 내고,
+              // 적립 계산이 그 값을 쓴다.
               Text('보험료를 직접 내나요',
                   style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, spacing: -0.2)),
               const SizedBox(height: 2),
@@ -810,8 +818,10 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                       .keepWords,
                   style: AppTheme.sans(AppTheme.tsXS, sub)),
               const SizedBox(height: 6),
-              _insuranceToggle('국민연금 (지역가입)', 'pension_enrolled', ink, sub, accent),
-              _insuranceToggle('건강보험 (지역가입)', 'health_enrolled', ink, sub, accent),
+              if (_isFreelancer) ...[
+                _insuranceToggle('국민연금 (지역가입)', 'pension_enrolled', ink, sub, accent),
+                _insuranceToggle('건강보험 (지역가입)', 'health_enrolled', ink, sub, accent),
+              ],
               if (isSpecialWorker) ...[
                 _insuranceToggle('고용보험', 'employment_enrolled', ink, sub, accent),
                 _insuranceToggle('산재보험', 'industrial_accident_enrolled', ink, sub, accent),
@@ -819,6 +829,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
             ],
           ),
         ),
+        ],
       ],
     );
   }

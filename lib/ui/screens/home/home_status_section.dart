@@ -344,7 +344,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             // 지출 목표는 공제와 아무 상관이 없다 — 카드공제 문턱은 총급여의
             // 25%로 정해져 있다(조특법 §126의2). "공제 기준을 잡아드려요"는
             // 거짓말이었다.
-            child: Text('목표를 정하면 남은 돈을 알려드려요'.keepWords,
+            child: Text('이번 달 지출 목표액을 정하고 관리해봐요.'.keepWords,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTheme.sans(AppTheme.tsXS, accent, weight: FontWeight.w600)),

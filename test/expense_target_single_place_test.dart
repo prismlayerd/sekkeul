@@ -19,6 +19,15 @@ void main() {
         reason: '홈은 얼마나 썼는지 보여주는 자리다 — 설정은 가계부 한 곳에서.');
   });
 
+  test('홈의 목표 유도 문구가 정해진 그대로다', () {
+    // 2026-08-15에 이 문구를 바꾸라는 요청을 받고 스크립트로 치환했는데,
+    // 그 치환만 assert 없이 돌아 조용히 실패했다. 바뀐 줄 알고 보고까지 했다.
+    final src = File('lib/ui/screens/home/home_status_section.dart').readAsStringSync();
+    expect(src.contains('이번 달 지출 목표액을 정하고 관리해봐요.'), isTrue);
+    expect(src.contains('목표를 정하면 남은 돈을 알려드려요'), isFalse,
+        reason: '옛 문구가 남아 있다');
+  });
+
   testWidgets('가계부를 분석 탭으로 바로 열 수 있다', (t) async {
     t.view.physicalSize = const Size(390, 900);
     t.view.devicePixelRatio = 1.0;
