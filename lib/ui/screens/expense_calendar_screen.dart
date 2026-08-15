@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
@@ -157,6 +159,11 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
 
   /// [_cellKeys]가 어느 달의 것인지. 달이 바뀌면 비운다.
   String? _cellKeysMonth;
+
+  /// 여러 날 선택이 시작되는 최소 이동 거리(논리 픽셀).
+  /// 안드로이드 기본 터치 슬롭(18)보다 조금 크게 — 달력 칸이 좁아서
+  /// 톡 누르는 손이 한 칸을 쉽게 넘어간다.
+  static const double _dragSlop = 24;
 
   String _userType = '직장인'; // 직장인 / N잡러 / 프리랜서 — 기타수익 토글 노출 판단
   // 사업경비 인정 여부(프리랜서·N잡러 대상) — 결제수단별 독립 플래그.
@@ -400,6 +407,32 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       (_incomesByDay[key] ?? const []).fold(0, (s, e) => s + e.amount);
 
   // 결제수단별 합계 (카테고리 점 표시·prefill용)
+  /// 확대(2단계) 칸 한 줄의 높이 — laneBar의 Container(height:15) + margin 1.
+  static const double _laneH = 16;
+
+  /// 날짜 숫자와 위아래 여백 — 줄이 시작되기 전까지 칸이 쓰는 높이.
+  /// Padding(4,·,·,3) + dayNumber(21) + SizedBox(3).
+  static const double _cellChrome = 31;
+
+  /// 이 달에서 **가장 빽빽한 날**의 줄 수(수익 + 결제수단 셋 = 최대 4).
+  ///
+  /// 확대하면 칸마다 금액이 한 줄씩 들어가는데, 칸 높이를 화면 높이만 보고
+  /// 나누면 줄이 칸을 넘는다. 실기기에서 네 줄짜리 날이 20픽셀 넘쳤고, 한 줄인
+  /// 날들도 칸이 조금 모자라 0.73픽셀씩 넘쳤다 — 둘 다 여기서 온다.
+  /// 넘치면 릴리스에서는 빨간 줄 대신 **금액이 잘려 안 보인다.**
+  int get _maxLanesInMonth {
+    var maxLanes = 0;
+    for (var d = 1; d <= _daysInMonth; d++) {
+      final key = _key(DateTime(_year, _month, d));
+      var lanes = _incomeOf(key) > 0 ? 1 : 0;
+      for (final pm in const [_catCredit, _catDebit, _catOther]) {
+        if (_paymentOf(key, pm) > 0) lanes++;
+      }
+      if (lanes > maxLanes) maxLanes = lanes;
+    }
+    return maxLanes;
+  }
+
   int _paymentOf(String key, String pm) => (_expensesByDay[key] ?? const [])
       .toSet()
       .where((e) => e.paymentMethod == pm)
@@ -1666,9 +1699,12 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       final w = constraints.maxWidth;
       final zoomed = _zoomLevel > 1;
       final cw = zoomed ? w / 7 * 2 : w / 7;
+      // 확대하면 칸에 금액 줄이 들어간다. 화면 높이만 나누면 줄이 칸을 넘으므로
+      // **가장 빽빽한 날이 들어갈 만큼**은 확보한다(세로 스크롤 안이라 커져도 된다).
       final ch = _zoomLevel == 1
           ? (constraints.maxHeight / weekCount).clamp(0.0, 74.0)
-          : constraints.maxHeight / weekCount;
+          : math.max(constraints.maxHeight / weekCount,
+              _cellChrome + _maxLanesInMonth * _laneH);
       final totalW = cw * 7;
       final minPanX = (w - totalW).clamp(double.negativeInfinity, 0.0);
       _minPanX = minPanX;
@@ -1756,7 +1792,15 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           _pointers[e.pointer] = e.position;
           _downPos = e.position;
           if (_pointers.length >= 2) {
+            // 확대하려던 손이다. 첫 손가락이 칠해 둔 게 있으면 되돌린다 —
+            // 확대만 했는데 며칠이 선택된 채로 남던 자리다.
             _dragStart = null;
+            if (_isDragging) {
+              setState(() {
+                _isDragging = false;
+                _selected.clear();
+              });
+            }
             final pts = _pointers.values.toList();
             _pinchBaseDist = (pts[0] - pts[1]).distance;
             return;
@@ -1790,6 +1834,23 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             return;
           }
           if (_dragStart == null) return;
+
+          // 여러 날 선택은 **가로로 확실히 끌었을 때만** 시작한다.
+          //
+          // 예전에는 손가락이 닿은 뒤 다른 칸에 닿기만 하면 바로 칠했다.
+          // 그래서 (1) 톡 누르려다 2px 흔들려도 이틀이 잡히고, (2) 세로로
+          // 넘기려 하면 스크롤 대신 날짜가 칠해졌으며, (3) 두 손가락을
+          // 벌리는 사이 첫 손가락이 이미 며칠을 칠해 놓았다.
+          if (!_isDragging) {
+            final d = _downPos == null ? Offset.zero : e.position - _downPos!;
+            if (d.distance < _dragSlop) return;
+            // 세로로 더 많이 움직였으면 스크롤하려는 손이다 — 선택을 접는다.
+            if (d.dy.abs() > d.dx.abs()) {
+              _dragStart = null;
+              return;
+            }
+          }
+
           final date = _dateAtGlobal(e.position);
           if (date == null || date == _dragCurrent) return;
           _dragCurrent = date;
