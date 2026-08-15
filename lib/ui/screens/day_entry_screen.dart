@@ -1,37 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/data/expense_category.dart';
 import '../../core/data/expense_item.dart';
 import '../../core/data/income_entry.dart';
 import '../../core/data/ledger_profile.dart';
 import '../../core/data/quick_entry_preset.dart';
+import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
 
-const _incomeColor = Color(0xFF5CB87A); // 수익 — soft green
 const _catCredit = '신용카드';
 const _catDebit  = '체크+현금';
 const _catOther  = '기타';
+const _payments  = [_catCredit, _catDebit, _catOther];
 
-/// 하루(또는 여러 날 묶음)의 수입·지출을 입력/수정하는 풀스크린 화면.
-/// 캘린더 화면과 분리된 자체 스크롤·자체 상태를 가져 "입력창이 화면 밖으로 스크롤되는" 문제를 원천적으로 없앤다.
+/// 하루(또는 여러 날 묶음)의 수입·지출 **목록** 화면.
+///
+/// 예전에는 입력칸이 고정 4개(수익 1 + 결제수단 3)였다. 같은 날 신용카드로
+/// 식비와 교통을 따로 쓰면 하나밖에 못 적었고, 더 나쁜 건 저장이
+/// **그날 기록을 전부 지우고 4칸을 다시 넣는** 방식이라 고정지출 등 다른
+/// 경로로 들어온 기록이 조용히 사라졌다.
+///
+/// 그래서 화면을 목록으로 바꾸고 **항목 단위로 즉시 쓴다**. 일괄 저장 버튼이
+/// 없으니 "전부 지우고 다시 넣기"가 코드에 존재할 자리가 없다.
+///
+/// 입력은 **목록 안에서 펼친다**(inline expand). 앱 하드 제약이 바텀시트 금지라
+/// 그렇기도 하고, 하루치를 연달아 적을 때 화면이 안 바뀌는 쪽이 훨씬 빠르다 —
+/// 적은 것이 바로 위에 쌓이는 게 보이니 뭘 넣었는지 확인하러 나갈 일이 없다.
+///
+/// 여러 날을 고르면 **각 날짜에 항목을 하나씩** 만든다. 예전의 기간 항목
+/// (`endDate`)은 금액 전부를 첫날에 몰아 넣고 달력에만 걸쳐 보이게 해서,
+/// 12/28~1/3 여행이면 1월 몫까지 12월 지출로 집계됐다. 새로 만들지 않는다.
+/// 이미 있는 기간 기록은 그대로 보이고 수정·삭제된다.
 class DayEntryScreen extends StatefulWidget {
   final Set<DateTime> dates;
   final String userType;
-  final bool hasExisting;
-  final String initialIncomeText;
-  final String initialIncomeType;
-  final bool initialIncomeWithheld;
-  final String initialCreditText;
-  final String initialCreditCategory;
-  final bool initialCreditBusiness;
-  final String initialDebitText;
-  final String initialDebitCategory;
-  final bool initialDebitBusiness;
-  final String initialOtherText;
-  final String initialOtherCategory;
-  final bool initialOtherBusiness;
   final Map<String, List<IncomeEntry>> incomesByDay;
   final Map<String, List<ExpenseItem>> expensesByDay;
 
@@ -39,19 +42,6 @@ class DayEntryScreen extends StatefulWidget {
     super.key,
     required this.dates,
     required this.userType,
-    required this.hasExisting,
-    required this.initialIncomeText,
-    required this.initialIncomeType,
-    required this.initialIncomeWithheld,
-    required this.initialCreditText,
-    required this.initialCreditCategory,
-    required this.initialCreditBusiness,
-    required this.initialDebitText,
-    required this.initialDebitCategory,
-    required this.initialDebitBusiness,
-    required this.initialOtherText,
-    required this.initialOtherCategory,
-    required this.initialOtherBusiness,
     required this.incomesByDay,
     required this.expensesByDay,
   });
@@ -61,31 +51,47 @@ class DayEntryScreen extends StatefulWidget {
 }
 
 class _DayEntryScreenState extends State<DayEntryScreen> {
-  late final _incomeCtrl = TextEditingController(text: widget.initialIncomeText);
-  late final _creditCtrl = TextEditingController(text: widget.initialCreditText);
-  late final _debitCtrl  = TextEditingController(text: widget.initialDebitText);
-  late final _otherCtrl  = TextEditingController(text: widget.initialOtherText);
-
   late final LedgerProfile _profile = LedgerProfile.of(widget.userType);
 
-  late String _incomeType = widget.initialIncomeType;
-  late bool _incomeIsWithheld = widget.initialIncomeWithheld;
-  late String _creditCategory = widget.initialCreditCategory;
-  late String _debitCategory  = widget.initialDebitCategory;
-  late String _otherCategory  = widget.initialOtherCategory;
-  late bool _creditIsBusiness = widget.initialCreditBusiness;
-  late bool _debitIsBusiness  = widget.initialDebitBusiness;
-  late bool _otherIsBusiness  = widget.initialOtherBusiness;
+  /// 지금 펼쳐 둔 편집기. `'inc'`/`'exp'`는 새로 추가, 그 외에는 그 항목의 id.
+  /// 한 번에 하나만 연다 — 둘이 열려 있으면 어느 쪽을 저장하는지 알 수 없다.
+  String? _open;
+  QuickEntryPreset? _pendingPreset;
+  final _openKey = GlobalKey();
 
-  final _fmt = NumberFormat('#,###');
-
+  final List<IncomeEntry> _incomes = [];
+  final List<ExpenseItem> _expenses = [];
   List<QuickEntryPreset> _presets = [];
+
+  List<DateTime> get _dates => widget.dates.toList()..sort();
+  bool get _isMulti => widget.dates.length > 1;
 
   @override
   void initState() {
     super.initState();
-    _incomeCtrl.addListener(_onIncomeChanged);
+    _collect();
     _loadPresets();
+  }
+
+  String _key(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  /// 고른 날짜들의 기록을 모은다. 기간 항목은 여러 날에 걸쳐 같은 id로 잡히므로
+  /// id로 걸러 한 번만 담는다.
+  void _collect() {
+    final seenInc = <String>{}, seenExp = <String>{};
+    _incomes.clear();
+    _expenses.clear();
+    for (final d in _dates) {
+      for (final e in (widget.incomesByDay[_key(d)] ?? const <IncomeEntry>[])) {
+        if (seenInc.add(e.id)) _incomes.add(e);
+      }
+      for (final e in (widget.expensesByDay[_key(d)] ?? const <ExpenseItem>[])) {
+        if (seenExp.add(e.id)) _expenses.add(e);
+      }
+    }
+    _incomes.sort((a, b) => a.date.compareTo(b.date));
+    _expenses.sort((a, b) => a.date.compareTo(b.date));
   }
 
   Future<void> _loadPresets() async {
@@ -93,947 +99,703 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
     if (mounted) setState(() => _presets = list);
   }
 
-  /// 즐겨찾기 프리셋을 결제수단에 맞는 행에 채운다.
-  void _applyPreset(QuickEntryPreset p) {
+  String _newId(DateTime d) =>
+      '${DateTime.now().microsecondsSinceEpoch}_${_key(d)}_${_expenses.length + _incomes.length}';
+
+  // ── 쓰기 — 전부 항목 하나씩. 통째로 지우는 경로는 없다. ────────────────
+
+  Future<void> _addExpense(_ExpenseDraft dr) async {
+    for (final d in _dates) {
+      final item = ExpenseItem(
+        id: _newId(d),
+        date: d,
+        amount: dr.amount,
+        content: dr.content,
+        category: dr.category,
+        paymentMethod: dr.paymentMethod,
+        isBusiness: dr.isBusiness,
+        userType: widget.userType,
+      );
+      await dbService.insertExpense(item);
+      _expenses.add(item);
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _updateExpense(ExpenseItem old, _ExpenseDraft dr) async {
+    // endDate는 건드리지 않는다 — 옛 기간 기록을 수정해도 성격이 바뀌면 안 된다.
+    final item = old.copyWith(
+      amount: dr.amount,
+      content: dr.content,
+      category: dr.category,
+      paymentMethod: dr.paymentMethod,
+      isBusiness: dr.isBusiness,
+    );
+    await dbService.updateExpense(item);
+    if (!mounted) return;
+    setState(() => _expenses[_expenses.indexWhere((e) => e.id == old.id)] = item);
+  }
+
+  Future<void> _deleteExpense(ExpenseItem e) async {
+    await dbService.deleteExpense(e.id);
+    if (!mounted) return;
+    setState(() => _expenses.removeWhere((x) => x.id == e.id));
+  }
+
+  Future<void> _addIncome(_IncomeDraft dr) async {
+    for (final d in _dates) {
+      final item = IncomeEntry(
+        id: _newId(d),
+        date: d,
+        amount: dr.amount,
+        memo: dr.memo,
+        incomeType: dr.incomeType,
+        isWithheld: dr.isWithheld,
+        userType: widget.userType,
+      );
+      await dbService.insertIncomeEntry(item);
+      _incomes.add(item);
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _updateIncome(IncomeEntry old, _IncomeDraft dr) async {
+    final item = old.copyWith(
+      amount: dr.amount,
+      memo: dr.memo,
+      incomeType: dr.incomeType,
+      isWithheld: dr.isWithheld,
+    );
+    await dbService.updateIncomeEntry(item);
+    if (!mounted) return;
+    setState(() => _incomes[_incomes.indexWhere((e) => e.id == old.id)] = item);
+  }
+
+  Future<void> _deleteIncome(IncomeEntry e) async {
+    await dbService.deleteIncomeEntry(e.id, e.date.year, e.date.month);
+    if (!mounted) return;
+    setState(() => _incomes.removeWhere((x) => x.id == e.id));
+  }
+
+  // ── 편집기 열고 닫기 ────────────────────────────────────────────────
+
+  void _openEditor(String key, {QuickEntryPreset? preset}) {
     setState(() {
-      final amountText = comma(p.amount);
-      switch (p.paymentMethod) {
-        case _catCredit:
-          _creditCtrl.text = amountText;
-          _creditCategory = p.category;
-          if (_profile.tracksBusinessExpense) _creditIsBusiness = p.isBusiness;
-          break;
-        case _catDebit:
-          _debitCtrl.text = amountText;
-          _debitCategory = p.category;
-          if (_profile.tracksBusinessExpense) _debitIsBusiness = p.isBusiness;
-          break;
-        default:
-          _otherCtrl.text = amountText;
-          _otherCategory = p.category;
-          if (_profile.tracksBusinessExpense) _otherIsBusiness = p.isBusiness;
+      _open = key;
+      _pendingPreset = preset;
+    });
+    // 펼친 자리가 키보드에 가리지 않게 스크롤을 붙여 준다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _openKey.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(ctx,
+            duration: const Duration(milliseconds: 220), alignment: 0.1);
       }
     });
   }
 
-  Future<void> _showAddPresetDialog() async {
-    final nameCtrl = TextEditingController();
-    final amountCtrl = TextEditingController();
-    String paymentMethod = _catCredit;
-    String category = '기타';
-    final ink = AppTheme.ink(context);
-    final sub = AppTheme.inkSecondary(context);
-    final bg = AppTheme.backgroundColor(context);
-    final line = AppTheme.line(context);
-    final accent = AppTheme.accentColor(context);
+  void _closeEditor() => setState(() {
+        _open = null;
+        _pendingPreset = null;
+      });
 
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: bg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-            side: BorderSide(color: line),
-          ),
-          titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-          contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          title: Text('즐겨찾기 추가', style: AppTheme.serif(17, ink)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: nameCtrl,
-                  autofocus: true,
-                  style: AppTheme.sans(15, ink),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: '이름 (예: 아메리카노)',
-                    hintStyle: AppTheme.sans(15, AppTheme.inkTertiary(ctx)),
-                    border: UnderlineInputBorder(borderSide: BorderSide(color: line)),
-                    enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: line)),
-                    focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: accent, width: 1.5)),
-                  ),
+  // ── 화면 ──────────────────────────────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    const wd = ['월', '화', '수', '목', '금', '토', '일'];
+    final first = _dates.first, last = _dates.last;
+    final title = _isMulti
+        ? '${first.month}월 ${first.day}일 – ${last.month}월 ${last.day}일'
+        : '${first.month}월 ${first.day}일 (${wd[first.weekday - 1]})';
+
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          children: [
+            if (_isMulti) ...[
+              Text('고른 ${widget.dates.length}일에 각각 기록됩니다.'.keepWords,
+                  style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+              const SizedBox(height: 14),
+            ],
+
+            AppTheme.sectionHead(context, '01', '수익'),
+            const SizedBox(height: 10),
+            for (final e in _incomes)
+              if (_open == e.id)
+                _incomeForm(edit: e)
+              else
+                _row(
+                  title: e.memo.isNotEmpty ? e.memo : e.incomeType,
+                  sub: [
+                    if (e.memo.isNotEmpty) e.incomeType,
+                    if (e.isWithheld) '원천징수',
+                    if (e.endDate != null) '기간',
+                    if (_isMulti) '${e.date.month}/${e.date.day}',
+                  ].join(' · '),
+                  amount: e.amount,
+                  onTap: () => _openEditor(e.id),
                 ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: amountCtrl,
-                  keyboardType: TextInputType.number,
-                  style: AppTheme.sans(15, ink),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: '금액',
-                    hintStyle: AppTheme.sans(15, AppTheme.inkTertiary(ctx)),
-                    suffixText: '원',
-                    border: UnderlineInputBorder(borderSide: BorderSide(color: line)),
-                    enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: line)),
-                    focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: accent, width: 1.5)),
-                  ),
-                  onChanged: (v) {
-                    final n = v.replaceAll(RegExp(r'[^0-9]'), '');
-                    final f = n.isEmpty ? '' : comma(int.parse(n));
-                    amountCtrl.value = TextEditingValue(text: f, selection: TextSelection.collapsed(offset: f.length));
-                  },
+            if (_open == 'inc')
+              _incomeForm()
+            else
+              _addRow('수익 추가하기', () => _openEditor('inc')),
+
+            const SizedBox(height: 18),
+            AppTheme.dashRule(context),
+            const SizedBox(height: 18),
+
+            AppTheme.sectionHead(context, '02', '지출'),
+            const SizedBox(height: 10),
+            for (final e in _expenses)
+              if (_open == e.id)
+                _expenseForm(edit: e)
+              else
+                _row(
+                  title: e.content.isNotEmpty
+                      ? e.content
+                      : expenseCategoryById(e.category).label,
+                  sub: [
+                    if (e.content.isNotEmpty) expenseCategoryById(e.category).label,
+                    e.paymentMethod,
+                    if (e.isBusiness) '사업경비',
+                    if (e.endDate != null) '기간',
+                    if (_isMulti) '${e.date.month}/${e.date.day}',
+                  ].join(' · '),
+                  amount: e.amount,
+                  onTap: () => _openEditor(e.id),
                 ),
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [_catCredit, _catDebit, _catOther].map((pm) {
-                    final sel = paymentMethod == pm;
-                    return GestureDetector(
-                      onTap: () => setDialogState(() => paymentMethod = pm),
+            if (_open == 'exp')
+              _expenseForm()
+            else
+              _addRow('지출 추가하기', () => _openEditor('exp')),
+
+            if (_presets.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              AppTheme.dashRule(context),
+              const SizedBox(height: 18),
+              AppTheme.sectionHead(context, null, '즐겨찾기'),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final p in _presets)
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _openEditor('exp', preset: p),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                         decoration: BoxDecoration(
-                          color: sel ? accent.withValues(alpha: 0.15) : Colors.transparent,
-                          border: Border.all(color: sel ? accent : line, width: sel ? 1.4 : 1.0),
-                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: AppTheme.line(context), width: 1),
                         ),
-                        child: Text(pm,
-                            style: AppTheme.sans(12, sel ? ink : sub,
-                                weight: sel ? FontWeight.w700 : FontWeight.w500)),
+                        child: Text('${p.name} ${comma(p.amount)}',
+                            style: AppTheme.sans(AppTheme.tsSM, AppTheme.ink(context))),
                       ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: kExpenseCategories.map((cat) {
-                    final sel = category == cat.id;
-                    return GestureDetector(
-                      onTap: () => setDialogState(() => category = cat.id),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: sel ? cat.color.withValues(alpha: 0.15) : Colors.transparent,
-                          border: Border.all(color: sel ? cat.color : line, width: sel ? 1.4 : 1.0),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(cat.icon, size: 13, color: sel ? cat.color : sub),
-                          const SizedBox(width: 4),
-                          Text(cat.label,
-                              style: AppTheme.sans(12, sel ? ink : sub,
-                                  weight: sel ? FontWeight.w700 : FontWeight.w500)),
-                        ]),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            GestureDetector(
-              onTap: () => Navigator.pop(ctx, false),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 0, 8, 12),
-                child: Text('취소', style: AppTheme.sans(14, sub)),
+                    ),
+                ],
               ),
-            ),
-            GestureDetector(
-              onTap: () {
-                if (nameCtrl.text.trim().isEmpty) return;
-                Navigator.pop(ctx, true);
-              },
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 0, 12, 12),
-                child: Text('저장', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
-              ),
-            ),
+            ],
           ],
         ),
       ),
     );
-
-    if (saved == true) {
-      final amount = int.tryParse(amountCtrl.text.replaceAll(',', '')) ?? 0;
-      await dbService.insertQuickEntryPreset(QuickEntryPreset(
-        id: 0,
-        name: nameCtrl.text.trim(),
-        amount: amount,
-        category: category,
-        paymentMethod: paymentMethod,
-        sortOrder: _presets.length,
-      ));
-      await _loadPresets();
-    }
-    nameCtrl.dispose();
-    amountCtrl.dispose();
   }
 
-  Future<void> _confirmDeletePreset(QuickEntryPreset p) async {
-    final ink = AppTheme.ink(context);
-    final sub = AppTheme.inkSecondary(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        title: Text('즐겨찾기 삭제', style: AppTheme.sans(16, ink, weight: FontWeight.w700)),
-        content: Text('"${p.name}"을(를) 삭제할까요?'.keepWords, style: AppTheme.sans(14, sub)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('취소', style: AppTheme.sans(14, sub)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('삭제', style: AppTheme.sans(14, AppTheme.colorDanger, weight: FontWeight.w700)),
-          ),
-        ],
+  /// 목록 안에서 펼쳐지는 지출 편집기.
+  Widget _expenseForm({ExpenseItem? edit}) {
+    final preset = _pendingPreset;
+    return _ExpenseForm(
+      key: _openKey,
+      profile: _profile,
+      initial: edit == null
+          ? _ExpenseDraft(
+              amount: preset?.amount ?? 0,
+              content: preset?.name ?? '',
+              category: preset?.category ?? '기타',
+              paymentMethod: preset?.paymentMethod ?? _catCredit,
+              isBusiness: false)
+          : _ExpenseDraft(
+              amount: edit.amount,
+              content: edit.content,
+              category: edit.category,
+              paymentMethod: edit.paymentMethod,
+              isBusiness: edit.isBusiness),
+      dayCount: edit == null ? widget.dates.length : 1,
+      onCancel: _closeEditor,
+      onDelete: edit == null
+          ? null
+          : () async {
+              await _deleteExpense(edit);
+              _closeEditor();
+            },
+      onSave: (d) async {
+        if (d.amount <= 0) return;
+        if (edit == null) {
+          await _addExpense(d);
+        } else {
+          await _updateExpense(edit, d);
+        }
+        _closeEditor();
+      },
+    );
+  }
+
+  /// 목록 안에서 펼쳐지는 수익 편집기.
+  Widget _incomeForm({IncomeEntry? edit}) {
+    return _IncomeForm(
+      key: _openKey,
+      profile: _profile,
+      initial: edit == null
+          ? _IncomeDraft(
+              amount: 0,
+              memo: '',
+              incomeType: _profile.defaultIncomeType,
+              isWithheld: _profile.withholdingDefault)
+          : _IncomeDraft(
+              amount: edit.amount,
+              memo: edit.memo,
+              incomeType: edit.incomeType,
+              isWithheld: edit.isWithheld),
+      dayCount: edit == null ? widget.dates.length : 1,
+      onCancel: _closeEditor,
+      onDelete: edit == null
+          ? null
+          : () async {
+              await _deleteIncome(edit);
+              _closeEditor();
+            },
+      onSave: (d) async {
+        if (d.amount <= 0) return;
+        if (edit == null) {
+          await _addIncome(d);
+        } else {
+          await _updateIncome(edit, d);
+        }
+        _closeEditor();
+      },
+    );
+  }
+
+  /// 기록 한 줄 — 이름, 그 밑에 부속 정보, 오른쪽 끝에 금액. 누르면 고친다.
+  Widget _row({
+    required String title,
+    required String sub,
+    required int amount,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppTheme.line(context), width: 1)),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title.keepWords,
+                      style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context))),
+                  if (sub.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(sub,
+                        style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkTertiary(context))),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(comma(amount),
+                style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context),
+                    weight: FontWeight.w700)),
+          ],
+        ),
       ),
     );
-    if (confirmed == true) {
-      await dbService.deleteQuickEntryPreset(p.id);
-      await _loadPresets();
-    }
   }
 
-  void _onIncomeChanged() {
-    if (_profile.tracksBusinessExpense && _incomeIsWithheld) setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _incomeCtrl.removeListener(_onIncomeChanged);
-    _incomeCtrl.dispose();
-    _creditCtrl.dispose();
-    _debitCtrl.dispose();
-    _otherCtrl.dispose();
-    super.dispose();
-  }
-
-  String _key(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
-  // ── 저장 / 삭제 ──────────────────────────────────────────────────
-
-  Future<void> _save() async {
-    final inc = int.tryParse(_incomeCtrl.text.replaceAll(',', '')) ?? 0;
-    final cr  = int.tryParse(_creditCtrl.text.replaceAll(',', '')) ?? 0;
-    final db  = int.tryParse(_debitCtrl.text.replaceAll(',', '')) ?? 0;
-    final ot  = int.tryParse(_otherCtrl.text.replaceAll(',', '')) ?? 0;
-
-    final sorted = widget.dates.toList()..sort();
-    final first = sorted.first;
-    final last  = sorted.last;
-    final isRange = sorted.length > 1;
-    final endDate = isRange ? last : null;
-
-    final removedInc = <String>{};
-    final removedExp = <String>{};
-    for (final date in widget.dates) {
-      final key = _key(date);
-      for (final e in (widget.incomesByDay[key] ?? const [])) {
-        if (removedInc.add(e.id)) {
-          await dbService.deleteIncomeEntry(e.id, e.date.year, e.date.month);
-        }
-      }
-      for (final e in (widget.expensesByDay[key] ?? const [])) {
-        if (removedExp.add(e.id)) {
-          await dbService.deleteExpense(e.id);
-        }
-      }
-    }
-
-    final batch = DateTime.now().microsecondsSinceEpoch;
-    final prefix = 'b${batch}_${_key(first)}';
-    if (inc > 0) {
-      await dbService.insertIncomeEntry(IncomeEntry(
-        id: '${prefix}_inc', date: first, endDate: endDate, amount: inc, memo: '',
-        incomeType: _incomeType,
-        isWithheld: _profile.tracksBusinessExpense && _incomeType != '급여' && _incomeIsWithheld,
-        userType: widget.userType));
-    }
-    if (cr > 0) {
-      await dbService.insertExpense(ExpenseItem(
-        id: '${prefix}_cr', date: first, endDate: endDate, amount: cr,
-        content: '', category: _creditCategory, paymentMethod: _catCredit,
-        isBusiness: _profile.tracksBusinessExpense && _creditIsBusiness,
-        userType: widget.userType));
-    }
-    if (db > 0) {
-      await dbService.insertExpense(ExpenseItem(
-        id: '${prefix}_db', date: first, endDate: endDate, amount: db,
-        content: '', category: _debitCategory, paymentMethod: _catDebit,
-        isBusiness: _profile.tracksBusinessExpense && _debitIsBusiness,
-        userType: widget.userType));
-    }
-    if (ot > 0) {
-      await dbService.insertExpense(ExpenseItem(
-        id: '${prefix}_ot', date: first, endDate: endDate, amount: ot,
-        content: '', category: _otherCategory, paymentMethod: _catOther,
-        isBusiness: _profile.tracksBusinessExpense && _otherIsBusiness,
-        userType: widget.userType));
-    }
-
-    if (mounted) Navigator.pop(context);
-  }
-
-  Future<void> _delete() async {
-    for (final date in widget.dates) {
-      final key = _key(date);
-      for (final e in (widget.incomesByDay[key] ?? const [])) {
-        await dbService.deleteIncomeEntry(e.id, date.year, date.month);
-      }
-      for (final e in (widget.expensesByDay[key] ?? const []).toSet()) {
-        await dbService.deleteExpense(e.id);
-      }
-    }
-    if (mounted) Navigator.pop(context);
-  }
-
-  // ── 즐겨찾기 프리셋 ────────────────────────────────────────────────
-
-  Widget _buildPresetRow(Color ink, Color sub, Color accent, Color line) {
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      children: [
-        for (final p in _presets)
-          GestureDetector(
-            onTap: () => _applyPreset(p),
-            onLongPress: () => _confirmDeletePreset(p),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              decoration: BoxDecoration(
-                border: Border.all(color: line, width: 1.0),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(expenseCategoryById(p.category).icon, size: 13, color: sub),
-                const SizedBox(width: 4),
-                Text(p.name, style: AppTheme.sans(12, ink, weight: FontWeight.w600)),
-                const SizedBox(width: 4),
-                Text('${comma(p.amount)}원', style: AppTheme.sans(11, sub)),
+  /// 아직 안 채운 칸 — 점선. 홈의 지출 목표 빈 칸과 같은 문법.
+  Widget _addRow(String label, VoidCallback onTap) => Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: AppTheme.dashedBox(
+            context,
+            child: SizedBox(
+              height: 46,
+              child: Row(children: [
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(label,
+                      style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+                ),
+                Text('＋',
+                    style: AppTheme.sans(AppTheme.tsLG, AppTheme.ink(context),
+                        weight: FontWeight.w600)),
+                const SizedBox(width: 14),
               ]),
             ),
           ),
-        GestureDetector(
-          onTap: _showAddPresetDialog,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(
-              border: Border.all(color: accent, width: 1.0),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.add_rounded, size: 13, color: accent),
-              const SizedBox(width: 4),
-              Text('즐겨찾기', style: AppTheme.sans(12, accent, weight: FontWeight.w600)),
-            ]),
-          ),
         ),
-      ],
-    );
-  }
+      );
+}
 
-  // ── build ─────────────────────────────────────────────────────────
+// ── 편집 대상 값 ────────────────────────────────────────────────────────
+
+class _ExpenseDraft {
+  _ExpenseDraft({
+    required this.amount,
+    required this.content,
+    required this.category,
+    required this.paymentMethod,
+    required this.isBusiness,
+  });
+  int amount;
+  String content;
+  String category;
+  String paymentMethod;
+  bool isBusiness;
+}
+
+class _IncomeDraft {
+  _IncomeDraft({
+    required this.amount,
+    required this.memo,
+    required this.incomeType,
+    required this.isWithheld,
+  });
+  int amount;
+  String memo;
+  String incomeType;
+  bool isWithheld;
+}
+
+// ── 시트 ───────────────────────────────────────────────────────────────
+
+/// 목록 안에서 펼쳐지는 편집 칸.
+///
+/// 바텀시트가 아니다 — 앱 하드 제약(바텀시트 금지)이기도 하고, 목록 자리에서
+/// 그대로 열려야 방금 적은 항목이 위에 쌓이는 게 보인다. 아직 안 채운 칸이라
+/// 테두리는 점선으로 둔다(홈의 빈 칸과 같은 문법).
+class _FormBlock extends StatelessWidget {
+  const _FormBlock({
+    required this.title,
+    required this.children,
+    required this.onSave,
+    required this.onCancel,
+    this.onDelete,
+    this.note,
+  });
+  final String title;
+  final List<Widget> children;
+  final VoidCallback onSave;
+  final VoidCallback onCancel;
+  final Future<void> Function()? onDelete;
+  final String? note;
 
   @override
   Widget build(BuildContext context) {
-    final ink = AppTheme.ink(context);
-    final sub = AppTheme.inkSecondary(context);
-    final bg  = AppTheme.backgroundColor(context);
-    final accent = AppTheme.accentColor(context);
-    final line = AppTheme.line(context);
-
-    final sorted = widget.dates.toList()..sort();
-    final isRange = sorted.length > 1;
-    const wd = ['월', '화', '수', '목', '금', '토', '일'];
-    final title = isRange
-        ? '${sorted.first.month}월 ${sorted.first.day}일 – ${sorted.last.month}월 ${sorted.last.day}일'
-        : '${sorted.first.month}월 ${sorted.first.day}일 (${wd[sorted.first.weekday - 1]})';
-
-    Widget sectionEyebrow(IconData icon, String label, Color color) => Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 11, color: color),
-        const SizedBox(width: 4),
-        Text(label,
-            style: AppTheme.sans(11, color, weight: FontWeight.w700, spacing: 0.6)),
-      ],
-    );
-
-    return Scaffold(
-      backgroundColor: bg,
-      appBar: AppBar(
-        title: Text(title, style: AppTheme.serif(20, ink, weight: FontWeight.w400, spacing: -0.3)),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 4),
+      child: AppTheme.dashedBox(
+        context,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── 수익 ───────────────────────────
-              sectionEyebrow(Icons.arrow_upward_rounded, '수익', _incomeColor),
-              const SizedBox(height: 8),
-              _BlueprintAmountField(label: '', ctrl: _incomeCtrl, color: _incomeColor, fmt: _fmt),
-              const SizedBox(height: 8),
-              _incomeTypeToggle(sub),
-              if (_profile.tracksBusinessExpense && _incomeType != '급여') _withheldToggle(ink, sub),
-              const SizedBox(height: 18),
-
-              // ── 지출 ───────────────────────────
-              sectionEyebrow(Icons.arrow_downward_rounded, '지출', accent),
-              const SizedBox(height: 8),
-              _buildPresetRow(ink, sub, accent, line),
-              const SizedBox(height: 10),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: line, width: 1),
-                  borderRadius: BorderRadius.circular(4),
+              AppTheme.sectionHead(context, null, title),
+              if (note != null) ...[
+                const SizedBox(height: 6),
+                Text(note!,
+                    style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+              ],
+              const SizedBox(height: 14),
+              ...children,
+              Row(children: [
+                if (onDelete != null)
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onDelete!(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                      child: Text('삭제',
+                          style: AppTheme.sans(AppTheme.tsSM, AppTheme.colorDanger,
+                              weight: FontWeight.w600)),
+                    ),
+                  ),
+                const Spacer(),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onCancel,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    child: Text('취소',
+                        style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+                  ),
                 ),
-                child: Column(children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                    child: _PaymentCategoryRow(
-                      label: '신용카드', ctrl: _creditCtrl, fmt: _fmt,
-                      category: _creditCategory,
-                      onCategoryChanged: (v) => setState(() => _creditCategory = v),
-                      showBottomBorder: false,
-                      isBusiness: _profile.tracksBusinessExpense ? _creditIsBusiness : null,
-                      onBusinessChanged: (v) => setState(() => _creditIsBusiness = v),
-                    ),
+                const SizedBox(width: 4),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onSave,
+                  child: Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 22),
+                    alignment: Alignment.center,
+                    color: AppTheme.ink(context),
+                    child: Text('저장',
+                        style: AppTheme.sans(AppTheme.tsSM, AppTheme.backgroundColor(context),
+                            weight: FontWeight.w700)),
                   ),
-                  Divider(height: 1, thickness: 1, color: line),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                    child: _PaymentCategoryRow(
-                      label: '체크/현금', ctrl: _debitCtrl, fmt: _fmt,
-                      category: _debitCategory,
-                      onCategoryChanged: (v) => setState(() => _debitCategory = v),
-                      showBottomBorder: false,
-                      isBusiness: _profile.tracksBusinessExpense ? _debitIsBusiness : null,
-                      onBusinessChanged: (v) => setState(() => _debitIsBusiness = v),
-                    ),
-                  ),
-                  Divider(height: 1, thickness: 1, color: line),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                    child: _PaymentCategoryRow(
-                      label: '기타', ctrl: _otherCtrl, fmt: _fmt,
-                      category: _otherCategory,
-                      onCategoryChanged: (v) => setState(() => _otherCategory = v),
-                      showBottomBorder: false,
-                      isBusiness: _profile.tracksBusinessExpense ? _otherIsBusiness : null,
-                      onBusinessChanged: (v) => setState(() => _otherIsBusiness = v),
-                    ),
-                  ),
-                ]),
-              ),
+                ),
+              ]),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          // Row+Expanded를 bottomNavigationBar에 높이 제약 없이 직접 두면 flutter web에서
-          // body/appBar까지 통째로 렌더링되지 않는 문제가 있어 SizedBox로 높이를 고정한다.
-          child: SizedBox(
-            height: 48,
-            child: Row(children: [
-              if (widget.hasExisting) ...[
-                GestureDetector(
-                  onTap: _delete,
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppTheme.colorDanger, width: 1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text('삭제',
-                        style: AppTheme.sans(13, AppTheme.colorDanger, weight: FontWeight.w600)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: GestureDetector(
-                  onTap: _save,
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: ink,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(widget.hasExisting ? '수정' : '저장',
-                        style: AppTheme.sans(14, bg, weight: FontWeight.w700)),
-                  ),
-                ),
-              ),
-            ]),
-          ),
-        ),
-      ),
     );
   }
+}
 
-  Widget _incomeTypeToggle(Color sub) {
-    final String hint;
-    switch (_incomeType) {
-      case '급여':
-        hint = '근로소득 — 회사 월급·상여. 연말정산으로 정산돼요.';
-        break;
-      case '사업소득':
-        hint = '사업소득 — 계속·반복적인 용역. 3.3% 원천징수(소득세 3%+지방소득세 0.3%).';
-        break;
-      case '기타소득':
-        hint = '기타소득 — 강연료·원고료 등 일시적인 용역. 8.8% 원천징수(필요경비 60% 자동 인정).';
-        break;
-      default:
-        hint = '기타 수익 — 5월 종합소득세에 합산돼요.'; // 과거 기록 호환(레거시 '기타')
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+/// 편집 칸 안의 한 줄 — 왼쪽 라벨 고정, 오른쪽 내용.
+class _Field extends StatelessWidget {
+  const _Field(this.label, this.child);
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          SizedBox(
+            width: 74,
+            child: Text(label,
+                style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+          ),
+          Expanded(child: child),
+        ]),
+      );
+
+/// 고르는 칸들 — 분류·결제수단·소득유형이 같은 모양을 쓴다.
+  static Widget chips(BuildContext context, List<String> labels, String selected,
+      ValueChanged<String> onTap,
+      {List<String>? values}) {
+    final vals = values ?? labels;
+    return Wrap(spacing: 6, runSpacing: 6, children: [
+      for (var i = 0; i < labels.length; i++)
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => onTap(vals[i]),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+            decoration: BoxDecoration(
+              color: vals[i] == selected ? AppTheme.accentSoft(context) : null,
+              border: Border.all(
+                color: vals[i] == selected
+                    ? AppTheme.ink(context)
+                    : AppTheme.line(context),
+                width: vals[i] == selected ? 1.5 : 1,
+              ),
+            ),
+            child: Text(labels[i],
+                style: AppTheme.sans(AppTheme.tsSM,
+                    vals[i] == selected
+                        ? AppTheme.ink(context)
+                        : AppTheme.inkTertiary(context),
+                    weight: vals[i] == selected ? FontWeight.w700 : FontWeight.w400)),
+          ),
+        ),
+    ]);
+  }
+}
+
+class _ExpenseForm extends StatefulWidget {
+  const _ExpenseForm({
+    super.key,
+    required this.profile,
+    required this.initial,
+    required this.dayCount,
+    required this.onCancel,
+    required this.onSave,
+    this.onDelete,
+  });
+  final LedgerProfile profile;
+  final _ExpenseDraft initial;
+  final int dayCount;
+  final Future<void> Function()? onDelete;
+  final VoidCallback onCancel;
+  final ValueChanged<_ExpenseDraft> onSave;
+
+  @override
+  State<_ExpenseForm> createState() => _ExpenseFormState();
+}
+
+class _ExpenseFormState extends State<_ExpenseForm> {
+  late final _amountCtrl =
+      TextEditingController(text: widget.initial.amount > 0 ? comma(widget.initial.amount) : '');
+  late final _contentCtrl = TextEditingController(text: widget.initial.content);
+  late String _category = widget.initial.category;
+  late String _payment = widget.initial.paymentMethod;
+  late bool _isBusiness = widget.initial.isBusiness;
+
+  @override
+  void dispose() {
+    _amountCtrl.dispose();
+    _contentCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cats = kExpenseCategories;
+    return _FormBlock(
+      title: widget.onDelete == null ? '지출 추가' : '지출 수정',
+      note: widget.dayCount > 1 ? '고른 ${widget.dayCount}일에 각각 기록됩니다.' : null,
+      onDelete: widget.onDelete,
+      onCancel: widget.onCancel,
+      onSave: () => widget.onSave(_ExpenseDraft(
+        amount: int.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0,
+        content: _contentCtrl.text.trim(),
+        category: _category,
+        paymentMethod: _payment,
+        isBusiness: _isBusiness,
+      )),
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 58,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 5),
-                child: Text('구분', style: AppTheme.sans(13, sub, weight: FontWeight.w600)),
-              ),
+        _Field('금액', AmountField(controller: _amountCtrl, expand: true, autofocus: true)),
+        _Field(
+          '내용',
+          TextField(
+            controller: _contentCtrl,
+            style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context)),
+            decoration: InputDecoration(
+              isDense: true,
+              // 비워도 된다 — 목록에서는 분류 이름으로 대신 보인다.
+              hintText: '선택 · 예: 한남상회',
+              hintStyle: AppTheme.sans(AppTheme.tsBase, AppTheme.inkTertiary(context)),
             ),
-            Expanded(
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final t in _profile.incomeTypes)
-                    _incomeTypeChip(t == '급여' ? '근로소득' : t, t),
-                ],
-              ),
+          ),
+        ),
+        _Field(
+          '분류',
+          _Field.chips(context, [for (final c in cats) c.label], _category,
+              (v) => setState(() => _category = v),
+              values: [for (final c in cats) c.id]),
+        ),
+        _Field('결제수단',
+            _Field.chips(context, _payments, _payment, (v) => setState(() => _payment = v))),
+        if (widget.profile.tracksBusinessExpense)
+          _Field(
+            '사업경비',
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setState(() => _isBusiness = !_isBusiness),
+              child: Row(children: [
+                AppTheme.tick(context, _isBusiness),
+                const SizedBox(width: 10),
+                Text('경비로 인정',
+                    style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context))),
+              ]),
             ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Padding(
-          padding: const EdgeInsets.only(left: 58),
-          child: Text(hint, textAlign: TextAlign.left, style: AppTheme.sans(12, sub, height: 1.4)),
-        ),
+          ),
       ],
     );
   }
-
-  /// 원천징수 토글 — 프리랜서(사업소득 3.3%·기타소득 8.8%)·N잡러의 '기타 수익'(3.3%)에서 노출.
-  Widget _withheldToggle(Color ink, Color sub) {
-    final isOtherIncome = _incomeType == '기타소득';
-    final rateLabel = isOtherIncome ? '8.8%' : '3.3%';
-    final divisor = isOtherIncome ? 0.912 : 0.967;
-    final raw = int.tryParse(_incomeCtrl.text.replaceAll(',', '')) ?? 0;
-    final gross = raw > 0 ? (raw / divisor).round() : 0;
-    return Padding(
-      padding: const EdgeInsets.only(left: 58, top: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onTap: () => setState(() => _incomeIsWithheld = !_incomeIsWithheld),
-            behavior: HitTestBehavior.opaque,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _incomeIsWithheld ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
-                  size: 16,
-                  color: _incomeIsWithheld ? _incomeColor : sub,
-                ),
-                const SizedBox(width: 6),
-                Text('$rateLabel 원천징수 (세후 실수령액으로 입력)'.keepWords,
-                    style: AppTheme.sans(12, _incomeIsWithheld ? ink : sub, weight: FontWeight.w600)),
-              ],
-            ),
-          ),
-          if (_incomeIsWithheld && raw > 0) ...[
-            const SizedBox(height: 4),
-            Text('세전 금액(추정) ${comma(gross)}원'.keepWords,
-                style: AppTheme.sans(12, sub, height: 1.4)),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _incomeTypeChip(String label, String type) {
-    final selected = _incomeType == type;
-    final ink = AppTheme.ink(context);
-    final sub = AppTheme.inkSecondary(context);
-    return GestureDetector(
-      onTap: () => setState(() {
-        _incomeType = type;
-        // 사업/기타소득 선택 시 원천징수(세후 입력)를 기본으로 켠다 — 통장엔 이미 뗀 돈이 들어오므로.
-        if (type != '급여') _incomeIsWithheld = true;
-      }),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected ? _incomeColor.withValues(alpha: 0.12) : Colors.transparent,
-          border: Border.all(
-            color: selected ? _incomeColor : AppTheme.line(context),
-            width: selected ? 1.4 : 1.0,
-          ),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Text(label,
-            style: AppTheme.sans(12, selected ? ink : sub,
-                weight: selected ? FontWeight.w700 : FontWeight.w500)),
-      ),
-    );
-  }
 }
 
-// ── 금액 입력 필드 — 레이블 고정 너비 58px, 항목 색으로 포커스 표시 ──
-class _BlueprintAmountField extends StatefulWidget {
-  final String label;
-  final TextEditingController ctrl;
-  final Color color;
-  final NumberFormat fmt;
-
-  const _BlueprintAmountField({
-    required this.label,
-    required this.ctrl,
-    required this.color,
-    required this.fmt,
+class _IncomeForm extends StatefulWidget {
+  const _IncomeForm({
+    super.key,
+    required this.profile,
+    required this.initial,
+    required this.dayCount,
+    required this.onCancel,
+    required this.onSave,
+    this.onDelete,
   });
+  final LedgerProfile profile;
+  final _IncomeDraft initial;
+  final int dayCount;
+  final Future<void> Function()? onDelete;
+  final VoidCallback onCancel;
+  final ValueChanged<_IncomeDraft> onSave;
 
   @override
-  State<_BlueprintAmountField> createState() => _BlueprintAmountFieldState();
+  State<_IncomeForm> createState() => _IncomeFormState();
 }
 
-class _BlueprintAmountFieldState extends State<_BlueprintAmountField> {
-  final _focus = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-    _focus.addListener(_onFocusChange);
-  }
-
-  void _onFocusChange() {
-    if (mounted) setState(() {});
-  }
+class _IncomeFormState extends State<_IncomeForm> {
+  late final _amountCtrl =
+      TextEditingController(text: widget.initial.amount > 0 ? comma(widget.initial.amount) : '');
+  late final _memoCtrl = TextEditingController(text: widget.initial.memo);
+  late String _type = widget.initial.incomeType;
+  late bool _isWithheld = widget.initial.isWithheld;
 
   @override
   void dispose() {
-    _focus.removeListener(_onFocusChange);
-    _focus.dispose();
+    _amountCtrl.dispose();
+    _memoCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final ink = AppTheme.ink(context);
-    final sub = AppTheme.inkSecondary(context);
-    final focused = _focus.hasFocus;
-    final lineColor  = focused ? widget.color : AppTheme.line(context);
-    final labelColor = focused ? widget.color : sub;
-
-    return Container(
-      padding: const EdgeInsets.only(bottom: 6),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: lineColor, width: focused ? 1.6 : 1.0)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (widget.label.isNotEmpty)
-            SizedBox(
-              width: 58,
-              child: Text(widget.label,
-                  style: AppTheme.sans(13, labelColor, weight: FontWeight.w600)),
-            ),
-          if (widget.label.isNotEmpty)
-            Expanded(
-              flex: 2,
-              child: _amountField(context, ink),
-            )
-          else
-            Expanded(child: _amountField(context, ink)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 5),
-            child: Text('원', style: AppTheme.sans(widget.label.isEmpty ? 13 : 12, sub)),
-          ),
-          if (widget.label.isNotEmpty) const Spacer(flex: 3),
-        ],
-      ),
-    );
-  }
-
-  Widget _amountField(BuildContext context, Color ink) {
-    final fs = widget.label.isEmpty ? 22.0 : 18.0;
-    return TextField(
-      controller: widget.ctrl,
-      focusNode: _focus,
-      keyboardType: TextInputType.number,
-      textAlign: TextAlign.right,
-      cursorColor: widget.color,
-      style: AppTheme.sans(fs, ink, weight: FontWeight.w700),
-      decoration: InputDecoration(
-        isDense: true,
-        contentPadding: EdgeInsets.zero,
-        border: InputBorder.none,
-        hintText: '0',
-        hintStyle: AppTheme.sans(fs, AppTheme.inkTertiary(context), weight: FontWeight.w300),
-      ),
-      onChanged: (v) {
-        final n = v.replaceAll(RegExp(r'[^0-9]'), '');
-        final f = n.isEmpty ? '' : widget.fmt.format(int.parse(n));
-        if (f != widget.ctrl.text) {
-          widget.ctrl.value = TextEditingValue(
-            text: f, selection: TextSelection.collapsed(offset: f.length));
-        }
-      },
-    );
-  }
-}
-
-// ── 결제수단별 금액 + 카테고리 compact 행 ────────────────────────────
-class _PaymentCategoryRow extends StatefulWidget {
-  final String label;
-  final TextEditingController ctrl;
-  final NumberFormat fmt;
-  final String category;
-  final ValueChanged<String> onCategoryChanged;
-  final bool showBottomBorder;
-  /// null이면 사업경비 토글 숨김(직장인 등) — 프리랜서·N잡러만 값을 전달.
-  final bool? isBusiness;
-  final ValueChanged<bool>? onBusinessChanged;
-
-  const _PaymentCategoryRow({
-    required this.label,
-    required this.ctrl,
-    required this.fmt,
-    required this.category,
-    required this.onCategoryChanged,
-    this.showBottomBorder = true,
-    this.isBusiness,
-    this.onBusinessChanged,
-  });
-
-  @override
-  State<_PaymentCategoryRow> createState() => _PaymentCategoryRowState();
-}
-
-class _PaymentCategoryRowState extends State<_PaymentCategoryRow> {
-  final _focus = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-    _focus.addListener(_onFocusChange);
-  }
-
-  void _onFocusChange() {
-    if (mounted) setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _focus.removeListener(_onFocusChange);
-    _focus.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickCategory() async {
-    final picked = await showDialog<String>(
-      context: context,
-      builder: (ctx) {
-        final ink = AppTheme.ink(ctx);
-        final sub = AppTheme.inkSecondary(ctx);
-        final bg  = AppTheme.backgroundColor(ctx);
-        final line = AppTheme.line(ctx);
-        return AlertDialog(
-          backgroundColor: bg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-            side: BorderSide(color: line),
-          ),
-          titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-          contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          title: Text('${widget.label} 카테고리'.keepWords, style: AppTheme.serif(17, ink)),
-          content: Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: kExpenseCategories.map((cat) {
-              final sel = widget.category == cat.id;
-              return GestureDetector(
-                onTap: () => Navigator.of(ctx).pop(cat.id),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: sel ? cat.color.withValues(alpha: 0.15) : Colors.transparent,
-                    border: Border.all(
-                      color: sel ? cat.color : line,
-                      width: sel ? 1.4 : 1.0,
-                    ),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(cat.icon, size: 13, color: sel ? cat.color : sub),
-                    const SizedBox(width: 4),
-                    Text(cat.label,
-                        style: AppTheme.sans(12, sel ? ink : sub,
-                            weight: sel ? FontWeight.w700 : FontWeight.w500)),
-                  ]),
-                ),
-              );
-            }).toList(),
-          ),
-        );
-      },
-    );
-    if (picked != null) widget.onCategoryChanged(picked);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ink = AppTheme.ink(context);
-    final sub = AppTheme.inkSecondary(context);
-    final cat = expenseCategoryById(widget.category);
-    final focused = _focus.hasFocus;
-    final isEmpty = widget.ctrl.text.isEmpty || widget.ctrl.text == '0';
-    final lineColor = focused ? cat.color : AppTheme.line(context);
-    final labelColor = focused ? cat.color : sub;
-
-    final amountBox = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: lineColor, width: focused ? 1.4 : 1.0),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: widget.ctrl,
-              focusNode: _focus,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.right,
-              cursorColor: cat.color,
-              style: AppTheme.sans(16, ink, weight: FontWeight.w700),
-              decoration: InputDecoration(
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-                border: InputBorder.none,
-                hintText: '0',
-                hintStyle: AppTheme.sans(16, AppTheme.inkTertiary(context), weight: FontWeight.w300),
-              ),
-              onChanged: (v) {
-                final n = v.replaceAll(RegExp(r'[^0-9]'), '');
-                final f = n.isEmpty ? '' : widget.fmt.format(int.parse(n));
-                if (f != widget.ctrl.text) {
-                  widget.ctrl.value = TextEditingValue(
-                    text: f, selection: TextSelection.collapsed(offset: f.length));
-                }
-                if (mounted) setState(() {});
-              },
+    return _FormBlock(
+      title: widget.onDelete == null ? '수익 추가' : '수익 수정',
+      note: widget.dayCount > 1 ? '고른 ${widget.dayCount}일에 각각 기록됩니다.' : null,
+      onDelete: widget.onDelete,
+      onCancel: widget.onCancel,
+      onSave: () => widget.onSave(_IncomeDraft(
+        amount: int.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0,
+        memo: _memoCtrl.text.trim(),
+        incomeType: _type,
+        isWithheld: _isWithheld,
+      )),
+      children: [
+        _Field('금액', AmountField(controller: _amountCtrl, expand: true, autofocus: true)),
+        _Field(
+          '내용',
+          TextField(
+            controller: _memoCtrl,
+            style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context)),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: '선택 · 예: 9월 급여',
+              hintStyle: AppTheme.sans(AppTheme.tsBase, AppTheme.inkTertiary(context)),
             ),
           ),
-          const SizedBox(width: 4),
-          Text('원', style: AppTheme.sans(12, sub)),
-        ],
-      ),
-    );
-
-    final categoryBox = GestureDetector(
-      onTap: _pickCategory,
-      behavior: HitTestBehavior.opaque,
-      child: Opacity(
-        opacity: isEmpty ? 0.35 : 1.0,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isEmpty ? Colors.transparent : cat.color.withValues(alpha: 0.12),
-            border: Border.all(
-              color: isEmpty ? AppTheme.line(context) : cat.color.withValues(alpha: 0.5),
-            ),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(cat.icon, size: 13, color: isEmpty ? sub : cat.color),
-            const SizedBox(width: 4),
-            Text(cat.label,
-                style: AppTheme.sans(12, isEmpty ? sub : cat.color,
-                    weight: FontWeight.w600)),
-          ]),
         ),
-      ),
-    );
-
-    final innerRow = Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 58,
-            child: Text(widget.label,
-                style: AppTheme.sans(13, labelColor, weight: FontWeight.w600)),
-          ),
-          Expanded(flex: 3, child: amountBox),
-          const SizedBox(width: 8),
-          Expanded(flex: 2, child: categoryBox),
-        ],
-    );
-
-    Widget content = innerRow;
-    if (widget.isBusiness != null) {
-      final biz = widget.isBusiness!;
-      content = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          innerRow,
-          const SizedBox(height: 6),
-          Opacity(
-            opacity: isEmpty ? 0.35 : 1.0,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 58),
-              child: GestureDetector(
-                onTap: () => widget.onBusinessChanged?.call(!biz),
-                behavior: HitTestBehavior.opaque,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      biz ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
-                      size: 15,
-                      color: biz ? cat.color : sub,
-                    ),
-                    const SizedBox(width: 5),
-                    Text('사업경비로 인정',
-                        style: AppTheme.sans(11.5, biz ? ink : sub, weight: FontWeight.w600)),
-                  ],
+        _Field(
+          '소득 유형',
+          _Field.chips(context, widget.profile.incomeTypes, _type,
+              (v) => setState(() => _type = v)),
+        ),
+        // 원천징수는 사업·기타소득에만 있다. 급여는 간이세액표라 역산이 안 된다.
+        if (widget.profile.tracksBusinessExpense && _type != '급여')
+          _Field(
+            '원천징수',
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setState(() => _isWithheld = !_isWithheld),
+              child: Row(children: [
+                AppTheme.tick(context, _isWithheld),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text('세금 떼고 받은 금액'.keepWords,
+                      style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context))),
                 ),
-              ),
+              ]),
             ),
           ),
-        ],
-      );
-    }
-
-    if (!widget.showBottomBorder) return content;
-
-    return Container(
-      padding: const EdgeInsets.only(bottom: 6),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: lineColor, width: focused ? 1.6 : 1.0)),
-      ),
-      child: content,
+      ],
     );
   }
 }

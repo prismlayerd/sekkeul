@@ -65,9 +65,8 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('청년 주택드림 청약통장',
+        title: Text('청년 주택드림 청약통장'.keepWords,
             style: AppTheme.serif(16, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
@@ -91,7 +90,7 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('이자 비교 (단리 추정)',
+                    Text('이자 비교 (단리 추정)'.keepWords,
                         style:
                             AppTheme.sans(11, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),

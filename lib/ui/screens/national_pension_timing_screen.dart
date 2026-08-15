@@ -102,7 +102,7 @@ class _NationalPensionTimingScreenState
                   ),
                   if (hasInput) ...[
                     const SizedBox(height: 8),
-                    Text('기준 연금: ${won(_base)}'.keepWords,
+                    Text('기준 연금: ${won(_base)}',
                         style: TextStyle(color: subColor, fontSize: 12)),
                   ],
                 ],
@@ -150,7 +150,7 @@ class _NationalPensionTimingScreenState
                     '• 조기수령: 최대 5년 앞당겨 받으며 1년당 6% 감액됩니다.\n'
                     '• 연기수령: 최대 5년 늦춰 받으며 1년당 7.2% 증액됩니다.\n'
                     '• 손익분기점은 정상수령 개시 시점 이후 기준입니다.\n'
-                    '• 실제 수령 조건은 국민연금공단에 문의하세요.',
+                    '• 실제 수령 조건은 국민연금공단에 문의하세요.'.keepWords,
                     style: TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),
                 ],

@@ -56,7 +56,6 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
     final cheaper = _kpassRealCost <= _climateFee ? 'K-패스' : '기후동행카드';
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('K-패스 · 기후동행카드 비교'.keepWords,
             style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),

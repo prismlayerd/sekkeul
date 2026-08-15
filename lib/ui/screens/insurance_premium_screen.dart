@@ -65,7 +65,7 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('보험료 세액공제 계산기',
+        title: Text('보험료 세액공제 계산기'.keepWords,
             style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
@@ -113,7 +113,7 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
                   Row(children: [
                     Icon(Icons.health_and_safety_rounded, color: primary, size: 20),
                     const SizedBox(width: 8),
-                    Text('예상 절세액 (세액공제)',
+                    Text('예상 절세액 (세액공제)'.keepWords,
                         style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.bold)),
                   ]),
                   const SizedBox(height: 12),
@@ -148,12 +148,12 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           Icon(Icons.check_circle_rounded, color: AppTheme.colorSuccess, size: 14),
                           const SizedBox(width: 6),
-                          Text('최대 공제 달성 (27만원)', style: TextStyle(color: AppTheme.colorSuccess, fontSize: 12, fontWeight: FontWeight.w600)),
+                          Text('최대 공제 달성 (27만원)'.keepWords, style: TextStyle(color: AppTheme.colorSuccess, fontSize: 12, fontWeight: FontWeight.w600)),
                         ]),
                       ),
                     ],
                   ] else
-                    Text('보험 납입액을 입력해보세요.',
+                    Text('보험 납입액을 입력해보세요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 13)),
                 ],
               ),
@@ -180,7 +180,7 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
                     '• 보장성보험(실손·암·종신)은 연 100만원 한도로 12% 공제됩니다.\n'
                     '• 장애인전용보장성보험은 별도 연 100만원 한도로 15% 공제됩니다.\n'
                     '• 저축성 보험(연금보험, 저축보험 등)은 이 공제 대상이 아닙니다.\n'
-                    '• 연말정산 시 보험료 납입증명서를 회사에 제출하세요.',
+                    '• 연말정산 시 보험료 납입증명서를 회사에 제출하세요.'.keepWords,
                     style: TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),
                 ],

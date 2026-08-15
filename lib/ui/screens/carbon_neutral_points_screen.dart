@@ -72,7 +72,6 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('탄소중립포인트',
             style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),
@@ -111,7 +110,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
                   onChanged: (v) => setState(() => _greenBuy = v ?? false),
                   activeColor: accent,
                 ),
-                Expanded(child: Text('친환경제품 구매(매월 1건)', style: AppTheme.sans(13, ink))),
+                Expanded(child: Text('친환경제품 구매(매월 1건)'.keepWords, style: AppTheme.sans(13, ink))),
               ],
             ),
             const SizedBox(height: 32),

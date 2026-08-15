@@ -238,16 +238,17 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     final textColor = theme.textTheme.bodyLarge!.color!;
     final subColor = theme.textTheme.labelMedium!.color!;
     final cardColor = theme.cardColor;
-    final bgColor = theme.scaffoldBackgroundColor;
+    // 페이지 색은 AppTheme에서 읽는다 — theme.scaffoldBackgroundColor는
+    // 이제 투명이라(뒤의 종이 결이 비쳐야 한다) 채움·글자색으로 못 쓴다.
+    final bgColor = AppTheme.backgroundColor(context);
 
     return Scaffold(
-      backgroundColor: bgColor,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('종합소득세 신고 가이드', style: AppTheme.serif(AppTheme.serifMD, textColor)),
+        title: Text('종합소득세 신고 가이드'.keepWords, style: AppTheme.serif(AppTheme.serifMD, textColor)),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -281,7 +282,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       return ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         children: [
-          Text('${_year}년 귀속\n종합소득세 신고서'.keepWords, style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
+          Text('${_year}년 귀속\n종합소득세 신고서', style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(20),
@@ -289,7 +290,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('아직 진단 결과가 없어요', style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
+                Text('아직 진단 결과가 없어요'.keepWords, style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Text('①종소세 진단에서 계산한 뒤 "가상 신고서 양식 보기"를 눌러야 홈택스에 입력할 숫자가 여기 채워져요.'.keepWords,
                     style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
@@ -317,7 +318,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       children: [
-        Text('${_year}년 귀속\n종합소득세 신고서'.keepWords, style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
+        Text('${_year}년 귀속\n종합소득세 신고서', style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2)),
         const SizedBox(height: 4),
         Text('①진단 결과를 홈택스 화면에 나오는 순서대로 안내해드려요.\n신고 기한: 매년 5월 1일 ~ 5월 31일'.keepWords,
             style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
@@ -410,7 +411,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           Row(children: [
             Icon(Icons.open_in_browser_rounded, color: primary, size: 18),
             const SizedBox(width: 8),
-            Text('홈택스 종합소득세 신고 순서', style: TextStyle(color: primary, fontSize: 14, fontWeight: FontWeight.bold)),
+            Text('홈택스 종합소득세 신고 순서'.keepWords, style: TextStyle(color: primary, fontSize: 14, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 14),
           _step('1', 'hometax.go.kr 접속 → 로그인\n(공동인증서 또는 카카오·네이버 간편인증)', primary, textColor),
@@ -443,7 +444,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       children: [
         // ── 인트로 ──
         Text(
-          '${_year}년 귀속\n종합소득세 신고서'.keepWords,
+          '${_year}년 귀속\n종합소득세 신고서',
           style: AppTheme.serif(28, textColor, spacing: -0.5, height: 1.2),
         ),
         const SizedBox(height: 4),
@@ -607,7 +608,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           Row(children: [
             Icon(Icons.auto_awesome_rounded, color: primary, size: 18),
             const SizedBox(width: 8),
-            Text('앱이 자동으로 수집한 정보',
+            Text('앱이 자동으로 수집한 정보'.keepWords,
                 style: TextStyle(color: primary, fontSize: 13, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 14),
@@ -782,7 +783,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
                   const SizedBox(height: 5),
                   isCount
                       ? _buildCountField(controllers[i], textColor, subColor)
-                      : _buildAmountField(controllers[i], hints[i], textColor, subColor, Theme.of(context).scaffoldBackgroundColor),
+                      : _buildAmountField(controllers[i], hints[i], textColor, subColor, AppTheme.backgroundColor(context)),
                 ],
                 const SizedBox(height: 14),
                 // 공제 조건 안내
@@ -968,7 +969,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           Row(children: [
             Icon(Icons.open_in_browser_rounded, color: primary, size: 18),
             const SizedBox(width: 8),
-            Text('홈택스 종합소득세 신고 순서',
+            Text('홈택스 종합소득세 신고 순서'.keepWords,
                 style: TextStyle(color: primary, fontSize: 14, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 14),

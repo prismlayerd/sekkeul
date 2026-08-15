@@ -100,7 +100,7 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('연금저축·IRP 절세 계산기',
+        title: Text('연금저축·IRP 절세 계산기'.keepWords,
             style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
@@ -164,7 +164,7 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
                   Row(children: [
                     Icon(Icons.savings_rounded, color: primary, size: 20),
                     const SizedBox(width: 8),
-                    Text('예상 절세액 (세액공제)',
+                    Text('예상 절세액 (세액공제)'.keepWords,
                         style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.bold)),
                   ]),
                   const SizedBox(height: 12),
@@ -211,7 +211,7 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
                   Text(
                     '• 근로소득 5,500만원, 종합소득 4,500만원 이하는 16.5%, 초과는 13.2%입니다 (지방소득세 포함).\n'
                     '• 연금저축은 연 600만원, IRP 포함 합산 900만원까지 공제 대상입니다.\n'
-                    '• 세액공제는 결정세액에서 직접 차감되어 환급으로 돌아옵니다.',
+                    '• 세액공제는 결정세액에서 직접 차감되어 환급으로 돌아옵니다.'.keepWords,
                     style: TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),
                 ],

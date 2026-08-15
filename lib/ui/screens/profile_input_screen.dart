@@ -752,7 +752,6 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
         if (!didPop) _prevPage();
       },
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),

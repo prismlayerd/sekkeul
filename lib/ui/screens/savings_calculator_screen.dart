@@ -288,7 +288,7 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
                     '• 이자소득세 = 소득세 14% + 지방소득세 1.4% = 15.4%\n'
                     '• 비과세종합저축(장애인·65세 이상 등 5천만원 한도) 해당 시 비과세.\n'
                     '• ISA·IRP·연금저축 등은 별도 절세 혜택이 있습니다.\n'
-                    '• 적금 이자는 납입 순서별 기간에 따라 복잡하게 산정될 수 있습니다.',
+                    '• 적금 이자는 납입 순서별 기간에 따라 복잡하게 산정될 수 있습니다.'.keepWords,
                     style:
                         TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),

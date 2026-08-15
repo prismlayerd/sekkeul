@@ -64,7 +64,6 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('본인부담상한제 환급',
             style: AppTheme.serif(16, ink,
@@ -89,7 +88,7 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
                   value: _tierIdx,
                   isExpanded: true,
                   style: AppTheme.sans(14, ink),
-                  dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                  dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < outOfPocketCapTiers.length; i++)
                       DropdownMenuItem(
@@ -150,9 +149,9 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('요양병원 120일 초과 입원',
+                      Text('요양병원 120일 초과 입원'.keepWords,
                           style: AppTheme.sans(14, ink)),
-                      Text('올해 요양병원 입원일수가 120일을 넘으면 상한액이 따로 적용돼요'
+                      Text('올해 요양병원 입원일수가 120일을 넘으면 상한액이 따로 적용돼요'.keepWords
                           .keepWords,
                           style: AppTheme.sans(11, sub)),
                     ],

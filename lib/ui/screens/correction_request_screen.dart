@@ -97,7 +97,6 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
     final c = _report();
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),
@@ -111,14 +110,14 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
           children: [
             Text('경정청구 준비'.toUpperCase(), style: AppTheme.label(context)),
             const SizedBox(height: 12),
-            Text('놓친 공제\n되돌려받기', style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
+            Text('놓친 공제\n되돌려받기'.keepWords, style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
             const SizedBox(height: 10),
             Text('연말정산 때 깜빡한 공제를 고르기만 하면, 5년 내 경정청구로 얼마를 돌려받을 수 있는지 계산하고 홈택스 신고 방법까지 알려드려요.'.keepWords,
                 style: AppTheme.sans(14, sub, height: 1.55)),
 
             // ── 대상 연도 ──
             const SizedBox(height: 22),
-            Text('어느 해 연말정산을 바로잡을까요?'.toUpperCase(), style: AppTheme.label(context)),
+            Text('어느 해 연말정산을 바로잡을까요?'.keepWords.toUpperCase(), style: AppTheme.label(context)),
             const SizedBox(height: 10),
             _yearSelector(),
 
@@ -134,7 +133,7 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
 
             // ── 잊은 공제 선택 ──
             const SizedBox(height: 26),
-            Text('어떤 공제를 빠뜨렸나요?'.toUpperCase(), style: AppTheme.label(context)),
+            Text('어떤 공제를 빠뜨렸나요?'.keepWords.toUpperCase(), style: AppTheme.label(context)),
             const SizedBox(height: 6),
             Text('해당하는 항목을 고르고 실제 지출액을 적어주세요.'.keepWords, style: AppTheme.sans(12, sub)),
             const SizedBox(height: 14),
@@ -254,7 +253,7 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
             Text('원', style: AppTheme.sans(15, sub, weight: FontWeight.w600)),
           ]),
           const SizedBox(height: 6),
-          Text('$_selectedYear년 귀속 — 5년 내 경정청구로 돌려받을 수 있어요.'.keepWords, style: AppTheme.sans(12, sub, height: 1.45)),
+          Text('$_selectedYear년 귀속 — 5년 내 경정청구로 돌려받을 수 있어요.', style: AppTheme.sans(12, sub, height: 1.45)),
         ],
       ),
     );
@@ -282,7 +281,7 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
                   Text('+${comma(l.missedCredit)}원', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
                 ]),
                 const SizedBox(height: 4),
-                Text('지출 ${comma(l.available)}원 기준'.keepWords, style: AppTheme.sans(12, sub, height: 1.4)),
+                Text('지출 ${comma(l.available)}원 기준', style: AppTheme.sans(12, sub, height: 1.4)),
               ],
             ),
           ),

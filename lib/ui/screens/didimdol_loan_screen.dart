@@ -70,7 +70,6 @@ class _DidimdolLoanScreenState extends State<DidimdolLoanScreen> {
     final r = _result;
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
         titleSpacing: 0,
         title: Text('디딤돌 대출 계산',

@@ -76,13 +76,11 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
 
     if (!_loaded) {
       return Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: const SizedBox.shrink(),
       );
     }
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),
@@ -99,7 +97,7 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
                 children: [
                   Text('공제 고르기'.toUpperCase(), style: AppTheme.label(context)),
                   const SizedBox(height: 12),
-                  Text('해당되는 것만\n골라주세요', style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
+                  Text('해당되는 것만\n골라주세요'.keepWords, style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
                   const SizedBox(height: 10),
                   Text(
                     _gross > 0

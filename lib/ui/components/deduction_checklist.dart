@@ -70,35 +70,26 @@ class _DeductionChecklistState extends State<DeductionChecklist> {
 
   @override
   Widget build(BuildContext context) {
+    // 확인 목록은 전표의 체크칸 줄이다 — 항목마다 상자를 두르지 않고
+    // 헤어라인 한 줄로 잇는다(목업 1e).
     return Column(
       children: [
-        for (final c in kDeductionCatalog) ...[
-          _categoryCard(c),
-          const SizedBox(height: 10),
-        ],
+        for (final c in kDeductionCatalog) _categoryRow(c),
       ],
     );
   }
 
-  Widget _categoryCard(DeductionCategory c) {
+  Widget _categoryRow(DeductionCategory c) {
     final ink = AppTheme.ink(context);
     final sub = AppTheme.inkSecondary(context);
     final tert = AppTheme.inkTertiary(context);
-    final accent = AppTheme.accentColor(context);
     final selected = _selected.contains(c.id);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOutCubic,
+    return Container(
       decoration: BoxDecoration(
-        color: selected ? accent.withValues(alpha: 0.06) : Colors.transparent,
-        border: Border.all(
-          color: selected ? accent : AppTheme.line(context),
-          width: selected ? 1.4 : 1.0,
-        ),
-        borderRadius: BorderRadius.circular(4),
+        border: Border(bottom: BorderSide(color: AppTheme.line(context), width: 1)),
       ),
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -109,33 +100,41 @@ class _DeductionChecklistState extends State<DeductionChecklist> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  selected ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
-                  size: 22,
-                  color: selected ? accent : tert,
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: AppTheme.tick(context, selected),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(c.name, style: AppTheme.sans(15, ink, weight: FontWeight.w700)),
+                      Text(c.name,
+                          style: AppTheme.sans(AppTheme.tsBase, ink,
+                              weight: selected ? FontWeight.w700 : FontWeight.w400)),
                       const SizedBox(height: 3),
-                      Text(c.summary, style: AppTheme.sans(12.5, sub, height: 1.45)),
+                      Text(c.summary, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
                     ],
                   ),
+                ),
+                const SizedBox(width: 10),
+                // 오른쪽 끝의 상태말 — 고른 줄은 '반영됨', 아직인 줄은 '확인'.
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(selected ? '반영됨' : '확인',
+                      style: AppTheme.label(context, color: tert)),
                 ),
               ],
             ),
           ),
           // 선택 시 — 금액 입력 + 어디서 찾나 힌트.
           if (selected) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Row(
               children: [
                 SizedBox(
-                  width: 54,
-                  child: Text('지출액', style: AppTheme.sans(13, sub, weight: FontWeight.w600)),
+                  width: 58,
+                  child: Text('지출액', style: AppTheme.sans(AppTheme.tsSM, sub, weight: FontWeight.w600)),
                 ),
                 Expanded(
                   child: AmountField(
@@ -146,20 +145,12 @@ class _DeductionChecklistState extends State<DeductionChecklist> {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.search_rounded, size: 13, color: tert),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(c.findHint, style: AppTheme.sans(11.5, tert, height: 1.45)),
-                ),
-              ],
-            ),
+            const SizedBox(height: 8),
+            Text(c.findHint, style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.45)),
           ],
         ],
       ),
     );
   }
+
 }

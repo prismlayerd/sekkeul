@@ -339,7 +339,7 @@ class _TaxFormsBodyState extends State<TaxFormsBody> {
             Icon(Icons.description_outlined,
                 size: 36, color: AppTheme.inkTertiary(context)),
             const SizedBox(height: 12),
-            Text('해당 유형의 양식이 없어요',
+            Text('해당 유형의 양식이 없어요'.keepWords,
                 style: AppTheme.sans(14, AppTheme.inkSecondary(context))),
           ],
         ),
@@ -356,7 +356,6 @@ class FormsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: IconButton(

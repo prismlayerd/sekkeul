@@ -69,7 +69,6 @@ class _BogeumjariLoanScreenState extends State<BogeumjariLoanScreen> {
     final r = _result;
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
         titleSpacing: 0,
         title: Text('보금자리론 계산',

@@ -79,7 +79,6 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('주택연금',
             style: AppTheme.serif(16, ink,
@@ -93,7 +92,7 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
             _inputField('가입자 연령 (부부 중 연소자 기준)', _ageCtrl, '65', '세', ink, sub,
                 line),
             const SizedBox(height: 16),
-            Text('주택 공시가격 (만원)',
+            Text('주택 공시가격 (만원)'.keepWords,
                 style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(

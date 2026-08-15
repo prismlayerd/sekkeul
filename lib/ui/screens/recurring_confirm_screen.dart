@@ -8,9 +8,7 @@ import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
 
-const _pmCreditColor = Color(0xFF6B8FD4);
-const _pmDebitColor  = Color(0xFFD4A847);
-const _pmOtherColor  = Color(0xFF9E9B96);
+
 
 class RecurringConfirmScreen extends StatefulWidget {
   final int year;
@@ -175,11 +173,12 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
 
   int _daysInMonth(int year, int month) => DateTime(year, month + 1, 0).day;
 
+  /// 결제수단은 색이 아니라 **잉크 농도**로 가른다 — 가계부 달력의 약어 범례와 같은 규율.
   Color _pmColor(String pm) {
     switch (pm) {
-      case '신용카드': return _pmCreditColor;
-      case '체크+현금': return _pmDebitColor;
-      default:       return _pmOtherColor;
+      case '신용카드':  return AppTheme.ink(context);
+      case '체크+현금': return AppTheme.inkSecondary(context);
+      default:        return AppTheme.inkTertiary(context);
     }
   }
 
@@ -188,16 +187,14 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
   @override
   Widget build(BuildContext context) {
     final ink = AppTheme.ink(context);
-    final bg  = AppTheme.backgroundColor(context);
 
     const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월',
         '7월', '8월', '9월', '10월', '11월', '12월'];
     final monthLabel = monthNames[widget.month - 1];
 
     return Scaffold(
-      backgroundColor: bg,
       appBar: AppBar(
-        title: Text('$monthLabel 고정 지출'.keepWords, style: AppTheme.serif(22, ink)),
+        title: Text('$monthLabel 고정 지출', style: AppTheme.serif(22, ink)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: AppTheme.hairline(context),
@@ -236,8 +233,8 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
                                       begin: Alignment.topCenter,
                                       end: Alignment.bottomCenter,
                                       colors: [
-                                        Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0),
-                                        Theme.of(context).scaffoldBackgroundColor,
+                                        AppTheme.backgroundColor(context).withValues(alpha: 0),
+                                        AppTheme.backgroundColor(context),
                                       ],
                                     ),
                                   ),

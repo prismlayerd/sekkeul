@@ -215,7 +215,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
                     const SizedBox(height: 12),
                     _row('총 납부세액', won(_totalTax), subColor, primary),
                   ] else
-                    Text('취득가액을 입력해보세요.',
+                    Text('취득가액을 입력해보세요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 13)),
                 ],
               ),
@@ -270,7 +270,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
                     '• 주택 수는 취득 후 1세대 합산 기준입니다.\n'
                     '• 농어촌특별세: 1주택 9억 이하 제외, 나머지 취득가×0.2%.\n'
                     '• 일시적 2주택(3년 내 기존주택 처분 등) 감면 별도 확인.\n'
-                    '• 오피스텔·상가 등 비주택 취득세(4.6%)는 별도 계산.',
+                    '• 오피스텔·상가 등 비주택 취득세(4.6%)는 별도 계산.'.keepWords,
                     style:
                         TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),

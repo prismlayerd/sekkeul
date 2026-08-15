@@ -105,7 +105,6 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
     final r = _result;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         titleSpacing: 16,
         title: Text('장부 만들기',
@@ -141,12 +140,12 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                 const SizedBox(height: 6),
                 Text(
                   '무기장가산세(소득세법 §81의5). 장부를 갖추면 붙지 않아요.\n'
-                  '신규사업자이거나 직전연도 수입이 4,800만원 미만이면 면제됩니다.',
+                  '신규사업자이거나 직전연도 수입이 4,800만원 미만이면 면제됩니다.'.keepWords,
                   style: AppTheme.sans(13, sub, height: 1.5),
                 ),
                 if (_judgment?.isSmallBusinessExemptFromPenalty == true) ...[
                   const SizedBox(height: 8),
-                  Text('→ 지금은 면제 대상이에요.',
+                  Text('→ 지금은 면제 대상이에요.'.keepWords,
                       style: AppTheme.sans(13, accent, weight: FontWeight.w700)),
                 ],
                 const SizedBox(height: 20),
@@ -172,7 +171,7 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                     child: Row(children: [
                       Icon(Icons.edit_calendar_outlined, size: 17, color: accent),
                       const SizedBox(width: 8),
-                      Text('가계부에 기록하러 가기',
+                      Text('가계부에 기록하러 가기'.keepWords,
                           style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
                       const Spacer(),
                       Icon(Icons.chevron_right_rounded, size: 18, color: accent),
@@ -195,7 +194,7 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                     const SizedBox(height: 6),
                     Text(
                       '거래내용이 빈 줄이 ${r.blankDescriptionCount}건이에요. '
-                      '거래처와 함께 직접 채워야 장부로 인정받기 좋아요.',
+                      '거래처와 함께 직접 채워야 장부로 인정받기 좋아요.'.keepWords,
                       style: AppTheme.sans(12, AppTheme.colorDanger, height: 1.5),
                     ),
                   ],
@@ -212,7 +211,7 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                         Icon(Icons.ios_share_rounded, size: 17, color: accent),
                         const SizedBox(width: 8),
-                        Text('간편장부 내보내기 (CSV)',
+                        Text('간편장부 내보내기 (CSV)'.keepWords,
                             style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
                       ]),
                     ),
@@ -220,7 +219,7 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                   const SizedBox(height: 10),
                   Text(
                     '엑셀에서 열어 거래처·부가세 칸을 채운 뒤 보관하세요. '
-                    '홈택스 신고 시 장부 근거가 됩니다.',
+                    '홈택스 신고 시 장부 근거가 됩니다.'.keepWords,
                     style: AppTheme.sans(12, tert, height: 1.5),
                   ),
                 ],

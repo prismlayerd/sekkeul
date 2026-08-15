@@ -24,10 +24,96 @@ import '../theme/text_wrap.dart';
 
 
 // ── 항목 색상 (파스텔 톤) ──
-const _incomeColor   = Color(0xFF5CB87A); // 수익      — soft green
-const _pmCreditColor = Color(0xFF6B8FD4); // 신용카드  — steel blue
-const _pmDebitColor  = Color(0xFFD4A847); // 체크+현금 — soft amber
-const _pmOtherColor  = Color(0xFF9E9B96); // 기타      — warm gray
+/// 수익·결제수단을 흑백에서 가르는 **표식**. 색 점 → 약어(카/현/기)를 거쳐
+/// 속이 찬 도형으로 왔다.
+///
+/// 신용카드 15% / 체크·현금 30%로 공제율이 갈리는 구분이라 뭉개지면 안 되는데,
+/// 영수증 테마에는 색이 없다. 도형은 모양으로 갈리니 색맹인 사람에게도 읽히고,
+/// 달력 칸처럼 좁은 자리에서 글자보다 작게 찍을 수 있다.
+enum _Mark { income, credit, debit, other }
+
+/// 표식 하나 — 잉크로 채운 도형. 수익만 부호(+)다: 결제수단과 축이 다르다.
+class _MarkShape extends StatelessWidget {
+  const _MarkShape(this.kind, {this.size = 8, this.color});
+  final _Mark kind;
+
+  /// 표식이 차지하는 **정사각 상자**의 한 변. 도형은 그 안에 들어간다.
+  final double size;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? AppTheme.ink(context);
+    // 네 표식이 **같은 크기 상자**를 쓴다. 예전엔 +가 size+2, 세모가 size+1,
+    // 네모·원이 size라 범례에서 글자 높이가 제각각이었고, 달력 칸에 세로로
+    // 쌓으면 오른쪽 끝이 들쭉날쭉했다. 상자를 맞추면 어디 놓아도 줄이 선다.
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Center(child: _shape(c)),
+    );
+  }
+
+  Widget _shape(Color c) {
+    switch (kind) {
+      case _Mark.income: // 부호 — 결제수단과 축이 다르다
+        return SizedBox(
+          width: size,
+          height: size,
+          child: CustomPaint(painter: _PlusPainter(c)),
+        );
+      case _Mark.credit: // 네모
+        return Container(width: size * 0.82, height: size * 0.82, color: c);
+      case _Mark.debit: // 원 — 같은 변이면 네모보다 작아 보여 살짝 키운다
+        return Container(
+          width: size * 0.92,
+          height: size * 0.92,
+          decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+        );
+      case _Mark.other: // 세모 — 밑변을 맞추면 무게중심이 처져 위로 조금 올린다
+        return CustomPaint(
+          size: Size(size, size * 0.86),
+          painter: _TrianglePainter(c),
+        );
+    }
+  }
+}
+
+/// 수익 부호. 글자 '+'는 글꼴마다 굵기·위치가 달라 상자 안에서 흔들린다.
+class _PlusPainter extends CustomPainter {
+  const _PlusPainter(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final t = size.width * 0.22; // 획 두께
+    final c = size.width / 2;
+    final paint = Paint()..color = color;
+    canvas.drawRect(Rect.fromLTWH(0, c - t / 2, size.width, t), paint);
+    canvas.drawRect(Rect.fromLTWH(c - t / 2, 0, t, size.height), paint);
+  }
+
+  @override
+  bool shouldRepaint(_PlusPainter old) => old.color != color;
+}
+
+class _TrianglePainter extends CustomPainter {
+  const _TrianglePainter(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(size.width / 2, 0)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_TrianglePainter old) => old.color != color;
+}
 
 const _catCredit = '신용카드';
 const _catDebit  = '체크+현금';
@@ -60,21 +146,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
 
   final Map<String, GlobalKey> _cellKeys = {};
 
-  final _incomeCtrl = TextEditingController();
-  String _incomeType = '급여'; // '급여'(근로소득) | '기타'(기타 수익)
   String _userType = '직장인'; // 직장인 / N잡러 / 프리랜서 — 기타수익 토글 노출 판단
-  final _creditCtrl = TextEditingController();
-  final _debitCtrl  = TextEditingController();
-  final _otherCtrl  = TextEditingController();
-  String _creditCategory = '기타';
-  String _debitCategory  = '기타';
-  String _otherCategory  = '기타';
   // 사업경비 인정 여부(프리랜서·N잡러 대상) — 결제수단별 독립 플래그.
-  bool _creditIsBusiness = false;
-  bool _debitIsBusiness  = false;
-  bool _otherIsBusiness  = false;
   // 3.3% 원천징수 사업소득 여부 — true면 수익 입력값이 실수령액(세후).
-  bool _incomeIsWithheld = false;
 
   LedgerProfile get _profile => LedgerProfile.of(_userType);
   bool get _isBusinessUser => _profile.tracksBusinessExpense;
@@ -142,10 +216,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   void dispose() {
     _panFlingCtrl.dispose();
     _calScrollCtrl.dispose();
-    _incomeCtrl.dispose();
-    _creditCtrl.dispose();
-    _debitCtrl.dispose();
-    _otherCtrl.dispose();
     super.dispose();
   }
 
@@ -219,7 +289,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       setState(() {
         _userType = loadedType;
         _importOptions = importOpts;
-        _incomeType = LedgerProfile.of(loadedType).defaultIncomeType;
         _expensesByDay = expMap;
         _incomesByDay  = incMap;
         _dayBatchId    = dayBatch;
@@ -264,10 +333,10 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        title: Text('세금 적립 카드가 생겼어요', style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
+        title: Text('세금 적립 카드가 생겼어요'.keepWords, style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
         content: Text(
           '이번 달 수입에서 세금·4대보험으로 미리 떼어둬야 할 금액과, 지금 마음 놓고 써도 되는 금액을 매달 계산해서 보여드려요. '
-          '업종코드를 설정하면 더 정확해져요 — 내 정보에서 언제든 설정할 수 있어요.',
+          '업종코드를 설정하면 더 정확해져요 — 내 정보에서 언제든 설정할 수 있어요.'.keepWords,
           style: AppTheme.sans(13, sub, height: 1.5),
         ),
         actions: [
@@ -324,9 +393,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       .where((e) => e.paymentMethod == pm)
       .fold(0, (s, e) => s + e.amount);
 
-  bool _hasData(String key) =>
-      (_incomesByDay[key]?.isNotEmpty ?? false) ||
-      (_expensesByDay[key]?.isNotEmpty ?? false);
 
   // ── 선택 ─────────────────────────────────────────────────────────
 
@@ -347,22 +413,19 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final alreadySelected =
         _selected.length == group.length && group.every(_selected.contains);
     if (alreadySelected) {
-      setState(() {
-        _selected.clear();
-        _clearForm();
-      });
+      setState(_selected.clear);
       _scrollToTop();
       return;
     }
-    setState(() {
-      _selected..clear()..addAll(group);
-      _prefillFromDate(group.reduce((a, b) => a.isBefore(b) ? a : b));
-    });
+    setState(() => _selected..clear()..addAll(group));
     _openDayEntry();
   }
 
   /// 풀스크린 입력 화면을 열고, 돌아오면 새로고침 — 인라인 에디터의 "스크롤이
   /// 에디터를 지나쳐버리는" 문제를 화면 분리로 원천 해결한다.
+  ///
+  /// 넘기는 건 날짜와 그날의 기록뿐이다. 예전에는 입력칸 4개를 미리 채워
+  /// 보내느라 이 화면이 폼 상태를 통째로 들고 있었는데, 그 폼이 사라졌다.
   Future<void> _openDayEntry() async {
     await Navigator.push(
       context,
@@ -370,19 +433,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         builder: (_) => DayEntryScreen(
           dates: Set.of(_selected),
           userType: _userType,
-          hasExisting: _selected.any((d) => _hasData(_key(d))),
-          initialIncomeText: _incomeCtrl.text,
-          initialIncomeType: _incomeType,
-          initialIncomeWithheld: _incomeIsWithheld,
-          initialCreditText: _creditCtrl.text,
-          initialCreditCategory: _creditCategory,
-          initialCreditBusiness: _creditIsBusiness,
-          initialDebitText: _debitCtrl.text,
-          initialDebitCategory: _debitCategory,
-          initialDebitBusiness: _debitIsBusiness,
-          initialOtherText: _otherCtrl.text,
-          initialOtherCategory: _otherCategory,
-          initialOtherBusiness: _otherIsBusiness,
           incomesByDay: _incomesByDay,
           expensesByDay: _expensesByDay,
         ),
@@ -392,82 +442,8 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     _deselect();
   }
 
-  /// 그 날 기록된 소득의 유형(첫 항목 기준). 없으면 유형별 기본값(직장인·N잡러=근로소득, 프리랜서=사업소득).
-  String _incomeTypeOf(String key) {
-    final list = _incomesByDay[key];
-    if (list == null || list.isEmpty) return _profile.defaultIncomeType;
-    return list.first.incomeType;
-  }
-
-  /// 대표 날짜(가장 이른) 기준으로 폼 prefill — 묶음은 같은 금액의 한 건.
-  void _prefillFromDate(DateTime date) {
-    final key = _key(date);
-    final inc = _incomeOf(key);
-    final cr = _paymentOf(key, _catCredit);
-    final db = _paymentOf(key, _catDebit);
-    final ot = _paymentOf(key, _catOther);
-    _incomeType = _incomeTypeOf(key);
-    _incomeIsWithheld = (_incomesByDay[key] ?? const []).isEmpty
-        ? _profile.withholdingDefault
-        : (_incomesByDay[key] ?? const []).first.isWithheld;
-    // 기존 지출에서 결제수단별 카테고리·사업경비 복원
-    for (final e in (_expensesByDay[key] ?? []).toSet()) {
-      if (e.paymentMethod == _catCredit) { _creditCategory = e.category; _creditIsBusiness = e.isBusiness; }
-      else if (e.paymentMethod == _catDebit) { _debitCategory = e.category; _debitIsBusiness = e.isBusiness; }
-      else if (e.paymentMethod == _catOther) { _otherCategory = e.category; _otherIsBusiness = e.isBusiness; }
-    }
-    _incomeCtrl.text = inc > 0 ? comma(inc) : '';
-    _creditCtrl.text = cr > 0 ? comma(cr) : '';
-    _debitCtrl.text  = db > 0 ? comma(db) : '';
-    _otherCtrl.text  = ot > 0 ? comma(ot) : '';
-  }
-
-  void _prefillForm() {
-    if (_selected.length == 1) {
-      final key = _key(_selected.first);
-      final inc = _incomeOf(key);
-      _incomeType = _incomeTypeOf(key);
-      _incomeIsWithheld = (_incomesByDay[key] ?? const []).isEmpty
-        ? _profile.withholdingDefault
-        : (_incomesByDay[key] ?? const []).first.isWithheld;
-      _incomeCtrl.text = inc > 0 ? comma(inc) : '';
-      final cr = _paymentOf(key, _catCredit);
-      final db = _paymentOf(key, _catDebit);
-      final ot = _paymentOf(key, _catOther);
-      for (final e in (_expensesByDay[key] ?? []).toSet()) {
-        if (e.paymentMethod == _catCredit) { _creditCategory = e.category; _creditIsBusiness = e.isBusiness; }
-        else if (e.paymentMethod == _catDebit) { _debitCategory = e.category; _debitIsBusiness = e.isBusiness; }
-        else if (e.paymentMethod == _catOther) { _otherCategory = e.category; _otherIsBusiness = e.isBusiness; }
-      }
-      _creditCtrl.text = cr > 0 ? comma(cr) : '';
-      _debitCtrl.text  = db > 0 ? comma(db) : '';
-      _otherCtrl.text  = ot > 0 ? comma(ot) : '';
-    } else {
-      _clearForm();
-    }
-  }
-
-  void _clearForm() {
-    _incomeType = _profile.defaultIncomeType;
-    // 프리랜서는 소득이 항상 원천징수 대상이라 기본 체크 — 통장엔 이미 뗀 돈이 들어오므로.
-    _incomeIsWithheld = _profile.withholdingDefault;
-    _creditCategory = '기타';
-    _debitCategory  = '기타';
-    _otherCategory  = '기타';
-    _creditIsBusiness = false;
-    _debitIsBusiness  = false;
-    _otherIsBusiness  = false;
-    _incomeCtrl.clear();
-    _creditCtrl.clear();
-    _debitCtrl.clear();
-    _otherCtrl.clear();
-  }
-
   void _deselect() {
-    setState(() {
-      _selected.clear();
-      _clearForm();
-    });
+    setState(_selected.clear);
     _scrollToTop();
   }
 
@@ -513,10 +489,8 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   Widget build(BuildContext context) {
     final ink = AppTheme.ink(context);
     final sub = AppTheme.inkSecondary(context);
-    final bg  = AppTheme.backgroundColor(context);
 
     return Scaffold(
-      backgroundColor: bg,
       appBar: AppBar(
         title: Text(
           widget.initialFocus == 'income'
@@ -625,32 +599,49 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       return;
     }
     final ink = AppTheme.ink(context);
-    showModalBottomSheet<void>(
+    // 바텀시트 금지(하드 제약) — 고르는 것뿐이라 AlertDialog로 충분하다.
+    showDialog<void>(
       context: context,
-      backgroundColor: AppTheme.backgroundColor(context),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.backgroundColor(ctx),
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: AppTheme.line(ctx)),
+          borderRadius: BorderRadius.zero,
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+        contentPadding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+        title: AppTheme.sectionHead(ctx, null, '가계부 가져오기'),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 12),
-            Text('가계부 가져오기', style: AppTheme.serif(18, ink)),
-            const SizedBox(height: 4),
             for (final opt in _importOptions)
-              ListTile(
-                leading: Icon(Icons.drive_file_move_outline, color: AppTheme.accentColor(context)),
-                title: Text('${opt.from} 때 기록'.keepWords, style: AppTheme.sans(14, ink)),
-                subtitle: Text('${opt.summary.totalMovable}건', style: AppTheme.sans(12, AppTheme.inkSecondary(context))),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () {
                   Navigator.pop(ctx);
                   _confirmImport(opt.from, opt.summary);
                 },
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(bottom: BorderSide(color: AppTheme.line(ctx))),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(children: [
+                    Expanded(
+                      child: Text('${opt.from} 때 기록',
+                          style: AppTheme.sans(AppTheme.tsBase, ink)),
+                    ),
+                    Text('${opt.summary.totalMovable}건',
+                        style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(ctx))),
+                  ]),
+                ),
               ),
-            const SizedBox(height: 8),
           ],
         ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기')),
+        ],
       ),
     );
   }
@@ -714,7 +705,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     await _load();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${summary.totalMovable}건을 가져왔어요.'.keepWords)),
+      SnackBar(content: Text('${summary.totalMovable}건을 가져왔어요.')),
     );
   }
 
@@ -757,7 +748,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         content: Text(
           '올해 기록한 기타소득의 소득금액(필요경비 60% 제외 후)이 300만원을 넘었어요. '
           '근로소득과 합산해 5월에 종합소득세를 신고해야 해요. '
-          'N잡러로 전환하면 소득 구분과 세금 적립을 더 정확히 안내받을 수 있어요.',
+          'N잡러로 전환하면 소득 구분과 세금 적립을 더 정확히 안내받을 수 있어요.'.keepWords,
           style: AppTheme.sans(13, sub, height: 1.5),
         ),
         actions: [
@@ -1170,7 +1161,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '$_recurringPendingCount건 미처리'.keepWords,
+                    '$_recurringPendingCount건 미처리',
                     style: AppTheme.sans(14, accent, weight: FontWeight.w700),
                   ),
                 ],
@@ -1191,55 +1182,41 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     );
   }
 
-  /// 색 점 범례 — 수익 + 결제수단 3종 + 고정지출 링크
+  /// 약어 범례 — 달력 칸에 찍히는 글자가 무슨 뜻인지 한 줄로
   Widget _buildLegend() {
+    final ink = AppTheme.ink(context);
     final sub = AppTheme.inkSecondary(context);
-    Widget dot(Color c, String label) => Row(mainAxisSize: MainAxisSize.min, children: [
-          Container(width: 7, height: 7, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
-          const SizedBox(width: 4),
-          Text(label, style: AppTheme.sans(11, sub, weight: FontWeight.w500)),
-        ]);
-    return Wrap(spacing: 10, runSpacing: 4, children: [
-      dot(_incomeColor,   '수익'),
-      dot(_pmCreditColor, '신용카드'),
-      dot(_pmDebitColor,  '체크/현금'),
-      dot(_pmOtherColor,  '기타'),
+    Widget item(_Mark kind, String label) => Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _MarkShape(kind, size: 9, color: ink),
+            const SizedBox(width: 6),
+            Text(label, style: AppTheme.sans(AppTheme.tsSM, sub)),
+          ],
+        );
+    return Wrap(spacing: 16, runSpacing: 6, children: [
+      item(_Mark.income, '수익'),
+      item(_Mark.credit, '신용카드'),
+      item(_Mark.debit,  '체크·현금'),
+      item(_Mark.other,  '기타'),
     ]);
   }
 
   Widget _buildViewTabs(Color ink) {
     const labels = ['달력', '분석', '연간'];
-    final accent = AppTheme.accentColor(context);
-    final sub = AppTheme.inkSecondary(context);
-    return Row(
-      children: List.generate(3, (i) {
-        final selected = _activeView == i;
-        return Expanded(
-          child: GestureDetector(
-            onTap: () {
-              if (_activeView != i) setState(() { _activeView = i; _deselect(); });
-            },
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: selected ? accent : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                labels[i],
-                style: AppTheme.sans(13, selected ? accent : sub,
-                    weight: selected ? FontWeight.w700 : FontWeight.w500),
-              ),
-            ),
-          ),
-        );
-      }),
+    // 홈 유형 선택과 **같은 위젯**이다. 각자 그리다 크기·간격·테두리가 다 어긋났다.
+    return Padding(
+      // 좌우 여백이 없어 버튼이 화면 양 끝에 붙어 있었다. 홈 본문과 같은 20.
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+      child: AppTheme.segmented(
+        context,
+        labels: labels,
+        selected: _activeView,
+        onTap: (i) {
+          if (_activeView != i) setState(() { _activeView = i; _deselect(); });
+        },
+      ),
     );
   }
 
@@ -1254,7 +1231,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             onPressed: () {
               setState(() {
                 if (_month == 1) { _year--; _month = 12; } else { _month--; }
-                _selected.clear(); _clearForm();
+                _selected.clear();
               });
               _scrollToTop();
               _load();
@@ -1281,7 +1258,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             onPressed: () {
               setState(() {
                 if (_month == 12) { _year++; _month = 1; } else { _month++; }
-                _selected.clear(); _clearForm();
+                _selected.clear();
               });
               _scrollToTop();
               _load();
@@ -1361,7 +1338,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('세금으로 미리 모아둘 돈', style: AppTheme.sans(13, sub)),
+                          Text('세금으로 미리 모아둘 돈'.keepWords, style: AppTheme.sans(13, sub)),
                           Row(mainAxisSize: MainAxisSize.min, children: [
                             Text('업종 설정 시',
                                 style: AppTheme.sans(13, AppTheme.accentColor(context), weight: FontWeight.w700)),
@@ -1535,7 +1512,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         children: [
           _reserveRow('올해 적은 경비', won(p.recordedExpense), ink, sub),
           const SizedBox(height: 4),
-          Text('${won(p.shortfall)}을 더 찾으면 환급이 쌓이기 시작해요 (최대 ${won(p.maxGain)})'.keepWords,
+          Text('${won(p.shortfall)}을 더 찾으면 환급이 쌓이기 시작해요 (최대 ${won(p.maxGain)})',
               style: AppTheme.sans(12, sub, height: 1.4)),
         ],
       );
@@ -1581,12 +1558,13 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     const labels = ['월', '화', '수', '목', '금', '토', '일'];
     final isSun = i == 6;
     final isSat = i == 5;
+    // 흑백이라 색 대신 농도로 가른다 — 일요일이 제일 진하고, 토요일이 그다음.
     return Text(labels[i],
         style: AppTheme.label(context,
             color: isSun
-                ? AppTheme.colorDanger
+                ? AppTheme.ink(context)
                 : isSat
-                    ? AppTheme.accentColor(context)
+                    ? AppTheme.inkSecondary(context)
                     : null));
   }
 
@@ -1675,23 +1653,27 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       _minPanX = minPanX;
 
       // 단일 주(週) 행 위젯
+      // 세로 괘선 — 장부는 칸이 그어진 종이다. 가로줄(절취선)만 있으면
+      // 요일이 어느 칸인지 눈으로 못 따라간다. 마지막 열은 긋지 않는다.
+      final ruleColor = AppTheme.line(context);
       Widget buildRow(int row) => SizedBox(
         height: ch,
         child: Row(
           children: List.generate(7, (col) {
             final idx = row * 7 + col - _firstOffset;
-            return SizedBox(
+            return Container(
               width: cw,
               height: ch,
+              decoration: BoxDecoration(
+                border: Border(
+                  right: col < 6
+                      ? BorderSide(color: ruleColor, width: 1)
+                      : BorderSide.none,
+                ),
+              ),
+              // 날짜가 없는 칸도 괘선은 이어져야 한 장의 표로 읽힌다.
               child: (idx < 0 || idx >= _daysInMonth)
-                  ? Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          right:  BorderSide(color: lineColor, width: 1),
-                          bottom: BorderSide(color: lineColor, width: 1),
-                        ),
-                      ),
-                    )
+                  ? const SizedBox.shrink()
                   : _buildCell(DateTime(_year, _month, idx + 1), ink, sub),
             );
           }),
@@ -1704,16 +1686,14 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         if (rows.isEmpty) return const SizedBox.shrink();
         // 섹션 높이를 행 수로 고정 — 세로 스크롤뷰(무한 높이) 안에서
         // OverflowBox가 세로로 붕괴하지 않도록. OverflowBox는 가로 줌 패닝 전용.
-        final sectionHeight = rows.length * ch;
+        // 절취선(5px)이 행 사이에 끼므로 높이를 실제 자식 수로 센다.
+        final weekRows = (rows.length + 1) ~/ 2;
+        final sectionHeight = weekRows * ch + (weekRows - 1) * 5;
         final g = Container(
           // 왼쪽 테두리 1px은 Container 폭 **안쪽**에 그려진다. totalW로 두면
           // 7칸(각 w/7)이 들어갈 자리가 1px 모자라 매번 오버플로가 난다.
           width: totalW + 1,
           height: sectionHeight,
-          decoration: BoxDecoration(
-            color: AppTheme.surface(context),
-            border: Border(left: BorderSide(color: lineColor, width: 1)),
-          ),
           child: Column(mainAxisSize: MainAxisSize.min, children: rows),
         );
         return SizedBox(
@@ -1735,7 +1715,17 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         );
       }
 
-      final allRows = <Widget>[for (int row = 0; row < weekCount; row++) buildRow(row)];
+      // 주 사이를 절취선으로 가른다 — 한 달이 다섯 장의 전표로 읽힌다.
+      final allRows = <Widget>[
+        for (int row = 0; row < weekCount; row++) ...[
+          buildRow(row),
+          if (row < weekCount - 1)
+            CustomPaint(
+              size: Size(totalW, 5),
+              painter: _PerforationPainter(AppTheme.lineStrong(context)),
+            ),
+        ],
+      ];
 
       final touchArea = Listener(
         behavior: HitTestBehavior.translucent,
@@ -1815,7 +1805,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             _toggleSingle(_dragStart!);
           } else if (_isDragging) {
             setState(() => _isDragging = false);
-            _prefillForm();
             _openDayEntry();
           }
           _dragStart = null;
@@ -1849,15 +1838,15 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final isSun = date.weekday == DateTime.sunday;
     final isSat = date.weekday == DateTime.saturday;
     final isHoliday = KrHolidays.isHoliday(date);
+    // 흑백이라 빨강·파랑을 못 쓴다. 쉬는 날은 **옅게** 인쇄된 것으로 가른다 —
+    // 달력에서 주말은 강조가 아니라 성격이 다른 날이라 오히려 이쪽이 맞다.
     final dayColor = (isSun || isHoliday)
-        ? AppTheme.colorDanger
+        ? AppTheme.inkSecondary(context)
         : isSat
-            ? AppTheme.accentColor(context)
+            ? AppTheme.inkSecondary(context)
             : ink;
     final isSelected = _selected.contains(date);
-    final isDark = AppTheme.isDark(context);
     final accent = AppTheme.accentColor(context);
-    final lineColor = AppTheme.lineStrong(context);
 
     final now = DateTime.now();
     final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
@@ -1870,18 +1859,20 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final nextDay = date.add(const Duration(days: 1));
     final selConnLeft  = isSelected && _selected.contains(prevDay);
     final selConnRight = isSelected && _selected.contains(nextDay);
-    final selBg = accent.withValues(alpha: isDark ? 0.24 : 0.12);
+    final selBg = AppTheme.accentSoft(context);
 
     // 날짜 숫자
     final bool todayPill = isToday && !isSelected;
+    // 오늘은 채운 원이 아니라 **도장 상자**다 — 영수증에는 색 원이 없다.
     final Widget dayNumber = Container(
-      width: 22,
-      height: 22,
+      width: 23,
+      height: 21,
       alignment: Alignment.center,
-      decoration: todayPill ? BoxDecoration(color: accent, shape: BoxShape.circle) : null,
+      decoration: todayPill
+          ? BoxDecoration(border: Border.all(color: accent, width: 1.2))
+          : null,
       child: Text('${date.day}',
-          style: AppTheme.sans(13,
-              todayPill ? Colors.white : dayColor,
+          style: AppTheme.sans(AppTheme.tsMD, dayColor,
               weight: (isSelected || isToday) ? FontWeight.w800 : FontWeight.w600)),
     );
 
@@ -1921,47 +1912,54 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           e.endDate!.year == date.year &&
           e.endDate!.month == date.month &&
           e.endDate!.day == date.day;
-      final color = _pmColorOf(e.paymentMethod);
+      // 이어지는 지출은 색 띠가 아니라 **밑줄**로 잇는다. 시작 칸에 표식을 찍는다.
+      final mark = _pmMarkOf(e.paymentMethod);
       return Container(
-        height: 7,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.85),
-          borderRadius: BorderRadius.only(
-            topLeft:     isBarStart ? const Radius.circular(4) : Radius.zero,
-            bottomLeft:  isBarStart ? const Radius.circular(4) : Radius.zero,
-            topRight:    isBarEnd   ? const Radius.circular(4) : Radius.zero,
-            bottomRight: isBarEnd   ? const Radius.circular(4) : Radius.zero,
-          ),
-        ),
+        height: 12,
         margin: EdgeInsets.only(
-          left:  isBarStart ? 5 : 0,
-          right: isBarEnd   ? 5 : 0,
+          left:  isBarStart ? 3 : 0,
+          right: isBarEnd   ? 3 : 0,
           bottom: 2,
         ),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppTheme.ink(context), width: 1)),
+        ),
+        alignment: Alignment.centerLeft,
+        child: isBarStart
+            ? Padding(
+                padding: const EdgeInsets.only(left: 1, bottom: 2),
+                child: _MarkShape(mark, size: 6),
+              )
+            : null,
       );
     }
 
     // ── 2단계 레인: 점(단일) → 막대(범위)로 같은 줄에서 바로 연결 ──
-    Widget laneBar(Color color, bool range, bool start, bool end, int amt, String sign) {
-      final roundL = !range || start;
-      final roundR = !range || end;
+    /// 한 줄 = 인쇄된 항목. `카 218,400` 꼴로 찍고, 이어지는 범위는 밑줄로 잇는다.
+    Widget laneBar(_Mark mark, bool range, bool start, bool end, int amt, bool isIncome) {
+      final inkC = AppTheme.ink(context);
+      final subC = AppTheme.inkSecondary(context);
+      final showText = (!range || start) && amt > 0;
       return Container(
-        height: 13,
-        margin: EdgeInsets.only(left: roundL ? 4 : 0, right: roundR ? 4 : 0, bottom: 3),
-        padding: const EdgeInsets.symmetric(horizontal: 5),
+        height: 15,
+        margin: const EdgeInsets.only(bottom: 1),
         alignment: Alignment.centerLeft,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.horizontal(
-            left: Radius.circular(roundL ? 6 : 0),
-            right: Radius.circular(roundR ? 6 : 0),
-          ),
-        ),
-        // 시작 칸에만 금액 표기 — 범위 중간/끝은 막대만 이어짐.
-        child: (roundL && amt > 0)
-            ? Text('$sign${comma(amt)}',
-                style: AppTheme.sans(8.5, Colors.white, weight: FontWeight.w700),
-                softWrap: false, overflow: TextOverflow.clip)
+        decoration: range
+            ? BoxDecoration(
+                border: Border(bottom: BorderSide(color: AppTheme.line(context), width: 1)))
+            : null,
+        child: showText
+            ? Row(children: [
+                _MarkShape(mark, size: 6, color: inkC),
+                const SizedBox(width: 3),
+                Expanded(
+                  child: Text(comma(amt),
+                      style: AppTheme.sans(AppTheme.tsLane,
+                          isIncome ? inkC : subC,
+                          weight: isIncome ? FontWeight.w700 : FontWeight.w500),
+                      softWrap: false, overflow: TextOverflow.clip),
+                ),
+              ])
             : null,
       );
     }
@@ -1975,13 +1973,13 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
               e.endDate!.month == e.date.month &&
               e.endDate!.day == e.date.day)) { r = e; break; }
       }
-      if (r == null) return laneBar(_incomeColor, false, true, true, income, '+');
+      if (r == null) return laneBar(_Mark.income, false, true, true, income, true);
       final st = r.date.month == date.month && r.date.day == date.day;
       final en = r.endDate!.month == date.month && r.endDate!.day == date.day;
-      return laneBar(_incomeColor, true, st, en, income, '+');
+      return laneBar(_Mark.income, true, st, en, income, true);
     }
 
-    Widget? laneExp(String pm, Color color) {
+    Widget? laneExp(String pm) {
       final amt = _paymentOf(key, pm);
       if (amt == 0) return null;
       ExpenseItem? r;
@@ -1991,19 +1989,23 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
               e.endDate!.month == e.date.month &&
               e.endDate!.day == e.date.day)) { r = e; break; }
       }
-      if (r == null) return laneBar(color, false, true, true, amt, '-');
+      final mark = _pmMarkOf(pm);
+      if (r == null) return laneBar(mark, false, true, true, amt, false);
       final st = r.date.month == date.month && r.date.day == date.day;
       final en = r.endDate!.month == date.month && r.endDate!.day == date.day;
-      return laneBar(color, true, st, en, amt, '-');
+      return laneBar(mark, true, st, en, amt, false);
     }
 
-    final crLane = laneExp(_catCredit, _pmCreditColor);
-    final dbLane = laneExp(_catDebit, _pmDebitColor);
-    final otLane = laneExp(_catOther, _pmOtherColor);
+    final crLane = laneExp(_catCredit);
+    final dbLane = laneExp(_catDebit);
+    final otLane = laneExp(_catOther);
     final incLane = laneInc();
 
+    // 확대하면 칸이 넓어지니 도형과 금액이 **한 줄씩** 들어간다.
+    // 날짜는 머리로 올리고, 그 아래로 줄이 쌓인다 — 전표의 항목 나열과 같다.
+    // 좌우 여백을 같게 둬야 금액의 오른쪽 끝이 옆 칸과 세로로 맞는다.
     final l2Content = Padding(
-      padding: const EdgeInsets.only(top: 4, left: 4),
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -2019,34 +2021,37 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
 
     final l1Content = Stack(
       children: [
+        // 날짜는 왼쪽 위, 표식은 **오른쪽에 세로로** 쌓는다.
+        // 가운데 정렬로 흩어 두면 날짜와 표식이 서로 자리를 밀어 어느 날에
+        // 무엇이 있는지 세로로 훑을 수가 없다. 오른쪽 한 줄로 세우면
+        // 칸을 가로질러 같은 위치에 찍혀 한눈에 비교된다.
         Positioned.fill(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 3),
-            child: Column(
+            padding: const EdgeInsets.fromLTRB(3, 4, 4, 4),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 dayNumber,
-                const SizedBox(height: 2),
-                SizedBox(
-                  width: double.infinity,
-                  child: bars.isEmpty
-                      ? Wrap(
-                          spacing: 3, runSpacing: 3,
-                          alignment: WrapAlignment.center,
-                          runAlignment: WrapAlignment.start,
-                          children: [
-                            if (income > 0) _catDot(_incomeColor, isDark),
-                            if (hasCr) _catDot(_pmCreditColor, isDark),
-                            if (hasDeb) _catDot(_pmDebitColor, isDark),
-                            if (hasOth) _catDot(_pmOtherColor, isDark),
-                          ],
-                        )
-                      : income > 0
-                          ? Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: _catDot(_incomeColor, isDark),
-                            )
-                          : const SizedBox.shrink(),
+                const Spacer(),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    // 범위 지출 막대가 이미 칸 아래를 차지하면 표식은 수익만 —
+                    // 둘 다 그리면 좁은 칸에서 겹친다.
+                    for (final m in bars.isEmpty
+                        ? [
+                            if (income > 0) _Mark.income,
+                            if (hasCr) _Mark.credit,
+                            if (hasDeb) _Mark.debit,
+                            if (hasOth) _Mark.other,
+                          ]
+                        : [if (income > 0) _Mark.income])
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 3),
+                        child: _catMark(m),
+                      ),
+                  ],
                 ),
               ],
             ),
@@ -2063,14 +2068,10 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       ],
     );
 
+    // 세로 괘선은 없다 — 영수증에 세로줄이 없고, 열은 조판이 잡는다.
+    // 주(週)를 가르는 가로선은 그리드 쪽에서 절취선으로 그린다.
     return Container(
         key: gkey,
-        decoration: BoxDecoration(
-          border: Border(
-            right:  BorderSide(color: lineColor, width: 1),
-            bottom: BorderSide(color: lineColor, width: 1),
-          ),
-        ),
         child: Stack(
           children: [
             // ① 선택 배경 (inner margin 유지)
@@ -2084,10 +2085,10 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 decoration: BoxDecoration(
                   color: isSelected ? selBg : null,
                   borderRadius: BorderRadius.only(
-                    topLeft:     selConnLeft  ? Radius.zero : const Radius.circular(6),
-                    bottomLeft:  selConnLeft  ? Radius.zero : const Radius.circular(6),
-                    topRight:    selConnRight ? Radius.zero : const Radius.circular(6),
-                    bottomRight: selConnRight ? Radius.zero : const Radius.circular(6),
+                    topLeft:     selConnLeft  ? Radius.zero : const Radius.circular(2),
+                    bottomLeft:  selConnLeft  ? Radius.zero : const Radius.circular(2),
+                    topRight:    selConnRight ? Radius.zero : const Radius.circular(2),
+                    bottomRight: selConnRight ? Radius.zero : const Radius.circular(2),
                   ),
                 ),
               ),
@@ -2110,29 +2111,16 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       );
   }
 
-  Color _pmColorOf(String pm) {
+  _Mark _pmMarkOf(String pm) {
     switch (pm) {
-      case _catCredit: return _pmCreditColor;
-      case _catDebit:  return _pmDebitColor;
-      default:         return _pmOtherColor;
+      case _catCredit: return _Mark.credit;
+      case _catDebit:  return _Mark.debit;
+      default:         return _Mark.other;
     }
   }
 
-  /// 카테고리 색 점 — 숫자 대신 무슨 항목이 있는지 색으로 표시
-  Widget _catDot(Color color, bool isDark) {
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.3),
-          width: 0.5,
-        ),
-      ),
-    );
-  }
+  /// 무슨 항목이 있는지 도형 하나로 — 금액은 확대(2단계)에서 보여준다.
+  Widget _catMark(_Mark kind) => _MarkShape(kind, size: 7);
 
   // ── 분석 뷰 ──────────────────────────────────────────────────────
 
@@ -2281,28 +2269,30 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       children: [
 
         // ── 이달 요약 ──────────────────────────────────────
-        Text('이달 요약'.toUpperCase(), style: AppTheme.label(context)),
+        AppTheme.sectionHead(context, null, '이달 요약'),
+        const SizedBox(height: 12),
+        // 들어온 돈과 나간 돈은 나란한 두 칸에 찍고, 남은 돈은 그 밑 소계 줄에 온다.
+        Row(children: [
+          _summaryCell('IN', '수입', totalInc, AppTheme.ink(context)),
+          const SizedBox(width: 8),
+          _summaryCell('OUT', '지출', totalExp, AppTheme.ink(context)),
+        ]),
         const SizedBox(height: 12),
         Row(children: [
-          _summaryCell('수입', totalInc, _incomeColor, ink, sub),
-          Container(width: 1, height: 44, color: AppTheme.line(context)),
-          _summaryCell('지출', totalExp, AppTheme.colorDanger, ink, sub),
-          Container(width: 1, height: 44, color: AppTheme.line(context)),
-          _summaryCell(
-            '잔액',
-            // 적자면 '-950,000원'처럼 마이너스 기호를 그대로 노출(색 + 부호 이중 신호).
-            totalInc - totalExp,
-            totalInc - totalExp >= 0 ? _incomeColor : AppTheme.colorDanger,
-            ink, sub,
-          ),
+          Text('남은 돈', style: AppTheme.sans(AppTheme.tsBase, sub)),
+          const Spacer(),
+          // 적자면 '-950,000원'처럼 부호를 그대로 노출한다(흑백이라 부호가 유일한 신호다).
+          Text('${totalInc - totalExp >= 0 ? '+' : ''}${comma(totalInc - totalExp)}원',
+              style: AppTheme.display(AppTheme.serifSM,
+                  totalInc - totalExp >= 0 ? AppTheme.ink(context) : AppTheme.colorDanger)),
         ]),
         const SizedBox(height: 20),
-        AppTheme.hairline(context),
+        AppTheme.dashRule(context),
 
         // ── D. 지출 목표 ──────────────────────────────────
         const SizedBox(height: 20),
         Row(children: [
-          Text('지출 목표'.toUpperCase(), style: AppTheme.label(context)),
+          AppTheme.sectionHead(context, null, '지출 목표'),
           const Spacer(),
           GestureDetector(
             onTap: _showExpenseTargetDialog,
@@ -2333,18 +2323,18 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           Text('이달 지출 목표를 설정하면 달성률을 여기서 확인할 수 있어요.'.keepWords,
               style: AppTheme.sans(13, tert, height: 1.5)),
         const SizedBox(height: 20),
-        AppTheme.hairline(context),
+        AppTheme.dashRule(context),
 
         // ── A. 결제수단별 ─────────────────────────────────
         if (hasData) ...[
           const SizedBox(height: 20),
-          Text('결제수단별'.toUpperCase(), style: AppTheme.label(context)),
+          AppTheme.sectionHead(context, null, '결제수단별'),
           const SizedBox(height: 10),
           _analysisSimpleBar(
             label: '신용카드',
             amount: pmTotals['신용카드']!,
             max: totalExp,
-            color: _pmCreditColor,
+            color: AppTheme.inkSecondary(context),
             ink: ink, sub: sub,
           ),
           const SizedBox(height: 8),
@@ -2352,7 +2342,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             label: '체크+현금',
             amount: pmTotals['체크+현금']!,
             max: totalExp,
-            color: _pmDebitColor,
+            color: AppTheme.inkTertiary(context),
             ink: ink, sub: sub,
           ),
           const SizedBox(height: 8),
@@ -2360,18 +2350,18 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             label: '기타',
             amount: pmTotals['기타']!,
             max: totalExp,
-            color: _pmOtherColor,
+            color: AppTheme.lineStrong(context),
             ink: ink, sub: sub,
           ),
           const SizedBox(height: 20),
-          AppTheme.hairline(context),
+          AppTheme.dashRule(context),
         ],
 
         // ── 인정 경비(사업경비) 합계 — 프리랜서·N잡러만 ──
         if (_isBusinessUser) ...[
           const SizedBox(height: 20),
           Row(children: [
-            Text('인정 경비 합계'.toUpperCase(), style: AppTheme.label(context)),
+            AppTheme.sectionHead(context, null, '인정 경비 합계'),
             const SizedBox(width: 8),
             if (totalBusinessExp > 0)
               AppTheme.blueprintBadge(context, '${comma(totalBusinessExp)}원'),
@@ -2389,13 +2379,13 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
               ink: ink, sub: sub,
             ),
           const SizedBox(height: 20),
-          AppTheme.hairline(context),
+          AppTheme.dashRule(context),
         ],
 
         // ── 신용카드 공제 문턱 (연봉 있는 직장인·N잡러) ──
         if (hasThreshold) ...[
           const SizedBox(height: 20),
-          Text('카드 공제 문턱'.toUpperCase(), style: AppTheme.label(context)),
+          AppTheme.sectionHead(context, null, '카드 공제 문턱'),
           const SizedBox(height: 10),
           _analysisSimpleBar(
             label: '연봉의 25% (${comma(cardThreshold.toInt())}원)',
@@ -2408,13 +2398,13 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             ink: ink, sub: sub,
           ),
           const SizedBox(height: 20),
-          AppTheme.hairline(context),
+          AppTheme.dashRule(context),
         ],
 
         // ── E. 세금 공제 가능 지출 ───────────────────────
         const SizedBox(height: 20),
         Row(children: [
-          Text('세금 공제 가능 지출'.toUpperCase(), style: AppTheme.label(context)),
+          AppTheme.sectionHead(context, null, '세금 공제 가능 지출'),
           const SizedBox(width: 8),
           if (totalTaxDeduct > 0)
             AppTheme.blueprintBadge(context, '${comma(totalTaxDeduct)}원'),
@@ -2429,40 +2419,134 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             const SizedBox(height: 6),
           ],
         const SizedBox(height: 20),
-        AppTheme.hairline(context),
+        AppTheme.dashRule(context),
 
         // ── 카테고리별 ───────────────────────────────────
         if (hasData) ...[
           const SizedBox(height: 20),
-          Text('카테고리별'.toUpperCase(), style: AppTheme.label(context)),
+          AppTheme.sectionHead(context, null, '분류별'),
           const SizedBox(height: 14),
           for (final entry in sortedCats) ...[
             _analysisCatBar(entry.key, entry.value, totalExp, ink, sub),
             const SizedBox(height: 14),
           ],
-          AppTheme.hairline(context),
+          AppTheme.dashRule(context),
+        ],
+
+        // ── 일별 기록 (목업 1c) ────────────────────────────
+        if (hasData) ...[
+          const SizedBox(height: 20),
+          AppTheme.sectionHead(context, null, '일별 기록'),
+          const SizedBox(height: 12),
+          _dailyChart(),
+          const SizedBox(height: 20),
+          AppTheme.dashRule(context),
+        ],
+
+        // ── 가장 많이 쓴 곳 (목업 1c) ──────────────────────
+        if (_topPlace() != null) ...[
+          const SizedBox(height: 20),
+          Row(children: [
+            Text('가장 많이 쓴 곳', style: AppTheme.sans(AppTheme.tsBase, sub)),
+            const Spacer(),
+            Text(_topPlace()!,
+                style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700)),
+          ]),
+          const SizedBox(height: 20),
+          AppTheme.dashRule(context),
         ],
 
         // ── C. 전월 대비 ──────────────────────────────────
         const SizedBox(height: 20),
-        Text('전월 대비'.toUpperCase(), style: AppTheme.label(context)),
+        AppTheme.sectionHead(context, null, '전월 대비'),
         const SizedBox(height: 10),
         _prevMonthSection(catTotals, prevCatTotals, totalExp, prevTotal, ink, sub, tert),
-        const SizedBox(height: 8),
-
       ],
     );
   }
 
-  Widget _summaryCell(String label, int amount, Color color, Color ink, Color sub) {
+  /// 이달에 제일 자주 나온 가맹점 — 없으면 제일 자주 나온 분류.
+  /// 목업 1c의 `가장 많이 쓴 곳 · 한남상회 · 6회`.
+  String? _topPlace() {
+    final month = _allExpenses
+        .where((e) => e.date.year == _year && e.date.month == _month);
+    if (month.isEmpty) return null;
+    final byName = <String, int>{};
+    for (final e in month) {
+      final name = e.content.trim().isNotEmpty
+          ? e.content.trim()
+          : expenseCategoryById(e.category).label;
+      byName[name] = (byName[name] ?? 0) + 1;
+    }
+    final top = byName.entries.reduce((a, b) => a.value >= b.value ? a : b);
+    // 전부 한 번씩이면 '가장 많이'가 아니다 — 말이 안 되는 줄은 안 내보낸다.
+    if (top.value < 2) return null;
+    return '${top.key} · ${top.value}회';
+  }
+
+  /// 일별 지출 막대 — 이달 1일부터 말일까지. 제일 많이 쓴 날만 잉크로 채운다.
+  Widget _dailyChart() {
+    final days = DateTime(_year, _month + 1, 0).day;
+    final byDay = List<int>.filled(days + 1, 0);
+    for (final e in _allExpenses) {
+      if (e.date.year == _year && e.date.month == _month) {
+        byDay[e.date.day] += e.amount;
+      }
+    }
+    final peak = byDay.fold(0, (m, v) => v > m ? v : m);
+    if (peak == 0) return const SizedBox.shrink();
+
+    final ink = AppTheme.ink(context);
+    final soft = AppTheme.lineStrong(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 64,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              for (int d = 1; d <= days; d++)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 0.7),
+                    child: Container(
+                      // 0원인 날도 1px은 남긴다 — 칸이 비면 며칠인지 세기 어렵다.
+                      height: (64 * byDay[d] / peak).clamp(1.0, 64.0),
+                      color: byDay[d] == peak ? ink : soft,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(children: [
+          Text('01', style: AppTheme.label(context)),
+          const Spacer(),
+          Text(days.toString(), style: AppTheme.label(context)),
+        ]),
+      ],
+    );
+  }
+
+  /// 합계 칸 — 테두리 하나에 영문 라벨과 숫자만. 목업 1c의 IN/OUT 박스.
+  Widget _summaryCell(String en, String kr, int amount, Color color) {
     return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        decoration: BoxDecoration(border: Border.all(color: AppTheme.line(context), width: 1)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: AppTheme.sans(11, sub, weight: FontWeight.w500, spacing: 0.3)),
-          const SizedBox(height: 2),
-          Text('${comma(amount)}원',
-              style: AppTheme.sans(13, color, weight: FontWeight.w700),
+          Row(children: [
+            Text(en, style: AppTheme.label(context)),
+            const SizedBox(width: 6),
+            Flexible(child: Text(kr,
+                overflow: TextOverflow.ellipsis,
+                style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkTertiary(context)))),
+          ]),
+          const SizedBox(height: 4),
+          Text(comma(amount),
+              style: AppTheme.display(AppTheme.serifSM, color),
               maxLines: 1, overflow: TextOverflow.ellipsis),
         ]),
       ),
@@ -2485,16 +2569,8 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         Text(trailText ?? '${comma(amount)}원  ${(pct * 100).round()}%',
             style: AppTheme.sans(12, sub)),
       ]),
-      const SizedBox(height: 5),
-      LayoutBuilder(builder: (ctx, c) => Stack(children: [
-        Container(height: 5, width: c.maxWidth,
-            decoration: BoxDecoration(color: AppTheme.line(context), borderRadius: BorderRadius.circular(2))),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 400), curve: Curves.easeOut,
-          height: 5, width: c.maxWidth * pct,
-          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
-        ),
-      ])),
+      const SizedBox(height: 6),
+      AppTheme.printedBar(context, pct, color: color),
     ]);
   }
 
@@ -2502,7 +2578,8 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final cat = expenseCategoryById(catId);
     final hint = _taxDeductCats[catId] ?? '';
     return Row(children: [
-      Icon(cat.icon, size: 13, color: cat.color),
+      // 카테고리 고유색은 쓰지 않는다 — 이 종이에는 잉크 한 색뿐이다.
+      Icon(cat.icon, size: 13, color: AppTheme.inkTertiary(context)),
       const SizedBox(width: 6),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(cat.label, style: AppTheme.sans(13, ink, weight: FontWeight.w600)),
@@ -2521,7 +2598,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final noData = prevTotal == 0 && curTotal == 0;
 
     if (noData) {
-      return Text('전월 데이터가 없어요.', style: AppTheme.sans(13, tert));
+      return Text('전월 데이터가 없어요.'.keepWords, style: AppTheme.sans(13, tert));
     }
 
     // 가장 많이 증가한 카테고리
@@ -2532,7 +2609,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       if (d > topIncrDiff) { topIncrDiff = d; topIncrCat = cat; }
     }
 
-    final overallColor = diff <= 0 ? _incomeColor : AppTheme.colorDanger;
+    final overallColor = diff <= 0 ? AppTheme.ink(context) : AppTheme.colorDanger;
     final overallSign  = diff <= 0 ? '▼ ' : '▲ ';
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -2578,7 +2655,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             const SizedBox(width: 8),
             SizedBox(
               width: 38,
-              child: Text('${(pct * 100).round()}%'.keepWords,
+              child: Text('${(pct * 100).round()}%',
                   style: AppTheme.sans(12, AppTheme.inkTertiary(context)),
                   textAlign: TextAlign.right),
             ),
@@ -2663,7 +2740,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       children: [
         // ── 연간 세금 공제 가능 지출 ──────────────────────
         Row(children: [
-          Text('$_year년 세금 공제 가능 지출'.toUpperCase(), style: AppTheme.label(context)),
+          AppTheme.sectionHead(context, null, '$_year년 공제 가능 지출'),
           const SizedBox(width: 8),
           if (yearTotalTaxDeduct > 0)
             AppTheme.blueprintBadge(context, '${comma(yearTotalTaxDeduct)}원'),
@@ -2681,12 +2758,12 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         Text('가계부 기록 기준 참고값이에요. 실제 공제액은 홈택스 간소화 자료로 확인하세요.'.keepWords,
             style: AppTheme.sans(11.5, tert, height: 1.4)),
         const SizedBox(height: 20),
-        AppTheme.hairline(context),
+        AppTheme.dashRule(context),
 
         // ── 연간 신용카드 공제 문턱 ────────────────────────
         if (hasThreshold) ...[
           const SizedBox(height: 20),
-          Text('$_year년 카드 공제 문턱'.toUpperCase(), style: AppTheme.label(context)),
+          AppTheme.sectionHead(context, null, '$_year년 카드 공제 문턱'),
           const SizedBox(height: 10),
           _analysisSimpleBar(
             label: '연봉의 25% (${comma(cardThreshold.toInt())}원)',
@@ -2699,14 +2776,14 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             ink: ink, sub: sub,
           ),
           const SizedBox(height: 20),
-          AppTheme.hairline(context),
+          AppTheme.dashRule(context),
         ],
 
         // ── 연간 인정 경비(사업경비) 합계 ───────────────────
         if (_isBusinessUser) ...[
           const SizedBox(height: 20),
           Row(children: [
-            Text('$_year년 인정 경비 합계'.toUpperCase(), style: AppTheme.label(context)),
+            AppTheme.sectionHead(context, null, '$_year년 인정 경비'),
             const SizedBox(width: 8),
             if (yearBusinessExp > 0)
               AppTheme.blueprintBadge(context, '${comma(yearBusinessExp)}원'),
@@ -2718,12 +2795,12 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           else
             Text('${comma(yearBusinessExp)}원', style: AppTheme.sans(20, ink, weight: FontWeight.w700)),
           const SizedBox(height: 20),
-          AppTheme.hairline(context),
+          AppTheme.dashRule(context),
         ],
 
         // ── 월별 순수익 ─────────────────────────────────
         const SizedBox(height: 20),
-        Text('$_year년 순수익'.toUpperCase(), style: AppTheme.label(context)),
+        AppTheme.sectionHead(context, null, '$_year년 순수익'),
         const SizedBox(height: 4),
         Text('수입 − 지출', style: AppTheme.sans(12, tert)),
         const SizedBox(height: 16),
@@ -2742,7 +2819,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final barColor = isCurrent
         ? accent
         : isPositive
-            ? _incomeColor.withValues(alpha: 0.7)
+            ? AppTheme.ink(context).withValues(alpha: 0.7)
             : AppTheme.colorDanger.withValues(alpha: 0.7);
     final labelColor = isCurrent ? accent : sub;
     final netAbs = net.abs();
@@ -2753,7 +2830,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           _month = month;
           _activeView = 0;
           _selected.clear();
-          _clearForm();
         });
         _load();
       },
@@ -2771,25 +2847,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
               final barW = maxAbs > 0
                   ? (netAbs / maxAbs) * constraints.maxWidth
                   : 0.0;
-              return Stack(alignment: Alignment.centerLeft, children: [
-                Container(
-                  height: 8,
-                  width: constraints.maxWidth,
-                  decoration: BoxDecoration(
-                    color: AppTheme.line(context),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                if (barW > 0)
-                  Container(
-                    height: 8,
-                    width: barW,
-                    decoration: BoxDecoration(
-                      color: barColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-              ]);
+              // 둥근 막대 대신 인쇄된 블록 — 분석 뷰·홈과 같은 문법이다.
+              final ratio = constraints.maxWidth > 0 ? barW / constraints.maxWidth : 0.0;
+              return AppTheme.printedBar(context, ratio, height: 8, color: barColor);
             }),
           ),
           const SizedBox(width: 10),
@@ -2800,7 +2860,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
               style: AppTheme.sans(12,
                   net == 0
                       ? AppTheme.inkTertiary(context)
-                      : isPositive ? _incomeColor : AppTheme.colorDanger,
+                      : isPositive ? AppTheme.ink(context) : AppTheme.colorDanger,
                   weight: FontWeight.w600),
               textAlign: TextAlign.right,
             ),
@@ -2812,3 +2872,29 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
 
 }
 
+
+
+/// 절취선 — 주(週)를 가르는 지그재그. 영수증은 여기서 뜯긴다.
+class _PerforationPainter extends CustomPainter {
+  const _PerforationPainter(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+    const step = 5.0;
+    final path = Path()..moveTo(0, size.height - 1);
+    var up = true;
+    for (double x = step; x <= size.width; x += step) {
+      path.lineTo(x, up ? 1 : size.height - 1);
+      up = !up;
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_PerforationPainter old) => old.color != color;
+}

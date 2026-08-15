@@ -66,7 +66,6 @@ class _BeotimmokLoanScreenState extends State<BeotimmokLoanScreen> {
     final r = _result;
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
         titleSpacing: 0,
         title: Text('버팀목 대출 계산',
@@ -123,7 +122,7 @@ class _BeotimmokLoanScreenState extends State<BeotimmokLoanScreen> {
                         style: AppTheme.serif(AppTheme.serifLG, accent,
                             weight: FontWeight.w400)),
                     const SizedBox(height: 4),
-                    Text('만기 시 원금 ${comma(_principal)}원 전액 상환'.keepWords,
+                    Text('만기 시 원금 ${comma(_principal)}원 전액 상환',
                         style: AppTheme.sans(AppTheme.tsSM, sub)),
                   ],
                 ),

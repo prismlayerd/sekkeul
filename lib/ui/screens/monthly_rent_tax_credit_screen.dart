@@ -58,7 +58,6 @@ class _MonthlyRentTaxCreditScreenState
     final r = _result;
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
         titleSpacing: 0,
         title: Text('월세 세액공제',
@@ -79,7 +78,7 @@ class _MonthlyRentTaxCreditScreenState
             Text('연 급여와 월세를 입력하면\n공제 가능 금액을 알려드려요.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsLG, ink, height: 1.5)),
             const SizedBox(height: 4),
-            Text('${TaxYear.label}. 무주택 세대주·세대원 대상.'.keepWords,
+            Text('${TaxYear.label}. 무주택 세대주·세대원 대상.',
                 style: AppTheme.sans(AppTheme.tsSM, tert)),
             const SizedBox(height: 24),
             Divider(height: 1, thickness: 1, color: line),

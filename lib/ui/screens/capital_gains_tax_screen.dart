@@ -236,7 +236,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
                   ),
                   if (_years >= 3) ...[
                     const SizedBox(height: 8),
-                    Text('장기보유특별공제율: ${_pct(_ltdRate)}'.keepWords,
+                    Text('장기보유특별공제율: ${_pct(_ltdRate)}',
                         style: TextStyle(
                             color: primary,
                             fontSize: 12,
@@ -357,7 +357,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
                     '• 취득세·중개수수료·필요경비는 취득가액에 포함해 입력하세요.\n'
                     '• 1세대 1주택 비과세(9억원 이하)·고가주택 특례는 별도 확인.\n'
                     '• 다주택·단기보유(1년 미만 40%, 2년 미만 30%) 중과는 미반영.\n'
-                    '• 지방소득세 10%는 양도소득세액 기준으로 추가됩니다.',
+                    '• 지방소득세 10%는 양도소득세액 기준으로 추가됩니다.'.keepWords,
                     style:
                         TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),

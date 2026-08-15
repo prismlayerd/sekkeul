@@ -101,7 +101,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final sub = AppTheme.inkSecondary(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),
@@ -121,7 +120,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 children: [
                   Text('소득 유형 점검'.toUpperCase(), style: AppTheme.label(context)),
                   const SizedBox(height: 14),
-                  Text('어떤 소득이\n있으신가요?',
+                  Text('어떤 소득이\n있으신가요?'.keepWords,
                       style: AppTheme.serif(34, ink, spacing: -0.5, height: 1.2)),
                   const SizedBox(height: 12),
                   Text('해당하는 항목을 모두 골라주세요. 아래 표제란이 유형을 판정해드려요.'.keepWords,
@@ -164,8 +163,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0),
-                                Theme.of(context).scaffoldBackgroundColor,
+                                AppTheme.backgroundColor(context).withValues(alpha: 0),
+                                AppTheme.backgroundColor(context),
                               ],
                             ),
                           ),

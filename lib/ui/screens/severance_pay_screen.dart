@@ -254,7 +254,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
                         fontWeight: FontWeight.w900),
                   ),
                   if (severance != null && workDays != null && workDays < 365)
-                    Text('1년 미만 — 퇴직금 미발생',
+                    Text('1년 미만 — 퇴직금 미발생'.keepWords,
                         style: TextStyle(color: Colors.orange, fontSize: 12)),
                   const SizedBox(height: 16),
                   if (severance != null && avgDailyWage != null) ...[
@@ -301,7 +301,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
                     '• 퇴직금 = 평균임금 × 30 × (재직일수 ÷ 365)\n'
                     '• 1년 이상 근무 + 주 15시간 이상이어야 발생합니다.\n'
                     '• 평균임금이 통상임금보다 낮으면 통상임금이 적용됩니다.\n'
-                    '• IRP 계좌 수령 시 퇴직소득세 과세이연 혜택이 있습니다.',
+                    '• IRP 계좌 수령 시 퇴직소득세 과세이연 혜택이 있습니다.'.keepWords,
                     style: TextStyle(
                         color: subColor, fontSize: 12, height: 1.6),
                   ),

@@ -43,7 +43,6 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('장애인연금·장애수당',
             style: AppTheme.serif(16, ink,
@@ -103,7 +102,7 @@ class _DisabilityPensionScreenState extends State<DisabilityPensionScreen> {
                     value: _incomeIdx,
                     isExpanded: true,
                     style: AppTheme.sans(14, ink),
-                    dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                    dropdownColor: AppTheme.backgroundColor(context),
                     items: const [
                       DropdownMenuItem(value: 0, child: Text('기초생활수급')),
                       DropdownMenuItem(value: 1, child: Text('차상위계층')),

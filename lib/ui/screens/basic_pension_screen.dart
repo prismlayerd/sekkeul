@@ -51,7 +51,6 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('기초연금 계산기',
             style: AppTheme.serif(16, ink,
@@ -75,7 +74,7 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
             const SizedBox(height: 16),
             _inputField('만 나이', _ageCtrl, '65', '세', ink, sub, line, isDecimal: false),
             const SizedBox(height: 16),
-            Text('월 소득인정액 (만원)',
+            Text('월 소득인정액 (만원)'.keepWords,
                 style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
@@ -137,7 +136,7 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
                           style: AppTheme.sans(11, sub)),
                     if (_ageEligible && !_incomeEligible)
                       Text(
-                          '* 소득인정액이 선정기준액(${_thresholdManwon[_householdIdx]}만원)을 초과했습니다.'.keepWords,
+                          '* 소득인정액이 선정기준액(${_thresholdManwon[_householdIdx]}만원)을 초과했습니다.',
                           style: AppTheme.sans(11, sub)),
                     if (_eligible)
                       Text('* 국민연금 연계감액·부부감액·소득역전방지감액 적용 전 기준연금액입니다.'.keepWords,

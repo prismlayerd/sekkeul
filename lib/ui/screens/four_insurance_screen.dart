@@ -174,7 +174,7 @@ class _FourInsuranceScreenState extends State<FourInsuranceScreen> {
                     '하한 ${comma(InsuranceEngine.pensionLowerBound.round())}원 적용됩니다.\n'
                     '• 건강보험료 기준으로 장기요양보험료가 산정됩니다.\n'
                     '• 사업주도 동일 금액을 부담합니다 (산재는 전액 사업주 부담).\n'
-                    '• 소득세·지방소득세는 별도 세율표에 따라 추가 공제됩니다.',
+                    '• 소득세·지방소득세는 별도 세율표에 따라 추가 공제됩니다.'.keepWords,
                     style: TextStyle(
                         color: subColor, fontSize: 12, height: 1.6),
                   ),

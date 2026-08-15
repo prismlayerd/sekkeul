@@ -91,7 +91,6 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
     final c = _report();
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),
@@ -113,29 +112,38 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
               child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 4, 24, 32),
           children: [
-            Text('빠진 공제 찾기'.toUpperCase(), style: AppTheme.label(context)),
+            // 전표의 표제 — 가운데로 모으고 위아래를 선으로 닫는다(목업 1e).
+            AppTheme.ruleLabel(context, 'ESTIMATED REFUND'),
             const SizedBox(height: 12),
-            Text('연말정산에 안 넣은\n공제를 골라보세요'.keepWords, style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
+            Text('빠진 공제 진단',
+                textAlign: TextAlign.center,
+                style: AppTheme.display(AppTheme.serifLG, ink, spacing: 4)),
             const SizedBox(height: 10),
             Text('깜빡해서 빠뜨렸거나, 회사에 알리고 싶지 않아 일부러 뺀 공제를 고르면, 5월 종합소득세 신고로 얼마를 더 돌려받을 수 있는지 계산해드려요.'.keepWords,
-                style: AppTheme.sans(14, sub, height: 1.55)),
+                style: AppTheme.sans(AppTheme.tsBase, sub, height: 1.55)),
 
             // ── 기준 금액 ──
-            const SizedBox(height: 24),
-            Text('기준 금액'.toUpperCase(), style: AppTheme.label(context)),
+            const SizedBox(height: 22),
+            AppTheme.dashRule(context),
+            const SizedBox(height: 16),
+            AppTheme.sectionHead(context, '01', '기준 금액'),
             const SizedBox(height: 6),
-            Text('원천징수영수증에서 확인할 수 있어요.'.keepWords, style: AppTheme.sans(12, AppTheme.inkTertiary(context))),
+            Text('원천징수영수증에서 확인할 수 있어요.'.keepWords,
+                style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkTertiary(context))),
             const SizedBox(height: 14),
             _kvRow('총급여', _grossCtrl),
             const SizedBox(height: 12),
             _kvRow('결정세액', _decidedCtrl),
 
             // ── 빠진 공제 선택 ──
-            const SizedBox(height: 26),
-            Text('빠뜨린 공제'.toUpperCase(), style: AppTheme.label(context)),
+            const SizedBox(height: 22),
+            AppTheme.dashRule(context),
+            const SizedBox(height: 16),
+            AppTheme.sectionHead(context, '02', '확인 목록'),
             const SizedBox(height: 6),
-            Text('해당하는 항목을 고르고 실제 지출액을 적어주세요.'.keepWords, style: AppTheme.sans(12, sub)),
-            const SizedBox(height: 14),
+            Text('해당하는 항목을 고르고 실제 지출액을 적어주세요.'.keepWords,
+                style: AppTheme.sans(AppTheme.tsSM, sub)),
+            const SizedBox(height: 10),
             DeductionChecklist(
               initialAmounts: _initialAmounts,
               onChanged: (a) => setState(() => _amounts = a),
@@ -163,8 +171,16 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
               child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 Icon(Icons.calculate_outlined, size: 16, color: accent),
                 const SizedBox(width: 6),
-                Text('정밀 계산기로 직접 계산하기', style: AppTheme.sans(13, accent, weight: FontWeight.w600)),
+                Text('정밀 계산기로 직접 계산하기'.keepWords,
+                    style: AppTheme.sans(AppTheme.tsSM, accent, weight: FontWeight.w600)),
               ]),
+            ),
+            const SizedBox(height: 22),
+            AppTheme.barcode(context),
+            const SizedBox(height: 6),
+            Center(
+              child: Text('＊ S E K K E U L ＊',
+                  style: AppTheme.label(context, color: AppTheme.inkTertiary(context))),
             ),
           ],
               ),
@@ -186,7 +202,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
   /// 이 화면의 숫자는 그대로 신고서로 넘어가므로, 틀린 금액이 빈 결과보다 나쁘다.
   Widget _blockedNotice(String reason) {
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: AppTheme.line(context), width: 1), borderRadius: BorderRadius.circular(3)),
+      decoration: BoxDecoration(border: Border.all(color: AppTheme.line(context), width: 1)),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Icon(Icons.info_outline_rounded, size: 20, color: AppTheme.inkTertiary(context)),
@@ -199,7 +215,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
 
   Widget _emptyState() {
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: AppTheme.line(context), width: 1), borderRadius: BorderRadius.circular(3)),
+      decoration: BoxDecoration(border: Border.all(color: AppTheme.line(context), width: 1)),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: Row(children: [
         Icon(Icons.checklist_rounded, size: 20, color: AppTheme.inkTertiary(context)),
@@ -213,21 +229,22 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
   Widget _refundHeadline(int refund) {
     final accent = AppTheme.accentColor(context);
     final sub = AppTheme.inkSecondary(context);
+    // 결과는 종이 위에 잉크가 앉은 칸으로 찍는다 — 테두리 1.5px + 옅은 채움.
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: AppTheme.lineStrong(context), width: 1.4), borderRadius: BorderRadius.circular(3)),
+      decoration: BoxDecoration(
+        color: AppTheme.accentSoft(context),
+        border: Border.all(color: AppTheme.lineStrong(context), width: 1.5),
+      ),
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('더 받을 수 있는 환급', style: AppTheme.label(context)),
+          Text('지금까지 찾은 환급', style: AppTheme.label(context)),
           const SizedBox(height: 10),
-          Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-            Text(comma(refund), style: AppTheme.serif(34, accent, spacing: -1.2, height: 1.0)),
-            const SizedBox(width: 5),
-            Text('원', style: AppTheme.sans(15, sub, weight: FontWeight.w600)),
-          ]),
+          AppTheme.amount(context, comma(refund), color: accent),
           const SizedBox(height: 6),
-          Text('5월 종합소득세 신고로 돌려받을 수 있어요.'.keepWords, style: AppTheme.sans(12, sub, height: 1.45)),
+          Text('5월 종합소득세 신고로 돌려받을 수 있어요.'.keepWords,
+              style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
         ],
       ),
     );
@@ -240,20 +257,23 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
     return Container(
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.line(context)))),
       padding: const EdgeInsets.symmetric(vertical: 14),
-      child: Row(children: [
-        Container(width: 3, height: 34, color: accent),
-        const SizedBox(width: 14),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(padding: const EdgeInsets.only(top: 2), child: AppTheme.tick(context, true)),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                Text(l.category, style: AppTheme.sans(15, ink, weight: FontWeight.w700)),
-                const Spacer(),
-                Text('+${comma(l.missedCredit)}원', style: AppTheme.sans(14, accent, weight: FontWeight.w700)),
+                Expanded(child: Text(l.category,
+                    style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700))),
+                const SizedBox(width: 8),
+                Text('+${comma(l.missedCredit)}원',
+                    style: AppTheme.sans(AppTheme.tsBase, accent, weight: FontWeight.w700)),
               ]),
               const SizedBox(height: 4),
-              Text('지출 ${comma(l.available)}원 기준'.keepWords, style: AppTheme.sans(12, sub, height: 1.4)),
+              Text('지출 ${comma(l.available)}원 기준',
+                  style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.4)),
             ],
           ),
         ),

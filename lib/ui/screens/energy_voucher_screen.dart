@@ -35,7 +35,6 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('에너지바우처 예상액',
             style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),

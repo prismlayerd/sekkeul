@@ -99,7 +99,6 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
     final types = ['일반형', '서민·농어민형'];
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
         titleSpacing: 0,
         title: Text('ISA 절세 계산',
@@ -191,7 +190,7 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
                         style: AppTheme.serif(AppTheme.serifLG, accent,
                             weight: FontWeight.w400)),
                     const SizedBox(height: 4),
-                    Text('일반계좌 대비 세금 절약',
+                    Text('일반계좌 대비 세금 절약'.keepWords,
                         style: AppTheme.sans(AppTheme.tsSM, sub)),
                   ],
                 ),

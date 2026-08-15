@@ -275,7 +275,7 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
                           style: TextStyle(color: subColor, fontSize: 12)),
                     ],
                   ] else
-                    Text('재산가액을 입력해보세요.',
+                    Text('재산가액을 입력해보세요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 13)),
                 ],
               ),
@@ -328,7 +328,7 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
                     '• 상속: 배우자 공제 최소 5억(실제 취득재산 기준 최대 30억), 일괄공제 5억.\n'
                     '• 증여: 배우자 6억, 성인자녀 5천만, 미성년 2천만, 기타친족 1천만원 (10년 합산).\n'
                     '• 신고세액공제 3%·세대생략 할증(30~40%)은 반영되지 않았습니다.\n'
-                    '• 영농상속공제 등 개별 특례는 세무사 상담을 권장합니다.',
+                    '• 영농상속공제 등 개별 특례는 세무사 상담을 권장합니다.'.keepWords,
                     style:
                         TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),

@@ -125,7 +125,6 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
     final ink = AppTheme.ink(context);
     final sub = AppTheme.inkSecondary(context);
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),

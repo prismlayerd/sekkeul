@@ -104,7 +104,6 @@ class _NewlywedSpecialSupplyScreenState
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('신혼특공 자격진단',
             style: AppTheme.serif(16, ink,
@@ -159,7 +158,7 @@ class _NewlywedSpecialSupplyScreenState
                   value: _householdIdx,
                   isExpanded: true,
                   style: AppTheme.sans(14, ink),
-                  dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                  dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _householdLabels.length; i++)
                       DropdownMenuItem(

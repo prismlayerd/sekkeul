@@ -91,7 +91,6 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
     final methods = ['원리금균등', '원금균등', '만기일시'];
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
         titleSpacing: 0,
         title: Text('대출이자 계산',
@@ -176,7 +175,7 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
                     if (_method == 1)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
-                        child: Text('첫 달 기준, 이후 감소',
+                        child: Text('첫 달 기준, 이후 감소'.keepWords,
                             style: AppTheme.sans(AppTheme.tsSM, sub)),
                       ),
                   ],

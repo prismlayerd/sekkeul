@@ -52,7 +52,6 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('새출발기금 채무조정',
             style: AppTheme.serif(16, ink,
@@ -63,7 +62,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('현재 상황 (차주 분류)',
+            Text('현재 상황 (차주 분류)'.keepWords,
                 style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Container(
@@ -77,13 +76,13 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
                   value: _statusIdx,
                   isExpanded: true,
                   style: AppTheme.sans(14, ink),
-                  dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                  dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _statuses.length; i++)
                       DropdownMenuItem(
                           value: i,
                           child: Text(
-                              '${_statuses[i].$1} (${(_statuses[i].$2 * 100).round()}% 감면)'.keepWords)),
+                              '${_statuses[i].$1} (${(_statuses[i].$2 * 100).round()}% 감면)')),
                   ],
                   onChanged: (v) => setState(() => _statusIdx = v!),
                 ),

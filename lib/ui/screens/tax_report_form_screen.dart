@@ -43,7 +43,6 @@ class TaxReportFormScreen extends StatelessWidget {
     final tert = AppTheme.inkTertiary(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),
@@ -66,7 +65,7 @@ class TaxReportFormScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
           children: [
             // ── 표제 ──
-            Text('가상 신고서 · ${reportType.toUpperCase()}'.keepWords, style: AppTheme.label(context)),
+            Text('가상 신고서 · ${reportType.toUpperCase()}', style: AppTheme.label(context)),
             const SizedBox(height: 12),
             Text(_officialName, style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
             const SizedBox(height: 22),
@@ -372,7 +371,6 @@ class _ReportFormLoaderState extends State<ReportFormLoader> {
   Widget build(BuildContext context) {
     if (_loading) {
       return Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: const SizedBox.shrink(),
       );
     }

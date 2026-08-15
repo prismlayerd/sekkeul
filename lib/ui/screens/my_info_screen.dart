@@ -265,7 +265,6 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     final sub = AppTheme.inkSecondary(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),
@@ -342,7 +341,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('더 많은 공제 항목 입력하기',
+                    Text('더 많은 공제 항목 입력하기'.keepWords,
                         style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
                     const SizedBox(height: 2),
                     Text(

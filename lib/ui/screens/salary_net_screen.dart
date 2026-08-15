@@ -105,7 +105,7 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
                   ),
                   if (hasInput) ...[
                     const SizedBox(height: 8),
-                    Text('월 환산: ${_won(monthly)}'.keepWords,
+                    Text('월 환산: ${_won(monthly)}',
                         style: TextStyle(color: subColor, fontSize: 12)),
                   ],
                 ],
@@ -120,7 +120,7 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('부양가족 수 (본인 포함)',
+                  Text('부양가족 수 (본인 포함)'.keepWords,
                       style: TextStyle(
                           color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
@@ -198,7 +198,7 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
                         '${(totalDeduction / monthly * 100).toStringAsFixed(1)}%',
                         subColor, textColor),
                   ] else
-                    Text('세전 연봉을 입력해보세요.',
+                    Text('세전 연봉을 입력해보세요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 13)),
                 ],
               ),
@@ -226,7 +226,7 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
                     '• 근로소득세는 간이세액표 근사값으로 연말정산 결과와 다를 수 있습니다.\n'
                     '• 지방소득세는 근로소득세의 10%입니다.\n'
                     '• 식대 비과세(월 20만원) 등은 반영되지 않았습니다.\n'
-                    '• 비과세 수당 적용 시 실수령액이 늘어날 수 있습니다.',
+                    '• 비과세 수당 적용 시 실수령액이 늘어날 수 있습니다.'.keepWords,
                     style: TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),
                 ],

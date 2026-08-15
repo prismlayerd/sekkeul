@@ -102,7 +102,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('금융소득 종합과세 계산',
+        title: Text('금융소득 종합과세 계산'.keepWords,
             style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
@@ -207,12 +207,12 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('건강보험료 추가 부과 주의',
+                      Text('건강보험료 추가 부과 주의'.keepWords,
                           style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
                       Text(
                         '연간 금융소득이 1,000만원을 초과하면 건강보험료가 추가로 부과됩니다. '
-                        '직장가입자도 소득월액 보험료로 별도 청구될 수 있습니다.',
+                        '직장가입자도 소득월액 보험료로 별도 청구될 수 있습니다.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 12, height: 1.5),
                       ),
                     ]),
@@ -243,7 +243,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
                     '• 2,000만원을 넘으면 5월에 신고해야 합니다. 다만 2,000만원까지는 그대로 14%가 붙고, '
                     '넘는 금액만 다른 소득과 합쳐 누진세율이 붙습니다.\n'
                     '• 비교과세: 그렇게 계산한 세액과 전액 14%로 계산한 세액 중 큰 쪽이 산출세액입니다.\n'
-                    '• 배당 Gross-up(귀속법인세 가산) 효과는 이 계산기에 미반영됩니다.',
+                    '• 배당 Gross-up(귀속법인세 가산) 효과는 이 계산기에 미반영됩니다.'.keepWords,
                     style: TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),
                 ],
@@ -295,10 +295,10 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
                 style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 12),
-          Text('5월에 더 낼 세금 ${_toManwon(r.additionalTaxBurden)}'.keepWords,
+          Text('5월에 더 낼 세금 ${_toManwon(r.additionalTaxBurden)}',
               style: TextStyle(color: Colors.redAccent, fontSize: 28, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
-          Text('(지방소득세 10% 별도)',
+          Text('(지방소득세 10% 별도)'.keepWords,
               style: TextStyle(color: subColor, fontSize: 12)),
           const SizedBox(height: 16),
           _resultRow('이미 원천징수된 세금 (14%)', _toManwon(r.separateTaxAmount), subColor, textColor),
@@ -316,7 +316,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.event_note_rounded, color: Colors.redAccent, size: 14),
               const SizedBox(width: 6),
-              Text('5월 종합소득세 신고 대상', style: TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600)),
+              Text('5월 종합소득세 신고 대상'.keepWords, style: TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600)),
             ]),
           ),
         ],

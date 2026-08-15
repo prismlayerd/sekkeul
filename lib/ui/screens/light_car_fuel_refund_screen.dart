@@ -56,7 +56,6 @@ class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('경차 유류세 환급',
             style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),

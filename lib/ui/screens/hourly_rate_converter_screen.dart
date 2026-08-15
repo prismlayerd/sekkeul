@@ -50,7 +50,6 @@ class _HourlyRateConverterScreenState
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('시급 환산기',
             style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),

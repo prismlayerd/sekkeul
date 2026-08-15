@@ -47,7 +47,6 @@ class _DocumentChecklistScreenState extends State<DocumentChecklistScreen> {
     final season = isEmployee ? '연말정산' : '종합소득세';
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('서류 체크리스트',
             style: AppTheme.serif(22, ink, weight: FontWeight.w400, spacing: -0.3)),
@@ -84,7 +83,7 @@ class _DocumentChecklistScreenState extends State<DocumentChecklistScreen> {
                   ],
                   if (autoItems.isNotEmpty) ...[
                     const SizedBox(height: 28),
-                    Text('홈택스 간소화 자동 수집'.toUpperCase(),
+                    Text('홈택스 간소화 자동 수집'.keepWords.toUpperCase(),
                         style: AppTheme.label(context)),
                     const SizedBox(height: 6),
                     AppTheme.hairline(context),
@@ -128,7 +127,7 @@ class _DocumentChecklistScreenState extends State<DocumentChecklistScreen> {
                   borderRadius: BorderRadius.circular(3),
                 ),
                 child: checked
-                    ? Icon(Icons.check_rounded, size: 13, color: Theme.of(context).scaffoldBackgroundColor)
+                    ? Icon(Icons.check_rounded, size: 13, color: AppTheme.backgroundColor(context))
                     : null,
               ),
             ),
@@ -181,7 +180,7 @@ class _DocumentChecklistScreenState extends State<DocumentChecklistScreen> {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Icon(Icons.task_alt_rounded, size: 40, color: tert),
         const SizedBox(height: 12),
-        Text('별도로 준비할 서류가 없어요',
+        Text('별도로 준비할 서류가 없어요'.keepWords,
             style: AppTheme.sans(15, tert, weight: FontWeight.w600)),
         const SizedBox(height: 6),
         Text('홈택스 간소화 서비스에서 자동으로 수집돼요.'.keepWords,

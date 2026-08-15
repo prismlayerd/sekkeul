@@ -91,7 +91,7 @@ class MortgageConditionRows extends StatelessWidget {
           onTap: () => onNonDeferred(!nonDeferred),
         ),
         const SizedBox(height: 6),
-        Text('지금 한도: 연 ${(limit / 10000).round()}만원'.keepWords,
+        Text('지금 한도: 연 ${(limit / 10000).round()}만원',
             style: AppTheme.sans(12, AppTheme.accentColor(context),
                 weight: FontWeight.w700)),
       ],

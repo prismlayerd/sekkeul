@@ -36,9 +36,8 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('보육료 · 가정양육 비교',
+        title: Text('보육료 · 가정양육 비교'.keepWords,
             style: AppTheme.serif(16, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
@@ -61,7 +60,7 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
                   value: _ageIdx,
                   isExpanded: true,
                   style: AppTheme.sans(14, ink),
-                  dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                  dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _ages.length; i++)
                       DropdownMenuItem(
@@ -84,7 +83,7 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('월 지원액 비교 (택일)',
+                  Text('월 지원액 비교 (택일)'.keepWords,
                       style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
                   const SizedBox(height: 12),
                   Row(
@@ -110,7 +109,7 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('가정양육 ($_homeLabel)'.keepWords,
+                      Text('가정양육 ($_homeLabel)',
                           style: AppTheme.sans(13, ink,
                               weight: FontWeight.w600)),
                       Text(won(_homeCash),

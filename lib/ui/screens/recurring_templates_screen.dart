@@ -9,9 +9,7 @@ import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
 
-const _pmCreditColor = Color(0xFF6B8FD4);
-const _pmDebitColor  = Color(0xFFD4A847);
-const _pmOtherColor  = Color(0xFF9E9B96);
+
 
 class RecurringTemplatesScreen extends StatefulWidget {
   const RecurringTemplatesScreen({super.key});
@@ -52,11 +50,12 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
     }
   }
 
+  /// 결제수단은 색이 아니라 **잉크 농도**로 가른다 — 가계부 달력의 약어 범례와 같은 규율.
   Color _pmColor(String pm) {
     switch (pm) {
-      case '신용카드':  return _pmCreditColor;
-      case '체크+현금': return _pmDebitColor;
-      default:        return _pmOtherColor;
+      case '신용카드':  return AppTheme.ink(context);
+      case '체크+현금': return AppTheme.inkSecondary(context);
+      default:        return AppTheme.inkTertiary(context);
     }
   }
 
@@ -261,7 +260,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                               ),
                               const SizedBox(width: 8),
                               Expanded(
-                                child: Text('사업경비로 인정 (기본값)',
+                                child: Text('사업경비로 인정 (기본값)'.keepWords,
                                     style: AppTheme.sans(14,
                                         isBusiness ? ink : sub,
                                         weight: FontWeight.w600)),
@@ -384,7 +383,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
         ),
         title: Text('항목 삭제', style: AppTheme.serif(17, ink)),
         content: Text(
-          '"${t.name}"을 삭제하면 이번 달 확인 기록도 함께 사라져요.'.keepWords,
+          '"${t.name}"을 삭제하면 이번 달 확인 기록도 함께 사라져요.',
           style: AppTheme.sans(14, sub),
         ),
         actions: [
@@ -415,7 +414,6 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
     final bg   = AppTheme.backgroundColor(context);
 
     return Scaffold(
-      backgroundColor: bg,
       appBar: AppBar(
         title: Text('고정 지출', style: AppTheme.serif(22, ink)),
         bottom: PreferredSize(

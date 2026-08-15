@@ -274,7 +274,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('정확한 시간에 알림 받기',
+        title: Text('정확한 시간에 알림 받기'.keepWords,
             style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontWeight: FontWeight.bold)),
         content: Text(
           '신고·납부 기한 알림이 정확한 시각에 오도록, 다음 화면에서 "정확한 알람" 권한을 허용해 주세요.'.keepWords,
@@ -403,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('지난 달 기록이 비어있어요', style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
+                Text('지난 달 기록이 비어있어요'.keepWords, style: AppTheme.sans(14, ink, weight: FontWeight.w700)),
                 const SizedBox(height: 4),
                 Text('간단히 채우면 올해 판정이 더 정확해져요 →'.keepWords, style: AppTheme.sans(12, accent)),
               ],
@@ -714,7 +714,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: IndexedStack(
         index: _currentIndex,
         children: [
@@ -760,19 +759,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   /// 홈 탭 — 세끌 워드마크 + 알림함 + 대시보드 본문. (설정은 전체 탭으로 일원화)
   Widget _buildHomeTab() {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        titleSpacing: 16,
-        title: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          decoration: BoxDecoration(
-            border: Border.all(color: AppTheme.ink(context), width: 1),
-            borderRadius: BorderRadius.circular(3),
-          ),
-          child: Text('세끌',
-              style: AppTheme.serif(17, AppTheme.ink(context), weight: FontWeight.w400, spacing: -0.5)),
-        ),
+        toolbarHeight: 64,
+        // 발행처 표시는 이제 물결 마크다 — 앱 아이콘과 같은 곡선.
+        // 가로로 길고 낮게 써서 머리글 높이를 '세 끌' 때와 같게 유지한다.
+        // 폭만 줄인다 — 파장이 고정이라 물결이 눌리지 않고 양 끝이 잘린다.
+        title: AppTheme.waveMark(context, height: 26, width: 92),
         actions: [
           Stack(
             clipBehavior: Clip.none,
@@ -872,18 +865,23 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Widget _buildHomeContent() {
-    // 각 기능을 표면색 패널로 묶어 경계를 분명히 한다(헤어라인 나열 → 카드 구획).
+    // 홈은 **한 장의 명세서**다. 기능마다 패널 상자를 두르지 않는다 —
+    // 영수증에는 카드가 없고, 절을 가르는 것은 점선이다.
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 선은 아래 한 줄만. 위아래로 두 번 그으면 머리줄이 상자가 된다.
+          // 발행 정보는 그 선에 바짝 붙어야 '선 위에 찍힌 것'으로 읽힌다.
+          _slipMeta(),
+          AppTheme.hairline(context, color: AppTheme.ink(context)),
+          const SizedBox(height: 14),
           _buildTypeSelector(),
-          const SizedBox(height: 16),
+          _slipRule(),
           // 업데이트가 있을 때만 그려진다. 없으면 자리를 차지하지 않는다.
           const UpdateCard(),
-          // 상단 회전 배너(광고/배너/알림 카드).
-          AppTheme.panel(context, child: HomeBannerCarousel(
+          HomeBannerCarousel(
             cards: _bannerCards(),
             activeIndex: _bannerIndex,
             onTickTap: (i) {
@@ -891,10 +889,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               _startBannerRotation();
             },
             onDismiss: _dismissBanner,
-          )),
-          const SizedBox(height: 14),
-          // 이달 현황(수입·지출·공제 문턱).
-          AppTheme.panel(context, child: HomeStatusSection(
+          ),
+          _slipRule(),
+          HomeStatusSection(
             userType: _userType,
             isEmployee: _isEmployee,
             monthlyIncome: double.tryParse(
@@ -930,23 +927,86 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               _checkBudget();
             },
             onCancelExpenseInput: () => setState(() => _showExpenseInput = false),
-          )),
-          const SizedBox(height: 14),
+          ),
           // 상태 카드에 아직 유도가 떠 있으면 백필 유도는 뒤로 미룬다 —
           // 요청은 한 번에 하나여야 눈에 들어온다(2026-07-25).
           if (_showBackfillPrompt &&
               !((_isEmployee && _grossIncome <= 0) || _expenseTarget <= 0)) ...[
-            AppTheme.panel(context, child: _buildBackfillPrompt()),
-            const SizedBox(height: 14),
+            _slipRule(),
+            _buildBackfillPrompt(),
           ],
-          // 리마인더(핵심 기능) — 접이식.
-          AppTheme.panel(context, child: ReminderCard(userType: _userType)),
-          const SizedBox(height: 14),
-          // 세무 도구 — 접이식 아코디언(세무 탭과 동일 메뉴 공유).
-          AppTheme.panel(context, child: TaxToolsAccordion(userType: _userType)),
-          const SizedBox(height: 14),
-          // 자주 묻는 질문.
-          AppTheme.panel(context, child: _buildFaqCard()),
+          _slipRule(),
+          ReminderCard(userType: _userType),
+          _slipRule(),
+          TaxToolsAccordion(userType: _userType),
+          _slipRule(),
+          _buildFaqCard(),
+          _slipFooter(),
+        ],
+      ),
+    );
+  }
+
+  /// 명세서 머리줄 — 발행 시각과 귀속연도. 종이 영수증이 맨 위에 찍는 것.
+  Widget _slipMeta() {
+    final now = DateTime.now();
+    final two = (int v) => v.toString().padLeft(2, '0');
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 5),
+      // 자간 2.0인 label 스타일을 그대로 쓰면 360px에서 두 칸이 부딪힌다.
+      // 머리줄은 좁은 화면에서도 한 줄이어야 하므로 자간을 줄여 쓴다.
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // 좁은 화면에서는 발행 시각이 먼저 줄어든다 — 오른쪽 두 항목이 잘리면 안 된다.
+          Flexible(
+            child: Text('${now.year}-${two(now.month)}-${two(now.day)}',
+                overflow: TextOverflow.ellipsis,
+                style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context),
+                    weight: FontWeight.w600, spacing: 1.0)),
+          ),
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            Semantics(
+              button: true,
+              label: _isProfileCompleted ? '내 정보 수정' : '내 정보 설정',
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _openProfile,
+                child: Text(_isProfileCompleted ? '내 정보' : '내 정보 설정',
+                    style: AppTheme.sans(AppTheme.tsXS, AppTheme.ink(context),
+                        weight: FontWeight.w700, spacing: 1.0,
+                        decoration: TextDecoration.underline)),
+              ),
+            ),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  /// 절을 가르는 선. 기본은 점선, 소계 위에서만 실선.
+  Widget _slipRule({bool solid = false}) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: solid
+            ? Container(height: 1, color: AppTheme.ink(context))
+            : AppTheme.dashRule(context),
+      );
+
+  /// 명세서 끝 — 바코드와 한 줄. 이 앱이 무엇인지 마지막으로 말하는 자리.
+  Widget _slipFooter() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 22),
+      child: Column(
+        children: [
+          Container(height: 1, color: AppTheme.ink(context)),
+          const SizedBox(height: 12),
+          Text('이 명세서는 기기 안에만 있습니다'.keepWords,
+              style: AppTheme.label(context, color: AppTheme.inkSecondary(context))),
+          const SizedBox(height: 10),
+          AppTheme.barcode(context, height: 26),
+          const SizedBox(height: 6),
+          Text('＊ S E K K E U L ＊',
+              style: AppTheme.label(context, color: AppTheme.inkTertiary(context))),
         ],
       ),
     );
@@ -1207,58 +1267,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     return cards;
   }
 
-  /// 유형 선택 — 텍스트 탭(선택 시 굵게 + 하단 라인) + 프로필 링크
+  /// 유형 선택 — 전표의 체크칸. 가계부 뷰 전환과 같은 위젯을 쓴다.
   Widget _buildTypeSelector() {
-    final ink = AppTheme.ink(context);
-    final tert = AppTheme.inkTertiary(context);
-    final accent = AppTheme.accentColor(context);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        ...['직장인', 'N잡러', '프리랜서'].map((type) {
-          final selected = _userType == type;
-          return Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: Semantics(
-              button: true,
-              selected: selected,
-              label: '$type 유형',
-              child: GestureDetector(
-                onTap: () => _switchUserType(type),
-                behavior: HitTestBehavior.opaque,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(type, style: AppTheme.sans(15, selected ? ink : tert, weight: selected ? FontWeight.w700 : FontWeight.w500, spacing: -0.2)),
-                    const SizedBox(height: 6),
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      height: 2,
-                      width: selected ? 20 : 0,
-                      color: ink,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }),
-        const Spacer(),
-        Semantics(
-          button: true,
-          label: _isProfileCompleted ? '내 정보 수정' : '내 정보 설정',
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _openProfile,
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(_isProfileCompleted ? Icons.check_circle_outline : Icons.add, size: 15, color: accent),
-              const SizedBox(width: 5),
-              Text(_isProfileCompleted ? '내 정보 수정' : '내 정보 설정', style: AppTheme.sans(13, accent, weight: FontWeight.w600)),
-            ]),
-          ),
-        ),
-      ],
+    const types = ['직장인', 'N잡러', '프리랜서'];
+    return AppTheme.segmented(
+      context,
+      labels: types,
+      selected: types.indexOf(_userType).clamp(0, types.length - 1),
+      onTap: (i) => _switchUserType(types[i]),
+      semanticSuffix: '유형',
     );
   }
 
@@ -1278,7 +1295,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         collapsedIconColor: AppTheme.inkTertiary(context),
         tilePadding: EdgeInsets.zero,
         childrenPadding: const EdgeInsets.only(bottom: 16),
-        title: Text('자주 묻는 질문', style: AppTheme.sans(13, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
+        // 위의 절들과 같은 머리를 쓴다 — 하나만 다른 모양이면 그 줄이 문서 밖으로 보인다.
+        title: AppTheme.sectionHead(context, '05', '자주 묻는 질문'),
         children: [
           ...shown.map((faq) => _buildFaqItem(faq['q']!, faq['a']!)),
           if (pool.length > 5)
@@ -1415,21 +1433,37 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         border: Border(top: BorderSide(color: AppTheme.line(context), width: 1)),
       ),
       child: BottomNavigationBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        // 배경은 테마가 투명으로 준다 — 하단바 밑으로도 같은 종이가 이어져야 한다.
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: _onNavTap,
         selectedItemColor: AppTheme.ink(context),
         unselectedItemColor: AppTheme.inkTertiary(context),
-        selectedFontSize: 10,
-        unselectedFontSize: 10,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.square_outlined, size: 20), label: '홈'),
-          BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined, size: 20), label: '혜택'),
-          BottomNavigationBarItem(icon: Icon(Icons.calculate_outlined, size: 20), label: '계산기'),
-          BottomNavigationBarItem(icon: Icon(Icons.apps_rounded, size: 20), label: '전체'),
+        selectedFontSize: AppTheme.tsNav,
+        unselectedFontSize: AppTheme.tsNav,
+        // 전표에는 아이콘이 없다. 현재 칸은 잉크로 채운 사각형, 나머지는 빈 테두리.
+        items: [
+          for (final label in const ['홈', '혜택', '계산기', '전체'])
+            BottomNavigationBarItem(
+              icon: _navMark(false),
+              activeIcon: _navMark(true),
+              label: label,
+            ),
         ],
       ),
     );
   }
+
+  Widget _navMark(bool active) => Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(
+            color: active ? AppTheme.ink(context) : null,
+            border: active ? null : Border.all(color: AppTheme.inkTertiary(context), width: 1),
+          ),
+        ),
+      );
 }
+

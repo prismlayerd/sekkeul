@@ -67,7 +67,6 @@ class _NewbornSpecialLoanScreenState extends State<NewbornSpecialLoanScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('신생아 특례대출',
             style: AppTheme.serif(16, ink,

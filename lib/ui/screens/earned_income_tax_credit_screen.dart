@@ -204,7 +204,7 @@ class _EarnedIncomeTaxCreditScreenState
                   ),
                   if (hasInput) ...[
                     const SizedBox(height: 6),
-                    Text('= ${comma(income.round())}만원'.keepWords,
+                    Text('= ${comma(income.round())}만원',
                         style: TextStyle(color: subColor, fontSize: 12)),
                   ],
                 ],
@@ -219,7 +219,7 @@ class _EarnedIncomeTaxCreditScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('부양자녀 수 (18세 미만)',
+                  Text('부양자녀 수 (18세 미만)'.keepWords,
                       style: TextStyle(
                           color: textColor,
                           fontSize: 15,
@@ -324,7 +324,7 @@ class _EarnedIncomeTaxCreditScreenState
                     '• 재산 합계 2억 원 미만인 경우에만 신청 가능합니다.\n'
                     '• 자녀장려금 소득상한은 부부합산 4,000만원입니다.\n'
                     '• 매년 5월 1일~31일 홈택스·모바일에서 신청합니다.\n'
-                    '• 소득·재산 기준은 전년도(과세기간) 기준입니다.',
+                    '• 소득·재산 기준은 전년도(과세기간) 기준입니다.'.keepWords,
                     style:
                         TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),

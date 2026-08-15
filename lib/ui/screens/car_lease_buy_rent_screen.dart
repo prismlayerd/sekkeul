@@ -70,9 +70,8 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('리스 · 구매 · 렌트 비교',
+        title: Text('리스 · 구매 · 렌트 비교'.keepWords,
             style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
       body: SingleChildScrollView(
@@ -127,7 +126,7 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('$_months개월 총 지출 비교'.keepWords,
+                    Text('$_months개월 총 지출 비교',
                         style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     _resultRow('리스', _leaseTotal, ink, sub, accent),

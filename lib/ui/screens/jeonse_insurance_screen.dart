@@ -61,7 +61,6 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
     final r = _result;
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
         titleSpacing: 0,
         title: Text('전세보증보험료 계산',

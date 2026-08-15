@@ -1392,7 +1392,6 @@ class _BenefitScreenState extends State<BenefitScreen> {
     final accent = AppTheme.accentColor(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         titleSpacing: 16,

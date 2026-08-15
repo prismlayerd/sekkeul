@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
 import '../tax_tools_screen.dart';
-import '../../theme/text_wrap.dart';
 
 /// 홈 세무 도구 아코디언 — 리마인더 카드와 동일한 헤더(라벨 + 요약 + 회전 화살표).
 /// 접힘 기본, 탭하면 세무 탭과 동일한 `TaxToolsMenu`를 펼친다.
@@ -20,7 +19,6 @@ class _TaxToolsAccordionState extends State<TaxToolsAccordion> {
 
   @override
   Widget build(BuildContext context) {
-    final sub = AppTheme.inkSecondary(context);
     final tert = AppTheme.inkTertiary(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -34,17 +32,9 @@ class _TaxToolsAccordionState extends State<TaxToolsAccordion> {
           onTap: () => setState(() => _expanded = !_expanded),
           child: Row(
             children: [
-              Text('세무 도구', style: AppTheme.label(context)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  '기록 · 신고 준비 · 경정청구 · 양식'.keepWords,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTheme.sans(12, sub, weight: FontWeight.w600),
-                  textAlign: TextAlign.right,
-                ),
-              ),
+              // 절 머리 하나로 충분하다. 오른쪽에 붙어 있던 '기록 · 신고 준비 · 경정청구 · 양식'
+              // 요약은 펼치면 바로 보이는 것을 접힌 상태에서 한 번 더 말하는 줄이라 뺐다.
+              Expanded(child: AppTheme.sectionHead(context, '04', '세무 도구')),
               const SizedBox(width: 6),
               AnimatedRotation(
                 turns: _expanded ? 0.5 : 0,

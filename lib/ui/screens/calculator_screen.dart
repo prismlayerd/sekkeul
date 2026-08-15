@@ -213,7 +213,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     final line = AppTheme.line(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         titleSpacing: 16,

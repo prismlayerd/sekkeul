@@ -308,7 +308,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                     '• 주 15시간 이상 근무 시 주휴수당이 발생합니다.\n'
                     '• 주휴수당 = (주 근로시간 ÷ 40) × 8 × 시급\n'
                     '• 최저임금 미달 시 사업주가 법적 책임을 집니다.\n'
-                    '• 하루 근무시간 8시간 초과분은 계산에서 제외했습니다.',
+                    '• 하루 근무시간 8시간 초과분은 계산에서 제외했습니다.'.keepWords,
                     style: TextStyle(
                         color: subColor, fontSize: 12, height: 1.6),
                   ),

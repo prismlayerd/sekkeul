@@ -183,7 +183,7 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
                       Icon(Icons.trending_up_rounded,
                           color: primary, size: 20),
                       const SizedBox(width: 8),
-                      Text('${_years}년 후 예상 자산'.keepWords,
+                      Text('${_years}년 후 예상 자산',
                           style: TextStyle(
                               color: textColor,
                               fontSize: 14,
@@ -325,7 +325,7 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
                     '• 월 복리로 계산됩니다 (연이율 ÷ 12로 매월 적용).\n'
                     '• 세금·수수료는 반영되지 않았습니다.\n'
                     '• 실제 투자 수익은 시장 상황에 따라 달라집니다.\n'
-                    '• 이 계산기는 투자 권유가 아닌 참고용입니다.',
+                    '• 이 계산기는 투자 권유가 아닌 참고용입니다.'.keepWords,
                     style:
                         TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),

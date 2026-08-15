@@ -30,7 +30,6 @@ class TaxToolsScreen extends StatelessWidget {
     final ink = AppTheme.ink(context);
     final sub = AppTheme.inkSecondary(context);
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: embedded
@@ -224,7 +223,7 @@ class _TaxToolsMenuState extends State<TaxToolsMenu> {
         child: Row(children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('양식 ${allTaxForms.length}종'.keepWords, style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
+              Text('양식 ${allTaxForms.length}종', style: AppTheme.sans(15, ink, weight: FontWeight.w700, spacing: -0.2)),
               const SizedBox(height: 3),
               Text('연말정산·종소세·경정청구 등 자주 쓰는 양식 모음'.keepWords,
                   style: AppTheme.sans(12, sub, height: 1.4)),

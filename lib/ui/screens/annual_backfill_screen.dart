@@ -143,7 +143,6 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
     final sub = AppTheme.inkSecondary(context);
     final tert = AppTheme.inkTertiary(context);
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),
@@ -159,7 +158,7 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
                 children: [
                   Text(
                     '연초부터 기록이 없으면 이번 달 판정이 부정확해질 수 있어요. '
-                    '간단하게 달마다 수입·지출 총액만 입력해두면 정확도가 올라가요. 몰라도 건너뛰어도 괜찮아요.',
+                    '간단하게 달마다 수입·지출 총액만 입력해두면 정확도가 올라가요. 몰라도 건너뛰어도 괜찮아요.'.keepWords,
                     style: AppTheme.sans(13, sub),
                   ),
                   const SizedBox(height: 20),
@@ -167,7 +166,7 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
                     if (row.hasData)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Text('${row.month}월 — 이미 기록 있음'.keepWords, style: AppTheme.sans(13, tert)),
+                        child: Text('${row.month}월 — 이미 기록 있음', style: AppTheme.sans(13, tert)),
                       )
                     else
                       Padding(

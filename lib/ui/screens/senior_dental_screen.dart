@@ -41,7 +41,6 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('노인 틀니·임플란트',
             style: AppTheme.serif(16, ink,
@@ -146,7 +145,7 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
           value: value,
           isExpanded: true,
           style: AppTheme.sans(14, ink),
-          dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+          dropdownColor: AppTheme.backgroundColor(context),
           items: [
             for (int i = 0; i < items.length; i++)
               DropdownMenuItem(

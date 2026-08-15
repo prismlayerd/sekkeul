@@ -224,7 +224,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '기기 내부 $fileType 파일 선택'.keepWords,
+                      '기기 내부 $fileType 파일 선택',
                       style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     IconButton(
@@ -305,7 +305,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('국세청 간소화 파일 ($selectedFile) 로컬 분석 완료!'.keepWords),
+            content: Text('국세청 간소화 파일 ($selectedFile) 로컬 분석 완료!'),
             backgroundColor: Theme.of(context).cardColor,
           ),
         );
@@ -322,7 +322,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
 
     if (salary <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('총급여를 입력해주세요.'), backgroundColor: Theme.of(context).cardColor),
+        SnackBar(content: Text('총급여를 입력해주세요.'.keepWords), backgroundColor: Theme.of(context).cardColor),
       );
       return;
     }
@@ -451,7 +451,6 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).textTheme.bodyLarge!.color!),
@@ -581,7 +580,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
             height: 60,
             alignment: Alignment.center,
             decoration: BoxDecoration(color: Theme.of(context).textTheme.bodyLarge!.color!, borderRadius: BorderRadius.circular(16)),
-            child: Text('연말정산 진단하기', style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor, fontSize: 18, fontWeight: FontWeight.bold)),
+            child: Text('연말정산 진단하기', style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 18, fontWeight: FontWeight.bold)),
           ),
         ),
         
@@ -655,7 +654,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         const SizedBox(height: 24),
 
         // ── 공제 항목별 적용 내역 ──
-        Text('📋 공제 항목별 적용 내역', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 16, fontWeight: FontWeight.bold)),
+        Text('📋 공제 항목별 적용 내역'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(20),
@@ -738,7 +737,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                 ),
               ));
             },
-            child: Text('신고서 양식으로 보기', style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor, fontSize: 18, fontWeight: FontWeight.bold)),
+            child: Text('신고서 양식으로 보기', style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 18, fontWeight: FontWeight.bold)),
           ),
         ),
         const SizedBox(height: 12),
@@ -937,7 +936,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               ),
               child: Text(
                 '네, 준비해주세요',
-                style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor, fontSize: 15, fontWeight: FontWeight.bold),
+                style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 15, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -1004,7 +1003,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '누락 공제 확인 ${_wizardStep + 1}/${_totalWizardSteps} — ${stepLabels[_wizardStep]}'.keepWords,
+                  '누락 공제 확인 ${_wizardStep + 1}/${_totalWizardSteps} — ${stepLabels[_wizardStep]}',
                   style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12),
                 ),
                 const SizedBox(height: 6),
@@ -1078,7 +1077,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               },
               child: Text(
                 isLast ? '계산하기' : '다음',
-                style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor, fontSize: 15, fontWeight: FontWeight.bold),
+                style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 15, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -1106,7 +1105,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         const SizedBox(height: 24),
 
         // 자녀세액공제
-        Text('${TaxRates.childTaxCreditEligibilityLabel()} 기본공제 대상 자녀 수'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
+        Text('${TaxRates.childTaxCreditEligibilityLabel()} 기본공제 대상 자녀 수', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
         Text('첫째 25만 · 둘째 55만 · 셋째 이상 1명당 40만원 추가'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12)),
         const SizedBox(height: 10),
@@ -1122,7 +1121,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '→ ${comma(previewChildCredit.toInt())}원 공제'.keepWords,
+                  '→ ${comma(previewChildCredit.toInt())}원 공제',
                   style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 13, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -1177,7 +1176,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? Theme.of(context).scaffoldBackgroundColor : Theme.of(context).textTheme.bodyLarge!.color!,
+            color: selected ? AppTheme.backgroundColor(context) : Theme.of(context).textTheme.bodyLarge!.color!,
             fontSize: 13,
             fontWeight: FontWeight.bold,
           ),
@@ -1194,10 +1193,10 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 8),
-        Text('🏥 의료비 지출을 확인할게요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
+        Text('🏥 의료비 지출을 확인할게요'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
         const SizedBox(height: 6),
         Text(
-          '총급여의 3%(${comma(threshold)}원)를 초과한 의료비부터 공제됩니다. 없으면 건너뛰세요.'.keepWords,
+          '총급여의 3%(${comma(threshold)}원)를 초과한 의료비부터 공제됩니다. 없으면 건너뛰세요.',
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
         ),
         const SizedBox(height: 16),
@@ -1239,7 +1238,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 8),
-        Text('📚 교육비를 확인할게요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
+        Text('📚 교육비를 확인할게요'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
         const SizedBox(height: 6),
         Text(
           '15% 공제율이 적용돼요. 없으면 건너뛰세요.'.keepWords,
@@ -1293,7 +1292,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 8),
-        Text('❤️ 기부금을 확인할게요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
+        Text('❤️ 기부금을 확인할게요'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3)),
         const SizedBox(height: 6),
         Text(
           '1,000만원 이하 15%, 초과분 30% 공제율이 적용돼요. 없으면 건너뛰세요.'.keepWords,
@@ -1346,7 +1345,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         const SizedBox(height: 6),
         Text(
           '회사에 알리기 꺼려 연말정산에서 누락한 경우, 5월 경정청구로 되돌려 받을 수 있어요. (총급여 5,500만원 이하 17% / 초과 15%)\n\n'
-                  '집은 전용 85㎡ 이하이거나 시가 4억원 이하여야 해요. 2026년부터 기본공제 대상 자녀가 3명 이상이면 100㎡까지 넓어졌어요.'
+                  '집은 전용 85㎡ 이하이거나 시가 4억원 이하여야 해요. 2026년부터 기본공제 대상 자녀가 3명 이상이면 100㎡까지 넓어졌어요.'.keepWords
               .keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
         ),
@@ -1530,7 +1529,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).textTheme.bodyLarge!.color!, size: 20),
               onPressed: () => setState(() { _wizardDone = false; _wizardStep = 0; }),
             ),
-            Text('5월 종합소득세 신고서', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('5월 종합소득세 신고서'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
         const SizedBox(height: 16),
@@ -1559,7 +1558,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               if (!widget.directWizardMode) ...[
                 const SizedBox(height: 4),
                 Text(
-                  '연말정산 환급(${comma(_expectedRefund.toInt())}원) + 추가 = 총 ${comma(totalRefund.toInt())}원'.keepWords,
+                  '연말정산 환급(${comma(_expectedRefund.toInt())}원) + 추가 = 총 ${comma(totalRefund.toInt())}원',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12, height: 1.4),
                 ),
@@ -1569,7 +1568,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         ),
 
         const SizedBox(height: 24),
-        Text('📋 추가 공제 항목 내역', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 16, fontWeight: FontWeight.bold)),
+        Text('📋 추가 공제 항목 내역'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(20),
@@ -1600,7 +1599,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                   _wizardRentRefund == 0 && _wizardIncomeDedSaving == 0 && _wizardStandardTaxCredit == 0)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text('추가 공제 항목이 없습니다.', style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 14)),
+                  child: Text('추가 공제 항목이 없습니다.'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 14)),
                 ),
               Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(color: Theme.of(context).dividerColor)),
               _buildDeductionRow(
@@ -1678,7 +1677,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                 ),
               ));
             },
-            child: Text('신고서 양식으로 보기', style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor, fontSize: 18, fontWeight: FontWeight.bold)),
+            child: Text('신고서 양식으로 보기', style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 18, fontWeight: FontWeight.bold)),
           ),
         ),
         const SizedBox(height: 12),

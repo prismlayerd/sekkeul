@@ -62,7 +62,6 @@ class _DriverLicenseRenewalScreenState
     final next = _nextExpiry;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('운전면허 갱신 만료일',
             style: AppTheme.serif(16, ink,
@@ -86,7 +85,7 @@ class _DriverLicenseRenewalScreenState
               Expanded(child: _dateBox(_dayCtrl, '10', '일', ink, sub, line)),
             ]),
             const SizedBox(height: 16),
-            Text('다음 갱신 시점의 만 나이',
+            Text('다음 갱신 시점의 만 나이'.keepWords,
                 style: AppTheme.sans(12, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
@@ -126,7 +125,7 @@ class _DriverLicenseRenewalScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('예상 다음 갱신 만료일',
+                    Text('예상 다음 갱신 만료일'.keepWords,
                         style:
                             AppTheme.sans(11, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),

@@ -38,7 +38,6 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
     final selected = _types[_idx];
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('여권 발급 수수료',
             style: AppTheme.serif(16, ink,
@@ -63,7 +62,7 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
                   value: _idx,
                   isExpanded: true,
                   style: AppTheme.sans(14, ink),
-                  dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                  dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _types.length; i++)
                       DropdownMenuItem(

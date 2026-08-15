@@ -20,7 +20,8 @@ class ReminderCard extends StatefulWidget {
 
 class _ReminderCardState extends State<ReminderCard> with RouteAware {
   List<Reminder> _reminders = [];
-  bool _expanded = true;
+  // 홈은 이미 길다. 리마인더는 접힌 채로 시작하고, 접힌 자리에는 한 줄만 남긴다.
+  bool _expanded = false;
 
   @override
   void initState() {
@@ -96,35 +97,22 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── 헤더: 라벨+화살표(접힘) / 추가·관리 링크(우상단) ──
-        Row(
-          children: [
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _expanded = !_expanded),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('리마인더', style: AppTheme.label(context)),
-                const SizedBox(width: 6),
-                AnimatedRotation(
-                  turns: _expanded ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  child: Icon(Icons.expand_more_rounded, size: 20, color: tert),
-                ),
-              ]),
-            ),
-            const Spacer(),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _openManager,
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.add_rounded, size: 16, color: accent),
-                const SizedBox(width: 4),
-                Text(_reminders.isEmpty ? '알림 추가' : '리마인더 관리',
-                    style: AppTheme.sans(13, accent, weight: FontWeight.w600)),
-              ]),
-            ),
-          ],
+        // ── 헤더: 절 머리 + 오른쪽 끝 펼침 화살표. 줄 전체가 토글이다. ──
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Row(
+            children: [
+              Expanded(child: AppTheme.sectionHead(context, '03', '리마인더')),
+              const SizedBox(width: 8),
+              AnimatedRotation(
+                turns: _expanded ? 0.5 : 0,
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                child: Icon(Icons.expand_more_rounded, size: 20, color: tert),
+              ),
+            ],
+          ),
         ),
         // ── 펼침 영역 — AnimatedSize로 높이 전환 ──
         ClipRect(
@@ -134,7 +122,11 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
             alignment: Alignment.topCenter,
             child: _expanded
                 ? _expandedContent(ink, sub, tert, accent)
-                : const SizedBox(width: double.infinity),
+                : Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text('나만의 맞춤 알림 설정해보세요.'.keepWords,
+                        style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5)),
+                  ),
           ),
         ),
       ],
@@ -147,11 +139,31 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (_reminders.isEmpty)
-            Text('가계부 기록·월세·건강검진, 알림으로 챙겨보세요.'.keepWords,
-                style: AppTheme.sans(12.5, tert, height: 1.5))
-          else
-            ..._reminders.take(3).map((r) => _reminderRow(r, ink, sub, tert, accent)),
+          ..._reminders.take(3).map((r) => _reminderRow(r, ink, sub, tert, accent)),
+          if (_reminders.isNotEmpty) const SizedBox(height: 10),
+          // 추가는 목록의 **마지막 줄**이다 — 아직 안 채운 칸이라 점선으로 두른다
+          // (지출 목표 빈 칸과 같은 문법). 헤더에 두면 접힌 상태에서도 눌리는데,
+          // 안 보이는 목록에 항목을 더하라는 말은 이르다.
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _openManager,
+            child: AppTheme.dashedBox(
+              context,
+              child: SizedBox(
+                height: 44,
+                child: Row(children: [
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(_reminders.isEmpty ? '알림 추가하기' : '리마인더 관리',
+                        style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+                  ),
+                  const SizedBox(width: 8),
+                  Text('＋', style: AppTheme.sans(AppTheme.tsLG, accent, weight: FontWeight.w600)),
+                  const SizedBox(width: 14),
+                ]),
+              ),
+            ),
+          ),
         ],
       ),
     );

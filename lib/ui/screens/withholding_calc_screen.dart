@@ -49,7 +49,7 @@ class _WithholdingCalcScreenState extends State<WithholdingCalcScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('3.3% 원천징수 계산기',
+        title: Text('3.3% 원천징수 계산기'.keepWords,
             style: TextStyle(
                 color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
         actions: [
@@ -132,7 +132,7 @@ class _WithholdingCalcScreenState extends State<WithholdingCalcScreen> {
                     const SizedBox(height: 12),
                     _row('원천징수세액 합계', won(_withheldTotal), subColor, primary),
                   ] else
-                    Text('계약금액을 입력해보세요.',
+                    Text('계약금액을 입력해보세요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 13)),
                 ],
               ),
@@ -163,7 +163,7 @@ class _WithholdingCalcScreenState extends State<WithholdingCalcScreen> {
                     '• 원천징수는 지급자가 미리 떼고 주는 세금으로, 최종 세액이 아니에요.\n'
                     '• 5월 종합소득세 신고 때 실제 소득·경비 기준으로 정산돼요.\n'
                     '• 가계부에 수익을 기록할 때 "3.3% 원천징수"를 켜면 실수령액 입력만으로 '
-                    '세전 금액을 자동으로 보여줘요.',
+                    '세전 금액을 자동으로 보여줘요.'.keepWords,
                     style:
                         TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),

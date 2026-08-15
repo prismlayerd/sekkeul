@@ -179,7 +179,7 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('기회비용 적용 금리 (%)',
+                        Text('기회비용 적용 금리 (%)'.keepWords,
                             style: TextStyle(
                                 color: textColor,
                                 fontSize: 15,
@@ -365,7 +365,7 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
                     '• 전세: 보증금을 은행에 예치했을 때 받을 수 있는 이자가 기회비용입니다.\n'
                     '• 월세: 월 임차료 + 보증금의 기회비용을 합산한 연간 비용입니다.\n'
                     '• 손익분기 전환율: 이 금리보다 높으면 월세, 낮으면 전세가 유리합니다.\n'
-                    '• 전세 레버리지·갱신 리스크 등 질적 요소는 반영되지 않습니다.',
+                    '• 전세 레버리지·갱신 리스크 등 질적 요소는 반영되지 않습니다.'.keepWords,
                     style:
                         TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),

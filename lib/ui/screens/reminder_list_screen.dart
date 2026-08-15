@@ -12,13 +12,6 @@ import '../../core/data/db_helper.dart';
 import 'reminder_form_screen.dart';
 import '../theme/text_wrap.dart';
 
-/// 만료 알림 프리셋 — 계산기 연동 없이 제목만 미리 채우고 날짜는 직접 입력.
-const List<(String, String)> kExpiryReminderPresets = [
-  ('면허 갱신', '운전면허 갱신'),
-  ('여권 만료', '여권 만료'),
-  ('전세 만기', '전세 계약 만기'),
-];
-
 /// 리마인더 — 사용자 직접 생성 알림만.
 /// 세금 일정·공제 문턱·예산 알림은 전체탭 > 알림 설정에서 관리.
 class ReminderListScreen extends StatefulWidget {
@@ -116,7 +109,6 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
     final sub = AppTheme.inkSecondary(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: widget.embedded
@@ -139,7 +131,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                   Text('챙길 알림',
                       style: AppTheme.serif(28, ink, spacing: -0.5, height: 1.2)),
                   const SizedBox(height: 10),
-                  Text('직접 만든 알림과 가계부 기록 넛지를 관리해요.'.keepWords,
+                  Text('직접 만들거나 앱이 챙겨주는 것들을 여기서 관리해요.'.keepWords,
                       style: AppTheme.sans(14, sub, height: 1.55)),
                   const SizedBox(height: 18),
 
@@ -149,7 +141,6 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                       _customs.isEmpty
                           ? [_muted('월세 이체·건강검진처럼 잊지 않을 일을 직접 만들어요.')]
                           : _customs.map(_userRow).toList()),
-                  _presetChips(),
                   const SizedBox(height: 14),
                   _addButton(),
                   const SizedBox(height: 18),
@@ -157,10 +148,10 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                   // ── 기본 제공 (앱이 자동으로 챙겨주는 알림) ──
                   _section('기본 제공', [
                     ..._records.map(_userRow),
-                    _eventRow('budget_alert', '예산 목표 80%·초과 알림', _budgetPref),
-                    _eventRow('inactivity_nudge', '지출 미기록 넛지', _inactivityPref),
-                    _eventRow('income_inactivity_nudge', '수입 미기록 넛지', _incomeInactivityPref),
-                    _eventRow('recurring_expense_alert', '고정지출 알림', _recurringExpensePref),
+                    _eventRow('budget_alert', '예산 목표 80%·초과', _budgetPref),
+                    _eventRow('inactivity_nudge', '지출을 오래 안 적었을 때', _inactivityPref),
+                    _eventRow('income_inactivity_nudge', '수입을 오래 안 적었을 때', _incomeInactivityPref),
+                    _eventRow('recurring_expense_alert', '고정지출 결제일', _recurringExpensePref),
                     if (widget.userType == '프리랜서')
                       _eventRow('freelancer_health_uninsured', '건강보험 미가입 경고', _healthUninsuredPref),
                   ]),
@@ -321,7 +312,12 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                       style: AppTheme.sans(15, pref.enabled ? ink : tert,
                           weight: FontWeight.w700)),
                   const SizedBox(height: 3),
-                  Text(t, style: AppTheme.sans(12, tert)),
+                  // 시각은 눌러서 고칠 수 있다 — 연필을 붙여야 그게 보인다.
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text(t, style: AppTheme.sans(AppTheme.tsSM, tert)),
+                    const SizedBox(width: 5),
+                    Icon(Icons.edit_outlined, size: 13, color: tert),
+                  ]),
                 ],
               ),
             ),
@@ -404,32 +400,6 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
   }
 
   /// 만료 알림 빠른 추가 — 제목만 미리 채우고 날짜는 직접 입력(계산기 연동 없음).
-  Widget _presetChips() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          for (final p in kExpiryReminderPresets)
-            GestureDetector(
-              onTap: () => _openForm(initialTitle: p.$2),
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppTheme.line(context)),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(p.$1,
-                    style: AppTheme.sans(12, AppTheme.inkSecondary(context), weight: FontWeight.w600)),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
   Widget _addButton() {
     final bg = AppTheme.backgroundColor(context);
     return GestureDetector(

@@ -175,7 +175,6 @@ class _TaxRecordImportScreenState extends State<TaxRecordImportScreen> {
     final g = _ganso;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),

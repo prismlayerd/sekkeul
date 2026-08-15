@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
+import '../../theme/text_wrap.dart';
 
 /// 홈 상단 회전 배너의 단일 카드 모델 (광고·알림·안내).
 class BannerCardData {
@@ -107,7 +108,7 @@ class HomeBannerCarousel extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Expanded(child: Text(c.label.toUpperCase(), style: AppTheme.label(context))),
+                      Expanded(child: AppTheme.sectionHead(context, null, c.label)),
                       Semantics(
                         button: true,
                         label: '이 카드 닫기',
@@ -129,10 +130,13 @@ class HomeBannerCarousel extends StatelessWidget {
                     height: MediaQuery.textScalerOf(context).scale(22) * 1.2 * 2,
                     child: Align(
                       alignment: Alignment.topLeft,
-                      child: Text(c.headline,
+                      child: Text(c.headline.keepWords,
                           maxLines: 2,
+                          textAlign: TextAlign.left,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTheme.serif(22, ink, spacing: -0.5, height: 1.2)),
+                          // 홈의 표제는 절 머리(01 INCOME…)다. 배너가 그보다 크면
+                          // 광고가 문서를 이긴다 — 한 급 낮춰 본문 위계에 넣는다.
+                          style: AppTheme.display(AppTheme.serifSM, ink, height: 1.3)),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -144,7 +148,7 @@ class HomeBannerCarousel extends StatelessWidget {
                         child: Text(subText.replaceAll('. ', '.\n'),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTheme.sans(12, sub, height: 1.4)),
+                            style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
                       ),
                       const SizedBox(width: 5),
                       Icon(Icons.arrow_forward, size: 13, color: sub),

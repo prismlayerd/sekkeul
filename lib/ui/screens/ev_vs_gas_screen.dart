@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
-import '../theme/text_wrap.dart';
 
 class EvVsGasScreen extends StatefulWidget {
   const EvVsGasScreen({super.key});
@@ -86,7 +85,6 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('전기차 vs 휘발유차',
             style: AppTheme.serif(16, ink, weight: FontWeight.w400, spacing: -0.3)),
@@ -139,7 +137,7 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('$_years년 총소유비용(TCO) 비교'.keepWords,
+                    Text('$_years년 총소유비용(TCO) 비교',
                         style: AppTheme.sans(11, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     _row('휘발유차 TCO', won(_gasTco), ink, sub),

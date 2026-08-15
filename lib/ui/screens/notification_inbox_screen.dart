@@ -42,7 +42,7 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        title: Text('알림 기록을 모두 지울까요?',
+        title: Text('알림 기록을 모두 지울까요?'.keepWords,
             style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
         content: Text('지워진 기록은 복구할 수 없어요.'.keepWords,
             style: AppTheme.sans(13, AppTheme.inkSecondary(ctx), height: 1.45)),
@@ -82,7 +82,6 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
     final tert = AppTheme.inkTertiary(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('알림함', style: AppTheme.serif(22, ink, weight: FontWeight.w400, spacing: -0.3)),
         leading: IconButton(

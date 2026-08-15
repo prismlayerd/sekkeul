@@ -154,7 +154,7 @@ class _UnemploymentBenefitScreenState
                           size: 14, color: subColor),
                       const SizedBox(width: 6),
                       Text(
-                        '일 평균임금 ${_won(dailyWage)}  →  구직급여 일액 ${_won(benefitDaily)}'.keepWords,
+                        '일 평균임금 ${_won(dailyWage)}  →  구직급여 일액 ${_won(benefitDaily)}',
                         style: TextStyle(color: subColor, fontSize: 12),
                       ),
                     ]),
@@ -291,7 +291,7 @@ class _UnemploymentBenefitScreenState
                     '• 비자발적 이직(권고사직·계약만료 등)이어야 수급 가능합니다.\n'
                     '• 구직급여 일액 하한: ${comma(_minDailyLimit.round())}원, 상한: ${comma(_maxDailyLimit.round())}원 (2026년)\n'
                     '• 실제 지급은 고용센터 신청·실업인정일 기준입니다.\n'
-                    '• 이직 전 18개월 중 피보험단위기간 180일 이상 필요합니다.',
+                    '• 이직 전 18개월 중 피보험단위기간 180일 이상 필요합니다.'.keepWords,
                     style: TextStyle(
                         color: subColor, fontSize: 12, height: 1.6),
                   ),
@@ -340,7 +340,7 @@ class _UnemploymentBenefitScreenState
           }).toList(),
         ),
         const SizedBox(height: 8),
-        Text('선택: $_insuredMonths개월'.keepWords,
+        Text('선택: $_insuredMonths개월',
             style: TextStyle(
                 color: textColor,
                 fontSize: 14,

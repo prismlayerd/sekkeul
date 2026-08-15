@@ -133,7 +133,6 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
     final sub = AppTheme.inkSecondary(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),
@@ -185,7 +184,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
 
             // ── 시각 ──
             const SizedBox(height: 26),
-            Text('몇 시에 알릴까요?'.toUpperCase(), style: AppTheme.label(context)),
+            AppTheme.sectionHead(context, null, '알릴 시각'),
             const SizedBox(height: 12),
             _timePicker(ink, sub),
           ],
@@ -367,68 +366,78 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
   }
 
   /// 인라인 시·분 선택 — 계기판 한 창에 두 드럼을 묶는다(시 0~23 · 분 0~59).
+  /// 시각 고르기 — 전표 문법으로 다시 짰다.
+  ///
+  /// 종전은 파란 알파를 깐 둥근 상자 안에 드럼 두 개였다. 이 종이 위에서
+  /// 그 상자만 다른 세계였고, 정작 **지금 몇 시로 맞춰져 있는지**가 제일 작게
+  /// 찍혀 있었다. 고른 값을 표시 숫자로 올리고, 상자는 각진 테두리로 눕힌다.
   Widget _timePicker(Color ink, Color sub) {
-    final accent = AppTheme.accentColor(context);
     final tert = AppTheme.inkTertiary(context);
     const itemExtent = 44.0;
     const drumHeight = 154.0;
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        border: Border.all(color: AppTheme.line(context)),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        children: [
-          // 실시간 값 — 도면 주석처럼 작게.
-          Text('${_hour < 12 ? "오전" : "오후"}  ${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
-              style: AppTheme.sans(12, tert, weight: FontWeight.w600, spacing: 0.5)),
-          const SizedBox(height: 2),
-          // 계기판: 두 드럼 + 가운데 단일 선택 띠(위아래 헤어라인).
-          SizedBox(
-            height: drumHeight,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // 선택 창(두 드럼 공통)
-                IgnorePointer(
-                  child: Container(
-                    height: itemExtent,
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.07),
-                      border: Border.symmetric(
-                        horizontal: BorderSide(color: accent.withValues(alpha: 0.40)),
-                      ),
+    final isAm = _hour < 12;
+    final h12 = _hour % 12 == 0 ? 12 : _hour % 12;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 고른 값이 주인공 — 12시간제로 크게 찍고, 24시간 표기를 옆에 작게 단다.
+        Row(crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(isAm ? '오전' : '오후',
+                style: AppTheme.sans(AppTheme.tsBase, sub, weight: FontWeight.w600)),
+            const SizedBox(width: 8),
+            Text('${h12.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
+                style: AppTheme.display(AppTheme.serifXL, ink, spacing: 0.5, height: 1.0)),
+            const Spacer(),
+            Text('${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
+                style: AppTheme.label(context, color: tert)),
+          ],
+        ),
+        const SizedBox(height: 10),
+        AppTheme.dashRule(context),
+        const SizedBox(height: 6),
+
+        // 드럼 두 개. 고른 줄만 잉크가 앉은 자리로 표시하고, 위아래를 실선으로 닫는다.
+        SizedBox(
+          height: drumHeight,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              IgnorePointer(
+                child: Container(
+                  height: itemExtent,
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentSoft(context),
+                    border: Border.symmetric(
+                      horizontal: BorderSide(color: ink, width: 1),
                     ),
                   ),
                 ),
-                Row(
-                  children: [
-                    Expanded(child: _drum(_hourCtrl, 24, itemExtent, (v) => _hour = v)),
-                    Text(':', style: AppTheme.serif(22, tert, height: 1.0)),
-                    Expanded(child: _drum(_minCtrl, 60, itemExtent, (v) => _minute = v)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          // 시 / 분 라벨
-          Row(
-            children: [
-              Expanded(child: Center(child: Text('시', style: AppTheme.label(context)))),
-              const SizedBox(width: 14),
-              Expanded(child: Center(child: Text('분', style: AppTheme.label(context)))),
+              ),
+              Row(
+                children: [
+                  Expanded(child: _drum(_hourCtrl, 24, itemExtent, (v) => _hour = v)),
+                  Text(':', style: AppTheme.display(AppTheme.serifSM, tert, height: 1.0)),
+                  Expanded(child: _drum(_minCtrl, 60, itemExtent, (v) => _minute = v)),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: Center(child: Text('시', style: AppTheme.label(context)))),
+            const SizedBox(width: 14),
+            Expanded(child: Center(child: Text('분', style: AppTheme.label(context)))),
+          ],
+        ),
+      ],
     );
   }
 
-  /// 세로 회전 드럼 한 개 — 선택 창은 바깥 계기판이 그리므로 오버레이는 투명.
   Widget _drum(FixedExtentScrollController controller, int count, double itemExtent, ValueChanged<int> onChange) {
     final ink = AppTheme.ink(context);
     return CupertinoPicker(
@@ -442,7 +451,8 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
       onSelectedItemChanged: (i) => setState(() => onChange(i)),
       children: [
         for (int i = 0; i < count; i++)
-          Center(child: Text(i.toString().padLeft(2, '0'), style: AppTheme.serif(27, ink, height: 1.0))),
+          Center(child: Text(i.toString().padLeft(2, '0'),
+              style: AppTheme.display(AppTheme.serifSM, ink, spacing: 0.5, height: 1.0))),
       ],
     );
   }
@@ -460,7 +470,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
             child: Container(
               height: 54,
               alignment: Alignment.center,
-              decoration: BoxDecoration(color: AppTheme.ink(context), borderRadius: BorderRadius.circular(4)),
+              decoration: BoxDecoration(color: AppTheme.ink(context)),
               child: Text(_isEdit ? '저장' : '알림 만들기',
                   style: AppTheme.sans(15, bg, weight: FontWeight.w700)),
             ),

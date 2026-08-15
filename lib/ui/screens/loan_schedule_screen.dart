@@ -98,7 +98,6 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
     final totalPayment = schedule.fold<int>(0, (s, r) => s + r.payment);
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
         titleSpacing: 0,
         title: Text('대출 상환 스케줄',
@@ -295,7 +294,7 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         child: Center(
-                          child: Text('전체 ${schedule.length}개월 보기'.keepWords,
+                          child: Text('전체 ${schedule.length}개월 보기',
                               style: AppTheme.sans(AppTheme.tsMD, accent,
                                   weight: FontWeight.w600)),
                         ),

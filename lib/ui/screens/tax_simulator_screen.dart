@@ -841,7 +841,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           ),
         if (missed.length > top.length) ...[
           const SizedBox(height: 10),
-          Text('이 밖에 ${missed.length - top.length}개가 더 있어요.'.keepWords,
+          Text('이 밖에 ${missed.length - top.length}개가 더 있어요.',
               style: AppTheme.sans(12, AppTheme.inkTertiary(context))),
         ],
       ],
@@ -910,17 +910,17 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       ),
       const SizedBox(height: 16),
       Row(children: [
-        Expanded(child: Text('올해 처음 시작한 사업이에요', style: TextStyle(color: bodyColor, fontSize: 14, fontWeight: FontWeight.w600))),
+        Expanded(child: Text('올해 처음 시작한 사업이에요'.keepWords, style: TextStyle(color: bodyColor, fontSize: 14, fontWeight: FontWeight.w600))),
         Switch(
           value: _isNewBusiness,
           onChanged: (v) {
             setState(() => _isNewBusiness = v);
             _saveBookkeepingProfile();
           },
-          activeColor: Theme.of(context).scaffoldBackgroundColor,
+          activeColor: AppTheme.backgroundColor(context),
           activeTrackColor: bodyColor,
           inactiveThumbColor: bodyColor.withOpacity(0.5),
-          inactiveTrackColor: Theme.of(context).scaffoldBackgroundColor,
+          inactiveTrackColor: AppTheme.backgroundColor(context),
         ),
       ]),
       const SizedBox(height: 8),
@@ -932,10 +932,10 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
             setState(() => _hasMultipleBusinesses = v);
             _saveBookkeepingProfile();
           },
-          activeColor: Theme.of(context).scaffoldBackgroundColor,
+          activeColor: AppTheme.backgroundColor(context),
           activeTrackColor: bodyColor,
           inactiveThumbColor: bodyColor.withOpacity(0.5),
-          inactiveTrackColor: Theme.of(context).scaffoldBackgroundColor,
+          inactiveTrackColor: AppTheme.backgroundColor(context),
         ),
       ]),
       const SizedBox(height: 24),
@@ -970,7 +970,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                 const SizedBox(height: 10),
                 Text('${fmt(tax)}원', style: TextStyle(color: bodyColor, fontSize: 18, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 2),
-                Text('결정세액(지방세 포함)', style: TextStyle(color: bodyColor.withOpacity(0.5), fontSize: 11)),
+                Text('결정세액(지방세 포함)'.keepWords, style: TextStyle(color: bodyColor.withOpacity(0.5), fontSize: 11)),
               ],
             ),
           ),
@@ -981,7 +981,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('간편장부 vs 추계 비교', style: AppTheme.label(context)),
+          Text('간편장부 vs 추계 비교'.keepWords, style: AppTheme.label(context)),
           const SizedBox(height: 4),
           Text(
             '가계부에 기록한 사업경비(${fmt(_businessExpenseAccumulated)}원)를 실제 경비로 인정받는 간편장부와, '
@@ -1029,7 +1029,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
             const SizedBox(height: 12),
             Text(
               '복식부기는 재무제표 수준의 장부가 필요해 세무사·기장대행과 함께 준비하는 걸 권장해요. '
-              '이 앱의 간편장부·경비율 계산은 복식부기의무자에게는 적용되지 않아요.',
+              '이 앱의 간편장부·경비율 계산은 복식부기의무자에게는 적용되지 않아요.'.keepWords,
               style: TextStyle(color: bodyColor.withOpacity(0.75), fontSize: 13, height: 1.5),
             ),
             const SizedBox(height: 8),
@@ -1056,11 +1056,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('🏠 월세 세액공제 꿀팁', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontWeight: FontWeight.bold)),
+        title: Text('🏠 월세 세액공제 꿀팁'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontWeight: FontWeight.bold)),
         content: Text(
           '새 계약서가 없어도 계좌이체 내역과 주민등록등본만 있으면 5월 종합소득세 때 최대 17%까지 똑같이 돌려받을 수 있어요!\n\n'
                   '집은 전용 85㎡ 이하이거나 시가 4억원 이하여야 해요. 2026년부터는 기본공제 대상 자녀가 3명 이상이면 100㎡까지 넓어졌어요.\n\n'
-                  '주소지가 서로 다른 시·군·구인 무주택 주말부부는 2026년부터 각자 받을 수 있어요(합쳐서 연 1,000만원까지).'
+                  '주소지가 서로 다른 시·군·구인 무주택 주말부부는 2026년부터 각자 받을 수 있어요(합쳐서 연 1,000만원까지).'.keepWords
               .keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, height: 1.5),
         ),
@@ -1438,7 +1438,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
             const SizedBox(height: 4),
             Text(
               '월급 말고 다른 소득이 있으면 5월에 합쳐서 신고해야 해요. '
-                      '홈 위쪽에서 유형을 N잡러로 바꾸면 합산과 분리과세까지 계산해드려요.'
+                      '홈 위쪽에서 유형을 N잡러로 바꾸면 합산과 분리과세까지 계산해드려요.'.keepWords
                   .keepWords,
               style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.45),
             ),
@@ -1516,7 +1516,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: AppTheme.backgroundColor(context), borderRadius: BorderRadius.circular(12)),
               child: Text(
                 // 두 문장짜리 안내가 폭 기준으로 아무 데서나 잘려 넘어가지 않도록
                 // 문장 경계('. ')에서 명시적으로 줄바꿈.
@@ -1727,7 +1727,6 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // 앱 배경색
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppTheme.inkSecondary(context)),
@@ -1839,7 +1838,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('민감항목 추가 공제 신청', style: AppTheme.sans(15, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
+                              Text('민감항목 추가 공제 신청'.keepWords, style: AppTheme.sans(15, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
                               const SizedBox(height: 4),
                               Text('의료비 · 기부금 · 교육비 (5월 종합소득세)'.keepWords, style: AppTheme.sans(12, AppTheme.inkSecondary(context))),
                             ],
@@ -1860,7 +1859,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         // 의료비
                         Text('의료비 세액공제 (총급여의 3% 초과분)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 16),
-                        Text('난임시술비 (공제율 30%)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600)),
+                        Text('난임시술비 (공제율 30%)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),
                         _buildSensitiveTextField(_infertilityMedicalController),
                         const SizedBox(height: 12),
@@ -1876,7 +1875,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                               label: '그중 본인·65세 이상·장애인 의료비',
                               controller: _selfSeniorDisabledMedicalController),
 
-                        Divider(height: 32, color: Theme.of(context).scaffoldBackgroundColor),
+                        Divider(height: 32, color: AppTheme.backgroundColor(context)),
 
                         // 기부금
                         Text('기부금 세액공제', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.bold)),
@@ -1885,7 +1884,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         const SizedBox(height: 6),
                         _buildSensitiveTextField(_donationController),
 
-                        Divider(height: 32, color: Theme.of(context).scaffoldBackgroundColor),
+                        Divider(height: 32, color: AppTheme.backgroundColor(context)),
 
                         // 교육비
                         Text('교육비 세액공제 (공제율 15%)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, fontWeight: FontWeight.bold)),
@@ -1897,9 +1896,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('유치원~고등학생 교육비', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600)),
+                                  Text('유치원~고등학생 교육비'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600)),
                                   const SizedBox(height: 4),
-                                  Text('1인당 300만원 한도', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5), fontSize: 11)),
+                                  Text('1인당 300만원 한도'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5), fontSize: 11)),
                                   const SizedBox(height: 6),
                                   _buildSensitiveTextField(_childrenEduController),
                                 ],
@@ -1938,7 +1937,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                                 children: [
                                   Text('대학생 교육비', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600)),
                                   const SizedBox(height: 4),
-                                  Text('1인당 900만원 한도', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5), fontSize: 11)),
+                                  Text('1인당 900만원 한도'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5), fontSize: 11)),
                                   const SizedBox(height: 6),
                                   _buildSensitiveTextField(_collegeEduController),
                                 ],
@@ -1969,7 +1968,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
               ],
 
               if (_isFreelancer) ...[
-                Text('나의 프리랜서 업종코드', style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
+                Text('나의 프리랜서 업종코드'.keepWords, style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
                 const SizedBox(height: 8),
                 InkWell(
                   onTap: _openOccupationSheet,
@@ -2038,13 +2037,13 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
 
                 // 자녀세액공제(소법 §59의2)는 종합소득자 전원 대상이라 프리랜서도 받는다.
                 if (!_isEmployee) ...[
-                  Text('${TaxRates.childTaxCreditEligibilityLabel()} 자녀 수'.keepWords, style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
+                  Text('${TaxRates.childTaxCreditEligibilityLabel()} 자녀 수', style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
                   const SizedBox(height: 4),
                   Text('1명 25만 원, 2명 55만 원, 셋째부터 1명당 40만 원이\n세금에서 바로 빠져요.'.keepWords, style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.4)),
                   const SizedBox(height: 8),
                   _underlineInput(_childrenForCreditController, hint: '0', suffix: '명'),
                   const SizedBox(height: 20),
-                  Text('올해 출산·입양한 자녀 수', style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
+                  Text('올해 출산·입양한 자녀 수'.keepWords, style: AppTheme.sans(14, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
                   const SizedBox(height: 4),
                   Text('첫째 30만 원, 둘째 50만 원, 셋째부터 70만 원이 위 금액에\n더해져요. 출산·입양한 해에만 받을 수 있어요.'.keepWords, style: AppTheme.sans(12, AppTheme.inkSecondary(context), height: 1.4)),
                   const SizedBox(height: 8),
@@ -2077,16 +2076,16 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                               setState(() { _hasYellowUmbrella = value; });
                               _calculateTax();
                             },
-                            activeColor: Theme.of(context).scaffoldBackgroundColor,
+                            activeColor: AppTheme.backgroundColor(context),
                             activeTrackColor: Theme.of(context).textTheme.bodyLarge!.color!,
                             inactiveThumbColor: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5),
-                            inactiveTrackColor: Theme.of(context).scaffoldBackgroundColor,
+                            inactiveTrackColor: AppTheme.backgroundColor(context),
                           ),
                         ],
                       ),
                       if (_hasYellowUmbrella) ...[
                         const SizedBox(height: 20),
-                        Divider(color: Theme.of(context).scaffoldBackgroundColor),
+                        Divider(color: AppTheme.backgroundColor(context)),
                         const SizedBox(height: 20),
                         Align(
                           alignment: Alignment.centerLeft,
@@ -2103,7 +2102,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                             hintText: '0',
                             hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.2), fontSize: 18),
                             filled: true,
-                            fillColor: Theme.of(context).scaffoldBackgroundColor,
+                            fillColor: AppTheme.backgroundColor(context),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                             suffixText: '원',
@@ -2227,7 +2226,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                         const SizedBox(height: 6),
                         _buildSensitiveTextField(_insurancePremiumController),
                         const SizedBox(height: 16),
-                        Text('${TaxRates.childTaxCreditEligibilityLabel()} 자녀수 (자녀세액공제)'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
+                        Text('${TaxRates.childTaxCreditEligibilityLabel()} 자녀수 (자녀세액공제)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 4),
                         Text('첫째 25만 · 둘째 55만 · 셋째이상 1명당 40만'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.5), fontSize: 11)),
                         const SizedBox(height: 6),
@@ -2293,7 +2292,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                       border: Border.all(color: AppTheme.lineStrong(context), width: 1.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text('가계부에 경비 기록하기',
+                    child: Text('가계부에 경비 기록하기'.keepWords,
                         style: AppTheme.sans(15, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
                   ),
                 ),
@@ -2368,7 +2367,7 @@ class _SimulatorTossButtonState extends State<SimulatorTossButton> with SingleTi
           child: Text(
             widget.text,
             style: TextStyle(
-              color: Theme.of(context).scaffoldBackgroundColor, // 글씨는 앱 배경색으로 대비
+              color: AppTheme.backgroundColor(context), // 글씨는 앱 배경색으로 대비
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),

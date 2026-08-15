@@ -60,7 +60,6 @@ class _SevereDiseaseCopaymentScreenState
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('중증질환 산정특례',
             style: AppTheme.serif(16, ink,
@@ -85,7 +84,7 @@ class _SevereDiseaseCopaymentScreenState
                   value: _diseaseIdx,
                   isExpanded: true,
                   style: AppTheme.sans(14, ink),
-                  dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                  dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _diseases.length; i++)
                       DropdownMenuItem(
@@ -112,7 +111,7 @@ class _SevereDiseaseCopaymentScreenState
                   value: _typeIdx,
                   isExpanded: true,
                   style: AppTheme.sans(14, ink),
-                  dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                  dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _types.length; i++)
                       DropdownMenuItem(

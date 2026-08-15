@@ -40,7 +40,6 @@ class _EmploymentSupportProgramScreenState
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('국민취업지원제도',
             style: AppTheme.serif(16, ink,
@@ -79,7 +78,7 @@ class _EmploymentSupportProgramScreenState
                     value: _dependents,
                     isExpanded: true,
                     style: AppTheme.sans(14, ink),
-                    dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                    dropdownColor: AppTheme.backgroundColor(context),
                     items: [
                       for (int i = 0; i <= 4; i++)
                         DropdownMenuItem(value: i, child: Text('$i명')),

@@ -58,7 +58,6 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
     final hasInput = _monthly > 0;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('청년도약계좌',
             style: AppTheme.serif(16, ink,
@@ -83,7 +82,7 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
                   value: _incomeIdx,
                   isExpanded: true,
                   style: AppTheme.sans(14, ink),
-                  dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                  dropdownColor: AppTheme.backgroundColor(context),
                   items: [
                     for (int i = 0; i < _brackets.length; i++)
                       DropdownMenuItem(

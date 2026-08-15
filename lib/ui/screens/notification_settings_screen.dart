@@ -108,7 +108,6 @@ class _NotificationSettingsScreenState
         sys.where((s) => s.category == SysCategory.moment).toList();
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded,

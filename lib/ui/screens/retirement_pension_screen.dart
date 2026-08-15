@@ -54,7 +54,6 @@ class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('퇴직연금',
             style: AppTheme.serif(16, ink,

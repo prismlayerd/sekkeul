@@ -59,9 +59,8 @@ class _HouseholdSeparationScreenState
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('세대분리 가능여부 진단',
+        title: Text('세대분리 가능여부 진단'.keepWords,
             style: AppTheme.serif(16, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
@@ -113,11 +112,12 @@ class _HouseholdSeparationScreenState
                   value: _maritalIdx,
                   isExpanded: true,
                   style: AppTheme.sans(14, ink),
-                  dropdownColor: Theme.of(context).scaffoldBackgroundColor,
-                  items: const [
-                    DropdownMenuItem(value: 0, child: Text('미혼')),
-                    DropdownMenuItem(value: 1, child: Text('기혼 (혼인신고 완료)')),
-                    DropdownMenuItem(value: 2, child: Text('이혼·사별 + 자녀 부양')),
+                  dropdownColor: AppTheme.backgroundColor(context),
+                  // const 목록이 아니다 — .keepWords가 런타임 호출이라 상수로 못 접는다.
+                  items: [
+                    const DropdownMenuItem(value: 0, child: Text('미혼')),
+                    DropdownMenuItem(value: 1, child: Text('기혼 (혼인신고 완료)'.keepWords)),
+                    DropdownMenuItem(value: 2, child: Text('이혼·사별 + 자녀 부양'.keepWords)),
                   ],
                   onChanged: (v) => setState(() => _maritalIdx = v!),
                 ),

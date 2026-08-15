@@ -139,7 +139,6 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
 
     if (!_loaded) {
       return Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -271,7 +270,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 child: Text('저장하기',
-                    style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor, fontSize: 16, fontWeight: FontWeight.bold)),
+                    style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
             const CalcDisclaimer(),

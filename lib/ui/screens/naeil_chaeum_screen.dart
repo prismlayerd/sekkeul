@@ -13,7 +13,6 @@ class NaeilChaeumScreen extends StatelessWidget {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('내일채움공제',
             style: AppTheme.serif(16, ink,

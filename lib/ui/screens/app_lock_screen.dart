@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../../core/security/app_lock_service.dart';
+import '../theme/text_wrap.dart';
 
 /// S-3 앱 잠금 화면 — 재개(resumed) 시 전체 화면으로 덮어 인증을 요구한다.
 /// 바텀시트 금지 원칙에 따라 PIN 입력도 같은 화면 내 인라인으로 둔다.
@@ -69,12 +70,10 @@ class _AppLockScreenState extends State<AppLockScreen> {
   Widget build(BuildContext context) {
     final ink = AppTheme.ink(context);
     final sub = AppTheme.inkSecondary(context);
-    final bg = AppTheme.backgroundColor(context);
 
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: bg,
         body: SafeArea(
           child: _checking
               ? const Center(child: CircularProgressIndicator())
@@ -120,7 +119,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                             children: [
                               Icon(Icons.fingerprint_rounded, size: 18, color: AppTheme.accentColor(context)),
                               const SizedBox(width: 8),
-                              Text('생체 인증으로 잠금 해제',
+                              Text('생체 인증으로 잠금 해제'.keepWords,
                                   style: AppTheme.sans(13, AppTheme.accentColor(context), weight: FontWeight.w600)),
                             ],
                           ),

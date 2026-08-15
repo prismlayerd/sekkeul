@@ -253,7 +253,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           '세끌은 제1모드(완전 오프라인)로 운영됩니다.\n\n'
           '모든 납세자 정보·가계부·리마인더 데이터는 이 기기의 저장소에만 보관되며, '
           '외부 서버 전송·제3자 제공·광고 추적이 전혀 없습니다.\n\n'
-          '데이터는 "개인 세무 데이터 영구 파기"로 언제든 완전히 삭제할 수 있습니다.',
+          '데이터는 "개인 세무 데이터 영구 파기"로 언제든 완전히 삭제할 수 있습니다.'.keepWords,
           style: AppTheme.sans(13, AppTheme.inkSecondary(ctx), height: 1.55),
         ),
         actions: [
@@ -278,7 +278,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           '세끌이 제공하는 세액·환급액·수급액 계산은 법령·고시 정보를 바탕으로 한 참고용 추정치입니다.\n\n'
           '실제 세액·환급액·수급 여부는 개인 상황에 따라 달라질 수 있으며, 법적 효력이 없습니다. '
           '정확한 금액과 자격 요건은 홈택스·국세청·관할 기관 또는 세무사를 통해 반드시 확인하세요.\n\n'
-          '세끌 이용에 따른 판단과 책임은 이용자 본인에게 있습니다.',
+          '세끌 이용에 따른 판단과 책임은 이용자 본인에게 있습니다.'.keepWords,
           style: AppTheme.sans(13, AppTheme.inkSecondary(ctx), height: 1.55),
         ),
         actions: [
@@ -297,7 +297,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final sub = AppTheme.inkSecondary(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('설정', style: AppTheme.serif(22, ink, weight: FontWeight.w400, spacing: -0.3)),
         leading: IconButton(

@@ -58,9 +58,8 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
     final bg = AppTheme.surface(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('6+6 부모육아휴직급여',
+        title: Text('6+6 부모육아휴직급여'.keepWords,
             style: AppTheme.serif(16, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
@@ -97,7 +96,7 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('부부 합산 (첫 6개월)',
+                        Text('부부 합산 (첫 6개월)'.keepWords,
                             style: AppTheme.sans(14, ink,
                                 weight: FontWeight.w700)),
                         Text(_manwon(_combined),

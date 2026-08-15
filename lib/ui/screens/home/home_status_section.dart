@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
+import '../../../core/tax_engine/tax_year.dart';
 import '../../../core/tax_engine/employee_tax.dart';
 import '../../../core/tax_engine/reserve_estimator.dart';
 import '../../components/amount_field.dart';
@@ -103,7 +104,6 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     final sub = AppTheme.inkSecondary(context);
     final tert = AppTheme.inkTertiary(context);
     final accent = AppTheme.accentColor(context);
-    final now = DateTime.now();
 
     final monthlyIncome = widget.monthlyIncome;
     final grossIncome = widget.grossIncome;
@@ -139,60 +139,53 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── 헤더: 라벨 + 기록하기 ──
+        // ── 절 머리: `01 · INCOME · 이번 달 수입` + 가계부 열기 ──
+        // 명세서는 순서가 있는 문서라 절에 번호가 붙는다.
         Row(children: [
-          _sectionLabel('${now.month}월 현황'),
-          const Spacer(),
+          Expanded(child: AppTheme.sectionHead(context, '01', '이번 달 수입')),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: widget.onOpenLedger,
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.chevron_right_rounded, size: 16, color: accent),
-              Text('가계부', style: AppTheme.sans(13, accent, weight: FontWeight.w600)),
-            ]),
+            child: Text('가계부 열기',
+                style: AppTheme.sans(AppTheme.tsSM, accent,
+                    weight: FontWeight.w700, decoration: TextDecoration.underline)),
           ),
         ]),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
 
-        // ── 수입 — 금액 위, 라벨 아래 (우측 정렬) ──
+        // ── 수입 — 라벨 위, 금액 아래 (금액은 우측 정렬) ──
+        // 항목 이름이 먼저 찍히고 금액이 그 밑 오른쪽 끝에 온다. 02 지출의 소계 줄과
+        // 오른쪽 모서리가 맞아야 세 숫자를 세로로 훑어 비교할 수 있다.
         // 프리랜서는 금액을 탭하면 세전 환산으로 페이드 전환(원천징수 역산 — 근로소득과 달리
         // 사업/기타소득은 고정 비율이라 정확히 역산 가능).
         // N잡러는 헤드라인이 근로소득만 반영해야 하므로(라벨과 실제 값이 어긋나면 안 됨),
         // income_entries 합산인 monthlyIncome 대신 laborIncome을 쓴다.
-        Align(
-          alignment: Alignment.centerRight,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              GestureDetector(
-                onTap: !isEmployee && monthlyIncome > 0
-                    ? () => setState(() => _showGrossIncome = !_showGrossIncome)
-                    : null,
-                behavior: HitTestBehavior.opaque,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  child: (userType == 'N잡러' ? widget.laborIncome : monthlyIncome) > 0
-                      ? Text(
-                          _toWon(!isEmployee && _showGrossIncome
-                              ? widget.otherIncomeGrossEstimate
-                              : (userType == 'N잡러' ? widget.laborIncome : monthlyIncome)),
-                          key: ValueKey(_showGrossIncome),
-                          style: AppTheme.serif(44, ink, spacing: -1.5, height: 1.0),
-                        )
-                      : Text('기록 없음',
-                          key: const ValueKey('empty'),
-                          style: AppTheme.serif(28, tert, spacing: -0.5, height: 1.0)),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                userType == 'N잡러'
-                    ? '이번 달 근로소득 (세전)'
-                    : isEmployee
-                        ? '이번 달 수령액 (세전)'
-                        : (_showGrossIncome ? '이번 달 수입 (세전 환산 · 탭해서 되돌리기)' : '이번 달 수입 (세후 · 탭해서 세전 보기)'),
-                style: AppTheme.sans(12, tert),
-              ),
-            ],
+        Text(
+          userType == 'N잡러'
+              ? '이번 달 근로소득 (세전)'
+              : isEmployee
+                  ? '이번 달 수령액 (세전)'
+                  : (_showGrossIncome ? '이번 달 수입 (세전 환산 · 탭해서 되돌리기)' : '이번 달 수입 (세후 · 탭해서 세전 보기)'),
+          style: AppTheme.sans(AppTheme.tsSM, sub),
+        ),
+        const SizedBox(height: 4),
+        GestureDetector(
+          onTap: !isEmployee && monthlyIncome > 0
+              ? () => setState(() => _showGrossIncome = !_showGrossIncome)
+              : null,
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: (userType == 'N잡러' ? widget.laborIncome : monthlyIncome) > 0
+                ? KeyedSubtree(
+                    key: ValueKey(_showGrossIncome),
+                    child: _rightAmount(
+                      comma(!isEmployee && _showGrossIncome
+                          ? widget.otherIncomeGrossEstimate
+                          : (userType == 'N잡러' ? widget.laborIncome : monthlyIncome)),
+                    ),
+                  )
+                : _rightEmpty(tert, const ValueKey('empty')),
           ),
         ),
 
@@ -212,7 +205,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             behavior: HitTestBehavior.opaque,
             child: Row(children: [
               Expanded(
-                child: Text('내 정보에서 연봉을 설정하면 예상 환급을 계산해드려요'.keepWords,
+                child: Text('연봉을 넣으면 예상 환급을 계산해드려요'.keepWords,
                     style: AppTheme.sans(12, accent, weight: FontWeight.w600)),
               ),
               Icon(Icons.arrow_forward, size: 14, color: accent),
@@ -220,26 +213,25 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           ),
         ],
 
-        const SizedBox(height: 14),
+        _rule(),
 
-        // ── 지출 — 금액 위, 라벨 아래 (우측 정렬) ──
-        Align(
-          alignment: Alignment.centerRight,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              // 수입 쪽이 '기록 없음'인데 지출만 '0원'이면, 같은 빈 상태를 두 가지 말로
-              // 표현하게 된다. 아직 아무것도 안 적은 사람에게 '0원'은 "안 썼다"로 읽힌다.
-              totalSpent > 0
-                  ? Text(_toWon(totalSpent),
-                      style: AppTheme.serif(34, ink, weight: FontWeight.w700, spacing: -1.0, height: 1.0))
-                  : Text('기록 없음',
-                      style: AppTheme.serif(28, tert, spacing: -0.5, height: 1.0)),
-              const SizedBox(height: 4),
-              Text('이번 달 지출', style: AppTheme.sans(12, tert)),
-            ],
-          ),
-        ),
+        // ── 지출 — 명세서의 소계 블록. 결제수단별로 한 줄씩 찍고 실선 위에 합계. ──
+        AppTheme.sectionHead(context, '02', '이번 달 지출'),
+        const SizedBox(height: 10),
+        if (totalSpent > 0) ...[
+          if (widget.creditCardTotal > 0)
+            _leaderRow('신용카드', _toWon(widget.creditCardTotal), sub, ink),
+          if (widget.debitCashTotal > 0)
+            _leaderRow('체크·현금', _toWon(widget.debitCashTotal), sub, ink),
+          const SizedBox(height: 6),
+          Container(height: 1, color: ink),
+          const SizedBox(height: 6),
+          _leaderRow('합계', _toWon(totalSpent), ink, ink, emphasize: true),
+        ] else
+          // 수입 쪽이 '기록 없음'인데 지출만 '0원'이면, 같은 빈 상태를 두 가지 말로
+          // 표현하게 된다. 아직 아무것도 안 적은 사람에게 '0원'은 "안 썼다"로 읽힌다.
+          // 라벨은 바로 위 절 머리가 이미 '이번 달 지출'이라 했으니 반복하지 않는다.
+          _rightEmpty(tert, null),
 
         // ── 지출 목표 진행 + 수정 ──
         if (hasBudget && !widget.showExpenseInput) ...[
@@ -272,7 +264,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
 
         // ── 카드 공제 → 올해 쌓인 예상 환급 (직장인 전용, A/B/C 3단계) ──
         if (hasThreshold) ...[
-          const SizedBox(height: 14),
+          _rule(),
           _buildCardRefundBlock(annualSalary, sub, tert, accent),
         ],
 
@@ -281,7 +273,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         // 프리랜서는 그 제도 대상이 아니라 필요경비 → 이미 뗀 3.3% 환급으로 자란다.
         // 자세한 내역(적은 경비·분기점)은 가계부 적립 카드에 있고 여기선 숫자만 보여준다.
         if (widget.refundProgress != null) ...[
-          const SizedBox(height: 14),
+          _rule(),
           _buildFreelancerRefundBlock(widget.refundProgress!, sub, tert, accent),
         ],
 
@@ -312,7 +304,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
       expanded: widget.showExpenseInput,
       // 지출 목표는 공제와 아무 상관이 없다 — 카드공제 문턱은 총급여의 25%로 정해져 있다
       // (조특법 §126의2). "공제 기준을 잡아드려요"는 거짓말이었다.
-      promptText: '지출 목표를 설정하면 이번 달 지출 현황을 알려드려요',
+      promptText: '목표를 정하면 남은 돈을 알려드려요',
       hintText: '이번 달 지출 목표',
       controller: widget.expenseTargetInlineCtrl,
       ink: ink, sub: sub, accent: accent,
@@ -347,29 +339,23 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
   }) {
     const h = 48.0;
 
-    // ── 안내 배너: 표면색 + 헤어라인 + 좌측 도면 액센트 바 + 화살표 ──
+    // ── 안내: 01의 '내 정보에서 연봉을…'과 같은 인라인 링크 ──
+    // 점선 상자로 두었더니 절을 가르는 점선과 겹쳐 눈에 안 들어왔다.
+    // 종이 위에 상자를 하나 더 얹는 대신, 문장 한 줄과 화살표로 끝낸다.
     final banner = GestureDetector(
       onTap: onTapBanner,
       behavior: HitTestBehavior.opaque,
-      child: Container(
+      child: SizedBox(
         height: h,
-        decoration: BoxDecoration(
-          color: AppTheme.surface(context),
-          border: Border.all(color: AppTheme.line(context), width: 1),
-          borderRadius: BorderRadius.circular(4),
-        ),
         child: Row(children: [
-          Container(width: 3, height: h, color: accent),
-          const SizedBox(width: 12),
-          Expanded(child: Text(
-            promptText,
-            style: AppTheme.sans(12, AppTheme.inkSecondary(context), weight: FontWeight.w500),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          )),
+          Expanded(
+            child: Text(promptText.keepWords,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTheme.sans(AppTheme.tsSM, accent, weight: FontWeight.w600)),
+          ),
           const SizedBox(width: 8),
-          Icon(Icons.arrow_forward, color: accent, size: 15),
-          const SizedBox(width: 14),
+          Icon(Icons.arrow_forward, size: 14, color: accent),
         ]),
       ),
     );
@@ -392,9 +378,11 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
               minLines: null,
               style: AppTheme.sans(14, ink, weight: FontWeight.w600),
               decoration: InputDecoration(
-                hintText: hintText,
+                // 힌트와 단위가 같이 떠 있으면 '이번 달 지출 목표원'으로 읽힌다.
+                // 빈 칸에는 안내만, 숫자를 적기 시작하면 단위만 남긴다.
+                hintText: controller.text.isEmpty ? hintText : null,
                 hintStyle: AppTheme.sans(14, AppTheme.inkTertiary(context)),
-                suffixText: '원',
+                suffixText: controller.text.isEmpty ? null : '원',
                 suffixStyle: AppTheme.sans(13, sub),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -409,6 +397,8 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
                 final f = n.isEmpty ? '' : comma(int.parse(n));
                 controller.value = TextEditingValue(
                   text: f, selection: TextSelection.collapsed(offset: f.length));
+                // 힌트↔단위가 입력 여부를 따라가야 하므로 다시 그린다.
+                setState(() {});
               },
             ),
           ),
@@ -444,40 +434,41 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     final ink = AppTheme.ink(context);
     final tert = AppTheme.inkTertiary(context);
     final hasOther = widget.otherIncome > 0;
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          GestureDetector(
-            onTap: hasOther
-                ? () => setState(() => _showOtherIncomeGross = !_showOtherIncomeGross)
-                : null,
-            behavior: HitTestBehavior.opaque,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
-              child: hasOther
-                  ? Text(
-                      _toWon(_showOtherIncomeGross ? widget.otherIncomeGrossEstimate : widget.otherIncome),
-                      key: ValueKey(_showOtherIncomeGross),
-                      style: AppTheme.serif(44, ink, spacing: -1.5, height: 1.0),
-                    )
-                  : Text('기록 없음',
-                      key: const ValueKey('empty'),
-                      style: AppTheme.serif(28, tert, spacing: -0.5, height: 1.0)),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          !hasOther
+              ? '이번 달 다른소득'
+              : _showOtherIncomeGross
+                  ? '이번 달 다른소득 (세전 환산 · 탭해서 되돌리기)'
+                  : '이번 달 다른소득 (세후 · 탭해서 세전 보기)',
+          style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context)),
+        ),
+        const SizedBox(height: 4),
+        GestureDetector(
+          onTap: hasOther
+              ? () => setState(() => _showOtherIncomeGross = !_showOtherIncomeGross)
+              : null,
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: hasOther
+                ? KeyedSubtree(
+                    key: ValueKey(_showOtherIncomeGross),
+                    // 근로소득보다 한 급 작게 — 대등하되 순서는 있다.
+                    child: _rightAmount(
+                      comma(_showOtherIncomeGross
+                          ? widget.otherIncomeGrossEstimate
+                          : widget.otherIncome),
+                      size: AppTheme.serifLG,
+                      color: ink,
+                    ),
+                  )
+                : _rightEmpty(tert, const ValueKey('empty')),
           ),
-          const SizedBox(height: 4),
-          Text(
-            !hasOther
-                ? '이번 달 다른소득'
-                : _showOtherIncomeGross
-                    ? '이번 달 다른소득 (세전 환산 · 탭해서 되돌리기)'
-                    : '이번 달 다른소득 (세후 · 탭해서 세전 보기)',
-            style: AppTheme.sans(12, tert),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -518,25 +509,35 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     }
 
     // B/C단계 — 환급 카운터(히어로). C는 한도 도달로 멈춤 안내.
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text('올해 쌓인 예상 환급', style: AppTheme.sans(12, tert)),
-          const SizedBox(height: 4),
-          Text(_toWon(taxSaving),
-              style: AppTheme.serif(34, accent, weight: FontWeight.w700, spacing: -1.0, height: 1.0)),
-          const SizedBox(height: 6),
-          Text(
-            r.isCapped
-                ? '올해 카드 소득공제 한도를 다 채웠어요 · 신용·체크·현금 모두 더 써도 공제는 안 늘어요'
-                : '이제 체크카드·현금영수증으로 쓰면 공제율 2배(30%)예요 · 예상',
-            style: AppTheme.sans(11, r.isCapped ? sub : tert),
-            textAlign: TextAlign.right,
-          ),
-        ],
-      ),
+    return _refundBlock(
+      taxSaving,
+      accent,
+      r.isCapped
+          ? '올해 카드 소득공제 한도를 다 채웠어요 · 신용·체크·현금 모두 더 써도 공제는 안 늘어요'
+          : '이제 체크카드·현금영수증으로 쓰면 공제율 2배(30%)예요 · 예상',
+      r.isCapped ? sub : tert,
+    );
+  }
+
+  /// `03 · ESTIMATED REFUND` 절 — 숫자 왼쪽, 추정 도장 오른쪽.
+  /// 직장인·프리랜서 두 경로가 같은 자리에 같은 모양으로 찍혀야 한 문서로 읽힌다.
+  Widget _refundBlock(double amount, Color accent, String note, Color noteColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppTheme.sectionHead(context, null, '올해 쌓인 예상 환급'),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(child: AppTheme.amount(context, comma(amount), color: accent)),
+            const SizedBox(width: 10),
+            AppTheme.stamp(context, 'EST.', '${TaxYear.reference}'),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(note, style: AppTheme.sans(AppTheme.tsSM, noteColor, height: 1.45)),
+      ],
     );
   }
 
@@ -565,27 +566,14 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
       );
     }
 
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text('올해 쌓인 예상 환급', style: AppTheme.sans(12, tert)),
-          const SizedBox(height: 4),
-          Text(_toWon(p.refundGain),
-              style: AppTheme.serif(34, accent,
-                  weight: FontWeight.w700, spacing: -1.0, height: 1.0)),
-          const SizedBox(height: 6),
-          Text(
-            p.isCapped
-                // 사업 3.3%+기타 8.8% 원천징수를 합쳐 말해야 정확하다 — "3.3%"로 좁히지 않는다.
-                ? '올해 원천징수된 세금을 다 돌려받는 상태예요 · 더 적어도 환급은 안 늘어요'
-                : '경비를 더 찾을수록 늘어요 · 예상',
-            style: AppTheme.sans(11, p.isCapped ? sub : tert),
-            textAlign: TextAlign.right,
-          ),
-        ],
-      ),
+    return _refundBlock(
+      p.refundGain,
+      accent,
+      p.isCapped
+          // 사업 3.3%+기타 8.8% 원천징수를 합쳐 말해야 정확하다 — "3.3%"로 좁히지 않는다.
+          ? '올해 원천징수된 세금을 다 돌려받는 상태예요 · 더 적어도 환급은 안 늘어요'
+          : '경비를 더 찾을수록 늘어요 · 예상',
+      p.isCapped ? sub : tert,
     );
   }
 
@@ -622,12 +610,8 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           Text(value, style: AppTheme.sans(12, color, weight: FontWeight.w700)),
         ]),
         const SizedBox(height: 8),
-        LinearProgressIndicator(
-          value: progress,
-          minHeight: 3,
-          backgroundColor: AppTheme.line(context),
-          valueColor: AlwaysStoppedAnimation<Color>(color),
-        ),
+        // 진행은 인쇄된 블록으로 찍는다 — 둥근 진행바는 이 종이 위에 없다.
+        AppTheme.printedBar(context, progress, color: color),
         const SizedBox(height: 8),
         Text(note, style: AppTheme.sans(12, color, weight: FontWeight.w500, height: 1.4)),
       ],
@@ -635,6 +619,74 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
   }
 
   /// 도면 주석 라벨 — 극소형 + 자간 극대 (섹션 머리표)
-  Widget _sectionLabel(String text) =>
-      Text(text.toUpperCase(), style: AppTheme.label(context));
+  /// 금액을 오른쪽 끝에 붙인다 — 절마다 숫자의 오른쪽 모서리가 맞아야 훑어 읽힌다.
+  Widget _rightAmount(String digits, {double size = AppTheme.serifXL, Color? color}) =>
+      Align(
+        alignment: Alignment.centerRight,
+        child: AppTheme.amount(context, digits, size: size, color: color),
+      );
+
+  /// 숫자가 들어올 자리의 빈 상태. 자리는 숫자와 같아야 한다.
+  Widget _rightEmpty(Color color, Key? key) => Align(
+        key: key,
+        alignment: Alignment.centerRight,
+        child: Text('기록 없음',
+            style: AppTheme.display(AppTheme.serifLG, color, height: 1.0)),
+      );
+
+  /// 절을 가르는 점선. 홈 본문(_slipRule)과 같은 리듬이라 위아래 여백이 같다 —
+  /// 패널 안팎에서 간격이 달라지면 한 장의 종이로 안 읽힌다.
+  Widget _rule() => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: AppTheme.dashRule(context),
+      );
+
+  /// 항목 … 금액 — 영수증의 기본 줄. 점선이 이름과 숫자를 잇는다.
+  Widget _leaderRow(String label, String value, Color labelColor, Color valueColor,
+      {bool emphasize = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(label,
+              style: AppTheme.sans(AppTheme.tsBase, labelColor,
+                  weight: emphasize ? FontWeight.w700 : FontWeight.w400)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: CustomPaint(
+                size: const Size(double.infinity, 1),
+                painter: _LeaderDotsPainter(AppTheme.lineStrong(context)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(value,
+              style: AppTheme.sans(emphasize ? AppTheme.tsLG : AppTheme.tsBase, valueColor,
+                  weight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
+}
+
+
+/// 이름과 금액을 잇는 점선 리더.
+class _LeaderDotsPainter extends CustomPainter {
+  const _LeaderDotsPainter(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color..strokeWidth = 1;
+    for (double x = 0; x < size.width; x += 4) {
+      canvas.drawLine(Offset(x, 0), Offset(x + 1, 0), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_LeaderDotsPainter old) => old.color != color;
 }

@@ -339,7 +339,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                     ]),
                     if (_combinedCreditRate > 0) ...[
                       const SizedBox(height: 8),
-                      Text('세액공제율: ${_pct(_combinedCreditRate)}'.keepWords,
+                      Text('세액공제율: ${_pct(_combinedCreditRate)}',
                           style: TextStyle(
                               color: primary,
                               fontSize: 12,
@@ -469,7 +469,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                     '• 재산세는 주택마다 개별 공시가격으로 누진계산 후 합산합니다(1주택 특례 미반영, 2026년 기준 60% 단일 적용).\n'
                     '• 종부세는 모든 주택의 공시가격 합계에서 공제액을 뺀 뒤 계산하며, 세율은 2023년 개정 이후 주택수와 무관한 단일표입니다.\n'
                     '• 고령자·장기보유 세액공제는 1세대1주택 단독명의(공제 12억)만 해당하며, 부부 공동명의 선택 시 적용되지 않습니다.\n'
-                    '• 세부담 상한제 등은 미반영이며, 공정시장가액비율·세율은 매년 바뀔 수 있어 고지서와 차이가 날 수 있습니다.',
+                    '• 세부담 상한제 등은 미반영이며, 공정시장가액비율·세율은 매년 바뀔 수 있어 고지서와 차이가 날 수 있습니다.'.keepWords,
                     style:
                         TextStyle(color: subColor, fontSize: 12, height: 1.6),
                   ),

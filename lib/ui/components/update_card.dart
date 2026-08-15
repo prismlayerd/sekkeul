@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../core/data_vintage.dart';
 import '../../core/update_service.dart';
 import '../theme/app_theme.dart';
-import '../theme/text_wrap.dart';
 
 /// **업데이트가 있다는 걸 우리 말로 알린다.**
 ///
@@ -44,7 +43,7 @@ class UpdateCard extends StatelessWidget {
                 Text(
                   ready
                       ? '다시 시작하면 새 기준으로 계산해요.'
-                      : '지금 보시는 값은 ${DataVintage.label} 기준이에요.'.keepWords,
+                      : '지금 보시는 값은 ${DataVintage.label} 기준이에요.',
                   style: AppTheme.sans(12, sub, height: 1.5),
                 ),
                 const SizedBox(height: 12),
