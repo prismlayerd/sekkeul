@@ -114,6 +114,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         leading: widget.embedded
             ? null
             : IconButton(
+                tooltip: '뒤로',
                 icon: Icon(Icons.arrow_back_ios_new_rounded,
                     size: 18, color: sub),
                 onPressed: () => Navigator.pop(context),

@@ -249,6 +249,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
+          tooltip: '뒤로',
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor),
           onPressed: () => Navigator.pop(context),
         ),

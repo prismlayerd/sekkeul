@@ -55,7 +55,8 @@ class HomeBannerCarousel extends StatelessWidget {
     // 라벨(1줄) + 헤드라인(2줄) + 보조 문구(2줄)를 모두 담을 수 있도록 실측 산출.
     // 시스템 글자 확대(U-3)에 맞춰 함께 커지도록 textScaler 반영, 헤드라인 높이 계산과 동일 패턴.
     final ts = MediaQuery.textScalerOf(context);
-    final cardHeight = ts.scale(11) * 1.2 + 7 + ts.scale(22) * 1.2 * 2 + 6 + ts.scale(12) * 1.4 * 2 + 4;
+    final cardHeight =
+        ts.scale(11) * 1.2 + 7 + ts.scale(22) * 1.2 * 2 + 6 + ts.scale(12) * 1.4 * 2 + 4;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -94,71 +95,71 @@ class HomeBannerCarousel extends StatelessWidget {
       button: true,
       label: '${c.label} ${c.headline}',
       child: GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: c.onTap,
-      child: SizedBox(
-        width: double.infinity,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(child: AppTheme.sectionHead(context, null, c.label)),
-                      Semantics(
-                        button: true,
-                        label: '이 카드 닫기',
-                        child: GestureDetector(
-                          onTap: () => onDismiss(c),
-                          behavior: HitTestBehavior.opaque,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: Icon(Icons.close_rounded, size: 16, color: sub),
+        behavior: HitTestBehavior.opaque,
+        onTap: c.onTap,
+        child: SizedBox(
+          width: double.infinity,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: AppTheme.sectionHead(context, null, c.label)),
+                        Semantics(
+                          button: true,
+                          label: '이 카드 닫기',
+                          child: GestureDetector(
+                            onTap: () => onDismiss(c),
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: Icon(Icons.close_rounded, size: 16, color: sub),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 7),
-                  // 헤드라인이 1줄이든 2줄이든 카드 높이를 동일하게 유지 — 아래 보조 문구 위치 고정.
-                  // 높이는 시스템 글자 확대(U-3, 최대 1.3배)에 맞춰 함께 커지도록 textScaler 반영.
-                  SizedBox(
-                    height: MediaQuery.textScalerOf(context).scale(22) * 1.2 * 2,
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text(c.headline.keepWords,
-                          maxLines: 2,
-                          textAlign: TextAlign.left,
-                          overflow: TextOverflow.ellipsis,
-                          // 홈의 표제는 절 머리(01 INCOME…)다. 배너가 그보다 크면
-                          // 광고가 문서를 이긴다 — 한 급 낮춰 본문 위계에 넣는다.
-                          style: AppTheme.display(AppTheme.serifSM, ink, height: 1.3)),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  if (subText != null)
-                    Row(children: [
-                      Flexible(
-                        // 두 문장짜리 팁이 폭 기준으로 아무 데서나 잘려 넘어가지 않도록
-                        // 문장 경계('. ')에서 명시적으로 줄바꿈.
-                        child: Text(subText.replaceAll('. ', '.\n'),
+                    const SizedBox(height: 7),
+                    // 헤드라인이 1줄이든 2줄이든 카드 높이를 동일하게 유지 — 아래 보조 문구 위치 고정.
+                    // 높이는 시스템 글자 확대(U-3, 최대 1.3배)에 맞춰 함께 커지도록 textScaler 반영.
+                    SizedBox(
+                      height: MediaQuery.textScalerOf(context).scale(22) * 1.2 * 2,
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Text(c.headline.keepWords,
                             maxLines: 2,
+                            textAlign: TextAlign.left,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
+                            // 홈의 표제는 절 머리(01 INCOME…)다. 배너가 그보다 크면
+                            // 광고가 문서를 이긴다 — 한 급 낮춰 본문 위계에 넣는다.
+                            style: AppTheme.display(AppTheme.serifSM, ink, height: 1.3)),
                       ),
-                      const SizedBox(width: 5),
-                      Icon(Icons.arrow_forward, size: 13, color: sub),
-                    ]),
-                ],
+                    ),
+                    const SizedBox(height: 6),
+                    if (subText != null)
+                      Row(children: [
+                        Flexible(
+                          // 두 문장짜리 팁이 폭 기준으로 아무 데서나 잘려 넘어가지 않도록
+                          // 문장 경계('. ')에서 명시적으로 줄바꿈.
+                          child: Text(subText.replaceAll('. ', '.\n'),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
+                        ),
+                        const SizedBox(width: 5),
+                        Icon(Icons.arrow_forward, size: 13, color: sub),
+                      ]),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -170,16 +171,21 @@ class HomeBannerCarousel extends StatelessWidget {
       return Row(
         children: List.generate(count, (i) {
           final on = i == active;
-          return GestureDetector(
-            onTap: () => onTickTap(i),
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: on ? 18 : 10,
-                height: 2,
-                color: on ? ink : AppTheme.line(context),
+          return Semantics(
+            button: true,
+            selected: on,
+            label: '${i + 1}번째 소식',
+            child: GestureDetector(
+              onTap: () => onTickTap(i),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: on ? 18 : 10,
+                  height: 2,
+                  color: on ? ink : AppTheme.line(context),
+                ),
               ),
             ),
           );

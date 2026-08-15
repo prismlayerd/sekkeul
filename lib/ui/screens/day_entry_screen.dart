@@ -10,9 +10,9 @@ import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
 
 const _catCredit = '신용카드';
-const _catDebit  = '체크+현금';
-const _catOther  = '기타';
-const _payments  = [_catCredit, _catDebit, _catOther];
+const _catDebit = '체크+현금';
+const _catOther = '기타';
+const _payments = [_catCredit, _catDebit, _catOther];
 
 /// 하루(또는 여러 날 묶음)의 수입·지출 **목록** 화면.
 ///
@@ -188,8 +188,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final ctx = _openKey.currentContext;
       if (ctx != null) {
-        Scrollable.ensureVisible(ctx,
-            duration: const Duration(milliseconds: 220), alignment: 0.1);
+        Scrollable.ensureVisible(ctx, duration: const Duration(milliseconds: 220), alignment: 0.1);
       }
     });
   }
@@ -220,7 +219,6 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
                   style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
               const SizedBox(height: 14),
             ],
-
             AppTheme.sectionHead(context, '01', '수익'),
             const SizedBox(height: 10),
             for (final e in _incomes)
@@ -238,15 +236,10 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
                   amount: e.amount,
                   onTap: () => _openEditor(e.id),
                 ),
-            if (_open == 'inc')
-              _incomeForm()
-            else
-              _addRow('수익 추가하기', () => _openEditor('inc')),
-
+            if (_open == 'inc') _incomeForm() else _addRow('수익 추가하기', () => _openEditor('inc')),
             const SizedBox(height: 18),
             AppTheme.dashRule(context),
             const SizedBox(height: 18),
-
             AppTheme.sectionHead(context, '02', '지출'),
             const SizedBox(height: 10),
             for (final e in _expenses)
@@ -254,9 +247,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
                 _expenseForm(edit: e)
               else
                 _row(
-                  title: e.content.isNotEmpty
-                      ? e.content
-                      : expenseCategoryById(e.category).label,
+                  title: e.content.isNotEmpty ? e.content : expenseCategoryById(e.category).label,
                   sub: [
                     if (e.content.isNotEmpty) expenseCategoryById(e.category).label,
                     e.paymentMethod,
@@ -267,11 +258,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
                   amount: e.amount,
                   onTap: () => _openEditor(e.id),
                 ),
-            if (_open == 'exp')
-              _expenseForm()
-            else
-              _addRow('지출 추가하기', () => _openEditor('exp')),
-
+            if (_open == 'exp') _expenseForm() else _addRow('지출 추가하기', () => _openEditor('exp')),
             if (_presets.isNotEmpty) ...[
               const SizedBox(height: 18),
               AppTheme.dashRule(context),
@@ -386,36 +373,43 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
     required int amount,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppTheme.line(context), width: 1)),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title.keepWords,
-                      style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context))),
-                  if (sub.isNotEmpty) ...[
-                    const SizedBox(height: 3),
-                    Text(sub,
-                        style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkTertiary(context))),
-                  ],
-                ],
-              ),
+    // 한 줄이 한 기록이다 — 이름·부속·금액이 따로 읽히면 목록이 아니라
+    // 낱말 더미가 된다. 하나로 묶어 "김밥 5,000, 신용카드, 버튼"으로 읽힌다.
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppTheme.line(context), width: 1)),
             ),
-            const SizedBox(width: 10),
-            Text(comma(amount),
-                style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context),
-                    weight: FontWeight.w700)),
-          ],
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title.keepWords,
+                          style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context))),
+                      if (sub.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(sub,
+                            style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkTertiary(context))),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(comma(amount),
+                    style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context),
+                        weight: FontWeight.w700)),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -424,24 +418,32 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
   /// 아직 안 채운 칸 — 점선. 홈의 지출 목표 빈 칸과 같은 문법.
   Widget _addRow(String label, VoidCallback onTap) => Padding(
         padding: const EdgeInsets.only(top: 10),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
+        // '＋'는 전각 기호라 스크린리더가 "더하기"로 읽지 않는다. 라벨을 직접 준다.
+        child: Semantics(
+          button: true,
+          label: label,
           onTap: onTap,
-          child: AppTheme.dashedBox(
-            context,
-            child: SizedBox(
-              height: 46,
-              child: Row(children: [
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(label,
-                      style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+          child: ExcludeSemantics(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTap,
+              child: AppTheme.dashedBox(
+                context,
+                child: SizedBox(
+                  height: 46,
+                  child: Row(children: [
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(label,
+                          style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+                    ),
+                    Text('＋',
+                        style: AppTheme.sans(AppTheme.tsLG, AppTheme.ink(context),
+                            weight: FontWeight.w600)),
+                    const SizedBox(width: 14),
+                  ]),
                 ),
-                Text('＋',
-                    style: AppTheme.sans(AppTheme.tsLG, AppTheme.ink(context),
-                        weight: FontWeight.w600)),
-                const SizedBox(width: 14),
-              ]),
+              ),
             ),
           ),
         ),
@@ -516,45 +518,53 @@ class _FormBlock extends StatelessWidget {
               AppTheme.sectionHead(context, null, title),
               if (note != null) ...[
                 const SizedBox(height: 6),
-                Text(note!,
-                    style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+                Text(note!, style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
               ],
               const SizedBox(height: 14),
               ...children,
               Row(children: [
                 if (onDelete != null)
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => onDelete!(),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-                      child: Text('삭제',
-                          style: AppTheme.sans(AppTheme.tsSM, AppTheme.colorDanger,
-                              weight: FontWeight.w600)),
+                  Semantics(
+                    button: true,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => onDelete!(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                        child: Text('삭제',
+                            style: AppTheme.sans(AppTheme.tsSM, AppTheme.colorDanger,
+                                weight: FontWeight.w600)),
+                      ),
                     ),
                   ),
                 const Spacer(),
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: onCancel,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    child: Text('취소',
-                        style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+                Semantics(
+                  button: true,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onCancel,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                      child: Text('취소',
+                          style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 4),
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: onSave,
-                  child: Container(
-                    height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: 22),
-                    alignment: Alignment.center,
-                    color: AppTheme.ink(context),
-                    child: Text('저장',
-                        style: AppTheme.sans(AppTheme.tsSM, AppTheme.backgroundColor(context),
-                            weight: FontWeight.w700)),
+                Semantics(
+                  button: true,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onSave,
+                    child: Container(
+                      height: 40,
+                      padding: const EdgeInsets.symmetric(horizontal: 22),
+                      alignment: Alignment.center,
+                      color: AppTheme.ink(context),
+                      child: Text('저장',
+                          style: AppTheme.sans(AppTheme.tsSM, AppTheme.backgroundColor(context),
+                              weight: FontWeight.w700)),
+                    ),
                   ),
                 ),
               ]),
@@ -578,40 +588,41 @@ class _Field extends StatelessWidget {
         child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
           SizedBox(
             width: 74,
-            child: Text(label,
-                style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+            child: Text(label, style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
           ),
           Expanded(child: child),
         ]),
       );
 
-/// 고르는 칸들 — 분류·결제수단·소득유형이 같은 모양을 쓴다.
-  static Widget chips(BuildContext context, List<String> labels, String selected,
-      ValueChanged<String> onTap,
+  /// 고르는 칸들 — 분류·결제수단·소득유형이 같은 모양을 쓴다.
+  static Widget chips(
+      BuildContext context, List<String> labels, String selected, ValueChanged<String> onTap,
       {List<String>? values}) {
     final vals = values ?? labels;
     return Wrap(spacing: 6, runSpacing: 6, children: [
       for (var i = 0; i < labels.length; i++)
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => onTap(vals[i]),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-            decoration: BoxDecoration(
-              color: vals[i] == selected ? AppTheme.accentSoft(context) : null,
-              border: Border.all(
-                color: vals[i] == selected
-                    ? AppTheme.ink(context)
-                    : AppTheme.line(context),
-                width: vals[i] == selected ? 1.5 : 1,
+        // 고른 칸인지가 테두리 굵기와 잉크 농도로만 갈린다 — 눈으로 못 보면
+        // 무엇을 골랐는지 알 수 없다. selected를 넘겨 "선택됨"으로 읽히게 한다.
+        Semantics(
+          button: true,
+          selected: vals[i] == selected,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onTap(vals[i]),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+              decoration: BoxDecoration(
+                color: vals[i] == selected ? AppTheme.accentSoft(context) : null,
+                border: Border.all(
+                  color: vals[i] == selected ? AppTheme.ink(context) : AppTheme.line(context),
+                  width: vals[i] == selected ? 1.5 : 1,
+                ),
               ),
+              child: Text(labels[i],
+                  style: AppTheme.sans(AppTheme.tsSM,
+                      vals[i] == selected ? AppTheme.ink(context) : AppTheme.inkTertiary(context),
+                      weight: vals[i] == selected ? FontWeight.w700 : FontWeight.w400)),
             ),
-            child: Text(labels[i],
-                style: AppTheme.sans(AppTheme.tsSM,
-                    vals[i] == selected
-                        ? AppTheme.ink(context)
-                        : AppTheme.inkTertiary(context),
-                    weight: vals[i] == selected ? FontWeight.w700 : FontWeight.w400)),
           ),
         ),
     ]);
@@ -701,8 +712,7 @@ class _ExpenseFormState extends State<_ExpenseForm> {
               child: Row(children: [
                 AppTheme.tick(context, _isBusiness),
                 const SizedBox(width: 10),
-                Text('경비로 인정',
-                    style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context))),
+                Text('경비로 인정', style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context))),
               ]),
             ),
           ),
@@ -775,8 +785,8 @@ class _IncomeFormState extends State<_IncomeForm> {
         ),
         _Field(
           '소득 유형',
-          _Field.chips(context, widget.profile.incomeTypes, _type,
-              (v) => setState(() => _type = v)),
+          _Field.chips(
+              context, widget.profile.incomeTypes, _type, (v) => setState(() => _type = v)),
         ),
         // 원천징수는 사업·기타소득에만 있다. 급여는 간이세액표라 역산이 안 된다.
         if (widget.profile.tracksBusinessExpense && _type != '급여')

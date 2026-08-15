@@ -98,20 +98,27 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── 헤더: 절 머리 + 오른쪽 끝 펼침 화살표. 줄 전체가 토글이다. ──
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => setState(() => _expanded = !_expanded),
-          child: Row(
-            children: [
-              Expanded(child: AppTheme.sectionHead(context, '03', '리마인더')),
-              const SizedBox(width: 8),
-              AnimatedRotation(
-                turns: _expanded ? 0.5 : 0,
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                child: Icon(Icons.expand_more_rounded, size: 20, color: tert),
+        Semantics(
+          button: true,
+          expanded: _expanded,
+          label: '리마인더',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: ExcludeSemantics(
+              child: Row(
+                children: [
+                  Expanded(child: AppTheme.sectionHead(context, '03', '리마인더')),
+                  const SizedBox(width: 8),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    child: Icon(Icons.expand_more_rounded, size: 20, color: tert),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
         // ── 펼침 영역 — AnimatedSize로 높이 전환 ──

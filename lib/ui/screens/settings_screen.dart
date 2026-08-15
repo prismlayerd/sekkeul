@@ -299,6 +299,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         title: Text('설정', style: AppTheme.serif(22, ink, weight: FontWeight.w400, spacing: -0.3)),
         leading: IconButton(
+          tooltip: '뒤로',
           icon: Icon(Icons.arrow_back_rounded, color: sub),
           onPressed: () => Navigator.pop(context),
         ),

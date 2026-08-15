@@ -1729,6 +1729,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
+          tooltip: '뒤로',
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppTheme.inkSecondary(context)),
           onPressed: () => Navigator.pop(context),
         ),

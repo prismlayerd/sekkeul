@@ -383,11 +383,17 @@ class AppTheme {
   ///
   /// PNG로 두지 않는 이유: 라이트·다크에서 잉크색이 바뀌고 폭이 화면을 따라간다.
   /// 곡선식은 design/make_icon_barcode.py와 같다 — 한쪽을 고치면 다른 쪽도 고친다.
+  /// 홈 머리글에 이름 대신 이 마크만 서 있다 — 라벨이 없으면 스크린리더에는
+  /// 앱 이름이 어디에도 안 읽힌다.
   static Widget waveMark(BuildContext context,
           {double height = 26, double width = 132, Color? color}) =>
-      CustomPaint(
-        size: Size(width, height),
-        painter: _WaveMarkPainter(color ?? ink(context)),
+      Semantics(
+        label: '세끌',
+        image: true,
+        child: CustomPaint(
+          size: Size(width, height),
+          painter: _WaveMarkPainter(color ?? ink(context)),
+        ),
       );
 
   /// 워드마크 — `세 끌` + `TAX & LEDGER · NO. XIV`. 명세서의 발행처 표시다.

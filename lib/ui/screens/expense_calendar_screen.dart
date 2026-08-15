@@ -47,10 +47,15 @@ class _MarkShape extends StatelessWidget {
     // 네 표식이 **같은 크기 상자**를 쓴다. 예전엔 +가 size+2, 세모가 size+1,
     // 네모·원이 size라 범례에서 글자 높이가 제각각이었고, 달력 칸에 세로로
     // 쌓으면 오른쪽 끝이 들쭉날쭉했다. 상자를 맞추면 어디 놓아도 줄이 선다.
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Center(child: _shape(c)),
+    // 도형은 **장식**이다. 뜻은 늘 옆에 글자로 같이 있다 — 범례에는 '신용카드'
+    // 같은 라벨이, 달력 칸에는 칸 전체를 읽어 주는 라벨이 붙는다.
+    // 여기까지 읽히면 스크린리더가 빈 상자를 세 번 읽고 지나간다.
+    return ExcludeSemantics(
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Center(child: _shape(c)),
+      ),
     );
   }
 
@@ -1227,6 +1232,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
+            tooltip: '지난달',
             icon: Icon(Icons.chevron_left_rounded, color: ink, size: 26),
             onPressed: () {
               setState(() {
@@ -1254,6 +1260,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             ]),
           ),
           IconButton(
+            tooltip: '다음달',
             icon: Icon(Icons.chevron_right_rounded, color: ink, size: 26),
             onPressed: () {
               setState(() {
@@ -2068,9 +2075,28 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       ],
     );
 
+    // 이 칸에 무엇이 적혀 있는지 한 문장으로. 달력은 그리드 **전체**가 하나의
+    // Listener라, 이걸 안 붙이면 스크린리더에는 날짜 숫자만 스물아홉 개
+    // 흩어져 읽히고 어느 날에 무엇이 있는지 알 길이 없다. onTap을 같이 주면
+    // 포인터를 안 쓰고도 날짜를 고를 수 있다.
+    final parts = <String>[
+      '${date.month}월 ${date.day}일',
+      if (isToday) '오늘',
+      if (income > 0) '수익 ${won(income)}',
+      for (final pm in const [_catCredit, _catDebit, _catOther])
+        if (_paymentOf(key, pm) > 0) '$pm ${won(_paymentOf(key, pm))}',
+      if (income == 0 && dayExps.isEmpty) '기록 없음',
+      if (isSelected) '선택됨',
+    ];
+
     // 세로 괘선은 없다 — 영수증에 세로줄이 없고, 열은 조판이 잡는다.
     // 주(週)를 가르는 가로선은 그리드 쪽에서 절취선으로 그린다.
-    return Container(
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: parts.join(', '),
+      onTap: () => _toggleSingle(date),
+      child: Container(
         key: gkey,
         child: Stack(
           children: [
@@ -2108,7 +2134,8 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             ),
           ],
         ),
-      );
+      ),
+    );
   }
 
   _Mark _pmMarkOf(String pm) {

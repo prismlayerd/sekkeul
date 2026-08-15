@@ -51,6 +51,7 @@ class _DocumentChecklistScreenState extends State<DocumentChecklistScreen> {
         title: Text('서류 체크리스트',
             style: AppTheme.serif(22, ink, weight: FontWeight.w400, spacing: -0.3)),
         leading: IconButton(
+          tooltip: '뒤로',
           icon: Icon(Icons.arrow_back_rounded, color: sub),
           onPressed: () => Navigator.pop(context),
         ),

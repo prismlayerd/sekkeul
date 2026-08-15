@@ -145,6 +145,7 @@ class _AnnualBackfillScreenState extends State<AnnualBackfillScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
+          tooltip: '뒤로',
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: sub),
           onPressed: () => Navigator.pop(context, false),
         ),

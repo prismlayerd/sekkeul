@@ -453,6 +453,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
+          tooltip: '뒤로',
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).textTheme.bodyLarge!.color!),
           onPressed: () => Navigator.pop(context),
         ),
@@ -989,6 +990,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       child: Row(
         children: [
           IconButton(
+            tooltip: '뒤로',
             icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).textTheme.bodyLarge!.color!, size: 20),
             onPressed: () {
               if (_wizardStep == 0) {
@@ -1526,6 +1528,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Row(
           children: [
             IconButton(
+              tooltip: '뒤로',
               icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).textTheme.bodyLarge!.color!, size: 20),
               onPressed: () => setState(() { _wizardDone = false; _wizardStep = 0; }),
             ),

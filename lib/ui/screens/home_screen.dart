@@ -410,13 +410,17 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ),
           ),
         ),
-        GestureDetector(
-          onTap: () async {
-            await dbService.setAppState(
-                'annual_backfill_dismissed_${DateTime.now().year}', 'true');
-            if (mounted) setState(() => _showBackfillPrompt = false);
-          },
-          child: Icon(Icons.close_rounded, size: 18, color: sub),
+        Semantics(
+          button: true,
+          label: '안내 닫기',
+          child: GestureDetector(
+            onTap: () async {
+              await dbService.setAppState(
+                  'annual_backfill_dismissed_${DateTime.now().year}', 'true');
+              if (mounted) setState(() => _showBackfillPrompt = false);
+            },
+            child: Icon(Icons.close_rounded, size: 18, color: sub),
+          ),
         ),
       ],
     );
