@@ -336,21 +336,38 @@ class AppTheme {
   /// 라이트에서는 종이를 흰 쪽으로 살짝 눌러 깐다(opacity 0.82). 원본 그대로면
   /// 깊은 주름이 헤어라인만큼 진해져 글자와 선이 결에 묻힌다.
   /// 다크에서는 같은 사진을 [darkPaper]로 곱한다 — 주름은 남고 종이만 검어진다.
+  /// 사진은 **자기 레이어**에 따로 둔다.
+  ///
+  /// 예전에는 `DecoratedBox(child: 앱 전체)`였다. 그러면 사진과 앱이 한 레이어라
+  /// 위에서 뭐가 조금만 움직여도(스크롤·펼침·달력 확대) 전체화면 사진이 매번
+  /// 다시 그려졌다. [RepaintBoundary]로 갈라 두면 한 번 그린 걸 그대로 재사용한다.
+  ///
+  /// [FilterQuality.high]도 내렸다 — 구겨진 결에 쓰는 쌍삼차 보간은 눈에 보이는
+  /// 차이 없이 값만 비싸다.
   static Widget paperBackdrop(BuildContext context, {required Widget child}) {
     final dark = isDark(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: dark ? darkBackground : lightSurface,
-        image: DecorationImage(
-          image: AssetImage(paper),
-          fit: BoxFit.cover,
-          filterQuality: FilterQuality.high,
-          opacity: dark ? 1.0 : 0.82,
-          colorFilter:
-              dark ? const ColorFilter.mode(darkPaper, BlendMode.multiply) : null,
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: RepaintBoundary(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: dark ? darkBackground : lightSurface,
+                image: DecorationImage(
+                  image: AssetImage(paper),
+                  fit: BoxFit.cover,
+                  filterQuality: FilterQuality.medium,
+                  opacity: dark ? 1.0 : 0.82,
+                  colorFilter: dark
+                      ? const ColorFilter.mode(darkPaper, BlendMode.multiply)
+                      : null,
+                ),
+              ),
+            ),
+          ),
         ),
-      ),
-      child: child,
+        child,
+      ],
     );
   }
 

@@ -155,6 +155,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
 
   final Map<String, GlobalKey> _cellKeys = {};
 
+  /// [_cellKeys]가 어느 달의 것인지. 달이 바뀌면 비운다.
+  String? _cellKeysMonth;
+
   String _userType = '직장인'; // 직장인 / N잡러 / 프리랜서 — 기타수익 토글 노출 판단
   // 사업경비 인정 여부(프리랜서·N잡러 대상) — 결제수단별 독립 플래그.
   // 3.3% 원천징수 사업소득 여부 — true면 수익 입력값이 실수령액(세후).
@@ -1647,7 +1650,14 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   }
 
   Widget _buildCalendar(Color ink, Color sub) {
-    _cellKeys.clear();
+    // 달이 바뀔 때만 비운다. 예전에는 **매 빌드마다** 비우고 칸마다 GlobalKey를
+    // 새로 만들었다 — 42개씩, 스크롤·확대하는 내내 초당 수십 번. GlobalKey는
+    // 전역 등록부에 오르내리는 무거운 물건이라 그 자체가 프레임을 잡아먹었다.
+    final monthTag = '$_year-$_month';
+    if (_cellKeysMonth != monthTag) {
+      _cellKeys.clear();
+      _cellKeysMonth = monthTag;
+    }
     final lineColor = AppTheme.lineStrong(context);
     final weekCount = ((_daysInMonth + _firstOffset) / 7).ceil();
 
@@ -1845,7 +1855,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
 
   Widget _buildCell(DateTime date, Color ink, Color sub) {
     final key = _key(date);
-    final gkey = _cellKeys[key] = GlobalKey();
+    final gkey = _cellKeys.putIfAbsent(key, GlobalKey.new);
     final isSun = date.weekday == DateTime.sunday;
     final isSat = date.weekday == DateTime.saturday;
     final isHoliday = KrHolidays.isHoliday(date);

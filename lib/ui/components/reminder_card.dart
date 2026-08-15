@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import 'section_accordion.dart';
 import '../../core/notifications/reminder.dart';
 import '../../core/notifications/custom_reminder_service.dart';
+import '../../core/security/notification_helper.dart';
 import '../../core/navigation/app_route_observer.dart';
 import '../screens/reminder_list_screen.dart';
 import '../theme/text_wrap.dart';
@@ -180,6 +182,9 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
             value: r.enabled,
             activeThumbColor: accent,
             onChanged: (v) async {
+              // 목록 화면에는 있는데 여기만 빠져 있었다 — 홈에서 켠 사람은
+              // 권한을 물어본 적이 없어 조용히 안 울렸다.
+              if (v && !kIsWeb) await notificationHelper.ensurePermissionIfNeeded();
               await customReminderService.toggle(r, v);
               await _load();
             },

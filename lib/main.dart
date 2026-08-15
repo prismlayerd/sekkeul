@@ -29,8 +29,6 @@ void main() async {
     };
     // 준비가 실패해도 화면은 띄운다. 예전엔 이 셋 중 하나만 던져도 runApp에
     // 닿지 못해 앱이 통째로 안 떴다 — 기기마다 흰 화면이 되던 자리다.
-    // DB가 안 열린 기기에서는 insertErrorLog도 못 쓰므로 사유를 메모리에 들고
-    // 있다가 설정 화면의 "오류 기록 내보내기"가 함께 내보낸다.
     try {
       if (!kIsWeb) {
         // 알림 권한은 여기서 즉시 요청하지 않는다(U-1) — 첫 리마인더 화면 진입 또는
@@ -43,7 +41,8 @@ void main() async {
       themeModeNotifier.value =
           themeModeFromDb(await dbService.getAppState('theme_mode'));
     } catch (e, stack) {
-      startupError = '[시작 실패] $e\n$stack';
+      // DB가 안 열린 기기에서는 이 기록도 실패한다 — 그때는 남길 자리가 없다.
+      dbService.insertErrorLog('[시작 실패] $e', stack.toString());
     }
 
     runApp(const SeculApp());

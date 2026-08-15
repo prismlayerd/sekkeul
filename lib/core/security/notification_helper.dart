@@ -169,6 +169,31 @@ class NotificationHelper {
     return p.length;
   }
 
+  /// 진단용 알림 두 발. 어디서 막혔는지 이 둘로 갈린다.
+  ///
+  /// * 즉시 알림도 안 뜬다 → 알림 **권한**이나 방해금지 문제다.
+  /// * 즉시는 뜨는데 10초 뒤 것이 안 뜬다 → **예약(알람)** 쪽 문제다.
+  ///   기기 절전이 알람을 죽이는 경우가 대부분이다.
+  ///
+  /// 예약 id는 리마인더(2000번대)·세무일정(1001~)과 겹치지 않게 9000번대를 쓴다.
+  static const int _testNowId = 9001;
+  static const int _testLaterId = 9002;
+
+  Future<void> sendTestNotifications() async {
+    await showImmediateNotification(
+      id: _testNowId,
+      title: '테스트 · 즉시 알림',
+      body: '이게 보이면 알림 권한은 켜져 있어요.',
+      logCategory: 'test',
+    );
+    await scheduleAtDate(
+      id: _testLaterId,
+      title: '테스트 · 10초 예약',
+      body: '이게 보이면 예약 알림도 살아 있어요.',
+      when: DateTime.now().add(const Duration(seconds: 10)),
+    );
+  }
+
   /// 알림 표시 권한(POST_NOTIFICATIONS) 허용 여부.
   Future<bool> notificationsAllowed() async {
     final android = flutterLocalNotificationsPlugin
@@ -182,6 +207,43 @@ class NotificationHelper {
   Future<void> ensurePermissionIfNeeded() async {
     if (!await notificationsAllowed()) {
       await requestPermissions();
+    }
+  }
+
+  /// 정확한 시각에 알람을 걸 수 있는가(API 31+). 꺼져 있으면 예약은 되지만
+  /// 몇 분~몇십 분 늦게 울린다 — "안 울린다"로 체감되는 자리다.
+  Future<bool> exactAlarmsAllowed() async {
+    final android = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (android == null) return true;
+    try {
+      return await android.canScheduleExactNotifications() ?? true;
+    } catch (e) {
+      debugPrint('정확 알람 가능 여부를 못 읽었다: $e');
+      return true;
+    }
+  }
+
+  /// 정확 알람 허용 화면을 띄운다(사용자가 직접 켜야 하는 시스템 설정).
+  Future<void> requestExactAlarms() async {
+    final android = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (android == null) return;
+    try {
+      await android.requestExactAlarmsPermission();
+    } catch (e) {
+      debugPrint('정확 알람 요청 실패: $e');
+    }
+  }
+
+  /// 지금 잡혀 있는 예약들. 진단 화면이 "몇 건이 언제 울리기로 되어 있는지"를
+  /// 그대로 보여준다 — 알림함은 **울렸을 것**을 역산해 적는 곳이라 증거가 못 된다.
+  Future<List<PendingNotificationRequest>> pending() async {
+    try {
+      return await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    } catch (e) {
+      debugPrint('예약 목록을 못 읽었다: $e');
+      return const [];
     }
   }
 

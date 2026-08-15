@@ -1,16 +1,13 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../theme/app_theme.dart';
 import '../../core/data/theme_pref.dart';
 import '../../core/data/backup_service.dart';
 import '../../core/data/db_helper.dart';
-import '../../main.dart' show startupError;
 import '../../core/security/app_lock_service.dart';
+import 'notification_doctor_screen.dart';
 import 'notification_settings_screen.dart';
 import '../theme/text_wrap.dart';
 
@@ -159,52 +156,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  String _stamp() {
-    final now = DateTime.now();
-    return '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_'
-        '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
-  }
-
-  Future<void> _exportErrorLogs() async {
-    final logs = await dbService.getErrorLogs();
-    final buffer = StringBuffer();
-    // 기록이 없어도 공유는 연다. 예전엔 안내 문구만 띄우고 끝나서
-    // "눌러도 아무것도 안 된다"로 보였다 (2026-08-10 실기기).
-    // "기록 없음"도 진단에 쓰이는 정보다 — 저장이 되는지부터 갈라준다.
-    buffer.writeln('세끌 오류 기록 · ${_stamp()}');
-    buffer.writeln('기록 ${logs.length}건'
-        '${startupError == null ? '' : ' · 시작 실패 있음'}');
-    buffer.writeln('---');
-    if (startupError != null) {
-      buffer.writeln(startupError);
-      buffer.writeln('---');
-    }
-    for (final log in logs) {
-      buffer.writeln('[${log['occurred_at']}] ${log['message']}');
-      buffer.writeln(log['stack_trace']);
-      buffer.writeln('---');
-    }
-    // 본문으로 보낸다. 첨부는 받는 앱(메일·메신저)에 따라 조용히 떨어진다 —
-    // 2026-08-10에 Gmail로 보냈더니 본문만 가고 .txt가 사라졌다.
-    // 로그가 길면 앱이 잘라먹으므로 최신 것부터 4,000자까지만 싣고,
-    // 그보다 길 때만 파일도 함께 붙인다.
-    final text = buffer.toString();
-    final head = text.length <= _shareTextLimit
-        ? text
-        : '${text.substring(0, _shareTextLimit)}\n…(뒷부분은 첨부파일에)';
-
-    if (text.length <= _shareTextLimit) {
-      await Share.share(head, subject: '세끌 오류 기록');
-      return;
-    }
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/sekkeul_error_log_${_stamp()}.txt');
-    await file.writeAsString(text);
-    await Share.shareXFiles([XFile(file.path)], text: head, subject: '세끌 오류 기록');
-  }
-
-  static const int _shareTextLimit = 4000;
-
   Future<void> _importBackup() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -326,6 +277,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           NotificationSettingsScreen(userType: widget.userType))),
             ),
             AppTheme.hairline(context),
+            // 알림이 안 울릴 때 어디가 막혔는지 보는 자리. 홈 알림함은
+            // "울렸을 것"을 역산해 채우는 곳이라 증거가 못 된다.
+            _glyphRow(
+              title: '알림 점검',
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const NotificationDoctorScreen())),
+            ),
+            AppTheme.hairline(context),
             ValueListenableBuilder<ThemeMode>(
               valueListenable: themeModeNotifier,
               builder: (context, mode, _) => _glyphRow(
@@ -366,11 +325,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _glyphRow(
                 title: '데이터 복원 (가져오기)',
                 onTap: _importBackup,
-              ),
-              AppTheme.hairline(context),
-              _glyphRow(
-                title: '오류 기록 내보내기',
-                onTap: _exportErrorLogs,
               ),
               AppTheme.hairline(context),
             ],
