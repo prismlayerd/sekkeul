@@ -4,7 +4,6 @@ import '../../theme/app_theme.dart';
 import '../../../core/tax_engine/tax_year.dart';
 import '../../../core/tax_engine/employee_tax.dart';
 import '../../../core/tax_engine/reserve_estimator.dart';
-import '../../components/amount_field.dart';
 import '../../theme/text_wrap.dart';
 
 /// 홈 "이번 달 현황" 패널 — 수입 + 지출 통합(에디토리얼: 카드 없이 선과 여백).
@@ -47,11 +46,13 @@ class HomeStatusSection extends StatefulWidget {
   final VoidCallback onOpenLedger;
   final VoidCallback onOpenMyInfo;
 
-  final bool showExpenseInput;
-  final TextEditingController expenseTargetInlineCtrl;
-  final VoidCallback onRequestExpenseInput;
-  final Future<void> Function(double value) onApplyExpenseInput;
-  final VoidCallback onCancelExpenseInput;
+  /// 지출 목표를 정하러 간다 — 가계부 분석 탭.
+  ///
+  /// 예전엔 홈에서 바로 적을 수 있었다. 그런데 가계부 분석 탭에도 같은 입력이
+  /// 있어서 두 곳이 서로를 모르는 채로 같은 값을 고쳤다. 연봉이 「내 정보」
+  /// 한 곳으로 간 것과 같은 이유로(2026-07-24) 여기도 한 곳으로 모은다 —
+  /// 홈은 **얼마나 썼는지 보여주는 자리**지 설정하는 자리가 아니다.
+  final VoidCallback onSetExpenseTarget;
 
   const HomeStatusSection({
     super.key,
@@ -74,11 +75,7 @@ class HomeStatusSection extends StatefulWidget {
     this.cardSavingCombined,
     required this.onOpenLedger,
     required this.onOpenMyInfo,
-    required this.showExpenseInput,
-    required this.expenseTargetInlineCtrl,
-    required this.onRequestExpenseInput,
-    required this.onApplyExpenseInput,
-    required this.onCancelExpenseInput,
+    required this.onSetExpenseTarget,
   });
 
   @override
@@ -134,7 +131,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     // 연봉 → 지출 목표 순서. 다 채우면 유도를 걷고 조용한 안내만 남긴다.
     final needsSalary = isEmployee && grossIncome <= 0;
     final needsBudget = !hasBudget;
-    final allSet = !needsSalary && !needsBudget && !widget.showExpenseInput;
+    final allSet = !needsSalary && !needsBudget;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +231,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           _rightEmpty(tert, null),
 
         // ── 지출 목표 진행 + 수정 ──
-        if (hasBudget && !widget.showExpenseInput) ...[
+        if (hasBudget) ...[
           const SizedBox(height: 14),
           _progressBlock(
             '지출 목표 ${_toWon(budget)}',
@@ -246,10 +243,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
                 : underBudget && totalSpent > 0
                     ? '목표 대비 ${_toWon(budget - totalSpent)} 절약 중이에요.'
                     : '지출을 추가해보세요.',
-            onEdit: () {
-              widget.expenseTargetInlineCtrl.text = comma(widget.expenseTarget.toInt());
-              widget.onRequestExpenseInput();
-            },
+            onEdit: widget.onSetExpenseTarget,
           ),
         ],
         // ── 지출 목표 유도 — 유형과 상관없이 처음부터 뜬다.
@@ -257,9 +251,9 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         // 연봉 단계가 없어 바로 떴다. 같은 기능이 유형에 따라 있고 없어 보였고,
         // 연봉 저장이 막히면 지출 목표를 영영 못 만드는 잠금이 됐다 (2026-08-10).
         // 대신 빈 상태에서 유도가 둘(연봉·지출 목표) 뜬다 — 그건 감수한다.
-        if (needsBudget || widget.showExpenseInput) ...[
+        if (needsBudget) ...[
           const SizedBox(height: 12),
-          _buildExpensePromptOrInput(ink, sub, accent),
+          _expensePrompt(sub, accent),
         ],
 
         // ── 카드 공제 → 올해 쌓인 예상 환급 (직장인 전용, A/B/C 3단계) ──
@@ -298,131 +292,34 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     );
   }
 
-  /// 지출 목표 프롬프트 → 탭 시 인라인 입력 전환 (높이 고정)
-  Widget _buildExpensePromptOrInput(Color ink, Color sub, Color accent) {
-    return _inlinePrompt(
-      expanded: widget.showExpenseInput,
-      // 지출 목표는 공제와 아무 상관이 없다 — 카드공제 문턱은 총급여의 25%로 정해져 있다
-      // (조특법 §126의2). "공제 기준을 잡아드려요"는 거짓말이었다.
-      promptText: '목표를 정하면 남은 돈을 알려드려요',
-      hintText: '이번 달 지출 목표',
-      controller: widget.expenseTargetInlineCtrl,
-      ink: ink, sub: sub, accent: accent,
-      onTapBanner: () {
-        widget.expenseTargetInlineCtrl.text =
-            widget.expenseTarget > 0 ? comma(widget.expenseTarget.toInt()) : '';
-        widget.onRequestExpenseInput();
-      },
-      onApply: () async {
-        final val = double.tryParse(widget.expenseTargetInlineCtrl.text.replaceAll(',', '')) ?? 0.0;
-        if (val > 0) {
-          await widget.onApplyExpenseInput(val);
-        } else {
-          widget.onCancelExpenseInput();
-        }
-      },
-    );
-  }
-
-  /// 홈 인라인 프롬프트 공통 위젯 — 도면(에디토리얼) 스타일
-  /// 안내 배너 ↔ 입력 행 페이드 전환, 양쪽 동일 높이로 스크롤 흔들림 방지
-  Widget _inlinePrompt({
-    required bool expanded,
-    required String promptText,
-    required String hintText,
-    required TextEditingController controller,
-    required VoidCallback onTapBanner,
-    required Future<void> Function() onApply,
-    required Color ink,
-    required Color sub,
-    required Color accent,
-  }) {
-    const h = 48.0;
-
-    // ── 안내: 01의 '내 정보에서 연봉을…'과 같은 인라인 링크 ──
-    // 점선 상자로 두었더니 절을 가르는 점선과 겹쳐 눈에 안 들어왔다.
-    // 종이 위에 상자를 하나 더 얹는 대신, 문장 한 줄과 화살표로 끝낸다.
-    final banner = GestureDetector(
-      onTap: onTapBanner,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        height: h,
-        child: Row(children: [
-          Expanded(
-            child: Text(promptText.keepWords,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTheme.sans(AppTheme.tsSM, accent, weight: FontWeight.w600)),
-          ),
-          const SizedBox(width: 8),
-          Icon(Icons.arrow_forward, size: 14, color: accent),
-        ]),
-      ),
-    );
-
-    // ── 입력 행: 헤어라인 필드 + 잉크 적용 버튼 ──
-    final inputRow = SizedBox(
-      height: h,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              inputFormatters: const [ThousandsFormatter()],
-              textAlign: TextAlign.right,
-              autofocus: true,
-              expands: true,
-              maxLines: null,
-              minLines: null,
-              style: AppTheme.sans(14, ink, weight: FontWeight.w600),
-              decoration: InputDecoration(
-                // 힌트와 단위가 같이 떠 있으면 '이번 달 지출 목표원'으로 읽힌다.
-                // 빈 칸에는 안내만, 숫자를 적기 시작하면 단위만 남긴다.
-                hintText: controller.text.isEmpty ? hintText : null,
-                hintStyle: AppTheme.sans(14, AppTheme.inkTertiary(context)),
-                suffixText: controller.text.isEmpty ? null : '원',
-                suffixStyle: AppTheme.sans(13, sub),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                filled: true,
-                fillColor: AppTheme.surface(context),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: BorderSide(color: AppTheme.line(context))),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: BorderSide(color: AppTheme.line(context))),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: BorderSide(color: accent, width: 1.5)),
-              ),
-              onChanged: (v) {
-                final n = v.replaceAll(RegExp(r'[^0-9]'), '');
-                final f = n.isEmpty ? '' : comma(int.parse(n));
-                controller.value = TextEditingValue(
-                  text: f, selection: TextSelection.collapsed(offset: f.length));
-                // 힌트↔단위가 입력 여부를 따라가야 하므로 다시 그린다.
-                setState(() {});
-              },
+  /// 지출 목표 유도 — 누르면 가계부 분석 탭으로 간다.
+  ///
+  /// 예전엔 여기서 바로 적을 수 있었다(인라인 입력칸). 가계부 분석 탭에도
+  /// 같은 입력이 있어서, 두 곳이 서로를 모르는 채로 같은 값을 고쳤다.
+  /// 01의 '내 정보에서 연봉을…'과 같은 꼴 — 문장 한 줄과 화살표로 끝낸다.
+  Widget _expensePrompt(Color sub, Color accent) {
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        onTap: widget.onSetExpenseTarget,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          height: 48,
+          child: Row(children: [
+            Expanded(
+              // 지출 목표는 공제와 아무 상관이 없다 — 카드공제 문턱은 총급여의
+              // 25%로 정해져 있다(조특법 §126의2). "공제 기준을 잡아드려요"는
+              // 거짓말이었다.
+              child: Text('목표를 정하면 남은 돈을 알려드려요'.keepWords,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTheme.sans(AppTheme.tsSM, accent, weight: FontWeight.w600)),
             ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: onApply,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(color: ink, borderRadius: BorderRadius.circular(4)),
-              child: Text('적용', style: AppTheme.sans(14, AppTheme.backgroundColor(context), weight: FontWeight.w700)),
-            ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Icon(Icons.arrow_forward, size: 14, color: accent),
+          ]),
+        ),
       ),
-    );
-
-    return AnimatedCrossFade(
-      duration: const Duration(milliseconds: 220),
-      crossFadeState: expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-      firstCurve: Curves.easeIn,
-      secondCurve: Curves.easeOut,
-      firstChild: banner,
-      secondChild: inputRow,
     );
   }
 

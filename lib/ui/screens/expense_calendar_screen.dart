@@ -129,7 +129,11 @@ class ExpenseCalendarScreen extends StatefulWidget {
   /// 'income' = 소득 기록, 'expense' = 지출 기록, null = 가계부(통합).
   final String? initialFocus;
 
-  const ExpenseCalendarScreen({super.key, this.initialFocus});
+  /// 어느 뷰로 열지 — 0=달력(기본) · 1=분석 · 2=연간.
+  /// 홈의 '지출 목표를 정하세요'가 분석 탭으로 곧장 들어온다.
+  final int initialView;
+
+  const ExpenseCalendarScreen({super.key, this.initialFocus, this.initialView = 0});
 
   @override
   State<ExpenseCalendarScreen> createState() => _ExpenseCalendarScreenState();
@@ -158,7 +162,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   LedgerProfile get _profile => LedgerProfile.of(_userType);
   bool get _isBusinessUser => _profile.tracksBusinessExpense;
 
-  int _activeView = 0; // 0=달력, 1=목록, 2=분석, 3=연간
+  late int _activeView = widget.initialView; // 0=달력, 1=분석, 2=연간
   List<ExpenseItem> _allExpenses = [];
   int _recurringPendingCount = 0;
   int _expenseTarget = 0;

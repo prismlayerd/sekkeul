@@ -101,8 +101,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   int _unreadNotifCount = 0; // 알림함 안읽음 배지
 
   // 홈 인라인 지출 목표 입력
-  bool _showExpenseInput = false;
-  final TextEditingController _expenseTargetInlineCtrl = TextEditingController();
 
   // FAQ 셔플 — 유형별 풀을 한 번 섞어두고 5개씩 창(window)으로 보여준다.
   // 버튼을 누르면 offset을 5씩 밀어 새 5개를 노출(끝에서 앞으로 순환)하므로, 계속 누르면 모든 질문을 볼 수 있다.
@@ -607,7 +605,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _freelancerIncomeController.dispose();
     _monthsController.dispose();
     _yellowUmbrellaController.dispose();
-    _expenseTargetInlineCtrl.dispose();
     _bannerTimer?.cancel();
     appRouteObserver.unsubscribe(this);
     super.dispose();
@@ -821,9 +818,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 
   /// 가계부로 이동 후 복귀 — 분석탭에서 바뀌었을 수 있는 유형별 지출 목표를 다시 읽어온다.
-  Future<void> _goToLedger() async {
+  Future<void> _goToLedger({int view = 0}) async {
     // 복귀 시 리로드는 didPopNext(RouteObserver)가 처리.
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpenseCalendarScreen()));
+    await Navigator.push(context,
+        MaterialPageRoute(builder: (_) => ExpenseCalendarScreen(initialView: view)));
   }
 
   /// 절세 팁 액션 키 → 화면 이동.
@@ -918,19 +916,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             cardSavingCombined: _cardSavingCombined,
             onOpenLedger: _goToLedger,
             onOpenMyInfo: _openProfile,
-            showExpenseInput: _showExpenseInput,
-            expenseTargetInlineCtrl: _expenseTargetInlineCtrl,
-            onRequestExpenseInput: () => setState(() => _showExpenseInput = true),
-            onApplyExpenseInput: (val) async {
-              setState(() {
-                _expenseTarget = val;
-                _savingGoalController.text = comma(val.toInt());
-                _showExpenseInput = false;
-              });
-              await dbService.setProfileTypeValues(_userType, expenseTarget: val);
-              _checkBudget();
-            },
-            onCancelExpenseInput: () => setState(() => _showExpenseInput = false),
+            onSetExpenseTarget: () => _goToLedger(view: 1),
           ),
           // 상태 카드에 아직 유도가 떠 있으면 백필 유도는 뒤로 미룬다 —
           // 요청은 한 번에 하나여야 눈에 들어온다(2026-07-25).
