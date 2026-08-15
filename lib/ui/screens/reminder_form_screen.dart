@@ -112,7 +112,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('알림을 삭제할까요?', style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
         content: Text('이 알림과 예약된 알림이 함께 사라져요.'.keepWords, style: AppTheme.sans(14, AppTheme.inkSecondary(ctx), height: 1.45)),
         actions: [

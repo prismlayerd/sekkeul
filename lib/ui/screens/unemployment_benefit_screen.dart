@@ -192,7 +192,7 @@ class _UnemploymentBenefitScreenState
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.orange.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(children: [
                         const Icon(Icons.warning_amber_rounded,
@@ -271,7 +271,7 @@ class _UnemploymentBenefitScreenState
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,11 +328,11 @@ class _UnemploymentBenefitScreenState
                   color: selected
                       ? primary
                       : primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(e.value,
                     style: TextStyle(
-                        color: selected ? Colors.white : subColor,
+                        color: selected ? AppTheme.backgroundColor(context) : subColor,
                         fontSize: 11,
                         fontWeight: FontWeight.w600)),
               ),

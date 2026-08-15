@@ -267,7 +267,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                 ),
                 child: Text('저장하기',
                     style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 16, fontWeight: FontWeight.bold)),
@@ -354,7 +354,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
         height: 32,
         decoration: BoxDecoration(
           color: (disabled ? primary.withValues(alpha: 0.08) : primary.withValues(alpha: 0.15)),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(4),
         ),
         child: Icon(icon, size: 18, color: disabled ? primary.withValues(alpha: 0.3) : primary),
       ),

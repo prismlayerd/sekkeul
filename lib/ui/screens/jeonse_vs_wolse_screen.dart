@@ -345,7 +345,7 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,13 +390,13 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
         suffixText: suffix,
         suffixStyle: TextStyle(color: subColor, fontSize: 13),
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(4),
             borderSide: BorderSide(color: Theme.of(context).dividerColor)),
         enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(4),
             borderSide: BorderSide(color: Theme.of(context).dividerColor)),
         focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(4),
             borderSide: BorderSide(color: primary, width: 1.5)),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

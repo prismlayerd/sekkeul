@@ -140,12 +140,12 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
                           height: 38,
                           decoration: BoxDecoration(
                             color: sel ? primary : primary.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                           alignment: Alignment.center,
                           child: Text('$n명',
                               style: TextStyle(
-                                  color: sel ? Colors.white : subColor,
+                                  color: sel ? AppTheme.backgroundColor(context) : subColor,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600)),
                         ),
@@ -209,7 +209,7 @@ class _SalaryNetScreenState extends State<SalaryNetScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

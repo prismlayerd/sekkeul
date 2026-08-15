@@ -75,7 +75,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: Theme.of(ctx).cardColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
           title: Text('PIN 설정 (4~6자리 숫자)'.keepWords,
               style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
           content: Column(
@@ -210,7 +210,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('백업에서 복원할까요?',
             style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
         content: Text('지금 기기에 있는 데이터는 백업 내용으로 덮어써져요.'.keepWords,
@@ -245,7 +245,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('개인정보처리방침',
             style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
         content: Text(
@@ -270,7 +270,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('이용 안내 및 면책',
             style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
         content: Text(
@@ -509,7 +509,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) => SimpleDialog(
         backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('화면 테마',
             style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
         children: [

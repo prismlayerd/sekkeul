@@ -109,7 +109,7 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
                       height: 26,
                       decoration: BoxDecoration(
                         color: _isYouth ? accent : line,
-                        borderRadius: BorderRadius.circular(13),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: AnimatedAlign(
                         duration: const Duration(milliseconds: 180),
@@ -121,8 +121,8 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
                           child: Container(
                             width: 20,
                             height: 20,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
+                            decoration: BoxDecoration(
+                              color: AppTheme.backgroundColor(context),
                               shape: BoxShape.circle,
                             ),
                           ),

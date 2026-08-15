@@ -193,7 +193,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('아직 준비 중이에요.',
-              style: AppTheme.sans(13, Colors.white)),
+              style: AppTheme.sans(13, AppTheme.backgroundColor(context))),
           backgroundColor: AppTheme.ink(context),
           behavior: SnackBarBehavior.floating,
           shape:

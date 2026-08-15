@@ -238,12 +238,12 @@ class _EarnedIncomeTaxCreditScreenState
                               color: sel
                                   ? primary
                                   : primary.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(4),
                             ),
                             alignment: Alignment.center,
                             child: Text('$i명',
                                 style: TextStyle(
-                                    color: sel ? Colors.white : subColor,
+                                    color: sel ? AppTheme.backgroundColor(context) : subColor,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600)),
                           ),
@@ -304,7 +304,7 @@ class _EarnedIncomeTaxCreditScreenState
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,12 +348,12 @@ class _EarnedIncomeTaxCreditScreenState
           height: 40,
           decoration: BoxDecoration(
             color: sel ? primary : primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(4),
           ),
           alignment: Alignment.center,
           child: Text(label,
               style: TextStyle(
-                  color: sel ? Colors.white : subColor,
+                  color: sel ? AppTheme.backgroundColor(context) : subColor,
                   fontSize: 12,
                   fontWeight: FontWeight.w600)),
         ),

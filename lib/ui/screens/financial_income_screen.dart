@@ -145,7 +145,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: (isOverThreshold ? Colors.redAccent : primary).withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(children: [
                         Icon(
@@ -199,7 +199,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.orange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(4),
                   border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                 ),
                 child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -227,7 +227,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,7 +311,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.redAccent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(4),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.event_note_rounded, color: Colors.redAccent, size: 14),

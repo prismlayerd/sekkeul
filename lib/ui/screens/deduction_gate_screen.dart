@@ -172,7 +172,7 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: on
-                    ? const Icon(Icons.check_rounded, size: 12, color: Colors.white)
+                    ? Icon(Icons.check_rounded, size: 12, color: AppTheme.backgroundColor(context))
                     : null,
               ),
               Expanded(
@@ -258,7 +258,7 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
               ),
               child: Center(
                 child: Text(n == 0 ? '건너뛰고 계산기 열기' : '$n개 입력하러 가기',
-                    style: AppTheme.sans(15, n == 0 ? ink : Colors.white,
+                    style: AppTheme.sans(15, n == 0 ? ink : AppTheme.backgroundColor(context),
                         weight: FontWeight.w700, spacing: -0.2)),
               ),
             ),

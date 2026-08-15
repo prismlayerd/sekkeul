@@ -250,7 +250,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,12 +293,12 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
           height: 40,
           decoration: BoxDecoration(
             color: sel ? primary : primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(4),
           ),
           alignment: Alignment.center,
           child: Text(label,
               style: TextStyle(
-                  color: sel ? Colors.white : subColor,
+                  color: sel ? AppTheme.backgroundColor(context) : subColor,
                   fontSize: 13,
                   fontWeight: FontWeight.w600)),
         ),

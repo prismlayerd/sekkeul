@@ -87,7 +87,7 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
 
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: AppTheme.sans(13, Colors.white)),
+      content: Text(msg, style: AppTheme.sans(13, AppTheme.backgroundColor(context))),
       backgroundColor: AppTheme.ink(context),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),

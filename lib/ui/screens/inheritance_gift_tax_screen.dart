@@ -192,7 +192,7 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
                         horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: primary.withValues(alpha: 0.07),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -308,7 +308,7 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,12 +352,12 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
           height: 40,
           decoration: BoxDecoration(
             color: sel ? primary : primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(4),
           ),
           alignment: Alignment.center,
           child: Text(label,
               style: TextStyle(
-                  color: sel ? Colors.white : subColor,
+                  color: sel ? AppTheme.backgroundColor(context) : subColor,
                   fontSize: 13,
                   fontWeight: FontWeight.w600)),
         ),
@@ -374,11 +374,11 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
         decoration: BoxDecoration(
           color: sel ? primary : primary.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(4),
         ),
         child: Text(label,
             style: TextStyle(
-                color: sel ? Colors.white : subColor,
+                color: sel ? AppTheme.backgroundColor(context) : subColor,
                 fontSize: 13,
                 fontWeight: FontWeight.w600)),
       ),

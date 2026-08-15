@@ -341,7 +341,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('세금 적립 카드가 생겼어요'.keepWords, style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
         content: Text(
           '이번 달 수입에서 세금·4대보험으로 미리 떼어둬야 할 금액과, 지금 마음 놓고 써도 되는 금액을 매달 계산해서 보여드려요. '
@@ -582,7 +582,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           decoration: BoxDecoration(
             color: accent.withValues(alpha: 0.08),
             border: Border.all(color: accent.withValues(alpha: 0.4)),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(4),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -693,7 +693,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text(t.title, style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
         content: Text(t.body, style: AppTheme.sans(13, sub, height: 1.5)),
         actions: [
@@ -752,7 +752,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('기타소득이 300만원을 넘었어요'.keepWords, style: AppTheme.serif(17, ink, weight: FontWeight.w400, spacing: -0.3)),
         content: Text(
           '올해 기록한 기타소득의 소득금액(필요경비 60% 제외 후)이 300만원을 넘었어요. '

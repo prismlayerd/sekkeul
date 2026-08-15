@@ -138,12 +138,12 @@ class _HousingSubscriptionScreenState
                         color: sel
                             ? primary
                             : primary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         '${_dependentLabels[i]}  ${_dependentPoints[i]}점',
                         style: TextStyle(
-                            color: sel ? Colors.white : subColor,
+                            color: sel ? AppTheme.backgroundColor(context) : subColor,
                             fontSize: 12,
                             fontWeight: FontWeight.w600),
                       ),
@@ -216,7 +216,7 @@ class _HousingSubscriptionScreenState
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(_grade(total),
                             style: TextStyle(
@@ -252,7 +252,7 @@ class _HousingSubscriptionScreenState
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,11 +355,11 @@ class _HousingSubscriptionScreenState
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: sel ? primary : primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(labels[i],
                     style: TextStyle(
-                        color: sel ? Colors.white : subColor,
+                        color: sel ? AppTheme.backgroundColor(context) : subColor,
                         fontSize: 12,
                         fontWeight: FontWeight.w600)),
               ),

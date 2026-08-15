@@ -165,7 +165,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
                         color:
                             (workDays >= 365 ? primary : Colors.orange)
                                 .withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(children: [
                         Icon(
@@ -281,7 +281,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,7 +332,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               border: Border.all(color: Theme.of(context).dividerColor),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(4),
             ),
             child: Row(children: [
               Expanded(

@@ -197,7 +197,7 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +233,7 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
         decoration: BoxDecoration(
           color: selected ? primary.withValues(alpha: 0.12) : Colors.transparent,
           border: Border.all(color: selected ? primary : subColor.withValues(alpha: 0.3)),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(4),
         ),
         child: Text(label,
             style: TextStyle(

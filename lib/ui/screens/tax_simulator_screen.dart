@@ -902,7 +902,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           hintStyle: TextStyle(color: bodyColor.withValues(alpha: 0.2), fontSize: 20),
           filled: true,
           fillColor: Theme.of(context).cardColor,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: BorderSide.none),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           suffixText: '원',
           suffixStyle: TextStyle(color: bodyColor, fontSize: 20, fontWeight: FontWeight.bold),
@@ -957,7 +957,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(4),
               border: isBetter ? Border.all(color: AppTheme.accentColor(context), width: 1.4) : null,
             ),
             child: Column(
@@ -1012,7 +1012,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: tone.withValues(alpha: 0.4), width: 1.4),
       ),
       child: Column(
@@ -1055,7 +1055,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('🏠 월세 세액공제 꿀팁'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontWeight: FontWeight.bold)),
         content: Text(
           '새 계약서가 없어도 계좌이체 내역과 주민등록등본만 있으면 5월 종합소득세 때 최대 17%까지 똑같이 돌려받을 수 있어요!\n\n'
@@ -1516,7 +1516,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: AppTheme.backgroundColor(context), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: AppTheme.backgroundColor(context), borderRadius: BorderRadius.circular(4)),
               child: Text(
                 // 두 문장짜리 안내가 폭 기준으로 아무 데서나 잘려 넘어가지 않도록
                 // 문장 경계('. ')에서 명시적으로 줄바꿈.
@@ -1569,7 +1569,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.3), width: 1),
       ),
       child: Column(
@@ -2104,7 +2104,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                             hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.2), fontSize: 18),
                             filled: true,
                             fillColor: AppTheme.backgroundColor(context),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: BorderSide.none),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                             suffixText: '원',
                             suffixStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 18, fontWeight: FontWeight.bold),
@@ -2363,7 +2363,7 @@ class _SimulatorTossButtonState extends State<SimulatorTossButton> with SingleTi
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Theme.of(context).textTheme.bodyLarge!.color!, // 메인 강조 버튼은 화이트
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
             widget.text,

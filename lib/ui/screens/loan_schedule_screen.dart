@@ -153,7 +153,7 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
                             ),
                             child: Text(methods[i],
                                 style: AppTheme.sans(AppTheme.tsMD,
-                                    sel ? Colors.white : sub,
+                                    sel ? AppTheme.backgroundColor(context) : sub,
                                     weight: sel
                                         ? FontWeight.w600
                                         : FontWeight.w400)),

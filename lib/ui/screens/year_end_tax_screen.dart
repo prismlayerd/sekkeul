@@ -210,7 +210,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       context: context,
       backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
       ),
       builder: (context) {
         return SafeArea(
@@ -264,7 +264,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 40),
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -481,7 +481,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             decoration: BoxDecoration(
               color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(4),
               border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.3)),
             ),
             child: Row(
@@ -510,10 +510,10 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
             Expanded(
               child: InkWell(
                 onTap: () => _pickAndParseFile('PDF'),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(4),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 20),
-                  decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
+                  decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(4)),
                   child: Column(
                     children: [
                       Icon(Icons.picture_as_pdf_rounded, color: Theme.of(context).primaryColor, size: 36),
@@ -528,10 +528,10 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
             Expanded(
               child: InkWell(
                 onTap: () => _pickAndParseFile('Excel'),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(4),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 20),
-                  decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16)),
+                  decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(4)),
                   child: Column(
                     children: [
                       Icon(Icons.grid_on_rounded, color: Theme.of(context).textTheme.bodyLarge!.color!, size: 36),
@@ -580,7 +580,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           child: Container(
             height: 60,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: Theme.of(context).textTheme.bodyLarge!.color!, borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(color: Theme.of(context).textTheme.bodyLarge!.color!, borderRadius: BorderRadius.circular(4)),
             child: Text('연말정산 진단하기', style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 18, fontWeight: FontWeight.bold)),
           ),
         ),
@@ -614,7 +614,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(4),
             border: Border.all(
               color: isRefund ? Theme.of(context).primaryColor.withValues(alpha: 0.3) : const Color(0xFFFF4D4D).withValues(alpha: 0.3),
             ),
@@ -659,7 +659,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20)),
+          decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(4)),
           child: Column(
             children: [
               _buildDeductionRow('총급여', comma(salary.toInt()), false),
@@ -713,7 +713,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).primaryColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             ),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(
@@ -748,7 +748,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           child: OutlinedButton(
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: Theme.of(context).primaryColor),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             ),
             onPressed: _saveTaxRecord,
             child: Text('기록부에 저장하기', style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 18, fontWeight: FontWeight.bold)),
@@ -802,7 +802,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(4),
             border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.2)),
           ),
           child: Column(
@@ -880,7 +880,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.3)),
       ),
       child: Column(
@@ -933,7 +933,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: Theme.of(context).primaryColor,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 '네, 준비해주세요',
@@ -1048,7 +1048,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: Theme.of(context).dividerColor),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                 minimumSize: const Size(0, 50),
               ),
               onPressed: () {
@@ -1067,7 +1067,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                 minimumSize: const Size(0, 50),
               ),
               onPressed: () {
@@ -1120,7 +1120,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   '→ ${comma(previewChildCredit.toInt())}원 공제',
@@ -1172,7 +1172,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: selected ? Theme.of(context).textTheme.bodyLarge!.color! : Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(4),
           border: Border.all(color: selected ? Theme.of(context).textTheme.bodyLarge!.color! : Theme.of(context).dividerColor),
         ),
         child: Text(
@@ -1206,7 +1206,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(4),
             border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.25)),
           ),
           child: Row(
@@ -1390,7 +1390,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         hintStyle: TextStyle(color: Theme.of(context).dividerColor),
         filled: true,
         fillColor: Theme.of(context).cardColor,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: BorderSide.none),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         suffixText: '명',
         suffixStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!),
@@ -1542,7 +1542,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(4),
             border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.35)),
           ),
           child: Column(
@@ -1575,7 +1575,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20)),
+          decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(4)),
           child: Column(
             children: [
               if (_wizardChildTaxCredit > 0)
@@ -1621,7 +1621,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Theme.of(context).primaryColor.withValues(alpha: 0.07),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(4),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1645,7 +1645,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).primaryColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             ),
             onPressed: () {
               final sr = _specialResult;

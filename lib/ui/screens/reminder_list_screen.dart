@@ -243,7 +243,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('알릴 시각', style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
         content: SizedBox(
           height: 140,
@@ -349,7 +349,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         title: Text('알릴 시각', style: AppTheme.sans(15, AppTheme.ink(ctx), weight: FontWeight.w700)),
         content: SizedBox(
           height: 140,

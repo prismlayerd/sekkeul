@@ -724,7 +724,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                 borderRadius: BorderRadius.circular(3),
               ),
               child: Text('$day',
-                  style: AppTheme.sans(13, isSelected ? Colors.white : ink,
+                  style: AppTheme.sans(13, isSelected ? AppTheme.backgroundColor(context) : ink,
                       weight: isSelected ? FontWeight.w700 : FontWeight.w400)),
             ),
           );
@@ -860,7 +860,7 @@ class _AmountDialogState extends State<_AmountDialog> {
 
     return AlertDialog(
       backgroundColor: Theme.of(context).cardColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
       contentPadding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
       title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

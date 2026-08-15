@@ -107,7 +107,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Row(children: [
                 Icon(Icons.info_outline_rounded, color: primary, size: 18),
@@ -147,7 +147,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.redAccent.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(children: [
                         const Icon(Icons.warning_rounded,
@@ -177,15 +177,15 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                       suffixStyle:
                           TextStyle(color: subColor, fontSize: 14),
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(4),
                           borderSide: BorderSide(
                               color: Theme.of(context).dividerColor)),
                       enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(4),
                           borderSide: BorderSide(
                               color: Theme.of(context).dividerColor)),
                       focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(4),
                           borderSide:
                               BorderSide(color: primary, width: 1.5)),
                     ),
@@ -210,13 +210,13 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                             color: selected
                                 ? primary
                                 : primary.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                           alignment: Alignment.center,
                           child: Text('$day일',
                               style: TextStyle(
                                   color: selected
-                                      ? Colors.white
+                                      ? AppTheme.backgroundColor(context)
                                       : subColor,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600)),
@@ -288,7 +288,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

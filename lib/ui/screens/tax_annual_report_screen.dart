@@ -307,7 +307,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
                     height: 48,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(4)),
-                    child: const Text('①진단으로 가기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: Text('①진단으로 가기', style: TextStyle(color: AppTheme.backgroundColor(context), fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -388,7 +388,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           width: 22, height: 22,
           alignment: Alignment.center,
           decoration: BoxDecoration(color: highlight ? primary : subColor.withValues(alpha: 0.3), shape: BoxShape.circle),
-          child: Text('$n', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+          child: Text('$n', style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 11, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -681,7 +681,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       Color primary, Color textColor, Color subColor, Color cardColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(4)),
       child: Row(children: [
         const Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
         const SizedBox(width: 12),
@@ -734,7 +734,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     return Container(
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(4),
         border: hasValue ? Border.all(color: primary.withValues(alpha: 0.5), width: 1.2) : null,
       ),
       child: Column(children: [
@@ -746,7 +746,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
               _expanded.add(id);
             }
           }),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(4),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             child: Row(children: [
@@ -1017,7 +1017,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           width: 22, height: 22,
           alignment: Alignment.center,
           decoration: BoxDecoration(color: primary, shape: BoxShape.circle),
-          child: Text(num, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+          child: Text(num, style: TextStyle(color: AppTheme.backgroundColor(context), fontSize: 11, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(width: 10),
         Expanded(child: Text(text, style: TextStyle(color: textColor, fontSize: 12, height: 1.5))),

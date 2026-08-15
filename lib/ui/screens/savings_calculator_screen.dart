@@ -268,7 +268,7 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: subColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,12 +311,12 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
           height: 40,
           decoration: BoxDecoration(
             color: sel ? primary : primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(4),
           ),
           alignment: Alignment.center,
           child: Text(label,
               style: TextStyle(
-                  color: sel ? Colors.white : subColor,
+                  color: sel ? AppTheme.backgroundColor(context) : subColor,
                   fontSize: 13,
                   fontWeight: FontWeight.w600)),
         ),
@@ -336,13 +336,13 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
         suffixText: suffix,
         suffixStyle: TextStyle(color: subColor, fontSize: 13),
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(4),
             borderSide: BorderSide(color: Theme.of(context).dividerColor)),
         enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(4),
             borderSide: BorderSide(color: Theme.of(context).dividerColor)),
         focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(4),
             borderSide: BorderSide(color: primary, width: 1.5)),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
