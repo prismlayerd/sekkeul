@@ -67,3 +67,9 @@ scratch/
 
 # 폐기된 에이전트 워크플로(ARCHITECT/BUILDER/REVIEWER)의 빈 템플릿.
 project-folder/
+
+# 아이콘·스플래시 미리보기는 design/make_*.py로 언제든 다시 만든다.
+design/icon_barcode_*.png
+design/launch_preview.png
+design/splash_*.png
+design/icon_ship_preview.png

@@ -10,6 +10,7 @@ import 'core/security/notification_helper.dart';
 import 'core/security/app_lock_service.dart';
 import 'core/navigation/app_route_observer.dart';
 
+import 'ui/components/splash_tear.dart';
 import 'ui/theme/app_theme.dart';
 
 /// 앱 시작 준비가 실패한 사유. DB가 안 열린 기기에서는 오류 기록 테이블에
@@ -73,7 +74,17 @@ class SeculApp extends StatelessWidget {
           final scaler = MediaQuery.textScalerOf(context).clamp(minScaleFactor: 1.0, maxScaleFactor: 1.3);
           return MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: scaler),
-            child: child!,
+            // 종이 바탕은 앱 **맨 밑**에 한 장만 깐다. 위에 덮으면 버튼·입력창·
+            // 아이콘 위로 결이 지나가 표면이 지저분해진다. 화면들의 Scaffold는
+            // 배경이 투명이라(app_theme) 이 한 장이 그대로 비친다.
+            //
+            // 물결 뜯김은 그 위에 한 번만 얹힌다. 여기(빌더)에 두면 콜드 스타트
+            // 한 번만 만들어지고, 화면을 옮겨 다니거나 백그라운드에서 돌아와도
+            // 다시 재생되지 않는다.
+            child: Stack(children: [
+              AppTheme.paperBackdrop(context, child: child!),
+              const SplashTear(),
+            ]),
           );
         },
         home: const _AppLockGate(child: HomeScreen()),
