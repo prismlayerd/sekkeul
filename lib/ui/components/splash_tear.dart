@@ -1,8 +1,7 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/wave.dart';
 
 /// 켜지는 순간 — 종이가 물결을 따라 뜯긴다.
 ///
@@ -109,20 +108,15 @@ class _TearPainter extends CustomPainter {
   static const _steps = 200;
 
   /// 뜯긴 자리를 그리는 물결선. [dy]만큼 통째로 내려 그린다.
-  List<Offset> _seam(Size size, double dy) {
-    final amp = size.width * _ampR;
-    final centerY = size.height / 2 + dy;
-    const c = (_hitch + 0.5) / _lobes;
-    return [
-      for (var i = 0; i <= _steps; i++)
-        () {
-          final u = i / _steps;
-          final d = (u - c) / (0.55 / _lobes);
-          final a = amp * (1 + _hitchK * math.exp(-(d * d)));
-          return Offset(size.width * u, centerY - a * math.sin(2 * math.pi * _lobes * u));
-        }(),
-    ];
-  }
+  List<Offset> _seam(Size size, double dy) => waveEdge(
+        size: size,
+        lobes: _lobes,
+        amp: size.width * _ampR,
+        dy: dy,
+        hitchK: _hitchK,
+        hitch: _hitch,
+        steps: _steps,
+      );
 
   /// 물결선 위(또는 아래) 화면 전체를 덮는 종이 조각.
   Path _piece(Size size, double dy, {required bool upper}) {

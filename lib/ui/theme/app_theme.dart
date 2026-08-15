@@ -1,9 +1,10 @@
-import 'dart:math' as math;
 import 'dart:math' show Random;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+
+import 'wave.dart';
 
 final NumberFormat _thousands = NumberFormat('#,###');
 
@@ -869,28 +870,22 @@ class _WaveMarkPainter extends CustomPainter {
   static double _lobesFor(Size size) =>
       (size.width / size.height) / _lobeSpan;
 
-  List<Offset> _edge(Size size, double offset, double hitchK) {
-    final amp = size.height * _ampR;
-    final y = size.height / 2 + offset;
-    final lobes = _lobesFor(size);
-    return [
-      for (var i = 0; i <= _steps; i++)
-        () {
-          final t = i / _steps;
-          final c = (_hitch + 0.5) / lobes;
-          final d = (t - c) / (0.55 / lobes);
-          final a = amp * (1 + hitchK * math.exp(-(d * d)));
-          return Offset(size.width * t, y - a * math.sin(2 * math.pi * lobes * t));
-        }(),
-    ];
-  }
+  List<Offset> _edge(Size size, double offset, double hitchK) => waveEdge(
+        size: size,
+        lobes: _lobesFor(size),
+        amp: size.height * _ampR,
+        dy: offset,
+        hitchK: hitchK,
+        hitch: _hitch,
+        steps: _steps,
+      );
 
   @override
   void paint(Canvas canvas, Size size) {
     final th = size.height * _thR;
     // 봉우리가 위아래로 넘치지 않을 만큼만 키운다 — 아이콘 쪽과 같은 규칙.
-    final head = size.height * 0.5 - th / 2;
-    final k = math.min(1.6, math.max(0.25, head / (size.height * _ampR) - 1));
+    final k = waveHitchK(
+        half: size.height * 0.5, th: th, amp: size.height * _ampR);
     final top = _edge(size, -th / 2, k);
     final bottom = _edge(size, th / 2, k).reversed;
     final path = Path()..moveTo(top.first.dx, top.first.dy);
