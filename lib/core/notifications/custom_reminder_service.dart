@@ -185,7 +185,9 @@ class CustomReminderService {
   Future<void> _safeCancel(int id) async {
     try {
       await notificationHelper.cancel(id);
-    } catch (_) {}
+    } catch (_) {
+      // 이미 없는 예약을 지우는 것도 실패로 온다 — 원하던 결과와 같다.
+    }
   }
 }
 

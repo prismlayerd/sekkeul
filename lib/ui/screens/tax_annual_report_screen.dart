@@ -129,7 +129,11 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       }
       _annualCreditCard = credit;
       _annualDebitCash = debit;
-    } catch (_) {}
+    } catch (e, st) {
+      // 여기서 던지면 카드 사용액이 0으로 남아 환급 추정이 조용히 작아진다.
+      // 화면은 계속 띄우되(0이라도 다른 칸은 쓸모 있다) 흔적은 남긴다.
+      await dbService.insertErrorLog('연말정산 화면 불러오기 실패: $e', st.toString());
+    }
 
     if (mounted) {
       setState(() => _isLoading = false);

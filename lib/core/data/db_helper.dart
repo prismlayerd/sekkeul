@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:path/path.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 import '../security/crypto_helper.dart';
@@ -291,6 +291,8 @@ class SqfliteDatabaseHelper implements DatabaseService {
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
+
+    await _flushMigrationFailures();
   }
 
   Future<bool> _isAlreadyEncrypted(String path, String key) async {
@@ -499,21 +501,51 @@ class SqfliteDatabaseHelper implements DatabaseService {
         await db.execute(_errorLogTableSql);
   }
 
+  /// 마이그레이션 도중 삼킨 실패. DB를 다 연 뒤에 error_log로 흘린다 —
+  /// 여는 도중에는 [_db]가 아직 없어서 [insertErrorLog]가 조용히 아무것도 안 한다.
+  final List<String> _migrationFailures = [];
+
+  /// 스키마 이전 한 걸음.
+  ///
+  /// 실패해도 다음 걸음으로 간다 — 대부분은 "컬럼이 이미 있다"라서 무해하고,
+  /// 여기서 멈추면 뒤따르는 이전이 통째로 안 걸려 앱이 더 크게 깨진다.
+  /// 다만 **조용히** 넘어가지는 않는다. 진짜 실패한 이전은 남아야 보인다.
+  Future<void> _step(String label, Future<void> Function() run) async {
+    try {
+      await run();
+    } catch (e) {
+      _migrationFailures.add('$label: $e');
+    }
+  }
+
+  Future<void> _flushMigrationFailures() async {
+    if (_migrationFailures.isEmpty) return;
+    final failures = List<String>.of(_migrationFailures);
+    _migrationFailures.clear();
+    try {
+      for (final f in failures) {
+        await insertErrorLog('DB 이전 실패 — $f', '');
+      }
+    } catch (e) {
+      debugPrint('이전 실패 기록을 남기지 못했다: $e');
+    }
+  }
+
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
         if (oldVersion < 2) {
-          try {
+          await _step('v2', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN monthly_income REAL');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 3) {
-          try {
+          await _step('v3', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN is_married INTEGER');
             await db.execute('ALTER TABLE user_profile ADD COLUMN is_spouse_dependent INTEGER');
             await db.execute('ALTER TABLE user_profile ADD COLUMN has_spouse_disability INTEGER');
             await db.execute('ALTER TABLE user_profile ADD COLUMN has_self_disability INTEGER');
             await db.execute('ALTER TABLE user_profile ADD COLUMN disabled_dependent_count INTEGER');
-          } catch (e) {}
-          try {
+          });
+          await _step('v3', () async {
             await db.execute('''
               CREATE TABLE tax_records (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -524,31 +556,31 @@ class SqfliteDatabaseHelper implements DatabaseService {
                 created_at TEXT
               )
             ''');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 4) {
-          try {
+          await _step('v4', () async {
             await db.execute('''
               CREATE TABLE banner_states (
                 banner_id TEXT PRIMARY KEY,
                 hide_until_epoch INTEGER
               )
             ''');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 5) {
-          try {
+          await _step('v5', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN data_mode TEXT');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 6) {
-          try {
+          await _step('v6', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN paid_tax REAL');
             await db.execute('ALTER TABLE user_profile ADD COLUMN withholding_text TEXT');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 7) {
-          try {
+          await _step('v7', () async {
             await db.execute('''
               CREATE TABLE monthly_card_usage (
                 year INTEGER,
@@ -558,15 +590,15 @@ class SqfliteDatabaseHelper implements DatabaseService {
                 PRIMARY KEY (year, month)
               )
             ''');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 8) {
-          try {
+          await _step('v8', () async {
             await db.execute('ALTER TABLE expenses ADD COLUMN end_date TEXT');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 9) {
-          try {
+          await _step('v9', () async {
             await db.execute('''
               CREATE TABLE monthly_income_records (
                 year INTEGER,
@@ -575,35 +607,35 @@ class SqfliteDatabaseHelper implements DatabaseService {
                 PRIMARY KEY (year, month)
               )
             ''');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 10) {
-          try {
+          await _step('v10', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN expense_target REAL');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 11) {
-          try {
+          await _step('v11', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN has_elderly_70plus INTEGER');
             await db.execute('ALTER TABLE user_profile ADD COLUMN is_female_head INTEGER');
             await db.execute('ALTER TABLE user_profile ADD COLUMN is_single_parent INTEGER');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 12) {
-          try {
+          await _step('v12', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN wedding_year INTEGER');
             await db.execute('ALTER TABLE user_profile ADD COLUMN children_count_8plus INTEGER');
             await db.execute('ALTER TABLE user_profile ADD COLUMN newborn_count INTEGER');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 13) {
-          try {
+          await _step('v13', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN is_sme_employee INTEGER');
             await db.execute('ALTER TABLE user_profile ADD COLUMN sme_start_year INTEGER');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 14) {
-          try {
+          await _step('v14', () async {
             await db.execute('''
               CREATE TABLE IF NOT EXISTS income_entries (
                 id TEXT PRIMARY KEY,
@@ -613,25 +645,25 @@ class SqfliteDatabaseHelper implements DatabaseService {
                 income_type TEXT
               )
             ''');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 15) {
-          try {
+          await _step('v15', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN pay_day INTEGER DEFAULT 25');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 16) {
-          try {
+          await _step('v16', () async {
             await db.execute('ALTER TABLE income_entries ADD COLUMN end_date TEXT');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 17) {
-          try {
+          await _step('v17', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN type_identified INTEGER DEFAULT 0');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 18) {
-          try {
+          await _step('v18', () async {
             await db.execute('''
               CREATE TABLE IF NOT EXISTS report_drafts (
                 user_type TEXT PRIMARY KEY,
@@ -642,10 +674,10 @@ class SqfliteDatabaseHelper implements DatabaseService {
                 created_at TEXT
               )
             ''');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 19) {
-          try {
+          await _step('v19', () async {
             await db.execute('''
               CREATE TABLE IF NOT EXISTS annual_records (
                 user_type TEXT PRIMARY KEY,
@@ -653,35 +685,35 @@ class SqfliteDatabaseHelper implements DatabaseService {
                 created_at TEXT
               )
             ''');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 20) {
-          try {
+          await _step('v20', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN age INTEGER');
             await db.execute('ALTER TABLE user_profile ADD COLUMN military_months INTEGER');
-          } catch (e) {}
-          try {
+          });
+          await _step('v20', () async {
             await db.execute(_remindersTableSql);
-          } catch (e) {}
+          });
         }
         if (oldVersion < 21) {
-          try {
+          await _step('v21', () async {
             await db.execute("ALTER TABLE reminders ADD COLUMN frequency TEXT DEFAULT 'once'");
             await db.execute('ALTER TABLE reminders ADD COLUMN weekday INTEGER');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 22) {
-          try {
+          await _step('v22', () async {
             await db.execute(_reminderSettingsTableSql);
-          } catch (e) {}
+          });
         }
         if (oldVersion < 23) {
-          try {
+          await _step('v23', () async {
             await db.execute(_notificationLogTableSql);
-          } catch (e) {}
+          });
         }
         if (oldVersion < 24) {
-          try {
+          await _step('v24', () async {
             await db.execute('ALTER TABLE expenses ADD COLUMN payment_method TEXT');
             // 기존 category(결제수단) → payment_method로 이관, category는 '기타'(미분류)로 초기화
             final rows = await db.query('expenses');
@@ -695,77 +727,79 @@ class SqfliteDatabaseHelper implements DatabaseService {
                     'category': encNewCat,
                   }, where: 'id = ?', whereArgs: [row['id']]);
                 }
-              } catch (_) {}
+              } catch (e) {
+                _migrationFailures.add('v24 행 ${row['id']}: $e');
+              }
             }
-          } catch (e) {}
+          });
         }
         if (oldVersion < 25) {
-          try {
+          await _step('v25', () async {
             await db.execute(_recurringTemplatesTableSql);
             await db.execute(_recurringConfirmationsTableSql);
-          } catch (e) {}
+          });
         }
         if (oldVersion < 26) {
-          try {
+          await _step('v26', () async {
             await db.execute(_cardPaymentDatesTableSql);
-          } catch (e) {}
+          });
         }
         if (oldVersion < 27) {
-          try {
+          await _step('v27', () async {
             await db.execute(_appStateTableSql);
-          } catch (e) {}
-          try {
+          });
+          await _step('v27', () async {
             await db.execute('ALTER TABLE reminders ADD COLUMN weekdays TEXT');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 28) {
-          try {
+          await _step('v28', () async {
             await db.execute(_eventReminderPrefsTableSql);
-          } catch (e) {}
+          });
         }
         if (oldVersion < 29) {
-          try {
+          await _step('v29', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN owns_car INTEGER');
             await db.execute('ALTER TABLE user_profile ADD COLUMN owns_house INTEGER');
-          } catch (e) {}
+          });
         }
         if (oldVersion < 30) {
-          try {
+          await _step('v30', () async {
             await db.execute(_profileTypeValuesTableSql);
-          } catch (e) {}
+          });
         }
         // 프리랜서·N잡러 사업경비 인정 / 3.3% 원천징수 사업소득 구분 (v31)
         if (oldVersion < 31) {
-          try {
+          await _step('v31', () async {
             await db.execute('ALTER TABLE expenses ADD COLUMN is_business INTEGER DEFAULT 0');
-          } catch (e) {}
-          try {
+          });
+          await _step('v31', () async {
             await db.execute('ALTER TABLE income_entries ADD COLUMN is_withheld INTEGER DEFAULT 0');
-          } catch (e) {}
-          try {
+          });
+          await _step('v31', () async {
             await db.execute('ALTER TABLE recurring_templates ADD COLUMN is_business INTEGER DEFAULT 0');
-          } catch (e) {}
+          });
         }
         // 프리랜서·N잡러 세금·4대보험 적립 추정용 프로필 필드 (v32)
         if (oldVersion < 32) {
-          try {
+          await _step('v32', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN occupation_code TEXT');
-          } catch (e) {}
-          try {
+          });
+          await _step('v32', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN property_value REAL');
-          } catch (e) {}
-          try {
+          });
+          await _step('v32', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN pension_enrolled INTEGER DEFAULT 0');
-          } catch (e) {}
-          try {
+          });
+          await _step('v32', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN health_enrolled INTEGER DEFAULT 0');
-          } catch (e) {}
-          try {
+          });
+          await _step('v32', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN employment_enrolled INTEGER DEFAULT 0');
-          } catch (e) {}
-          try {
+          });
+          await _step('v32', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN industrial_accident_enrolled INTEGER DEFAULT 0');
-          } catch (e) {}
+          });
         }
         // 즐겨찾기 빠른 입력 프리셋 (v33)
         if (oldVersion < 33) {
@@ -773,56 +807,56 @@ class SqfliteDatabaseHelper implements DatabaseService {
         }
         // 기장의무 판정용 프로필 필드 — 직전연도 수입·신규사업자·겸업 (v34)
         if (oldVersion < 34) {
-          try {
+          await _step('v34', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN prior_year_income REAL');
-          } catch (e) {}
-          try {
+          });
+          await _step('v34', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN is_new_business INTEGER DEFAULT 0');
-          } catch (e) {}
-          try {
+          });
+          await _step('v34', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN has_multiple_businesses INTEGER DEFAULT 0');
-          } catch (e) {}
+          });
         }
         // 가계부 유형별 분리 — 기존 기록은 user_type NULL(공통)로 남고, 앞으로 새로 적는
         // 기록부터 현재 선택된 유형으로 태깅된다 (v35).
         if (oldVersion < 35) {
-          try {
+          await _step('v35', () async {
             await db.execute('ALTER TABLE expenses ADD COLUMN user_type TEXT');
-          } catch (e) {}
-          try {
+          });
+          await _step('v35', () async {
             await db.execute('ALTER TABLE income_entries ADD COLUMN user_type TEXT');
-          } catch (e) {}
+          });
         }
         // 전역 에러 로그 (v36)
         if (oldVersion < 36) {
-          try {
+          await _step('v36', () async {
             await db.execute(_errorLogTableSql);
-          } catch (e) {}
+          });
         }
         // monthly_income_records 캐시 제거 (v37) — income_entries를 유형별로 직접
         // 합산하는 방식(T-3/T-4)으로 대체되어 더 이상 쓰지 않음(T-4).
         if (oldVersion < 37) {
-          try {
+          await _step('v37', () async {
             await db.execute('DROP TABLE IF EXISTS monthly_income_records');
-          } catch (e) {}
+          });
         }
         // 건강보험 지역가입자 연간 납부액 (v38) — 전액 소득공제 대상인데 그동안
         // 세무 시뮬레이터 화면 안에서만 살아 있어, 적립·환급 계산이 이 공제를
         // 빼놓고 세액을 과대 추정했다.
         if (oldVersion < 38) {
-          try {
+          await _step('v38', () async {
             await db.execute(
                 'ALTER TABLE user_profile ADD COLUMN freelancer_health_insurance REAL');
-          } catch (e) {}
+          });
         }
         // 자녀 수 (v39) — 카드공제 기본한도가 2025 개정으로 자녀 수에 따라
         // 300→350·400만으로 올라가는데(조특법 §126의2⑩) 그 입력이 없었다.
         // children_count_8plus는 컬럼만 있고 입력 UI가 없어 늘 0이었다.
         if (oldVersion < 39) {
-          try {
+          await _step('v39', () async {
             await db.execute(
                 'ALTER TABLE user_profile ADD COLUMN children_count_total INTEGER');
-          } catch (e) {}
+          });
         }
 
         // 자녀세액공제 연령기준 개정 (v40) — 소득세법 §59의2① 개정(법률 제21548호,
@@ -831,32 +865,32 @@ class SqfliteDatabaseHelper implements DatabaseService {
         // 없다 — 출생연도를 모르면 새 정의로 환산할 수 없으므로 값을 넘기지 않고
         // 새 컬럼에서 다시 받는다.
         if (oldVersion < 40) {
-          try {
+          await _step('v40', () async {
             await db.execute(
                 'ALTER TABLE user_profile ADD COLUMN children_count_credit INTEGER');
-          } catch (e) {}
+          });
         }
 
         // 공제 고르기 결과 (v41) — 쉼표로 이은 항목 id.
         // 저장해 두면 계산기에 바로 들어와도 자기와 무관한 입력이 접힌 채로 열리고,
         // 안 고른 항목을 되물을 수 있다. 게이트를 매번 통과시키지 않아도 된다.
         if (oldVersion < 41) {
-          try {
+          await _step('v41', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN deduction_picks TEXT');
-          } catch (e) {}
+          });
         }
         // v42 — 출산·입양 세액공제는 그 해에만 받는다. 수만 저장하면 내년에도
         // 남아 없는 공제를 계속 넣는다. 어느 해 일인지 같이 적는다.
         if (oldVersion < 42) {
-          try {
+          await _step('v42', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN newborn_year INTEGER');
-          } catch (e) {}
+          });
         }
         // v43 — 저장이 미입력을 기본값(전세·자녀 0명·급여일 25일)으로 적어 왔다.
         // 그 값들이 내 정보에서 "사용자가 고른 값"으로 보였다. 기본값 그대로인 칸만
         // 비워 미설정으로 되돌린다 — 실제로 그 값을 고른 사람은 한 번 다시 고르면 된다.
         if (oldVersion < 43) {
-          try {
+          await _step('v43', () async {
             await db.execute('UPDATE user_profile SET is_monthly_rent = NULL '
                 'WHERE is_monthly_rent = 0 AND owns_house IS NULL');
             await db.execute('UPDATE user_profile SET children_count_total = NULL '
@@ -864,7 +898,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
             await db.execute('UPDATE user_profile SET children_count_credit = NULL '
                 'WHERE children_count_credit = 0');
             await db.execute('UPDATE user_profile SET pay_day = NULL WHERE pay_day = 25');
-          } catch (e) {}
+          });
         }
   }
 

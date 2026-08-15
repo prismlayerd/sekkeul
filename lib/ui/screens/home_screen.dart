@@ -170,10 +170,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         setState(() {
           _userType = profile['user_type'] ?? '직장인';
           
-          double monthlyIncome = 0.0;
-          try {
-            monthlyIncome = profile['monthly_income'] as double? ?? 0.0;
-          } catch (_) {}
+          // SQLite의 REAL 칸은 정수로 넣으면 int로 돌아온다 — double로 바로
+          // 캐스팅하면 던진다. 예전에는 그 실패를 삼켜서 급여가 0으로 보였다.
+          final monthlyIncome =
+              (profile['monthly_income'] as num?)?.toDouble() ?? 0.0;
 
           if (monthlyIncome > 0) {
             _salaryController.text = comma(monthlyIncome.toInt());

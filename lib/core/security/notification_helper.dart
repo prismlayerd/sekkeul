@@ -59,7 +59,9 @@ class NotificationHelper {
   }) async {
     try {
       await dbService.insertNotificationLog(title: title, body: body, category: logCategory);
-    } catch (_) {}
+    } catch (_) {
+      // 기록에 실패해도 알림은 띄운다 — 알림이 본체고 기록은 부산물이다.
+    }
     const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'tax_nudge_channel',
       '세금·절세 알림',
