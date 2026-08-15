@@ -15,11 +15,12 @@ import 'support/screen_registry.dart';
 /// 목록형으로 바꾸면서 그 경로를 없앴는데, 없앤 걸 코드 읽기로만 확인하면
 /// 나중에 누가 "일괄 저장"을 다시 붙일 때 아무도 못 막는다. 이 테스트가 막는다.
 void main() {
-  ExpenseItem seed(String id, int amount, String category) => ExpenseItem(
+  ExpenseItem seed(String id, int amount, String category, {String content = ''}) =>
+      ExpenseItem(
         id: id,
         date: DateTime(2026, 8, 10),
         amount: amount,
-        content: '',
+        content: content,
         category: category,
         paymentMethod: '신용카드',
         userType: '직장인',
@@ -102,5 +103,131 @@ void main() {
     expect(after.every((e) => e.endDate == null), isTrue,
         reason: '기간 항목을 새로 만들면 금액이 첫날에 몰려 월별 집계가 틀어진다');
     expect(after.map((e) => e.date.day).toSet(), {10, 11, 12});
+  });
+
+  /// 화면을 열고 목록에서 [title] 줄을 눌러 편집기를 편다.
+  Future<void> openRow(WidgetTester t, String title) async {
+    await t.tap(findKo(title));
+    await t.pumpAndSettle();
+  }
+
+  Future<void> pumpDay(
+    WidgetTester t, {
+    List<ExpenseItem> expenses = const [],
+    List<IncomeEntry> incomes = const [],
+  }) async {
+    t.view.physicalSize = const Size(390, 1400);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    dbService = InMemoryDatabaseHelper();
+    await dbService.initDatabase();
+    for (final e in expenses) {
+      await dbService.insertExpense(e);
+    }
+    for (final e in incomes) {
+      await dbService.insertIncomeEntry(e);
+    }
+
+    await t.pumpWidget(MaterialApp(
+      theme: AppTheme.lightTheme,
+      home: DayEntryScreen(
+        dates: {DateTime(2026, 8, 10)},
+        userType: '직장인',
+        incomesByDay: incomes.isEmpty ? const {} : {'2026-08-10': incomes},
+        expensesByDay: expenses.isEmpty ? const {} : {'2026-08-10': expenses},
+      ),
+    ));
+    await t.pumpAndSettle();
+  }
+
+  testWidgets('지출을 고치면 그 항목만 바뀐다', (t) async {
+    final a = seed('a', 12000, '음식/배달', content: '김밥');
+    final b = seed('b', 3400, '교통', content: '버스');
+    await pumpDay(t, expenses: [a, b]);
+
+    await openRow(t, '김밥');
+    await t.enterText(find.byType(TextField).first, '20000');
+    await t.pumpAndSettle();
+    await t.tap(findKo('저장'));
+    await t.pumpAndSettle();
+
+    final after = await dbService.getExpenses();
+    expect(after.length, 2, reason: '수정이 항목을 하나 더 만들었다');
+    expect(after.firstWhere((e) => e.id == 'a').amount, 20000);
+    expect(after.firstWhere((e) => e.id == 'b').amount, 3400,
+        reason: '옆 항목까지 건드렸다');
+  });
+
+  testWidgets('지출을 지우면 그 항목만 사라진다', (t) async {
+    final a = seed('a', 12000, '음식/배달', content: '김밥');
+    final b = seed('b', 3400, '교통', content: '버스');
+    await pumpDay(t, expenses: [a, b]);
+
+    await openRow(t, '김밥');
+    await t.tap(findKo('삭제'));
+    await t.pumpAndSettle();
+
+    final after = await dbService.getExpenses();
+    expect(after.map((e) => e.id).toList(), ['b']);
+  });
+
+  testWidgets('옛 기간 기록을 고쳐도 기간이 사라지지 않는다', (t) async {
+    // 기간 항목은 이제 새로 만들지 않지만, 이미 적어 둔 사람의 기록은 남아 있다.
+    // 그걸 열어 금액만 고쳤을 때 endDate가 날아가면 달력에서 통째로 사라진다.
+    final ranged = ExpenseItem(
+      id: 'r',
+      date: DateTime(2026, 8, 10),
+      endDate: DateTime(2026, 8, 13),
+      amount: 50000,
+      content: '여행',
+      category: '음식/배달',
+      paymentMethod: '신용카드',
+      userType: '직장인',
+    );
+    await pumpDay(t, expenses: [ranged]);
+
+    await openRow(t, '여행');
+    await t.enterText(find.byType(TextField).first, '60000');
+    await t.pumpAndSettle();
+    await t.tap(findKo('저장'));
+    await t.pumpAndSettle();
+
+    final after = (await dbService.getExpenses()).single;
+    expect(after.amount, 60000);
+    expect(after.endDate, DateTime(2026, 8, 13), reason: '기간이 날아갔다');
+  });
+
+  testWidgets('수익도 추가·수정·삭제된다', (t) async {
+    await pumpDay(t);
+
+    await t.tap(findKo('수익 추가하기'));
+    await t.pumpAndSettle();
+    await t.enterText(find.byType(TextField).first, '300000');
+    await t.pumpAndSettle();
+    await t.tap(findKo('저장'));
+    await t.pumpAndSettle();
+
+    var rows = await dbService.getIncomeEntriesForMonth(2026, 8);
+    expect(rows.length, 1);
+    expect(rows.single.amount, 300000);
+
+    // 방금 적은 줄을 다시 열어 고친다 — 메모가 없으니 소득유형이 제목이다.
+    await openRow(t, rows.single.incomeType);
+    await t.enterText(find.byType(TextField).first, '250000');
+    await t.pumpAndSettle();
+    await t.tap(findKo('저장'));
+    await t.pumpAndSettle();
+
+    rows = await dbService.getIncomeEntriesForMonth(2026, 8);
+    expect(rows.single.amount, 250000, reason: '수익 수정이 안 먹었다');
+
+    await openRow(t, rows.single.incomeType);
+    await t.tap(findKo('삭제'));
+    await t.pumpAndSettle();
+
+    rows = await dbService.getIncomeEntriesForMonth(2026, 8);
+    expect(rows, isEmpty);
   });
 }
