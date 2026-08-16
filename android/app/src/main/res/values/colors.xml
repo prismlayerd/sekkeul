@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#1F1F1F</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
     <!-- 켜지는 순간의 바탕. AppTheme.lightSurface와 같은 값이다. -->
     <color name="splash_bg">#EFEFEF</color>
 </resources>

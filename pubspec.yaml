@@ -67,6 +67,6 @@ flutter_launcher_icons:
   image_path: "assets/icon/icon.png"
   # 적응형 아이콘: 잉크 바탕 + 종이 물결(전경). 전경의 띠는 안쪽 66%
   # 안전 영역 안에 들어가 있어 어떤 기기 마스크로 잘려도 안 깎인다.
-  adaptive_icon_background: "#1F1F1F"
+  adaptive_icon_background: "#FFFFFF"
   adaptive_icon_foreground: "assets/icon/icon_fg.png"
   remove_alpha_ios: true

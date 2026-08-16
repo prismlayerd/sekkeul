@@ -23,6 +23,13 @@ from PIL import Image, ImageDraw, ImageFont
 
 INK = (31, 31, 31)
 PAPER = (239, 239, 239)
+
+# 런처 아이콘의 바탕만 **순백**이다.
+#
+# 앱 안의 종이는 #EFEFEF(영수증 회색)지만, 런처에서는 그게 회색 타일로 보인다.
+# 옆에 놓인 다른 아이콘들이 대개 흰 바탕이라 우리만 때가 탄 것처럼 읽힌다.
+# 바탕은 순백으로 두고 물결을 잉크로 찍는다 — 앱을 열면 그때 종이색이 된다.
+ICON_BG = (255, 255, 255)
 S = 1024
 
 # 안드로이드 적응형 아이콘은 바깥 33%가 잘려 나갈 수 있다.
@@ -190,20 +197,26 @@ def ship():
                  **안전 영역** 안에 들어가야 어떤 기기 마스크에서도 안 잘린다.
                  가로로는 일부러 끝까지 흘려보낸다 — 잘려도 무늬가 이어진다.
     """
-    icon = _wave_band(S, **FINAL)
-    icon.save('assets/icon/icon.png')
-
-    # 전경: 종이 띠만 남기고 잉크 바탕을 투명으로.
-    fg = icon.convert('RGBA')
-    px = fg.load()
+    # 잉크 바탕에 흰 물결이었던 것을 **뒤집었다** — 흰 바탕에 잉크 물결.
+    icon = _wave_band(S, invert=True, **FINAL)
+    # invert는 바탕을 PAPER(#EFEFEF)로 칠한다. 런처에서는 순백이어야 한다.
+    px = icon.load()
     for y in range(S):
         for x in range(S):
-            r, g, b, _ = px[x, y]
-            px[x, y] = (r, g, b, 255) if (r, g, b) == PAPER else (0, 0, 0, 0)
+            if px[x, y] == PAPER:
+                px[x, y] = ICON_BG
+    icon.save('assets/icon/icon.png')
+
+    # 전경: 잉크 띠만 남기고 흰 바탕을 투명으로.
+    fg = icon.convert('RGBA')
+    a = fg.load()
+    for y in range(S):
+        for x in range(S):
+            r, g, b, _ = a[x, y]
+            a[x, y] = (r, g, b, 255) if (r, g, b) == INK else (0, 0, 0, 0)
     fg.save('assets/icon/icon_fg.png')
 
     # 안전 영역 검사 — 띠가 안쪽 66%를 벗어나면 마스크에 잘린다.
-    a = fg.load()
     top, bot = S, 0
     for y in range(S):
         for x in range(0, S, 8):

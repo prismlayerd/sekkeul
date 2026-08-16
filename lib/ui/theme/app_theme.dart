@@ -89,10 +89,14 @@ class AppTheme {
   static const List<FontFeature> _tabular = [FontFeature.tabularFigures()];
 
   /// 본문 (구 `sans`) — 같은 고정폭, 자간과 행간만 다르다.
+  ///
+  /// 기본 굵기가 **w500**이다. 고정폭 글꼴은 같은 굵기라도 획이 가늘게 퍼져
+  /// 보이는데, 여기에 종이 사진 결까지 겹치니 w400 본문이 바탕에 눌려 안
+  /// 읽혔다(실기기 확인). 한 급 올려도 굵어 보이지 않고 또렷해지기만 한다.
   static TextStyle sans(
     double size,
     Color color, {
-    FontWeight weight = FontWeight.w400,
+    FontWeight weight = FontWeight.w500,
     double spacing = 0,
     double height = 1.5,
     TextDecoration? decoration,
@@ -471,7 +475,7 @@ class AppTheme {
                         child: Text(labels[i],
                             overflow: TextOverflow.ellipsis,
                             style: sans(tsMD, i == selected ? inkC : tert,
-                                weight: i == selected ? FontWeight.w700 : FontWeight.w400)),
+                                weight: i == selected ? FontWeight.w700 : FontWeight.w500)),
                       ),
                     ],
                   ),
@@ -515,9 +519,11 @@ class AppTheme {
       titleLarge:  sans(tsXL, ink, weight: FontWeight.w700, spacing: -0.2),
       titleMedium: sans(tsLG, ink, weight: FontWeight.w600),
       titleSmall:  sans(tsMD, secondary, weight: FontWeight.w600),
-      bodyLarge:   sans(tsLG, ink, weight: FontWeight.w400, height: 1.6),
-      bodyMedium:  sans(tsBase, secondary, weight: FontWeight.w400, height: 1.55),
-      bodySmall:   sans(tsSM, tertiary, weight: FontWeight.w400, height: 1.45),
+      // 굵기는 sans의 기본(w500)을 따른다 — 여기서 w400으로 되돌리면
+      // 스타일을 안 준 Text 전부가 다시 바탕에 눌린다.
+      bodyLarge:   sans(tsLG, ink, height: 1.6),
+      bodyMedium:  sans(tsBase, secondary, height: 1.55),
+      bodySmall:   sans(tsSM, tertiary, height: 1.45),
       labelLarge:  sans(tsBase, ink, weight: FontWeight.w600),
       labelMedium: sans(tsMD, secondary, weight: FontWeight.w500),
       labelSmall:  sans(tsXS, tertiary, weight: FontWeight.w600, spacing: 2.0, height: 1.2),

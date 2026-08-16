@@ -255,11 +255,31 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     _load();
     // 목표를 정하러 들어온 사람에게는 그 칸을 바로 띄운다 — 분석 탭만 열어
     // 주면 목표 칸이 맨 아래라 낯선 화면에 떨어진다.
+    //
+    // 다만 **밀려 들어오는 전환이 끝난 뒤에** 띄운다. 전환 도중에 또 다른
+    // 라우트를 얹으면 상속 위젯이 딸린 것들을 둔 채 걷혀서
+    // `_dependents.isEmpty` 단언에 걸린다 — 실기기 빨간 화면이 이 자리였다.
+    // 릴리스에서는 단언이 빠져 안 죽지만, 트리가 어긋난 건 그대로다.
     if (widget.openExpenseTarget) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _showExpenseTargetDialog();
-      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _afterPush(_showExpenseTargetDialog));
     }
+  }
+
+  /// 화면이 다 밀려 들어온 뒤에 [run]을 부른다.
+  void _afterPush(VoidCallback run) {
+    if (!mounted) return;
+    final anim = ModalRoute.of(context)?.animation;
+    if (anim == null || anim.isCompleted) {
+      run();
+      return;
+    }
+    void onStatus(AnimationStatus s) {
+      if (s != AnimationStatus.completed) return;
+      anim.removeStatusListener(onStatus);
+      if (mounted) run();
+    }
+
+    anim.addStatusListener(onStatus);
   }
 
   @override
@@ -1015,6 +1035,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
 
   Future<void> _showAddCardDialog() async {
     final nameCtrl = TextEditingController();
+    // 목표 입력과 같은 이유로 포커스 노드를 직접 든다 — 바깥을 눌러 닫을 때
+    // 글자칸이 포커스를 쥔 채 트리가 해체되면 앱이 죽는다.
+    final nameFocus = FocusNode();
     int selectedDay = 1;
     final ink    = AppTheme.ink(context);
     final accent = AppTheme.accentColor(context);
@@ -1045,6 +1068,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                 const SizedBox(height: 6),
                 TextField(
                   controller: nameCtrl,
+                  focusNode: nameFocus,
                   autofocus: true,
                   style: AppTheme.sans(AppTheme.tsBase, ink),
                   decoration: InputDecoration(
@@ -1118,6 +1142,8 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     );
 
     final name = nameCtrl.text.trim();
+    nameFocus.unfocus();
+    nameFocus.dispose();
     nameCtrl.dispose();
     if (confirmed != true || name.isEmpty || !mounted) return;
 
@@ -2280,6 +2306,14 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   Future<void> _showExpenseTargetDialog() async {
     final ctrl = TextEditingController(
       text: _expenseTarget > 0 ? comma(_expenseTarget) : '');
+    // 포커스 노드를 **직접 들고** 닫을 때 풀어 준다.
+    //
+    // `autofocus: true`만 주면 노드를 프레임워크가 들고, 바깥을 눌러 다이얼로그가
+    // 걷힐 때 글자칸이 아직 포커스를 쥔 채로 트리가 해체된다. 그러면 상속 위젯이
+    // 딸린 것들을 둔 채 걷혀 `_dependents.isEmpty` 단언에서 앱이 죽는다.
+    // 디버그에서만 도는 단언이라 스토어 빌드에서는 조용히 넘어갔을 뿐,
+    // 트리가 어긋나는 건 릴리스에서도 같다.
+    final focus = FocusNode();
     final ink = AppTheme.ink(context);
     final accent = AppTheme.accentColor(context);
     final bg = AppTheme.backgroundColor(context);
@@ -2300,6 +2334,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           title: Text('이달 지출 목표', style: AppTheme.serif(AppTheme.tsLG, ink)),
           content: TextField(
             controller: ctrl,
+            focusNode: focus,
             autofocus: true,
             keyboardType: TextInputType.number,
             inputFormatters: const [ThousandsFormatter()],
@@ -2342,6 +2377,8 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     );
 
     final val = double.tryParse(ctrl.text.replaceAll(',', '')) ?? 0.0;
+    focus.unfocus();
+    focus.dispose();
     ctrl.dispose();
     if (confirmed != true || !mounted) return;
     await dbService.setProfileTypeValues(_userType, expenseTarget: val);
