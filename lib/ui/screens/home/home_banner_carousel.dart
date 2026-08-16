@@ -91,6 +91,9 @@ class HomeBannerCarousel extends StatelessWidget {
     );
   }
 
+  /// 헤드라인을 **정확히 두 줄**로 만든다 — 짧으면 빈 줄을 붙인다.
+  static String _twoLines(String s) => s.contains('\n') ? s : '$s\n';
+
   /// 단일 배너 카드 — 라벨 + 세리프 헤드라인 + 보조 문구 + 우측 글리프 박스.
   /// 카드 전체가 탭 영역. 색상은 유형 무관 기본 ink/sub.
   Widget _bannerCardView(BuildContext context, BannerCardData c) {
@@ -134,11 +137,17 @@ class HomeBannerCarousel extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 7),
-                    // **한 줄이다.** 첫 화면이 빽빽하다는 의견이 있어 배너를
-                    // 절반으로 줄였다 — 헤드라인은 한 줄에 담기게 쓰고,
-                    // 안 담기면 줄임표로 끊는다.
-                    Text(c.headline.keepWords,
-                        maxLines: 1,
+                    // **늘 두 줄이다.** 한 줄도, 세 줄도 아니다.
+                    //
+                    // 빽빽하다는 의견에 한 줄로 조였더니 "공제 문턱까지 /
+                    // 912만원 남았어요"처럼 원래 두 줄로 쓴 문장이 앞줄만 남고
+                    // **금액이 통째로 사라졌다**. 줄임표도 안 붙어서 잘린 줄도
+                    // 몰랐다. 짧아진 화면보다 사라진 숫자가 훨씬 비싸다.
+                    //
+                    // 한 줄짜리 문장에는 빈 줄을 붙여 자리를 채운다 — 카드마다
+                    // 줄 수가 갈리면 6초마다 아래가 들썩인다.
+                    Text(_twoLines(c.headline).keepWords,
+                        maxLines: 2,
                         textAlign: TextAlign.left,
                         overflow: TextOverflow.ellipsis,
                         // 홈의 표제는 절 머리(01 INCOME…)다. 배너가 그보다 크면
