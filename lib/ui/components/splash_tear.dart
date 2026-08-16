@@ -26,10 +26,13 @@ class _SplashTearState extends State<SplashTear>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
-    // 벌어지고(0~58%) · 잠깐 머물고 · 걷힌다(80~100%).
-    // 아이콘 두께만큼 벌어져야 해서 갈 길이 멀어졌다. 손을 붙잡지 않으니
-    // (IgnorePointer) 길어져도 기다리게 하지는 않는다.
-    duration: const Duration(milliseconds: 900),
+    // **다물고 있다가**(0~26%) · 벌어지고(~76%) · 머물고 · 걷힌다(88~100%).
+    //
+    // 앞의 다무는 구간이 이 애니메이션의 뜻이다. 종이는 뜯기 전에 한 장으로
+    // 있어야 한다 — 처음부터 벌어지기 시작하면 뜯는 게 아니라 그냥 갈라지는
+    // 것으로 보인다. 손을 붙잡지 않으니(IgnorePointer) 길어져도 기다리게
+    // 하지는 않는다.
+    duration: const Duration(milliseconds: 1150),
   );
   bool _done = false;
 
@@ -138,10 +141,15 @@ class _TearPainter extends CustomPainter {
     // 다 벌어졌을 때의 틈 = 아이콘 물결의 두께.
     final gap = size.width * _thR;
 
+    // 다무는 구간 — 여기서는 아무 일도 일어나지 않는다. 한 장의 민 종이다.
+    const shut = 0.26;
+    const opened = 0.76;
+
     // 벌어짐은 먼저 빠르고 끝에서 멎는다 — 뜯긴 종이가 툭 내려앉는 느낌.
-    final open = Curves.easeOutCubic.transform((t / 0.58).clamp(0.0, 1.0));
+    final open = Curves.easeOutCubic
+        .transform(((t - shut) / (opened - shut)).clamp(0.0, 1.0));
     // 다 벌어진 뒤 잠깐 머물다 종이째 걷힌다.
-    final fade = (1 - ((t - 0.80) / 0.20)).clamp(0.0, 1.0);
+    final fade = (1 - ((t - 0.88) / 0.12)).clamp(0.0, 1.0);
 
     canvas.saveLayer(
         Offset.zero & size, Paint()..color = Colors.white.withValues(alpha: fade));

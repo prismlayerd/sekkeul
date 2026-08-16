@@ -780,7 +780,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         // 발행처 표시는 이제 물결 마크다 — 앱 아이콘과 같은 곡선.
         // 가로로 길고 낮게 써서 머리글 높이를 '세 끌' 때와 같게 유지한다.
         // 폭만 줄인다 — 파장이 고정이라 물결이 눌리지 않고 양 끝이 잘린다.
-        title: AppTheme.waveMark(context, height: 26, width: 92),
+        title: AppTheme.waveMark(context, height: 23, width: 84),
         actions: [
           Stack(
             clipBehavior: Clip.none,
