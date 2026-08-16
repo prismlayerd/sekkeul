@@ -946,6 +946,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         // 배너 회전 틱과 같은 모양이라, 위쪽 머리에 두면 둘이 100픽셀 거리에
         // 나란히 놓여 무엇이 무엇인지 모호했다. 아래로 내리면 "지금 몇 번째
         // 장"이라는 뜻이 자리로 읽힌다.
+        //
+        // 장을 넘기는 길은 **손가락과 이 표시 둘뿐**이다. 1장 끝에 "다음 장으로"
+        // 링크를 뒀었는데, 가는 길만 있고 돌아오는 길이 없어 한쪽으로만 흐르는
+        // 문이 됐다. 좌우로 미는 건 양방향이고, 이 표시는 어느 장에서든 눌러서
+        // 건너뛸 수 있다.
         Padding(
           padding: const EdgeInsets.only(top: 10, bottom: 6),
           child: Center(
@@ -1015,8 +1020,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ],
           _slipRule(),
           ReminderCard(userType: _userType),
-          _slipRule(),
-          _nextPageLink(),
           _slipFooter(),
         ],
       ),
@@ -1035,33 +1038,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           _buildFaqCard(),
           _slipFooter(),
         ],
-      ),
-    );
-  }
-
-  /// 1장 끝에서 2장으로 가는 길.
-  ///
-  /// 틱만으로는 옆으로 넘길 수 있다는 걸 모르는 사람이 있다. 스와이프를
-  /// 몰라도 갈 수 있어야 한다 — 그게 없으면 04·05는 그냥 사라진 게 된다.
-  Widget _nextPageLink() {
-    final accent = AppTheme.accentColor(context);
-    return Semantics(
-      button: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => _goToHomePage(1),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(children: [
-            Expanded(
-              child: Text('세무 도구 · 자주 묻는 질문'.keepWords,
-                  style: AppTheme.sans(AppTheme.tsSM, accent,
-                      weight: FontWeight.w600)),
-            ),
-            const SizedBox(width: 8),
-            Icon(Icons.arrow_forward, size: 14, color: accent),
-          ]),
-        ),
       ),
     );
   }

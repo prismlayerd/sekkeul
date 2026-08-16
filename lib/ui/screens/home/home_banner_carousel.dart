@@ -53,34 +53,29 @@ class HomeBannerCarousel extends StatelessWidget {
     final idx = activeIndex % cards.length;
     final reduce = MediaQuery.of(context).disableAnimations;
 
-    // 카드 높이는 **재지 않는다.**
+    // 카드 높이는 **재지 않되, 카드끼리는 같다.**
     //
-    // 예전에는 라벨·헤드라인·보조 문구의 크기와 행간을 손으로 더해 높이를
-    // 냈다. 그 손셈이 타입 스케일을 옮길 때마다 뒤처져 두 번 넘쳤고
-    // (9.2px → 고쳤다가 다시 3.9px), 글꼴이 조금만 달라도 또 어긋난다.
-    // 세 번째로 같은 자리를 고치느니 셈을 없앤다 — 카드가 제 내용만큼
-    // 차지하고, 회전은 그 높이를 따라간다.
-
+    // 예전에는 글자 크기와 행간을 손으로 더해 높이를 냈다. 그 손셈이 타입
+    // 스케일을 옮길 때마다 뒤처져 두 번 넘쳤다(9.2px → 3.9px). 셈을 없앤 뒤엔
+    // 카드마다 높이가 달라져서, 6초마다 돌 때 아래 절취선부터 화면이 들썩였다.
+    //
+    // 지금은 셈도 안 하고 들썩이지도 않는다 — 모든 줄이 한 줄로 고정이고
+    // 보조 문구가 없는 카드도 그 자리를 비워 두기 때문이다(아래 참조).
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AnimatedSize(
-          duration: Duration(milliseconds: reduce ? 0 : 220),
-          curve: Curves.easeOutCubic,
-          alignment: Alignment.topCenter,
-          child: AnimatedSwitcher(
-            duration: Duration(milliseconds: reduce ? 0 : 500),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
-            layoutBuilder: (current, previous) => Stack(
-              alignment: Alignment.topLeft,
-              children: [...previous, if (current != null) current],
-            ),
-            child: KeyedSubtree(
-              key: ValueKey(idx),
-              child: _bannerCardView(context, cards[idx]),
-            ),
+        AnimatedSwitcher(
+          duration: Duration(milliseconds: reduce ? 0 : 500),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+          layoutBuilder: (current, previous) => Stack(
+            alignment: Alignment.topLeft,
+            children: [...previous, if (current != null) current],
+          ),
+          child: KeyedSubtree(
+            key: ValueKey(idx),
+            child: _bannerCardView(context, cards[idx]),
           ),
         ),
         if (cards.length > 1) ...[
@@ -150,19 +145,25 @@ class HomeBannerCarousel extends StatelessWidget {
                         // 광고가 문서를 이긴다 — 한 급 낮춰 본문 위계에 넣는다.
                         style: AppTheme.display(AppTheme.serifSM, ink, height: 1.3)),
                     const SizedBox(height: 6),
-                    if (subText != null)
-                      Row(children: [
-                        Flexible(
-                          // 한 줄로 줄였으니 문장 경계 줄바꿈도 뺀다 —
-                          // 어차피 첫 줄만 보인다.
-                          child: Text(subText,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
-                        ),
+                    // **보조 문구가 없어도 자리는 비운다.**
+                    //
+                    // 카드마다 이 줄이 있고 없고가 갈리면 카드 높이가 달라지고,
+                    // 6초마다 돌 때마다 아래 절취선부터 화면 전체가 들썩인다.
+                    // 빈 줄 하나를 두는 편이 낫다 — 흔들리는 화면은 읽히지 않는다.
+                    Row(children: [
+                      Flexible(
+                        // 한 줄로 줄였으니 문장 경계 줄바꿈도 뺀다 —
+                        // 어차피 첫 줄만 보인다.
+                        child: Text(subText ?? '',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
+                      ),
+                      if (subText != null) ...[
                         const SizedBox(width: 5),
                         Icon(Icons.arrow_forward, size: 13, color: sub),
-                      ]),
+                      ],
+                    ]),
                   ],
                 ),
               ),
