@@ -53,6 +53,16 @@ android {
             applicationIdSuffix = ".debug"
         }
 
+        // 성능을 재는 빌드. AOT로 컴파일돼 릴리스와 같은 속도로 돌지만,
+        // 패키지가 달라 스토어에서 받은 앱 옆에 나란히 깔린다.
+        //
+        // 디버그(JIT)는 원래 프레임이 밀려서 "버벅인다"의 원인이 앱인지
+        // 빌드 방식인지 가릴 수가 없다. 그걸 가르려고 둔다.
+        // **release는 건드리지 않는다** — 스토어에 올리는 AAB에 영향이 가면 안 된다.
+        getByName("profile") {
+            applicationIdSuffix = ".profile"
+        }
+
         release {
             // key.properties가 있으면 실서명, 없으면 debug로 폴백(빌드는 항상 성공).
             if (!keystorePropertiesFile.exists()) {
