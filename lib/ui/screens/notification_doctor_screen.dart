@@ -98,9 +98,12 @@ class _NotificationDoctorScreenState extends State<NotificationDoctorScreen> {
                   _row('알림 표시 권한', _notifOk,
                       onFix: _notifOk == true ? null : notificationHelper.requestPermissions),
                   AppTheme.hairline(context),
-                  _row('정확한 시각 알람', _exactOk,
+                  // **안 켜도 된다.** 켜야 하는 것처럼 보이면 안 되는 자리다.
+                  _row('정확한 시각 알람 (선택)', _exactOk,
                       onFix: _exactOk == true ? null : notificationHelper.requestExactAlarms,
-                      note: '꺼져 있으면 예약은 되지만 늦게 울려요'),
+                      note: _exactOk == true
+                          ? '정한 시각에 분 단위로 울려요'
+                          : '꺼져 있어도 울려요 — 켜면 몇 분 오차가 없어집니다'),
                   AppTheme.hairline(context),
 
                   const SizedBox(height: 22),
@@ -113,22 +116,36 @@ class _NotificationDoctorScreenState extends State<NotificationDoctorScreen> {
                     Text('${_pending.length}건',
                         style: AppTheme.display(AppTheme.serifLG, ink)),
                     const SizedBox(height: 8),
-                    for (final p in _pending.take(20))
+                    // **전부** 보여준다. 예전에는 20건에서 잘라서, 28건 중 8건이
+                    // 사라진 것처럼 보였다. 그리고 제목만 찍으니 자동차세
+                    // 연납(1·3·6·9월)처럼 제목이 같은 것들이 중복으로 보였다 —
+                    // 본문까지 보여줘야 서로 다른 항목인 게 드러난다.
+                    for (final p in (_pending.toList()
+                      ..sort((a, b) => a.id.compareTo(b.id))))
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Row(children: [
-                          SizedBox(
-                            width: 56,
-                            child: Text('${p.id}',
-                                style: AppTheme.sans(AppTheme.tsSM, sub)),
-                          ),
-                          Expanded(
-                            child: Text(p.title ?? '(제목 없음)',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTheme.sans(AppTheme.tsSM, ink)),
-                          ),
-                        ]),
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 46,
+                              child: Text('${p.id}',
+                                  style: AppTheme.sans(AppTheme.tsXS, sub)),
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(p.title ?? '(제목 없음)',
+                                      style: AppTheme.sans(AppTheme.tsSM, ink)),
+                                  if ((p.body ?? '').trim().isNotEmpty)
+                                    Text(p.body!,
+                                        style: AppTheme.sans(AppTheme.tsXS, sub)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                   ],
 
@@ -139,7 +156,9 @@ class _NotificationDoctorScreenState extends State<NotificationDoctorScreen> {
                     '두 발을 보냅니다 — 지금 하나, 10초 뒤 하나.\n'
                     '· 둘 다 안 오면 → 권한이나 방해금지(상단바 ⊘)\n'
                     '· 즉시만 오면 → 예약이 막힌 것, 기기 절전 설정을 보세요\n'
-                    '· 소리 없이 상단 줄에만 뜨면 → 채널 중요도가 낮아진 것'
+                    '· 소리 없이 상단 줄에만 뜨면 → 채널 중요도가 낮아진 것\n'
+                    '\n'
+                    '「정확한 시각 알람」은 안 켜도 됩니다 — 몇 분 오차가 생길 뿐이에요.'
                         .keepWords,
                     style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.6),
                   ),

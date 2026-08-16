@@ -28,6 +28,20 @@ class NotificationHelper {
     dbService.insertErrorLog('알림 실패 · $what', e.toString());
   }
 
+  /// 안드로이드 구현체 — **가져오는 것 자체가 던질 수 있다.**
+  ///
+  /// 플러그인이 아직 안 붙었으면 resolvePlatformSpecificImplementation이
+  /// LateInitializationError를 낸다. 예전에는 이 호출이 try 밖에 있어서, 정작
+  /// 감싸 둔 try는 아무것도 못 막았다.
+  AndroidFlutterLocalNotificationsPlugin? get _androidImpl {
+    try {
+      return flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// 플러그인 자체가 응답하는가.
   ///
   /// 네이티브 채널이 안 붙어 있으면 모든 호출이 MissingPluginException으로
@@ -40,6 +54,15 @@ class NotificationHelper {
     } catch (e) {
       _fail('플러그인 응답 없음', e);
       return false;
+    }
+  }
+
+  /// 예약 방식 판정도 절대 밖으로 던지지 않는다 — 홈 진입 경로에서 부른다.
+  Future<AndroidScheduleMode> _safeMode() async {
+    try {
+      return await _scheduleMode();
+    } catch (_) {
+      return AndroidScheduleMode.inexactAllowWhileIdle;
     }
   }
 
@@ -98,8 +121,7 @@ class NotificationHelper {
   static const String nudgeChannelId = 'sekkeul_nudge_v3';
 
   Future<void> _createChannels() async {
-    final android = flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final android = _androidImpl;
     if (android == null) return;
     try {
       for (final c in const [
@@ -151,9 +173,7 @@ class NotificationHelper {
 
   Future<void> requestPermissions() async {
     // Android 13+ 알림 표시 권한만 요청(정확 알람은 사용하지 않음).
-    final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-        flutterLocalNotificationsPlugin
-            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final androidImplementation = _androidImpl;
     if (androidImplementation != null) {
       await androidImplementation.requestNotificationsPermission();
     }
@@ -224,8 +244,18 @@ class NotificationHelper {
         ? when
         : tz.TZDateTime.from(when, tz.local);
 
-    // 정확 알람(exactAllowWhileIdle) — 정한 시각에 정확히 발화(Doze 무시).
-    // USE_EXACT_ALARM이 자동 부여되므로 사용자가 설정을 바꿀 필요가 없다.
+    // 정확 알람은 **있으면 쓰고 없으면 안 쓴다.**
+    //
+    // 예전에는 늘 정확(exactAllowWhileIdle)으로 먼저 걸고 거부당하면 비정확으로
+    // 다시 걸었다. 그런데 SCHEDULE_EXACT_ALARM은 사용자가 설정에서 직접 켜야
+    // 하는 권한이라 대개 꺼져 있다 — 예약할 때마다 exact_alarms_not_permitted가
+    // 던져지고 그게 전부 "실패"로 쌓였다. 실제로는 비정확으로 잘 걸리고
+    // 있었는데 기록만 새빨갰다.
+    //
+    // 리마인더에 분 단위 정확도는 필요 없다. 비정확 알람도 Doze를 뚫고 울리고
+    // (inexactAllowWhileIdle), 기기를 쓰는 중이면 거의 정시에 온다. 정확 알람은
+    // 사용자가 굳이 켜 줬을 때만 얹는 **덤**이다.
+    final mode = await _safeMode();
     try {
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id: id,
@@ -233,29 +263,46 @@ class NotificationHelper {
         body: body,
         scheduledDate: tzWhen,
         notificationDetails: platformChannelSpecifics,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: mode,
         matchDateTimeComponents: matchComponents,
       );
     } catch (e) {
-      // 단말이 정확 알람을 거부하는 드문 경우 — 비정확으로라도 예약(크래시 방지). 원인은 로깅.
-      _fail('정확 알람 예약(id $id) → 비정확으로 재시도', e);
-      try {
-        await flutterLocalNotificationsPlugin.zonedSchedule(
-          id: id,
-          title: title,
-          body: body,
-          scheduledDate: tzWhen,
-          notificationDetails: platformChannelSpecifics,
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          matchDateTimeComponents: matchComponents,
-        );
-      } catch (e2) {
-        // 폴백까지 실패해도 화면은 그대로 떠야 한다. 홈은 이 예약들을 await 없이
-        // 던져 두므로(fire-and-forget), 여기서 안 막으면 처리되지 않은 비동기 예외가 된다.
-        _fail('비정확 알람 예약(id \$id)', e2);
+      // 정확으로 걸려다 막혔으면 권한이 방금 바뀐 것 — 비정확으로 한 번 더.
+      if (mode == AndroidScheduleMode.exactAllowWhileIdle) {
+        _exactAllowed = false;
+        try {
+          await flutterLocalNotificationsPlugin.zonedSchedule(
+            id: id,
+            title: title,
+            body: body,
+            scheduledDate: tzWhen,
+            notificationDetails: platformChannelSpecifics,
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            matchDateTimeComponents: matchComponents,
+          );
+          return;
+        } catch (e2) {
+          _fail('알람 예약(id $id)', e2);
+          return;
+        }
       }
+      _fail('알람 예약(id $id)', e);
     }
   }
+
+  /// 정확 알람을 쓸 수 있는지 — 한 번 물어보고 기억한다.
+  /// 예약마다 물으면 앱을 켤 때 스물몇 번 왕복한다.
+  bool? _exactAllowed;
+
+  Future<AndroidScheduleMode> _scheduleMode() async {
+    _exactAllowed ??= await exactAlarmsAllowed() ?? false;
+    return _exactAllowed!
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
+  }
+
+  /// 사용자가 설정에서 정확 알람을 켜고 온 뒤 다시 물어보게 한다.
+  void forgetExactAlarmAnswer() => _exactAllowed = null;
 
   /// 현재 예약 대기 중인 알림 개수(진단용).
   Future<int> pendingCount() async {
@@ -293,8 +340,7 @@ class NotificationHelper {
   /// 예전에는 못 읽으면 `true`를 돌려줬다. 그러면 진단 화면이 "허용"이라고
   /// 적어 놓고 알림은 안 오는, 가장 나쁜 상태가 된다.
   Future<bool?> notificationsAllowed() async {
-    final android = flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final android = _androidImpl;
     if (android == null) return null;
     try {
       return await android.areNotificationsEnabled();
@@ -315,8 +361,7 @@ class NotificationHelper {
   /// 정확한 시각에 알람을 걸 수 있는가(API 31+). 꺼져 있으면 예약은 되지만
   /// 몇 분~몇십 분 늦게 울린다 — "안 울린다"로 체감되는 자리다.
   Future<bool?> exactAlarmsAllowed() async {
-    final android = flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final android = _androidImpl;
     if (android == null) return null;
     try {
       return await android.canScheduleExactNotifications();
@@ -328,11 +373,11 @@ class NotificationHelper {
 
   /// 정확 알람 허용 화면을 띄운다(사용자가 직접 켜야 하는 시스템 설정).
   Future<void> requestExactAlarms() async {
-    final android = flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final android = _androidImpl;
     if (android == null) return;
     try {
       await android.requestExactAlarmsPermission();
+      forgetExactAlarmAnswer();
     } catch (e) {
       _fail('정확 알람 권한 요청', e);
     }
