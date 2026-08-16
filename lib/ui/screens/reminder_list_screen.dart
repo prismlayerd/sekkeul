@@ -207,20 +207,24 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                       style: AppTheme.sans(AppTheme.tsBase, r.enabled ? ink : tert,
                           weight: FontWeight.w700)),
                   const SizedBox(height: 3),
-                  Text(_userSubtitle(r), style: AppTheme.sans(AppTheme.tsXS, tert)),
+                  // 시각을 고치는 방법은 **한 가지**다 — 시각 옆 연필.
+                  // 예전에는 「내가 만든」은 오른쪽 끝 시계 버튼, 「기본 제공」은
+                  // 시각 옆 연필로 서로 달랐다. 같은 일을 두 모양으로 두면
+                  // 사용자는 둘이 다른 일인 줄 안다.
+                  GestureDetector(
+                    onTap: () => _editReminderTime(r),
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Text(_userSubtitle(r),
+                          style: AppTheme.sans(AppTheme.tsXS, tert)),
+                      const SizedBox(width: 5),
+                      Icon(Icons.edit_outlined, size: 13, color: tert),
+                    ]),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(width: 4),
-            GestureDetector(
-              onTap: () => _editReminderTime(r),
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Icon(Icons.schedule_rounded, size: 18, color: tert),
-              ),
-            ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 8),
             Switch(
               value: r.enabled,
               activeThumbColor: accent,

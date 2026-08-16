@@ -178,7 +178,26 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   /// 넘는다는 제보를 받아 한 단계를 더 뒀다.
   static const List<double> _zoomSpans = [1, 2, 3.4];
 
-  double get _colSpan => _zoomSpans[_zoomLevel - 1];
+  /// 지금 배율 — **연속값**이다. 손가락을 벌린 만큼 그대로 따라간다.
+  ///
+  /// 예전에는 손을 뗄 때만 단계가 한 칸 바뀌었다. 벌리는 동안은 아무 일도
+  /// 안 일어나다가 놓는 순간 툭 바뀌니 사진 확대와 달리 끊겨 보였다.
+  double _scale = _zoomSpans.first;
+
+  /// 핀치를 시작할 때의 배율 — 여기에 손가락 비를 곱한다.
+  double _pinchStartScale = _zoomSpans.first;
+
+  double get _colSpan => _scale;
+
+  /// 배율에서 뽑은 **내용 단계**(1·2·3).
+  ///
+  /// 폭은 이어서 커지지만 보여주는 내용은 단계로 바뀐다 — 금액 줄이 반쯤
+  /// 나타났다 사라지면 읽을 수가 없다. 단계 사이 중간쯤을 문턱으로 잡는다.
+  int get _zoomLevel {
+    if (_scale >= (_zoomSpans[1] + _zoomSpans[2]) / 2) return 3;
+    if (_scale >= (_zoomSpans[0] + _zoomSpans[1]) / 2) return 2;
+    return 1;
+  }
 
   /// 칸 안 금액 글자. 칸이 넓어진 만큼 키운다 — 3단계에서까지 10픽셀로 두면
   /// 넓힌 보람이 없다.
@@ -213,7 +232,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   List<Map<String, dynamic>> _cardDates = [];
 
   // 핀치 줌 — 1단계(기본 7열) · 2단계(가로 2배 폭, 세로 동일).
-  int _zoomLevel = 1;
   int _activePointers = 0;
   Offset? _downPos;                      // 탭/패닝 구분용
   Size _vp = Size.zero;                  // 격자 뷰포트 크기
@@ -1679,7 +1697,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   /// 요일 행 오버레이 — 2단계 가로 폭/스크롤을 반영해 날짜 칸 위에 정렬
   Widget _buildOverlayDow() {
     final vp = _vp;
-    if (vp == Size.zero || _zoomLevel == 1) {
+    // 배율을 **연속으로** 따라간다. 단계로만 갈라 두면 벌리는 도중에 요일
+    // 머리는 그대로인데 칸만 넓어져 표가 어긋난 채로 움직인다.
+    if (vp == Size.zero || _scale == _zoomSpans.first) {
       return SizedBox(
         height: 28,
         child: Row(
@@ -1714,21 +1734,30 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
 
   /// 핀치를 놓을 때 손가락 벌어짐/오므림으로 단계 결정.
   void _resolvePinch() {
-    // 한 번에 한 단계씩 오르내린다.
-    if (_pinchRatio > 1.18 && _zoomLevel < _zoomSpans.length) {
-      _setZoom(_zoomLevel + 1);
-    } else if (_pinchRatio < 0.85 && _zoomLevel > 1) {
-      _setZoom(_zoomLevel - 1);
+    // 손을 떼면 **가장 가까운 단계**에 붙는다. 어중간한 배율로 남으면
+    // 칸 폭이 요일 머리와 안 맞아 표가 어긋나 보인다.
+    var nearest = _zoomSpans.first;
+    for (final span in _zoomSpans) {
+      if ((span - _scale).abs() < (nearest - _scale).abs()) nearest = span;
     }
+    _snapScaleTo(nearest);
     _pinchBaseDist = null;
     _pinchRatio = 1.0;
   }
 
-  void _setZoom(int level) {
-    if (level == _zoomLevel) return;
+  /// 어느 배율에서 가로로 얼마나 밀 수 있는가.
+  double _minPanXFor(double scale) {
+    final w = _vp.width;
+    if (w == 0) return 0;
+    return (w - w / 7 * scale * 7).clamp(double.negativeInfinity, 0.0);
+  }
+
+  /// 배율을 [target]으로 부드럽게 붙인다.
+  void _snapScaleTo(double target) {
+    if ((target - _scale).abs() < 0.001) return;
     setState(() {
-      _zoomLevel = level;
-      if (level == 1) {
+      _scale = target;
+      if (target == _zoomSpans.first) {
         _panX = 0;
       } else {
         // 핀치 중심 열이 손가락 아래 유지되도록 가로 오프셋 설정.
@@ -1739,7 +1768,8 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
               _pointers.length.toDouble();
           ratio = (mid.dx / w).clamp(0.0, 1.0);
         }
-        _panX = (-ratio * w).clamp(-w, 0.0);
+        // 손가락 아래 열이 그 자리에 남게 — 밀 수 있는 만큼만 민다.
+        _panX = (-ratio * w * (target - 1)).clamp(_minPanXFor(target), 0.0);
       }
     });
   }
@@ -1865,6 +1895,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             }
             final pts = _pointers.values.toList();
             _pinchBaseDist = (pts[0] - pts[1]).distance;
+            _pinchStartScale = _scale;
             return;
           }
           if (zoomed) return;
@@ -1883,6 +1914,12 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             final dist = (pts[0] - pts[1]).distance;
             if (_pinchBaseDist != null && _pinchBaseDist! > 0) {
               _pinchRatio = dist / _pinchBaseDist!;
+              // 손가락을 따라 **그 자리에서** 커진다.
+              setState(() {
+                _scale = (_pinchStartScale * _pinchRatio)
+                    .clamp(_zoomSpans.first, _zoomSpans.last);
+                _panX = _panX.clamp(_minPanXFor(_scale), 0.0);
+              });
             }
             return;
           }
@@ -2266,7 +2303,9 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
             // ② 셀 콘텐츠 — 단계 전환 시 페이드
             Positioned.fill(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
+                // 핀치 중에는 즉시 바꾼다 — 손가락을 따라오는 중에 칸 31개가
+                // 저마다 180ms씩 페이드하면 그 자체가 끊김으로 보인다.
+                duration: Duration(milliseconds: _pinchBaseDist == null ? 180 : 0),
                 transitionBuilder: (child, anim) =>
                     FadeTransition(opacity: anim, child: child),
                 child: KeyedSubtree(

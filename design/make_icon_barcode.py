@@ -229,6 +229,37 @@ def ship():
           % (top, bot, safe0, safe1, 'OK' if ok else '넘침!'))
 
 
+def notification():
+    """알림 작은 아이콘 — 흰 실루엣 + 투명 배경.
+
+    안드로이드는 알림 아이콘의 **알파 채널만** 본다. 색은 시스템이 칠한다.
+    그래서 색이 든 런처 아이콘을 그대로 쓰면 안 된다 — 게다가 API 26+에서
+    `@mipmap/ic_launcher`는 적응형 아이콘 XML로 풀리는데, 그건 작은 아이콘으로
+    쓸 수 없어서 빈칸으로 뜨거나 기기에 따라 알림이 아예 안 올라간다.
+
+    24dp 기준으로 밀도별 PNG를 만든다.
+    """
+    from PIL import Image as _I
+    dens = {'mdpi': 24, 'hdpi': 36, 'xhdpi': 48, 'xxhdpi': 72, 'xxxhdpi': 96}
+    base = 384  # 넉넉히 그려서 줄인다
+
+    band = _wave_band(base, **FINAL)   # 잉크 바탕 + 종이 물결
+    src = band.load()
+    out = _I.new('RGBA', (base, base), (0, 0, 0, 0))
+    px = out.load()
+    for y in range(base):
+        for x in range(base):
+            # 물결(PAPER)만 남기고 전부 투명. 남긴 곳은 흰색 — 색은 시스템이 칠한다.
+            px[x, y] = (255, 255, 255, 255) if src[x, y] == PAPER else (0, 0, 0, 0)
+
+    import os
+    for name, sz in dens.items():
+        d = 'android/app/src/main/res/drawable-%s' % name
+        os.makedirs(d, exist_ok=True)
+        out.resize((sz, sz), _I.LANCZOS).save('%s/ic_notification.png' % d)
+    print('ic_notification.png × %d 밀도' % len(dens))
+
+
 def main():
     for key, name, fn in CONCEPTS:
         k = key.lower()

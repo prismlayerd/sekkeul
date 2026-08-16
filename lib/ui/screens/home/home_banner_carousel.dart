@@ -52,30 +52,30 @@ class HomeBannerCarousel extends StatelessWidget {
     final idx = activeIndex % cards.length;
     final reduce = MediaQuery.of(context).disableAnimations;
 
-    // 라벨(1줄) + 헤드라인(2줄) + 보조 문구(2줄)가 다 들어갈 높이.
+    // 카드 높이는 **재지 않는다.**
     //
-    // **여기 쓰는 숫자는 아래에서 실제로 쓰는 스타일과 같아야 한다.** 예전에는
-    // 11·22·12로 셈해 뒀는데 안에 든 글자는 tsXS(12)·serifSM(19)·tsSM(13)이라
-    // 9.2픽셀이 넘쳤다 — 실기기에서 노란 줄로 보이던 자리다. 타입 스케일을
-    // 옮길 때 이런 손셈이 안 따라온 것이 이번 회귀의 뿌리였다.
-    final ts = MediaQuery.textScalerOf(context);
-    final cardHeight = ts.scale(AppTheme.tsXS) * 1.2 // 라벨
-        + 7
-        + ts.scale(AppTheme.serifSM) * 1.3 * 2 // 헤드라인 2줄
-        + 6
-        + ts.scale(AppTheme.tsSM) * 1.45 * 2 // 보조 2줄
-        + 4;
+    // 예전에는 라벨·헤드라인·보조 문구의 크기와 행간을 손으로 더해 높이를
+    // 냈다. 그 손셈이 타입 스케일을 옮길 때마다 뒤처져 두 번 넘쳤고
+    // (9.2px → 고쳤다가 다시 3.9px), 글꼴이 조금만 달라도 또 어긋난다.
+    // 세 번째로 같은 자리를 고치느니 셈을 없앤다 — 카드가 제 내용만큼
+    // 차지하고, 회전은 그 높이를 따라간다.
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(
-          height: cardHeight,
+        AnimatedSize(
+          duration: Duration(milliseconds: reduce ? 0 : 220),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
           child: AnimatedSwitcher(
             duration: Duration(milliseconds: reduce ? 0 : 500),
             switchInCurve: Curves.easeOut,
             switchOutCurve: Curves.easeIn,
             transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+            layoutBuilder: (current, previous) => Stack(
+              alignment: Alignment.topLeft,
+              children: [...previous, if (current != null) current],
+            ),
             child: KeyedSubtree(
               key: ValueKey(idx),
               child: _bannerCardView(context, cards[idx]),
@@ -133,25 +133,14 @@ class HomeBannerCarousel extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 7),
-                    // 헤드라인이 1줄이든 2줄이든 카드 높이를 동일하게 유지 — 아래 보조 문구 위치 고정.
-                    // 높이는 시스템 글자 확대(U-3, 최대 1.3배)에 맞춰 함께 커지도록 textScaler 반영.
-                    SizedBox(
-                      // 위 cardHeight의 헤드라인 몫과 **같은 식**이어야 한다.
-                      height: MediaQuery.textScalerOf(context)
-                              .scale(AppTheme.serifSM) *
-                          1.3 *
-                          2,
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        child: Text(c.headline.keepWords,
-                            maxLines: 2,
-                            textAlign: TextAlign.left,
-                            overflow: TextOverflow.ellipsis,
-                            // 홈의 표제는 절 머리(01 INCOME…)다. 배너가 그보다 크면
-                            // 광고가 문서를 이긴다 — 한 급 낮춰 본문 위계에 넣는다.
-                            style: AppTheme.display(AppTheme.serifSM, ink, height: 1.3)),
-                      ),
-                    ),
+                    // 두 줄까지만 쓰고 넘치면 줄임표. 높이는 글자가 정한다.
+                    Text(c.headline.keepWords,
+                        maxLines: 2,
+                        textAlign: TextAlign.left,
+                        overflow: TextOverflow.ellipsis,
+                        // 홈의 표제는 절 머리(01 INCOME…)다. 배너가 그보다 크면
+                        // 광고가 문서를 이긴다 — 한 급 낮춰 본문 위계에 넣는다.
+                        style: AppTheme.display(AppTheme.serifSM, ink, height: 1.3)),
                     const SizedBox(height: 6),
                     if (subText != null)
                       Row(children: [

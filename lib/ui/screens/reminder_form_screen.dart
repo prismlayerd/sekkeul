@@ -83,6 +83,48 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
 
   Future<void> _save() async {
     if (!_canSave) return;
+
+    // 이미 지난 시각으로 만든 **단발** 알림은 예약이 조용히 건너뛰어진다
+    // (CustomReminderService._schedule). 그런데 목록에는 켜짐으로 보여서,
+    // 사용자는 켜 뒀는데 안 울린다고 느낀다. 저장 전에 말한다.
+    if (_freq == ReminderFrequency.once) {
+      final when = DateTime(
+          _composedNotifyDate().year,
+          _composedNotifyDate().month,
+          _composedNotifyDate().day,
+          _hour,
+          _minute);
+      if (!when.isAfter(DateTime.now())) {
+        final go = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: AppTheme.backgroundColor(ctx),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+              side: BorderSide(color: AppTheme.line(ctx)),
+            ),
+            title: Text('이미 지난 시각이에요',
+                style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx),
+                    weight: FontWeight.w700)),
+            content: Text(
+                '한 번만 울리는 알림이라 이 시각에는 울리지 않아요. 시각을 앞으로 옮겨주세요.'
+                    .keepWords,
+                style: AppTheme.sans(AppTheme.tsMD, AppTheme.inkSecondary(ctx),
+                    height: 1.45)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text('시각 고치기',
+                    style: AppTheme.sans(AppTheme.tsMD, AppTheme.ink(ctx),
+                        weight: FontWeight.w700)),
+              ),
+            ],
+          ),
+        );
+        if (go != true) return;
+      }
+    }
+
     setState(() => _saving = true);
     final base = (widget.existing ??
             Reminder(title: '', notifyDate: _placeholderDate))

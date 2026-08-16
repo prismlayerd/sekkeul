@@ -15,8 +15,15 @@ class NotificationHelper {
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Seoul'));
 
+    // 알림 작은 아이콘은 **전용 드로어블**을 쓴다.
+    //
+    // `@mipmap/ic_launcher`는 API 26+에서 적응형 아이콘 XML로 풀리는데, 그건
+    // 알림 작은 아이콘으로 쓸 수 없다 — 빈칸으로 뜨거나 기기에 따라 알림이
+    // 아예 안 올라간다. 안드로이드는 작은 아이콘의 **알파 채널만** 보고 색은
+    // 자기가 칠하므로, 흰 실루엣 + 투명 배경이어야 한다.
+    // (design/make_icon_barcode.py의 notification()이 만든다.)
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@drawable/ic_notification');
 
     // iOS/macOS — 초기화 시점에 알림 권한 요청 (버전 안전)
     const DarwinInitializationSettings initializationSettingsDarwin =
@@ -98,7 +105,7 @@ class NotificationHelper {
         channelName,
         importance: Importance.max,
         priority: Priority.high,
-        icon: '@mipmap/ic_launcher',
+        icon: '@drawable/ic_notification',
         playSound: true,
         enableVibration: true,
         // 잠금화면에도 내용을 보여준다 — 가릴 만한 개인정보를 담지 않는다.

@@ -746,8 +746,21 @@ class _ExpenseFormState extends State<_ExpenseForm> {
               (v) => setState(() => _category = v),
               values: [for (final c in cats) c.id]),
         ),
-        _Field('결제수단',
-            _Field.chips(context, _payments, _payment, (v) => setState(() => _payment = v))),
+        // **저장값은 그대로, 보이는 이름만 다르게.**
+        //
+        // 분류에도 '기타'가 있고 결제수단에도 '기타'가 있어서, 분류를 기타로
+        // 골라 놓고 결제수단도 골랐다고 여기기 쉬웠다. 결제수단 쪽은 그게
+        // 무슨 뜻인지(현금영수증 없는 지출) 이름에 담는다.
+        _Field(
+          '결제수단',
+          _Field.chips(
+            context,
+            const [_catCredit, _catDebit, '기타(영수증 없음)'],
+            _payment,
+            (v) => setState(() => _payment = v),
+            values: _payments,
+          ),
+        ),
         if (widget.profile.tracksBusinessExpense)
           _Field(
             '사업경비',
