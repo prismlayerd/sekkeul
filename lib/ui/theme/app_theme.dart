@@ -177,6 +177,14 @@ class AppTheme {
   static const Color lightAccent        = Color(0xFF1F1F1F); // 강조 = 잉크. 색이 아니라 농도로 만든다
   // 바탕 위에서도 채워진 게 보여야 한다 — 바탕보다 확실히 어둡게 잡는다.
   static const Color lightAccentSoft    = Color(0xFFDADADA); // 잉크가 앉은 자리(반전 배경)
+  // **이 앱의 유일한 색.**
+  //
+  // 종이 달력의 빨간날은 400년 된 관습이라 설명이 필요 없다. 농도로 갈라 봤지만
+  // 회색 다섯 단계 안에서 한 단계 더 옅은 것은 "쉬는 날"로 읽히지 않았다.
+  // 어두운 벽돌빛으로 낮춰 잡았다 — 종이 사진의 가장 짙은 주름(#BABABA)
+  // 위에서도 4.8:1로 AA를 넘고, 순수한 빨강처럼 튀지 않는다.
+  // **달력 뷰의 날짜에만 쓴다.** 다른 데로 번지면 흑백이라는 규율이 무너진다.
+  static const Color lightHoliday       = Color(0xFF822618);
 
   // ──────────────────────────────────────────────
   // 팔레트 — Dark (먹지 carbon copy)
@@ -193,6 +201,7 @@ class AppTheme {
   static const Color darkLineStrong      = Color(0xFF444444); // 강조 라인 · 절취선
   static const Color darkAccent          = Color(0xFFE8E8E8); // 강조 = 잉크
   static const Color darkAccentSoft      = Color(0xFF292929); // 잉크가 앉은 자리
+  static const Color darkHoliday         = Color(0xFFE08A7D); // 먹지 위 5.2:1
 
   // ──────────────────────────────────────────────
   // 타입 스케일 상수 — 이 값 외 사용 금지
@@ -241,6 +250,8 @@ class AppTheme {
   static Color surface(BuildContext c)      => isDark(c) ? darkSurface : lightSurface;
   static Color accentColor(BuildContext c)  => isDark(c) ? darkAccent : lightAccent;
   static Color accentSoft(BuildContext c)   => isDark(c) ? darkAccentSoft : lightAccentSoft;
+  /// 빨간날 — 일요일과 공휴일. **달력 뷰 전용**([lightHoliday] 주석 참조).
+  static Color holiday(BuildContext c)      => isDark(c) ? darkHoliday : lightHoliday;
   static Color backgroundColor(BuildContext c) => isDark(c) ? darkBackground : lightBackground;
 
 

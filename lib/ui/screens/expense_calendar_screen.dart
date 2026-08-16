@@ -1649,11 +1649,15 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     const labels = ['월', '화', '수', '목', '금', '토', '일'];
     final isSun = i == 6;
     final isSat = i == 5;
-    // 흑백이라 색 대신 농도로 가른다 — 일요일이 제일 진하고, 토요일이 그다음.
+    // 일요일은 붉게, 토요일은 옅게, 평일은 잉크.
+    //
+    // 예전에는 농도로만 갈랐는데 **머리와 칸이 서로 반대였다** — 머리에서는
+    // 일요일이 제일 진하고 칸에서는 제일 옅었다. 같은 요일인데 위아래가
+    // 어긋나니 눈이 규칙을 잡지 못했다. 이제 둘 다 아래 규칙 하나를 따른다.
     return Text(labels[i],
         style: AppTheme.label(context,
             color: isSun
-                ? AppTheme.ink(context)
+                ? AppTheme.holiday(context)
                 : isSat
                     ? AppTheme.inkSecondary(context)
                     : null));
@@ -1964,7 +1968,17 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         child: SingleChildScrollView(
           controller: _calScrollCtrl,
           physics: _isDragging ? const NeverScrollableScrollPhysics() : null,
-          child: buildSection(allRows),
+          // 표는 아래도 닫혀 있어야 한다. 요일 머리 밑에는 줄이 있는데 끝에는
+          // 없어서 마지막 주가 종이에서 흘러내리는 것처럼 보였다.
+          // **스크롤 안**에 둔다 — 뷰포트 바닥에 고정하면 달이 짧은 달에
+          // 마지막 주와 줄 사이가 벌어진다.
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              buildSection(allRows),
+              Container(height: 1, color: lineColor),
+            ],
+          ),
         ),
       );
 
@@ -1984,10 +1998,14 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final isSun = date.weekday == DateTime.sunday;
     final isSat = date.weekday == DateTime.saturday;
     final isHoliday = KrHolidays.isHoliday(date);
-    // 흑백이라 빨강·파랑을 못 쓴다. 쉬는 날은 **옅게** 인쇄된 것으로 가른다 —
-    // 달력에서 주말은 강조가 아니라 성격이 다른 날이라 오히려 이쪽이 맞다.
+    // 빨간날은 **붉게** 찍는다 — 이 앱에서 색이 있는 유일한 자리다.
+    //
+    // 흑백을 지키려고 농도로만 갈라 봤지만, 회색 다섯 단계 안에서 한 칸 옅은
+    // 것은 "쉬는 날"로 안 읽혔다. 종이 달력의 빨간날은 배울 필요가 없는
+    // 관습이라, 규율을 여기 한 곳에서만 굽히는 편이 낫다.
+    // 토요일은 종이 달력에서도 검정이거나 파랑이라 붉게 하지 않는다.
     final dayColor = (isSun || isHoliday)
-        ? AppTheme.inkSecondary(context)
+        ? AppTheme.holiday(context)
         : isSat
             ? AppTheme.inkSecondary(context)
             : ink;
@@ -2009,13 +2027,18 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
 
     // 날짜 숫자
     final bool todayPill = isToday && !isSelected;
-    // 오늘은 채운 원이 아니라 **도장 상자**다 — 영수증에는 색 원이 없다.
+    // 오늘은 숫자 **아래 밑줄**이다.
+    //
+    // 상자로 둘러쌌더니 이미 괘선이 그어진 표 안에서 네모가 하나 더 겹쳐
+    // 어수선했고, 선택한 날의 칠한 배경과도 헷갈렸다. 밑줄은 종이에 자를 대고
+    // 그은 표시라 표를 어지럽히지 않는다.
     final Widget dayNumber = Container(
       width: 23,
       height: 21,
       alignment: Alignment.center,
       decoration: todayPill
-          ? BoxDecoration(border: Border.all(color: accent, width: 1.2))
+          ? BoxDecoration(
+              border: Border(bottom: BorderSide(color: accent, width: 1.5)))
           : null,
       child: Text('${date.day}',
           style: AppTheme.sans(AppTheme.tsMD, dayColor,
