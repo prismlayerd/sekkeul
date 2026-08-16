@@ -7,11 +7,15 @@ import 'package:secul/ui/screens/expense_calendar_screen.dart';
 import 'support/ko_finder.dart';
 import 'support/screen_registry.dart';
 
-/// **지출 목표를 정하는 곳은 하나다 — 가계부 분석 탭.**
+/// **지출 목표 입력칸은 하나다 — 부르는 곳이 둘일 뿐.**
 ///
-/// 예전엔 홈에도 인라인 입력칸이 있었다. 두 곳이 서로를 모르는 채로 같은 값을
-/// 고쳐서, 한쪽에서 바꾸고 다른 쪽을 열면 옛 값이 보였다. 연봉을 「내 정보」
-/// 한 곳으로 모은 것과 같은 이유다(2026-07-24).
+/// 처음엔 홈과 가계부가 각자 입력칸을 들고 있었다. 서로를 모르는 채로 같은
+/// 값을 고쳐서, 한쪽에서 바꾸고 다른 쪽을 열면 옛 값이 보였다.
+///
+/// 그래서 한동안 홈에서 누르면 가계부로 **보냈는데**, 실기기에서 써 보니
+/// 홈에서 목표를 정하려던 사람이 낯선 화면으로 끌려가는 게 어색했다.
+/// 지금은 입력칸 하나(showExpenseTargetDialog)를 두 곳에서 부른다 —
+/// 홈에서 누르면 **홈에 머문 채** 열린다.
 void main() {
   test('홈 상태 카드에 입력칸이 없다', () {
     final src = File('lib/ui/screens/home/home_status_section.dart').readAsStringSync();
@@ -26,6 +30,14 @@ void main() {
     expect(src.contains('이번 달 지출 목표액을 정하고 관리해봐요.'), isTrue);
     expect(src.contains('목표를 정하면 남은 돈을 알려드려요'), isFalse,
         reason: '옛 문구가 남아 있다');
+  });
+
+  test('홈이 목표를 정하러 가계부로 보내지 않는다', () {
+    final src = File('lib/ui/screens/home_screen.dart').readAsStringSync();
+    expect(src.contains('onSetExpenseTarget: _editExpenseTarget'), isTrue,
+        reason: '홈에서 누르면 홈에서 열려야 한다');
+    expect(src.contains('openExpenseTarget'), isFalse,
+        reason: '가계부로 보내던 경로가 남아 있다');
   });
 
   testWidgets('가계부를 분석 탭으로 바로 열 수 있다', (t) async {

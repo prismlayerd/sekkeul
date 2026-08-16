@@ -7,6 +7,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../theme/app_theme.dart';
 import '../../core/update_service.dart';
+import '../components/expense_target_dialog.dart';
 import '../components/reminder_card.dart';
 import '../components/section_accordion.dart';
 import '../components/update_card.dart';
@@ -829,13 +830,28 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 
   /// 가계부로 이동 후 복귀 — 분석탭에서 바뀌었을 수 있는 유형별 지출 목표를 다시 읽어온다.
-  Future<void> _goToLedger({int view = 0, bool openExpenseTarget = false}) async {
+  Future<void> _goToLedger({int view = 0}) async {
     // 복귀 시 리로드는 didPopNext(RouteObserver)가 처리.
-    await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (_) => ExpenseCalendarScreen(
-                initialView: view, openExpenseTarget: openExpenseTarget)));
+    await Navigator.push(context,
+        MaterialPageRoute(builder: (_) => ExpenseCalendarScreen(initialView: view)));
+  }
+
+  /// 지출 목표를 **홈에 머문 채** 정한다.
+  ///
+  /// 한동안 가계부 분석 탭으로 보냈는데, 홈에서 목표를 정하려던 사람이
+  /// 낯선 화면으로 끌려가는 게 실기기에서 확실히 어색했다. 입력칸을 두 곳에
+  /// 따로 두면 서로를 모르니, **같은 입력칸을 두 곳에서 부른다**
+  /// (`showExpenseTargetDialog`). 저장은 유형별 값 한 곳으로 간다.
+  Future<void> _editExpenseTarget() async {
+    final val = await showExpenseTargetDialog(context, _expenseTarget.toInt());
+    if (val == null || !mounted) return;
+    await dbService.setProfileTypeValues(_userType, expenseTarget: val);
+    if (!mounted) return;
+    setState(() {
+      _expenseTarget = val;
+      _savingGoalController.text = comma(val.toInt());
+    });
+    _checkBudget();
   }
 
   /// 절세 팁 액션 키 → 화면 이동.
@@ -931,7 +947,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             cardSavingCombined: _cardSavingCombined,
             onOpenLedger: _goToLedger,
             onOpenMyInfo: _openProfile,
-            onSetExpenseTarget: () => _goToLedger(view: 1, openExpenseTarget: true),
+            onSetExpenseTarget: _editExpenseTarget,
           ),
           // 상태 카드에 아직 유도가 떠 있으면 백필 유도는 뒤로 미룬다 —
           // 요청은 한 번에 하나여야 눈에 들어온다(2026-07-25).

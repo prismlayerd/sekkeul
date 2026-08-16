@@ -13,6 +13,7 @@ import '../../core/data/ledger_profile.dart';
 import '../../core/notifications/reminder_scheduler.dart';
 import '../../core/tax_engine/bookkeeping_duty.dart';
 import '../../core/tax_engine/reserve_estimator.dart';
+import '../components/expense_target_dialog.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import 'bookkeeping_guide_screen.dart';
@@ -21,7 +22,6 @@ import 'recurring_confirm_screen.dart';
 import 'recurring_templates_screen.dart';
 import 'day_entry_screen.dart';
 import 'month_list_screen.dart';
-import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
 
 
@@ -134,18 +134,10 @@ class ExpenseCalendarScreen extends StatefulWidget {
   /// 어느 뷰로 열지 — 0=달력(기본) · 1=분석 · 2=연간.
   final int initialView;
 
-  /// 열자마자 지출 목표 입력을 띄운다.
-  ///
-  /// 홈의 '지출 목표를 정해보세요'가 이걸 켜고 들어온다. 분석 탭만 열어 주면
-  /// 목표 칸이 그 탭 **맨 아래**에 있어서, 누른 사람은 차트가 깔린 낯선 화면에
-  /// 떨어진다 — 길이 끊긴 것처럼 보인다.
-  final bool openExpenseTarget;
-
   const ExpenseCalendarScreen({
     super.key,
     this.initialFocus,
     this.initialView = 0,
-    this.openExpenseTarget = false,
   });
 
   @override
@@ -271,33 +263,6 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         if (clamped == _minPanX || clamped == 0.0) _panFlingCtrl.stop();
       });
     _load();
-    // 목표를 정하러 들어온 사람에게는 그 칸을 바로 띄운다 — 분석 탭만 열어
-    // 주면 목표 칸이 맨 아래라 낯선 화면에 떨어진다.
-    //
-    // 다만 **밀려 들어오는 전환이 끝난 뒤에** 띄운다. 전환 도중에 또 다른
-    // 라우트를 얹으면 상속 위젯이 딸린 것들을 둔 채 걷혀서
-    // `_dependents.isEmpty` 단언에 걸린다 — 실기기 빨간 화면이 이 자리였다.
-    // 릴리스에서는 단언이 빠져 안 죽지만, 트리가 어긋난 건 그대로다.
-    if (widget.openExpenseTarget) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _afterPush(_showExpenseTargetDialog));
-    }
-  }
-
-  /// 화면이 다 밀려 들어온 뒤에 [run]을 부른다.
-  void _afterPush(VoidCallback run) {
-    if (!mounted) return;
-    final anim = ModalRoute.of(context)?.animation;
-    if (anim == null || anim.isCompleted) {
-      run();
-      return;
-    }
-    void onStatus(AnimationStatus s) {
-      if (s != AnimationStatus.completed) return;
-      anim.removeStatusListener(onStatus);
-      if (mounted) run();
-    }
-
-    anim.addStatusListener(onStatus);
   }
 
   @override
@@ -2340,86 +2305,10 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     '기부':     '기부금 세액공제 (15%, 1천만 초과분 30%)',
   };
 
-  /// 지출 목표 설정/수정 — 분석 탭에서 직접 입력. 홈 화면은 표시 전용이라
-  /// 목표를 정하는 곳은 여기 하나뿐이다.
+  /// 지출 목표 설정/수정. 입력칸 자체는 홈과 **같은 것**을 쓴다.
   Future<void> _showExpenseTargetDialog() async {
-    final ctrl = TextEditingController(
-      text: _expenseTarget > 0 ? comma(_expenseTarget) : '');
-    // 포커스 노드를 **직접 들고** 닫을 때 풀어 준다.
-    //
-    // `autofocus: true`만 주면 노드를 프레임워크가 들고, 바깥을 눌러 다이얼로그가
-    // 걷힐 때 글자칸이 아직 포커스를 쥔 채로 트리가 해체된다. 그러면 상속 위젯이
-    // 딸린 것들을 둔 채 걷혀 `_dependents.isEmpty` 단언에서 앱이 죽는다.
-    // 디버그에서만 도는 단언이라 스토어 빌드에서는 조용히 넘어갔을 뿐,
-    // 트리가 어긋나는 건 릴리스에서도 같다.
-    final focus = FocusNode();
-    final ink = AppTheme.ink(context);
-    final accent = AppTheme.accentColor(context);
-    final bg = AppTheme.backgroundColor(context);
-    final line = AppTheme.line(context);
-    final sub = AppTheme.inkSecondary(context);
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: bg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-            side: BorderSide(color: line),
-          ),
-          titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-          contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          title: Text('이달 지출 목표', style: AppTheme.serif(AppTheme.tsLG, ink)),
-          content: TextField(
-            controller: ctrl,
-            focusNode: focus,
-            autofocus: true,
-            keyboardType: TextInputType.number,
-            inputFormatters: const [ThousandsFormatter()],
-            textAlign: TextAlign.right,
-            style: AppTheme.sans(AppTheme.tsBase, ink),
-            decoration: InputDecoration(
-              isDense: true,
-              hintText: '예: 1,500,000',
-              hintStyle: AppTheme.sans(AppTheme.tsBase, AppTheme.inkTertiary(ctx)),
-              suffixText: '원',
-              contentPadding: const EdgeInsets.symmetric(vertical: 8),
-              border: UnderlineInputBorder(borderSide: BorderSide(color: line)),
-              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: line)),
-              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: accent, width: 1.5)),
-            ),
-            onChanged: (v) {
-              final n = v.replaceAll(RegExp(r'[^0-9]'), '');
-              final f = n.isEmpty ? '' : comma(int.parse(n));
-              ctrl.value = TextEditingValue(text: f, selection: TextSelection.collapsed(offset: f.length));
-            },
-          ),
-          actions: [
-            GestureDetector(
-              onTap: () => Navigator.pop(ctx),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 0, 8, 12),
-                child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, sub)),
-              ),
-            ),
-            GestureDetector(
-              onTap: () => Navigator.pop(ctx, true),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 0, 12, 12),
-                child: Text('저장', style: AppTheme.sans(AppTheme.tsMD, accent, weight: FontWeight.w700)),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    final val = double.tryParse(ctrl.text.replaceAll(',', '')) ?? 0.0;
-    focus.unfocus();
-    focus.dispose();
-    ctrl.dispose();
-    if (confirmed != true || !mounted) return;
+    final val = await showExpenseTargetDialog(context, _expenseTarget);
+    if (val == null || !mounted) return;
     await dbService.setProfileTypeValues(_userType, expenseTarget: val);
     if (mounted) setState(() => _expenseTarget = val.toInt());
   }
