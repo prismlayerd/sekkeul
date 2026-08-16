@@ -28,6 +28,10 @@ class HomeStatusSection extends StatefulWidget {
   final double expenseTarget;
   final double creditCardTotal;
   final double debitCashTotal;
+
+  /// 결제수단이 '기타'이거나 비어 있는 이번 달 지출. 카드공제 대상은 아니지만
+  /// **쓴 돈은 쓴 돈이다** — 합계에 넣고 줄로도 보여준다.
+  final double otherPayTotal;
   final double creditCardYtdTotal;
   final double debitCashYtdTotal;
 
@@ -68,6 +72,7 @@ class HomeStatusSection extends StatefulWidget {
     required this.expenseTarget,
     required this.creditCardTotal,
     required this.debitCashTotal,
+    this.otherPayTotal = 0,
     required this.creditCardYtdTotal,
     required this.debitCashYtdTotal,
     this.excludedFromThresholdYtd = 0.0,
@@ -133,7 +138,8 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     final userType = widget.userType;
 
     final budget = widget.expenseTarget;
-    final totalSpent = widget.creditCardTotal + widget.debitCashTotal;
+    final totalSpent =
+        widget.creditCardTotal + widget.debitCashTotal + widget.otherPayTotal;
     final hasBudget = budget > 0;
     final budgetProgress = hasBudget ? (totalSpent / budget).clamp(0.0, 1.0) : 0.0;
     // 표시용 비율은 100% 상한 없이 실제값(초과 시 100% 이상). 막대는 budgetProgress로 상한 유지.
@@ -251,6 +257,8 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
             _leaderRow('신용카드', _toWon(widget.creditCardTotal), sub, ink),
           if (widget.debitCashTotal > 0)
             _leaderRow('체크·현금', _toWon(widget.debitCashTotal), sub, ink),
+          if (widget.otherPayTotal > 0)
+            _leaderRow('기타', _toWon(widget.otherPayTotal), sub, ink),
           const SizedBox(height: 6),
           Container(height: 1, color: ink),
           const SizedBox(height: 6),
@@ -585,11 +593,21 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
                   weight: emphasize ? FontWeight.w700 : FontWeight.w400)),
           const SizedBox(width: 8),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: CustomPaint(
-                size: const Size(double.infinity, 1),
-                painter: _LeaderDotsPainter(AppTheme.lineStrong(context)),
+            // 점선을 **글자로** 찍는다.
+            //
+            // 예전에는 CustomPaint로 그렸는데, 기준선 정렬 Row에서 기준선이 없는
+            // 자식은 맨 위에 붙는다(RenderFlex는 getDistanceToBaseline이 null이면
+            // 0을 쓴다). 그래서 점선만 글자 위로 떠 있었다.
+            //
+            // 글자로 두면 기준선을 저절로 따라가고, 고정폭이라 점 간격이 라벨의
+            // 글자 격자와도 맞는다. 넘치는 만큼은 잘라 낸다.
+            child: ClipRect(
+              child: Text(
+                '·' * 120,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.clip,
+                style: AppTheme.sans(AppTheme.tsBase, AppTheme.lineStrong(context)),
               ),
             ),
           ),
@@ -603,20 +621,3 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
   }
 }
 
-
-/// 이름과 금액을 잇는 점선 리더.
-class _LeaderDotsPainter extends CustomPainter {
-  const _LeaderDotsPainter(this.color);
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color..strokeWidth = 1;
-    for (double x = 0; x < size.width; x += 4) {
-      canvas.drawLine(Offset(x, 0), Offset(x + 1, 0), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_LeaderDotsPainter old) => old.color != color;
-}

@@ -54,6 +54,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   // 신용카드/체크+현금 당월 누계 (표시용)
   double _creditCardTotal = 0.0;
   double _debitCashTotal = 0.0;
+  /// 결제수단이 '기타'이거나 비어 있는 이번 달 지출.
+  double _otherPayTotal = 0.0;
   // 신용카드 연간(1월~오늘) 누계 — 공제 문턱(연봉의 25%)은 연 누적 기준이라 당월 합계와 분리.
   double _creditCardYtdTotal = 0.0;
   // 체크+현금 연간 누계 — 카드공제 환급 추정에 신용(15%)/체크·현금(30%) 분리 필요.
@@ -437,6 +439,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final firstOfYear = DateTime(now.year, 1, 1);
     double credit = 0.0;
     double debit = 0.0;
+    double otherPay = 0.0;
     double creditYtd = 0.0;
     double debitYtd = 0.0;
     double excludedYtd = 0.0;
@@ -451,10 +454,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       }
       // 이번 달과 겹치는 항목 포함
       if (!eEnd.isBefore(firstOfMonth) && !eStart.isAfter(lastOfMonth)) {
+        // 연 누적처럼 **셋으로** 가른다. 예전에는 신용카드가 아니면 전부
+        // 체크·현금으로 보냈다 — 기타로 적은 지출이 체크·현금 숫자에 섞여
+        // 들어가, 가계부에는 있는 항목이 홈에서는 어디에도 안 보였다.
         if (e.paymentMethod == '신용카드') {
           credit += e.amount;
-        } else {
+        } else if (e.paymentMethod == '체크+현금') {
           debit += e.amount;
+        } else {
+          otherPay += e.amount;
         }
       }
       // 카드공제는 연 누적 기준 — 올해 1월~오늘. 신용/체크·현금은 공제율이 달라 분리 집계.
@@ -474,6 +482,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       setState(() {
         _creditCardTotal = credit;
         _debitCashTotal = debit;
+        _otherPayTotal = otherPay;
         _creditCardYtdTotal = creditYtd;
         _debitCashYtdTotal = debitYtd;
         _excludedYtdTotal = excludedYtd;
@@ -514,7 +523,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   /// 다시 그 아래로 내려가면 예약된 알림을 취소한다.
   void _checkBudget() {
     if (kIsWeb || !_notificationsEnabled || _expenseTarget <= 0) return;
-    final total = _creditCardTotal + _debitCashTotal;
+    final total = _creditCardTotal + _debitCashTotal + _otherPayTotal;
     if (total >= _expenseTarget) {
       if (!_budgetOverNotified) {
         _budgetOverNotified = true;
@@ -639,6 +648,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   _debitCashInputController.clear();
                   _creditCardTotal = 0.0;
                   _debitCashTotal = 0.0;
+                  _otherPayTotal = 0.0;
                   _creditCardYtdTotal = 0.0;
                   _debitCashYtdTotal = 0.0;
                   _excludedYtdTotal = 0.0;
@@ -913,6 +923,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             expenseTarget: _expenseTarget,
             creditCardTotal: _creditCardTotal,
             debitCashTotal: _debitCashTotal,
+            otherPayTotal: _otherPayTotal,
             creditCardYtdTotal: _creditCardYtdTotal,
             debitCashYtdTotal: _debitCashYtdTotal,
             excludedFromThresholdYtd: _excludedYtdTotal,
