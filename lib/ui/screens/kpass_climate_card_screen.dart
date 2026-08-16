@@ -114,7 +114,10 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
                   onChanged: (v) => setState(() => _ddareungi = v ?? false),
                   activeColor: accent,
                 ),
-                Text('따릉이 옵션 포함(+3,000원)'.keepWords, style: AppTheme.sans(AppTheme.tsSM, ink)),
+                Expanded(
+                  child: Text('따릉이 옵션 포함(+3,000원)'.keepWords,
+                      style: AppTheme.sans(AppTheme.tsSM, ink)),
+                ),
               ],
             ),
             const SizedBox(height: 32),

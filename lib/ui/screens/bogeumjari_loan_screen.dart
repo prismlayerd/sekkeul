@@ -179,9 +179,15 @@ class _BogeumjariLoanScreenState extends State<BogeumjariLoanScreen> {
                       Expanded(
                           child: Text(e.value.$1,
                               style: AppTheme.sans(AppTheme.tsSM, sub))),
-                      Text(e.value.$2,
-                          style: AppTheme.sans(AppTheme.tsSM, ink,
-                              weight: FontWeight.w600)),
+                      const SizedBox(width: 8),
+                      // 값도 같이 양보한다. 글자를 키우면 값 하나만으로도
+                      // 줄을 넘겼다.
+                      Flexible(
+                        child: Text(e.value.$2,
+                            textAlign: TextAlign.right,
+                            style: AppTheme.sans(AppTheme.tsSM, ink,
+                                weight: FontWeight.w600)),
+                      ),
                     ],
                   ),
                 ),

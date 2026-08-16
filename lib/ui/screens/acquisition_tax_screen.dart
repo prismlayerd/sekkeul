@@ -154,7 +154,9 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
+                      // 글자를 키우면 스위치를 밀어냈다 — 라벨이 양보한다.
+                      Expanded(
+                        child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('조정대상지역',
@@ -165,6 +167,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
                                   color: subColor.withValues(alpha: 0.8),
                                   fontSize: 12)),
                         ],
+                        ),
                       ),
                       Switch(
                         value: _adjusted,
@@ -305,7 +308,11 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: TextStyle(color: labelColor, fontSize: 12)),
+            // 라벨이 줄고 세율은 제 폭을 지킨다 — 숫자가 잘리면 안 된다.
+            Expanded(
+              child: Text(label, style: TextStyle(color: labelColor, fontSize: 12)),
+            ),
+            const SizedBox(width: 8),
             Text(rate,
                 style: TextStyle(
                     color: valueColor,

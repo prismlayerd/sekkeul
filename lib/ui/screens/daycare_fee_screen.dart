@@ -109,9 +109,12 @@ class _DaycareFeeScreenState extends State<DaycareFeeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('가정양육 ($_homeLabel)',
-                          style: AppTheme.sans(AppTheme.tsSM, ink,
-                              weight: FontWeight.w600)),
+                      Expanded(
+                        child: Text('가정양육 ($_homeLabel)',
+                            style: AppTheme.sans(AppTheme.tsSM, ink,
+                                weight: FontWeight.w600)),
+                      ),
+                      const SizedBox(width: 8),
                       Text(won(_homeCash),
                           style: AppTheme.sans(AppTheme.tsMD, accent,
                               weight: FontWeight.w700)),

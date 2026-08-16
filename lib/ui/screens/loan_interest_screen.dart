@@ -126,11 +126,15 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
                 children: [
                   Text('상환방식', style: AppTheme.sans(AppTheme.tsBase, ink)),
                   const SizedBox(height: 10),
-                  Row(
+                  // 칩 셋을 Row에 박아 두면 글자를 키울 때 넘친다.
+                  // Wrap으로 두면 안 들어가는 칩이 다음 줄로 내려간다.
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: List.generate(methods.length, (i) {
                       final sel = _method == i;
                       return Padding(
-                        padding: EdgeInsets.only(right: i < 2 ? 8 : 0),
+                        padding: EdgeInsets.zero,
                         child: GestureDetector(
                           onTap: () => setState(() => _method = i),
                           child: Container(

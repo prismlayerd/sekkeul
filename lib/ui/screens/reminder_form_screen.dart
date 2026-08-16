@@ -389,8 +389,19 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
             Text(isAm ? '오전' : '오후',
                 style: AppTheme.sans(AppTheme.tsBase, sub, weight: FontWeight.w600)),
             const SizedBox(width: 8),
-            Text('${h12.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
-                style: AppTheme.display(AppTheme.serifXL, ink, spacing: 0.5, height: 1.0)),
+            // 글자를 키우면 큰 숫자와 24시간 표기가 한 줄에서 다툰다.
+            // 큰 숫자가 자리를 차지하되 모자라면 줄어든다.
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                    '${h12.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
+                    style: AppTheme.display(AppTheme.serifXL, ink,
+                        spacing: 0.5, height: 1.0)),
+              ),
+            ),
+            const SizedBox(width: 12),
             const Spacer(),
             Text('${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')}',
                 style: AppTheme.label(context, color: tert)),

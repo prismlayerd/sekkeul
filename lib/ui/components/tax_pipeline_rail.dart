@@ -21,13 +21,28 @@ class TaxPipelineRail extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              for (int i = 0; i < labels.length; i++) _tick(context, i + 1, labels[i]),
-            ],
+        // 들어가면 지금처럼 양끝에 붙여 고르게 벌리고, 안 들어가면 옆으로 민다.
+        //
+        // N잡러는 단계가 넷이라 글자를 1.3배로 키우면 한 줄에 안 들어간다.
+        // 예전에는 그냥 잘렸다 — 마지막 단계가 화면 밖으로 나가서, 정작
+        // "지금 몇 단계인지"를 못 보게 됐다.
+        LayoutBuilder(
+          builder: (context, c) => SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: c.maxWidth - 48),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  for (int i = 0; i < labels.length; i++)
+                    Padding(
+                      padding: EdgeInsets.only(right: i < labels.length - 1 ? 14 : 0),
+                      child: _tick(context, i + 1, labels[i]),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
         AppTheme.hairline(context),
