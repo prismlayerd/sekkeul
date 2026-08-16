@@ -9,10 +9,11 @@ import '../theme/text_wrap.dart';
 ///
 /// 홈의 알림함은 증거가 못 된다 — 거기는 앱을 열 때마다 "이 시각에 울렸어야
 /// 한다"를 역산해 채우는 곳이라, OS가 실제로 띄웠는지와 무관하게 쌓인다
-/// (`notification_history.dart`). 그래서 진짜 상태를 보는 자리를 따로 둔다.
+/// (`notification_history.dart`).
 ///
-/// 막히는 자리는 셋뿐이다: 알림 권한 · 정확 알람 권한 · 예약 자체.
-/// 아래 세 줄이 그 셋을 그대로 보여주고, 테스트 두 발로 어디인지 가른다.
+/// 막히는 자리는 넷이다: 플러그인 · 알림 권한 · 정확 알람 권한 · 예약.
+/// **모르는 것은 모른다고 적는다** — 예전에는 못 읽으면 "허용"으로 적어서,
+/// 권한이 정상인데 안 오는 것처럼 보였다.
 class NotificationDoctorScreen extends StatefulWidget {
   const NotificationDoctorScreen({super.key});
 
@@ -22,10 +23,11 @@ class NotificationDoctorScreen extends StatefulWidget {
 
 class _NotificationDoctorScreenState extends State<NotificationDoctorScreen> {
   bool _loading = true;
-  bool _notifOk = false;
-  bool _exactOk = false;
+  bool _alive = false;
+  bool? _notifOk;
+  bool? _exactOk;
   List<PendingNotificationRequest> _pending = const [];
-  String? _testedAt;
+  String? _testResult;
 
   @override
   void initState() {
@@ -34,11 +36,13 @@ class _NotificationDoctorScreenState extends State<NotificationDoctorScreen> {
   }
 
   Future<void> _load() async {
+    final alive = await notificationHelper.pluginAlive();
     final notif = await notificationHelper.notificationsAllowed();
     final exact = await notificationHelper.exactAlarmsAllowed();
     final pending = await notificationHelper.pending();
     if (!mounted) return;
     setState(() {
+      _alive = alive;
       _notifOk = notif;
       _exactOk = exact;
       _pending = pending;
@@ -46,12 +50,26 @@ class _NotificationDoctorScreenState extends State<NotificationDoctorScreen> {
     });
   }
 
+  /// 테스트 두 발을 보내고, **예약이 실제로 잡혔는지까지** 확인한다.
+  ///
+  /// 보내는 것만으로는 모른다 — 플러그인이 죽어 있으면 조용히 아무 일도
+  /// 안 일어나고, 예전 코드는 그걸 삼켰다. 10초 예약이 대기 목록에 들어갔는지
+  /// 되짚어야 "예약까지는 됐다"를 말할 수 있다.
   Future<void> _sendTest() async {
+    final before = notificationHelper.failures.length;
     await notificationHelper.sendTestNotifications();
+    final pending = await notificationHelper.pending();
+    final queued = pending.any((p) => p.id == 9002);
+    final newFailures = notificationHelper.failures.length - before;
+
     if (!mounted) return;
-    final now = TimeOfDay.now();
-    setState(() => _testedAt =
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}');
+    setState(() {
+      _testResult = newFailures > 0
+          ? '보내는 중에 실패가 $newFailures건 났어요. 아래 「최근 실패」를 봐주세요.'
+          : queued
+              ? '보냈고 10초 예약도 잡혔어요. 이제 화면에 뜨는지만 보면 됩니다.'
+              : '보냈는데 **예약이 안 잡혔어요.** 알림 자체가 막혀 있습니다.';
+    });
     await _load();
   }
 
@@ -72,13 +90,16 @@ class _NotificationDoctorScreenState extends State<NotificationDoctorScreen> {
                       style: AppTheme.sans(AppTheme.tsSM, sub)),
                   const SizedBox(height: 18),
 
-                  AppTheme.sectionHead(context, '01', '권한'),
+                  AppTheme.sectionHead(context, '01', '기본'),
                   const SizedBox(height: 10),
-                  _check('알림 표시', _notifOk,
-                      onFix: _notifOk ? null : notificationHelper.requestPermissions),
+                  _row('알림 기능 자체', _alive,
+                      note: _alive ? null : '앱 알림 모듈이 응답하지 않아요 — 이게 꺼져 있으면 아래는 다 의미 없어요'),
                   AppTheme.hairline(context),
-                  _check('정확한 시각 알람', _exactOk,
-                      onFix: _exactOk ? null : notificationHelper.requestExactAlarms,
+                  _row('알림 표시 권한', _notifOk,
+                      onFix: _notifOk == true ? null : notificationHelper.requestPermissions),
+                  AppTheme.hairline(context),
+                  _row('정확한 시각 알람', _exactOk,
+                      onFix: _exactOk == true ? null : notificationHelper.requestExactAlarms,
                       note: '꺼져 있으면 예약은 되지만 늦게 울려요'),
                   AppTheme.hairline(context),
 
@@ -116,11 +137,9 @@ class _NotificationDoctorScreenState extends State<NotificationDoctorScreen> {
                   const SizedBox(height: 10),
                   Text(
                     '두 발을 보냅니다 — 지금 하나, 10초 뒤 하나.\n'
-                    '· 둘 다 안 오면 → 권한이나 방해금지 문제\n'
-                    '· 즉시만 오면 → 예약(알람)이 막힌 것, 기기 절전 설정을 보세요\n'
-                    '· 소리 없이 상단 줄에만 뜨면 → 채널 중요도가 낮아진 것,\n'
-                    '  안드로이드 설정 > 앱 > 세끌 > 알림에서 되돌립니다\n'
-                    '· 둘 다 배너로 오면 → 알림은 살아 있고 리마인더 설정 쪽 문제'
+                    '· 둘 다 안 오면 → 권한이나 방해금지(상단바 ⊘)\n'
+                    '· 즉시만 오면 → 예약이 막힌 것, 기기 절전 설정을 보세요\n'
+                    '· 소리 없이 상단 줄에만 뜨면 → 채널 중요도가 낮아진 것'
                         .keepWords,
                     style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.6),
                   ),
@@ -141,10 +160,24 @@ class _NotificationDoctorScreenState extends State<NotificationDoctorScreen> {
                       ),
                     ),
                   ),
-                  if (_testedAt != null) ...[
-                    const SizedBox(height: 8),
-                    Text('$_testedAt에 보냈어요.',
-                        style: AppTheme.sans(AppTheme.tsSM, sub)),
+                  if (_testResult != null) ...[
+                    const SizedBox(height: 10),
+                    Text(_testResult!.keepWords,
+                        style: AppTheme.sans(AppTheme.tsSM, ink, height: 1.5)),
+                  ],
+
+                  if (notificationHelper.failures.isNotEmpty) ...[
+                    const SizedBox(height: 22),
+                    AppTheme.sectionHead(context, '04', '최근 실패'),
+                    const SizedBox(height: 10),
+                    // 예전에는 이 실패들이 전부 logcat으로만 갔다 — 기기에서는
+                    // 아무 데도 안 보여서, 무엇이 막혔는지 알 길이 없었다.
+                    for (final f in notificationHelper.failures.take(8))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(f,
+                            style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4)),
+                      ),
                   ],
                 ],
               ),
@@ -152,21 +185,25 @@ class _NotificationDoctorScreenState extends State<NotificationDoctorScreen> {
     );
   }
 
-  Widget _check(String label, bool ok, {VoidCallback? onFix, String? note}) {
+  /// 한 줄. [ok]가 null이면 **모른다**고 적는다.
+  Widget _row(String label, bool? ok, {VoidCallback? onFix, String? note}) {
     final ink = AppTheme.ink(context);
     final sub = AppTheme.inkSecondary(context);
+    final (text, color) = switch (ok) {
+      true => ('허용', AppTheme.colorSuccess),
+      false => ('차단', AppTheme.colorDanger),
+      null => ('모름', AppTheme.colorWarning),
+    };
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 색을 못 쓰니 상태는 글자로 말한다.
+          // 색을 못 쓰는 체계라 상태는 글자로도 말한다.
           SizedBox(
-            width: 30,
-            child: Text(ok ? '허용' : '차단',
-                style: AppTheme.sans(AppTheme.tsSM,
-                    ok ? AppTheme.colorSuccess : AppTheme.colorDanger,
-                    weight: FontWeight.w700)),
+            width: 34,
+            child: Text(text,
+                style: AppTheme.sans(AppTheme.tsSM, color, weight: FontWeight.w700)),
           ),
           const SizedBox(width: 12),
           Expanded(

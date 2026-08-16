@@ -22,6 +22,9 @@ class ReminderScheduler {
     await NotificationHistory.backfill(userType: userType);
     await scheduleTaxSeason(userType);
     await customReminderService.ensureRecordSeed(payDay: payDay, userType: userType);
+    // 사용자가 만든 리마인더도 다시 건다 — 앱 업데이트·강제 종료로 알람이
+    // 날아가면 목록에는 켜짐으로 남은 채 영영 안 울린다.
+    await customReminderService.resyncAll();
   }
 
   static Future<void> cancelAll() => notificationHelper.cancelAll();

@@ -246,8 +246,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       } else {
         await ReminderScheduler.cancelAll();
       }
-    } catch (e) {
-      debugPrint('리마인더 예약 실패: $e');
+    } catch (e, st) {
+      // logcat으로만 흘리면 기기에서는 아무 데도 안 보인다 —
+      // 「설정 → 알림 점검」이 읽을 수 있게 오류 기록으로 남긴다.
+      await dbService.insertErrorLog('리마인더 예약 실패: $e', st.toString());
     }
   }
 

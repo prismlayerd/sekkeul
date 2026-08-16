@@ -11,6 +11,38 @@ class NotificationHelper {
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
+  /// 최근 실패들 — 화면에서 그대로 보여준다.
+  ///
+  /// 예전에는 알림이 실패하면 전부 `debugPrint`로 흘렸다. 기기에서는 logcat을
+  /// 못 보니 **아무 데도 안 보인다.** "알림이 안 온다"는 제보를 세 번 받고도
+  /// 무엇이 막혔는지 몰랐던 이유가 이것이다. 실패는 남겨야 고칠 수 있다.
+  static const int _maxFailures = 20;
+  final List<String> failures = [];
+
+  void _fail(String what, Object e) {
+    final stamp = DateTime.now().toIso8601String().substring(11, 19);
+    failures.insert(0, '[$stamp] $what — $e');
+    if (failures.length > _maxFailures) failures.removeLast();
+    debugPrint('알림 실패 · $what — $e');
+    // DB에도 남긴다 — 앱을 껐다 켜도 남아야 원인을 쫓을 수 있다.
+    dbService.insertErrorLog('알림 실패 · $what', e.toString());
+  }
+
+  /// 플러그인 자체가 응답하는가.
+  ///
+  /// 네이티브 채널이 안 붙어 있으면 모든 호출이 MissingPluginException으로
+  /// 죽는데, 예전 코드는 그걸 전부 삼켜서 "권한도 정상, 예약 0건"처럼 보였다.
+  /// 멀쩡한 것과 죽은 것이 화면에서 똑같아 보이면 진단이 아니다.
+  Future<bool> pluginAlive() async {
+    try {
+      await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+      return true;
+    } catch (e) {
+      _fail('플러그인 응답 없음', e);
+      return false;
+    }
+  }
+
   Future<void> init() async {
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Seoul'));
@@ -91,7 +123,7 @@ class NotificationHelper {
         await android.createNotificationChannel(c);
       }
     } catch (e) {
-      debugPrint('알림 채널을 못 만들었다: $e');
+      _fail('채널 만들기', e);
     }
   }
 
@@ -158,7 +190,7 @@ class NotificationHelper {
         notificationDetails: platformChannelSpecifics,
       );
     } catch (e) {
-      debugPrint('즉시 알림 표시 실패($id): $e');
+      _fail('즉시 알림 표시(id $id)', e);
     }
   }
 
@@ -206,7 +238,7 @@ class NotificationHelper {
       );
     } catch (e) {
       // 단말이 정확 알람을 거부하는 드문 경우 — 비정확으로라도 예약(크래시 방지). 원인은 로깅.
-      debugPrint('정확 알람 예약 실패 → 비정확 폴백: $e');
+      _fail('정확 알람 예약(id $id) → 비정확으로 재시도', e);
       try {
         await flutterLocalNotificationsPlugin.zonedSchedule(
           id: id,
@@ -220,7 +252,7 @@ class NotificationHelper {
       } catch (e2) {
         // 폴백까지 실패해도 화면은 그대로 떠야 한다. 홈은 이 예약들을 await 없이
         // 던져 두므로(fire-and-forget), 여기서 안 막으면 처리되지 않은 비동기 예외가 된다.
-        debugPrint('비정확 알람 예약도 실패: $e2');
+        _fail('비정확 알람 예약(id \$id)', e2);
       }
     }
   }
@@ -256,33 +288,41 @@ class NotificationHelper {
     );
   }
 
-  /// 알림 표시 권한(POST_NOTIFICATIONS) 허용 여부.
-  Future<bool> notificationsAllowed() async {
+  /// 알림 표시 권한(POST_NOTIFICATIONS). **모르면 null**이다.
+  ///
+  /// 예전에는 못 읽으면 `true`를 돌려줬다. 그러면 진단 화면이 "허용"이라고
+  /// 적어 놓고 알림은 안 오는, 가장 나쁜 상태가 된다.
+  Future<bool?> notificationsAllowed() async {
     final android = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    if (android == null) return true;
-    final ok = await android.areNotificationsEnabled();
-    return ok ?? true;
+    if (android == null) return null;
+    try {
+      return await android.areNotificationsEnabled();
+    } catch (e) {
+      _fail('알림 권한 확인', e);
+      return null;
+    }
   }
 
   /// 알림 토글을 켤 때 호출 — OS 권한이 꺼져 있으면 시스템 허용 요청을 띄운다.
   Future<void> ensurePermissionIfNeeded() async {
-    if (!await notificationsAllowed()) {
+    // 모를 때(null)도 물어본다 — 안 물어보는 것보다 한 번 더 묻는 게 낫다.
+    if (await notificationsAllowed() != true) {
       await requestPermissions();
     }
   }
 
   /// 정확한 시각에 알람을 걸 수 있는가(API 31+). 꺼져 있으면 예약은 되지만
   /// 몇 분~몇십 분 늦게 울린다 — "안 울린다"로 체감되는 자리다.
-  Future<bool> exactAlarmsAllowed() async {
+  Future<bool?> exactAlarmsAllowed() async {
     final android = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    if (android == null) return true;
+    if (android == null) return null;
     try {
-      return await android.canScheduleExactNotifications() ?? true;
+      return await android.canScheduleExactNotifications();
     } catch (e) {
-      debugPrint('정확 알람 가능 여부를 못 읽었다: $e');
-      return true;
+      _fail('정확 알람 가능 여부 확인', e);
+      return null;
     }
   }
 
@@ -294,7 +334,7 @@ class NotificationHelper {
     try {
       await android.requestExactAlarmsPermission();
     } catch (e) {
-      debugPrint('정확 알람 요청 실패: $e');
+      _fail('정확 알람 권한 요청', e);
     }
   }
 
@@ -304,7 +344,7 @@ class NotificationHelper {
     try {
       return await flutterLocalNotificationsPlugin.pendingNotificationRequests();
     } catch (e) {
-      debugPrint('예약 목록을 못 읽었다: $e');
+      _fail('예약 목록 읽기', e);
       return const [];
     }
   }
@@ -316,7 +356,7 @@ class NotificationHelper {
     try {
       await flutterLocalNotificationsPlugin.cancel(id: id);
     } catch (e) {
-      debugPrint('알림 취소 실패($id): $e');
+      _fail('알림 취소(id $id)', e);
     }
   }
 
@@ -324,7 +364,7 @@ class NotificationHelper {
     try {
       await flutterLocalNotificationsPlugin.cancelAll();
     } catch (e) {
-      debugPrint('알림 전체 취소 실패: $e');
+      _fail('알림 전체 취소', e);
     }
   }
 }

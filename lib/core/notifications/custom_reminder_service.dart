@@ -79,6 +79,27 @@ class CustomReminderService {
     ));
   }
 
+  /// 켜져 있는 리마인더를 **전부 다시 예약**한다.
+  ///
+  /// 예약은 만들거나 켤 때 한 번만 걸었다. 그런데 안드로이드의 알람은 앱을
+  /// 업데이트하거나 강제 종료하면 날아간다 — 그러면 목록에는 켜짐으로 남아
+  /// 있는데 영영 안 울린다. 앱을 켤 때마다 다시 걸어 두면 그 구멍이 막힌다.
+  ///
+  /// 같은 id로 다시 걸면 기존 예약을 덮어쓰므로 여러 번 불러도 안전하다.
+  Future<void> resyncAll() async {
+    for (final r in await list()) {
+      if (!r.enabled) continue;
+      // 예전 기록에는 notifId가 없을 수 있다 — 이때 붙여 준다.
+      final fixed = r.notifId == null && r.id != null
+          ? r.copyWith(notifId: _notifBase + r.id!)
+          : r;
+      if (fixed.notifId != r.notifId) {
+        await dbService.updateReminder(fixed.toMap());
+      }
+      await _schedule(fixed);
+    }
+  }
+
   /// 다음으로 울릴 활성 리마인더(요약 표시용).
   Future<Reminder?> nextUpcoming() async {
     final all = await list();
