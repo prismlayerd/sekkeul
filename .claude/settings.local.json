@@ -144,7 +144,10 @@
       "Bash(sed 's/\\\\.dart$//')",
       "Bash(python3 -c ' *)",
       "mcp__7d577208-aeb2-4438-b05c-c046d69710cf__notion-create-comment",
-      "mcp__7d577208-aeb2-4438-b05c-c046d69710cf__notion-update-page"
+      "mcp__7d577208-aeb2-4438-b05c-c046d69710cf__notion-update-page",
+      "Bash(python \"C:/Users/vedja/AppData/Local/Temp/claude/C--src-project-sekkeul/be849116-b912-4f42-a2e8-421d4e09382a/scratchpad/two_pages.py\")",
+      "Bash(git checkout *)",
+      "Bash(git commit -q -m ' *)"
     ]
   }
 }

@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../../core/update_service.dart';
 import '../components/expense_target_dialog.dart';
 import '../components/reminder_card.dart';
+import '../components/slip_ticks.dart';
 import '../components/section_accordion.dart';
 import '../components/update_card.dart';
 import 'onboarding_screen.dart';
@@ -54,6 +55,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   // 신용카드/체크+현금 당월 누계 (표시용)
   double _creditCardTotal = 0.0;
+  /// 홈의 몇 번째 장을 보고 있나 (0 = 이번 달, 1 = 도구와 문답).
+  int _homePage = 0;
+  final _homePageCtrl = PageController();
+
   double _debitCashTotal = 0.0;
   /// 결제수단이 '기타'이거나 비어 있는 이번 달 지출.
   double _otherPayTotal = 0.0;
@@ -618,6 +623,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _freelancerIncomeController.dispose();
     _monthsController.dispose();
     _yellowUmbrellaController.dispose();
+    _homePageCtrl.dispose();
     _bannerTimer?.cancel();
     appRouteObserver.unsubscribe(this);
     super.dispose();
@@ -898,21 +904,70 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
+  /// 홈은 **두 장의 명세서**다.
+  ///
+  /// 한 장에 절이 다섯(01~05) 쌓여 있어 "너무 많이 보인다"는 의견이 모였다.
+  /// 매달 보는 것(돈·알림)과 필요할 때 찾는 것(도구·문답)은 성격이 다르니
+  /// 장을 가른다.
+  ///
+  /// 머리(발행 정보·유형 선택)는 **페이지 밖에 고정**한다. 머리는 가만히
+  /// 있는데 내용만 옆으로 미끄러져야 "두 장"이라는 게 읽히고, 덤으로 유형
+  /// 선택이 어느 장에서든 손에 닿는다.
   Widget _buildHomeContent() {
-    // 홈은 **한 장의 명세서**다. 기능마다 패널 상자를 두르지 않는다 —
-    // 영수증에는 카드가 없고, 절을 가르는 것은 점선이다.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 선은 아래 한 줄만. 위아래로 두 번 그으면 머리줄이 상자가 된다.
+              // 발행 정보는 그 선에 바짝 붙어야 '선 위에 찍힌 것'으로 읽힌다.
+              _slipMeta(),
+              AppTheme.hairline(context, color: AppTheme.ink(context)),
+              const SizedBox(height: 14),
+              _buildTypeSelector(),
+            ],
+          ),
+        ),
+        Expanded(
+          child: PageView(
+            controller: _homePageCtrl,
+            onPageChanged: (i) => setState(() => _homePage = i),
+            children: [
+              _homePageOne(),
+              _homePageTwo(),
+            ],
+          ),
+        ),
+        // 장 표시는 **맨 아래**에 둔다.
+        //
+        // 배너 회전 틱과 같은 모양이라, 위쪽 머리에 두면 둘이 100픽셀 거리에
+        // 나란히 놓여 무엇이 무엇인지 모호했다. 아래로 내리면 "지금 몇 번째
+        // 장"이라는 뜻이 자리로 읽힌다.
+        Padding(
+          padding: const EdgeInsets.only(top: 10, bottom: 6),
+          child: Center(
+            child: SlipTicks(
+              count: 2,
+              active: _homePage,
+              onTap: _goToHomePage,
+              labelFor: (i) => i == 0 ? '이번 달' : '도구와 문답',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 1장 — 이번 달 얼마 벌고 썼나. 홈이 답해야 할 질문이 이것이다.
+  Widget _homePageOne() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 선은 아래 한 줄만. 위아래로 두 번 그으면 머리줄이 상자가 된다.
-          // 발행 정보는 그 선에 바짝 붙어야 '선 위에 찍힌 것'으로 읽힌다.
-          _slipMeta(),
-          AppTheme.hairline(context, color: AppTheme.ink(context)),
-          const SizedBox(height: 14),
-          _buildTypeSelector(),
-          _slipRule(),
           // 업데이트가 있을 때만 그려진다. 없으면 자리를 차지하지 않는다.
           const UpdateCard(),
           HomeBannerCarousel(
@@ -961,6 +1016,20 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           _slipRule(),
           ReminderCard(userType: _userType),
           _slipRule(),
+          _nextPageLink(),
+          _slipFooter(),
+        ],
+      ),
+    );
+  }
+
+  /// 2장 — 필요할 때 찾는 것.
+  Widget _homePageTwo() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           TaxToolsAccordion(userType: _userType),
           _slipRule(),
           _buildFaqCard(),
@@ -968,6 +1037,39 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         ],
       ),
     );
+  }
+
+  /// 1장 끝에서 2장으로 가는 길.
+  ///
+  /// 틱만으로는 옆으로 넘길 수 있다는 걸 모르는 사람이 있다. 스와이프를
+  /// 몰라도 갈 수 있어야 한다 — 그게 없으면 04·05는 그냥 사라진 게 된다.
+  Widget _nextPageLink() {
+    final accent = AppTheme.accentColor(context);
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _goToHomePage(1),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(children: [
+            Expanded(
+              child: Text('세무 도구 · 자주 묻는 질문'.keepWords,
+                  style: AppTheme.sans(AppTheme.tsSM, accent,
+                      weight: FontWeight.w600)),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.arrow_forward, size: 14, color: accent),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  void _goToHomePage(int i) {
+    if (!_homePageCtrl.hasClients) return;
+    _homePageCtrl.animateToPage(i,
+        duration: const Duration(milliseconds: 260), curve: Curves.easeOutCubic);
   }
 
   /// 명세서 머리줄 — 발행 시각과 귀속연도. 종이 영수증이 맨 위에 찍는 것.

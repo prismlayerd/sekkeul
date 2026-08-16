@@ -46,10 +46,16 @@ class AppTheme {
   static const String monoFamily   = 'IBM Plex Mono';
   static const String monoKrFamily = 'Nanum Gothic Coding';
 
-  /// 화면 89개가 `serif(...)` / `sans(...)`로 부른다. 이름만 남기고
-  /// 알맹이는 둘 다 고정폭이다 — 이름을 바꾸면 진짜 변경이 diff에 묻힌다.
+  /// 화면 89개가 `serif(...)`로 부른다. 이름만 남기고 알맹이는 고정폭이다 —
+  /// 이름을 바꾸면 진짜 변경이 diff에 묻힌다.
   static const String serifFamily = monoFamily;
-  static const String sansFamily  = monoFamily;
+
+  /// **본문은 고정폭이 아니다.**
+  ///
+  /// null이면 Flutter가 기기의 한글 UI 글꼴을 쓴다(안드로이드 Noto Sans KR,
+  /// iOS Apple SD Gothic Neo). 왜 비워 두는지는 [sans] 주석에 적었다.
+  /// 번들 글꼴로 가려면 여기 한 줄만 채우면 된다 — 호출부는 안 건드린다.
+  static const String? sansFamily = null;
 
   /// 고정폭에 음수 자간을 주면 글자가 서로 올라탄다. 세리프 시절 호출부
   /// 90여 곳이 `spacing: -1.5` 같은 값을 넘기고 있어, 부르는 쪽을 전부
@@ -88,11 +94,25 @@ class AppTheme {
   /// 숫자를 고정폭으로 — 자릿수가 세로로 맞아야 명세서가 된다.
   static const List<FontFeature> _tabular = [FontFeature.tabularFigures()];
 
-  /// 본문 (구 `sans`) — 같은 고정폭, 자간과 행간만 다르다.
+  /// 본문 — **여기만 고정폭이 아니다.**
   ///
-  /// 기본 굵기가 **w500**이다. 고정폭 글꼴은 같은 굵기라도 획이 가늘게 퍼져
-  /// 보이는데, 여기에 종이 사진 결까지 겹치니 w400 본문이 바탕에 눌려 안
-  /// 읽혔다(실기기 확인). 한 급 올려도 굵어 보이지 않고 또렷해지기만 한다.
+  /// 테스터 의견이 "홈에서 텍스트가 잘 안 보인다"로 모였다. 재 보니 명암은
+  /// 문제가 아니었다 — 종이 사진의 깊은 주름 위에서도 본문 8.5:1로 AA를
+  /// 통과한다. 원인은 **고정폭 한글**이었다. 고정폭은 라틴 글자 폭에 한글을
+  /// 밀어 넣어서, 받침이 많은 글자일수록 획이 뭉치고 자간이 균일해 낱말
+  /// 경계가 안 잡힌다. 홈 텍스트의 75%가 12~13px 고정폭 한글이었다.
+  ///
+  /// 크기를 키우는 건 답이 아니다 — 화면만 길어지고(테스터 불만 2번) 획이
+  /// 뭉치는 건 그대로다. 글꼴을 바꾼다.
+  ///
+  /// **영수증 느낌은 [display]와 [label]이 지킨다.** 금액·표시 숫자는 고정폭
+  /// 그대로고, 절 머리(`01 · 이번 달 수입`)의 자간 넓은 전표 주석도 그대로다.
+  /// 흉내내는 건 타자기지 본문 조판이 아니다.
+  ///
+  /// 기본 굵기 **w500**은 유지한다. 종이 결 위에서 w400은 바탕에 눌린다.
+  ///
+  /// [fontFeatures]의 tabular도 유지한다 — `sans()`로 찍는 금액(리더 행의 값
+  /// 같은 것)이 아직 있어서 자릿수가 세로로 맞아야 한다.
   static TextStyle sans(
     double size,
     Color color, {
@@ -102,8 +122,7 @@ class AppTheme {
     TextDecoration? decoration,
   }) =>
       TextStyle(
-        fontFamily: monoFamily,
-        fontFamilyFallback: const [monoKrFamily],
+        fontFamily: sansFamily,
         fontSize: size,
         color: color,
         fontWeight: weight,
@@ -118,10 +137,15 @@ class AppTheme {
   /// 전표 주석 라벨 — 소형 + 자간 극대.
   /// 11 → 12. 한글은 같은 픽셀에서 라틴보다 빽빽해 11에서 획이 뭉갠다.
   /// 작게 보이고 싶으면 크기가 아니라 잉크를 옅게, 자간을 넓게 쓴다.
+  ///
+  /// **여기는 고정폭으로 남는다.** 본문은 산세리프로 갔지만(→ [sans]) 절
+  /// 머리는 다르다 — 자간을 넓힌 고정폭 소형 대문자가 곧 전표의 문법이고,
+  /// 짧아서 읽기 부담도 없다. 컨셉을 지키는 자리다.
   static TextStyle label(BuildContext context, {Color? color}) {
     final c = color ?? inkTertiary(context);
     return TextStyle(
-      fontFamily: sansFamily,
+      fontFamily: monoFamily,
+      fontFamilyFallback: const [monoKrFamily],
       fontSize: tsXS,
       color: c,
       fontWeight: FontWeight.w600,

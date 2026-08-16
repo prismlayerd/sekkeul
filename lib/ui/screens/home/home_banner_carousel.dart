@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../components/slip_ticks.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/text_wrap.dart';
 
@@ -84,7 +85,12 @@ class HomeBannerCarousel extends StatelessWidget {
         ),
         if (cards.length > 1) ...[
           const SizedBox(height: 12),
-          _bannerTicks(cards.length, idx),
+          SlipTicks(
+            count: cards.length,
+            active: idx,
+            onTap: onTickTap,
+            labelFor: (i) => '${i + 1}번째 소식',
+          ),
         ],
       ],
     );
@@ -133,9 +139,11 @@ class HomeBannerCarousel extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 7),
-                    // 두 줄까지만 쓰고 넘치면 줄임표. 높이는 글자가 정한다.
+                    // **한 줄이다.** 첫 화면이 빽빽하다는 의견이 있어 배너를
+                    // 절반으로 줄였다 — 헤드라인은 한 줄에 담기게 쓰고,
+                    // 안 담기면 줄임표로 끊는다.
                     Text(c.headline.keepWords,
-                        maxLines: 2,
+                        maxLines: 1,
                         textAlign: TextAlign.left,
                         overflow: TextOverflow.ellipsis,
                         // 홈의 표제는 절 머리(01 INCOME…)다. 배너가 그보다 크면
@@ -145,10 +153,10 @@ class HomeBannerCarousel extends StatelessWidget {
                     if (subText != null)
                       Row(children: [
                         Flexible(
-                          // 두 문장짜리 팁이 폭 기준으로 아무 데서나 잘려 넘어가지 않도록
-                          // 문장 경계('. ')에서 명시적으로 줄바꿈.
-                          child: Text(subText.replaceAll('. ', '.\n'),
-                              maxLines: 2,
+                          // 한 줄로 줄였으니 문장 경계 줄바꿈도 뺀다 —
+                          // 어차피 첫 줄만 보인다.
+                          child: Text(subText,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
                         ),
@@ -165,33 +173,4 @@ class HomeBannerCarousel extends StatelessWidget {
     );
   }
 
-  /// 배너 위치 틱 — 현재 카드는 ink 긴 막대, 나머지는 헤어라인. 탭하면 이동.
-  Widget _bannerTicks(int count, int active) {
-    return Builder(builder: (context) {
-      final ink = AppTheme.ink(context);
-      return Row(
-        children: List.generate(count, (i) {
-          final on = i == active;
-          return Semantics(
-            button: true,
-            selected: on,
-            label: '${i + 1}번째 소식',
-            child: GestureDetector(
-              onTap: () => onTickTap(i),
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: on ? 18 : 10,
-                  height: 2,
-                  color: on ? ink : AppTheme.line(context),
-                ),
-              ),
-            ),
-          );
-        }),
-      );
-    });
-  }
 }
