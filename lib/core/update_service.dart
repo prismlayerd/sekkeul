@@ -62,24 +62,54 @@ class UpdateService extends ChangeNotifier {
     }
   }
 
+  /// Play가 준 정보를 화면 상태로 옮긴다.
+  ///
+  /// 판단만 하고 아무것도 실행하지 않는 순수 함수로 뺐다 — 이 결정이 틀리면
+  /// 다 받아 둔 업데이트가 영영 설치되지 않는데, 실기기에서만 도는 코드라
+  /// 눈으로 확인할 방법이 없어서다. 테스트가 대신 본다.
+  @visibleForTesting
+  static UpdateState stateFor(AppUpdateInfo info) {
+    // **이미 받아 두고 설치 전에 앱을 닫은 경우.**
+    //
+    // Play는 이 상태를 `updateAvailable`이 아니라
+    // `developerTriggeredUpdateInProgress`로 알려준다. 예전에는 이 값을
+    // "업데이트 없음"으로 흘려보냈다. 그래서 사용자가 다 받아 놓고 재시작 전에
+    // 앱을 닫으면, 다음에 켰을 때 카드가 사라지고 받아 둔 파일은 영영 설치되지
+    // 않았다. 받는 데 든 데이터만 버린 셈이다.
+    if (info.updateAvailability ==
+        UpdateAvailability.developerTriggeredUpdateInProgress) {
+      return switch (info.installStatus) {
+        InstallStatus.downloaded => UpdateState.readyToInstall,
+        InstallStatus.downloading || InstallStatus.pending =>
+          UpdateState.downloading,
+        _ => UpdateState.none,
+      };
+    }
+    if (info.updateAvailability != UpdateAvailability.updateAvailable) {
+      return UpdateState.none;
+    }
+    // 우선순위가 높은 릴리스는 막고 간다.
+    //
+    // 이 값은 **Play Console 화면에서 못 정한다.** Developer API의
+    // `Edits.tracks.releases.inAppUpdatePriority`로만 들어가고, 안 넣으면 0이다.
+    // 콘솔에서 손으로 올리는 동안에는 이 가지가 한 번도 참이 되지 않는다.
+    if (info.immediateUpdateAllowed && info.updatePriority >= 4) {
+      return UpdateState.immediate;
+    }
+    return info.flexibleUpdateAllowed ? UpdateState.flexible : UpdateState.none;
+  }
+
   Future<void> check() async {
     if (!_supported) {
       _set(UpdateState.none);
       return;
     }
     try {
-      final info = await InAppUpdate.checkForUpdate();
-      if (info.updateAvailability != UpdateAvailability.updateAvailable) {
-        _set(UpdateState.none);
-        return;
-      }
-      // 우선순위가 높은 릴리스는 막고 간다. Play Console에서 정한 값이다.
-      if (info.immediateUpdateAllowed && (info.updatePriority) >= 4) {
-        _set(UpdateState.immediate);
+      final next = stateFor(await InAppUpdate.checkForUpdate());
+      _set(next);
+      if (next == UpdateState.immediate) {
         await InAppUpdate.performImmediateUpdate();
-        return;
       }
-      _set(info.flexibleUpdateAllowed ? UpdateState.flexible : UpdateState.none);
     } catch (e) {
       // Play가 없거나 서명이 다른 빌드다. 사용자에게 보일 일이 아니다.
       debugPrint('업데이트 확인 실패: $e');
@@ -92,8 +122,13 @@ class UpdateService extends ChangeNotifier {
     if (_state != UpdateState.flexible) return;
     _set(UpdateState.downloading);
     try {
-      await InAppUpdate.startFlexibleUpdate();
-      _set(UpdateState.readyToInstall);
+      // **거절은 예외로 오지 않는다.** 결과값을 안 보고 넘기면, 사용자가
+      // Google 대화상자에서 「나중에」를 눌러도 카드가 「새 버전을 받았어요」로
+      // 바뀐다. 그걸 누르면 설치가 조용히 실패하는 막다른 길이 된다.
+      final r = await InAppUpdate.startFlexibleUpdate();
+      _set(r == AppUpdateResult.success
+          ? UpdateState.readyToInstall
+          : UpdateState.flexible);
     } catch (e) {
       debugPrint('업데이트 내려받기 실패: $e');
       _set(UpdateState.flexible);
