@@ -95,22 +95,27 @@ const List<TaxTip> _allTips = [
 /// 전체 팁 — 문구 줄나눔 규칙을 검사하는 테스트가 본다(test/tip_wrap_test.dart).
 const List<TaxTip> allTaxTips = _allTips;
 
-/// 이번 달 + 유형에 맞는 팁 상위 N개. 일정성(이번 달) → 2026 혜택 → 꿀팁 순.
+/// 이번 달 + 유형에 맞는 팁 N개. 이번 달 일정이 먼저, 나머지는 **달마다 돌린다**.
+///
+/// 예전에는 점수만 매겨 위에서 잘랐다(`2026 혜택` 2점 > `꿀팁` 1점). 그랬더니
+/// 직장인은 **1년 열두 달 내내 같은 두 장**만 봤다 — 라벨이 「2026 혜택」에
+/// 고정된 것처럼 보인 게 이것 때문이다. 팁 아홉 개 중 넷은 아무에게도 안 떴다.
+///
+/// 상시 팁을 달 번호만큼 밀어서 고른다. 매달 짝이 바뀌고, 몇 달이면 그 유형의
+/// 팁을 한 바퀴 다 본다. 이번 달 일정은 여전히 먼저다 — 그건 때를 놓치면
+/// 소용이 없으니까.
 List<TaxTip> taxTipsFor(String userType, int month, {int limit = 2}) {
-  int score(TaxTip t) {
-    final typeOk = t.types.isEmpty || t.types.contains(userType);
-    if (!typeOk) return 0;
-    if (t.months.contains(month)) return 3; // 이번 달 일정 — 최우선
-    if (t.months.isNotEmpty) return 0; // 다른 달 일정 — 제외
-    if (t.label == '2026 혜택') return 2; // 상시 혜택
-    return 1; // 상시 꿀팁
-  }
+  bool forType(TaxTip t) => t.types.isEmpty || t.types.contains(userType);
 
-  final scored = <MapEntry<TaxTip, int>>[];
-  for (final t in _allTips) {
-    final s = score(t);
-    if (s > 0) scored.add(MapEntry(t, s));
+  final seasonal = _allTips
+      .where((t) => forType(t) && t.months.contains(month))
+      .toList();
+  final evergreen =
+      _allTips.where((t) => forType(t) && t.months.isEmpty).toList();
+
+  final out = <TaxTip>[...seasonal];
+  for (var i = 0; i < evergreen.length && out.length < limit; i++) {
+    out.add(evergreen[(month + i) % evergreen.length]);
   }
-  scored.sort((a, b) => b.value.compareTo(a.value));
-  return scored.take(limit).map((e) => e.key).toList();
+  return out.take(limit).toList();
 }

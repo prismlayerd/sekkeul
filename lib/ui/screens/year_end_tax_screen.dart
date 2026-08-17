@@ -900,7 +900,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            '의료비·교육비·기부금 등 연말정산에서 빠진 공제 항목을 하나씩 확인하고, 5월 경정청구 신고서를 준비해드릴게요.'.keepWords,
+            '의료비·교육비·기부금 등 연말정산에서 빠진 공제 항목을 하나씩 확인하고, 5월 종합소득세 신고서를 준비해드릴게요.'.keepWords,
             style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
           ),
           const SizedBox(height: 16),
@@ -1101,7 +1101,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Text('👶 자녀·혼인·연금 공제를 확인할게요'.keepWords, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 19, fontWeight: FontWeight.w800, height: 1.3)),
         const SizedBox(height: 6),
         Text(
-          '연말정산에서 누락됐다면 5월 경정청구로 모두 돌려받을 수 있어요. 없으면 건너뛰세요.'.keepWords,
+          '연말정산에서 누락됐다면 5월 종합소득세 신고로 모두 돌려받을 수 있어요. 없으면 건너뛰세요.'.keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
         ),
         const SizedBox(height: 24),
@@ -1346,7 +1346,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         Text('🏠 월세를 확인할게요', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 19, fontWeight: FontWeight.w800, height: 1.3)),
         const SizedBox(height: 6),
         Text(
-          '회사에 알리기 꺼려 연말정산에서 누락한 경우, 5월 경정청구로 되돌려 받을 수 있어요. (총급여 5,500만원 이하 17% / 초과 15%)\n\n'
+          '회사에 알리기 꺼려 연말정산에서 누락한 경우, 5월 종합소득세 신고로 되돌려 받을 수 있어요. (총급여 5,500만원 이하 17% / 초과 15%)\n\n'
                   '집은 전용 85㎡ 이하이거나 시가 4억원 이하여야 해요. 2026년부터 기본공제 대상 자녀가 3명 이상이면 100㎡까지 넓어졌어요.'.keepWords
               .keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 13, height: 1.45),
@@ -1550,7 +1550,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               Icon(Icons.savings_rounded, color: Theme.of(context).primaryColor, size: 44),
               const SizedBox(height: 12),
               Text(
-                widget.directWizardMode ? '5월 종합소득세 절세 예상액' : '5월 경정청구 추가 환급 예상액',
+                widget.directWizardMode ? '5월 종합소득세 절세 예상액' : '5월 종합소득세 추가 환급 예상액',
                 style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 14, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
@@ -1630,7 +1630,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '5월 종합소득세 신고(경정청구)를 통해 연말정산에서 누락된 공제를 추가로 받을 수 있어요. 실제 신고 시 증빙 서류가 필요합니다.'.keepWords,
+                  '5월 종합소득세 신고로 연말정산에서 누락된 공제를 추가로 받을 수 있어요. 그 시기를 놓쳤어도 경정청구로 5년 안에는 청구할 수 있어요. 실제 신고 시 증빙 서류가 필요합니다.'.keepWords,
                   style: TextStyle(color: Theme.of(context).textTheme.labelMedium!.color!, fontSize: 12, height: 1.45),
                 ),
               ),

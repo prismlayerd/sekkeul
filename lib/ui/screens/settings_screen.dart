@@ -7,7 +7,6 @@ import '../../core/data/theme_pref.dart';
 import '../../core/data/backup_service.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/security/app_lock_service.dart';
-import 'notification_doctor_screen.dart';
 import 'notification_settings_screen.dart';
 import '../theme/text_wrap.dart';
 
@@ -277,14 +276,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           NotificationSettingsScreen(userType: widget.userType))),
             ),
             AppTheme.hairline(context),
-            // 알림이 안 울릴 때 어디가 막혔는지 보는 자리. 홈 알림함은
-            // "울렸을 것"을 역산해 채우는 곳이라 증거가 못 된다.
-            _glyphRow(
-              title: '알림 점검',
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const NotificationDoctorScreen())),
-            ),
-            AppTheme.hairline(context),
+            // 「알림 점검」은 뺐다. 예약된 알림 목록과 실패 기록을 보여 주고
+            // 시험 발송을 하는 화면이었는데, 그건 **내가 고칠 때 쓰던 도구**지
+            // 사용자가 볼 것이 아니다. 알림이 안 울리면 사용자가 할 일은
+            // 진단이 아니라 권한을 켜는 것뿐이고, 그건 위 「세부 알림 설정」이
+            // 안내한다. 화면 자체(notification_doctor_screen.dart)는 남겨 둔다 —
+            // 다음에 또 안 울릴 때 임시로 걸어 쓰면 된다.
             ValueListenableBuilder<ThemeMode>(
               valueListenable: themeModeNotifier,
               builder: (context, mode, _) => _glyphRow(
