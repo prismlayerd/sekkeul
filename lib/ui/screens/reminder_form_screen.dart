@@ -233,7 +233,8 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _saveBar(),
+      // 직접 만든 바라 시스템 내비게이션 바 자리를 스스로 비워야 한다.
+      bottomNavigationBar: SafeArea(top: false, child: _saveBar()),
     );
   }
 

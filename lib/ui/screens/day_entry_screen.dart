@@ -216,9 +216,19 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      // 웹에서 bottomNavigationBar에 Row+Expanded를 바로 넣으면 body까지
-      // 안 보인다 — SizedBox로 높이를 못박아 감싼다.
-      bottomNavigationBar: SizedBox(height: 64, child: _bottomBar()),
+      // **아래 바는 SafeArea로 감싼다.**
+      //
+      // 안드로이드 15(targetSdk 35+)부터 edge-to-edge가 강제라 시스템 내비게이션
+      // 바가 화면 맨 아래를 덮는다. Material의 BottomNavigationBar는 스스로
+      // 그만큼 자리를 비우지만, 여긴 직접 만든 바라 아무도 안 비워 준다.
+      // 그래서 「저장」이 내비게이션 바 밑에 깔려 눌리지 않았다.
+      //
+      // 안쪽 SizedBox는 그대로 둔다 — 웹에서 bottomNavigationBar에 Row+Expanded를
+      // 바로 넣으면 body까지 안 보이는 별개의 버그를 막는 것이다.
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: SizedBox(height: 64, child: _bottomBar()),
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),

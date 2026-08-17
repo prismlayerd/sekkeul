@@ -247,8 +247,9 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
                     ),
                   ],
                 ),
+      // 직접 만든 바라 시스템 내비게이션 바 자리를 스스로 비워야 한다.
       bottomNavigationBar: _loaded && _allItems.isNotEmpty
-          ? _buildBottomBar()
+          ? SafeArea(top: false, child: _buildBottomBar())
           : null,
     );
   }
