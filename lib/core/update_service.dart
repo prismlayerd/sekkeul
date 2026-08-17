@@ -39,6 +39,16 @@ class UpdateService extends ChangeNotifier {
   UpdateState _state = UpdateState.unknown;
   UpdateState get state => _state;
 
+  /// 이 업데이트가 **세법·복지 기준이 바뀐 릴리스**인가.
+  ///
+  /// 우리가 올릴 때 손으로 붙이는 우선순위(`tool/play_publish.py --priority`)를
+  /// 그대로 읽는다. 예전에는 카드가 무슨 업데이트든 "세법·복지 기준이 바뀐
+  /// 버전이 있어요"라고 말했다 — 테마만 바꾼 릴리스에도 그렇게 말해서,
+  /// 급하게 받은 사용자가 세법은 그대로인 걸 보게 됐다. 세금 앱에서 그 거짓말은
+  /// 다음번에 진짜 세법이 바뀌었을 때 안 믿게 만든다.
+  bool _taxUpdate = false;
+  bool get isTaxUpdate => _taxUpdate;
+
   bool get hasUpdate =>
       _state == UpdateState.flexible ||
       _state == UpdateState.downloading ||
@@ -105,7 +115,9 @@ class UpdateService extends ChangeNotifier {
       return;
     }
     try {
-      final next = stateFor(await InAppUpdate.checkForUpdate());
+      final info = await InAppUpdate.checkForUpdate();
+      _taxUpdate = info.updatePriority >= 4;
+      final next = stateFor(info);
       _set(next);
       if (next == UpdateState.immediate) {
         await InAppUpdate.performImmediateUpdate();
@@ -137,7 +149,10 @@ class UpdateService extends ChangeNotifier {
 
   /// 카드는 Play가 있는 실기기에서만 뜬다. 상태별 렌더를 확인하려면 직접 세운다.
   @visibleForTesting
-  void debugSet(UpdateState s) => _set(s);
+  void debugSet(UpdateState s, {bool tax = false}) {
+    _taxUpdate = tax;
+    _set(s);
+  }
 
   @visibleForTesting
   void reset() => _set(UpdateState.unknown);

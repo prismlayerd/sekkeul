@@ -31,11 +31,13 @@ API의 `Edits.tracks.releases`에만 있고, 안 넣으면 0으로 굳는다. �
     # 트랙 이름부터 확인 (비공개 테스트 트랙의 실제 이름을 모를 때)
     python tool/play_publish.py --list-tracks
 
-    # 세법이 바뀐 릴리스 — 앱이 알아서 전체화면으로 막고 업데이트한다
-    python tool/play_publish.py --track alpha --priority 5 --notes-file docs/릴리스노트.txt
+    # 출시 노트는 assets/changelog.md의 **맨 위 항목을 그대로** 쓴다.
+    # 앱 안 「업데이트 소식」이 읽는 그 파일이라, 두 곳이 어긋날 수가 없다.
+    python tool/play_publish.py --track alpha --priority 5   # 세법이 바뀐 릴리스
+    python tool/play_publish.py --track alpha --priority 0   # 그 밖
 
-    # 그 밖 — 홈 카드로 조용히 알린다
-    python tool/play_publish.py --track alpha --priority 0 --notes "화면을 다듬었어요."
+    # 굳이 따로 쓰고 싶으면
+    python tool/play_publish.py --track alpha --notes "화면을 다듬었어요."
 
 ## 우선순위를 어떻게 정하나
 
@@ -50,6 +52,7 @@ API의 `Edits.tracks.releases`에만 있고, 안 넣으면 0으로 굳는다. �
 """
 
 import argparse
+import io
 import os
 import sys
 
@@ -59,7 +62,28 @@ from googleapiclient.http import MediaFileUpload
 
 PACKAGE = 'com.sekkeul.app'
 AAB = 'build/app/outputs/bundle/release/app-release.aab'
+CHANGELOG = 'assets/changelog.md'
 SCOPE = 'https://www.googleapis.com/auth/androidpublisher'
+
+
+def latest_notes():
+    """`assets/changelog.md`의 맨 위 항목 → 출시 노트.
+
+    앱 안 「업데이트 소식」이 읽는 그 파일이다. 두 곳에 따로 쓰면 반드시
+    어긋나고, 어긋난 건 올린 뒤에야 보인다.
+    """
+    import re
+    src = io.open(CHANGELOG, encoding='utf-8').read()
+    head = re.compile(r'^##\s+([\d.]+)\s*\((\d+)\)', re.M)
+    m = head.search(src)
+    if not m:
+        sys.exit(f'{CHANGELOG}에서 항목을 못 찾았습니다.')
+    nxt = head.search(src, m.end())
+    body = src[m.end():nxt.start() if nxt else len(src)]
+    lines = [l[2:].strip() for l in body.splitlines() if l.startswith('- ')]
+    if not lines:
+        sys.exit(f'{CHANGELOG}의 {m.group(1)} 항목에 내용이 없습니다.')
+    return m.group(1), int(m.group(2)), chr(10).join('· ' + l for l in lines)
 
 
 def _service(key_path):
@@ -134,6 +158,8 @@ def main():
                    help='4~5는 계산에 쓰는 값이 바뀐 릴리스에만')
     p.add_argument('--notes', help='출시 노트 (한 줄)')
     p.add_argument('--notes-file', help='출시 노트 파일 (여러 줄)')
+    p.add_argument('--notes-manual', action='store_true',
+                   help='changelog.md를 안 쓰고 --notes만 쓴다')
     p.add_argument('--aab', default=AAB)
     p.add_argument('--draft', action='store_true', help='발행하지 않고 초안으로만')
     p.add_argument('--key', default=os.environ.get('PLAY_SERVICE_ACCOUNT_JSON'))
@@ -152,6 +178,12 @@ def main():
     if a.notes_file:
         with open(a.notes_file, encoding='utf-8') as f:
             notes = f.read().strip()
+    if not notes and not a.notes_manual:
+        # 기본은 changelog.md다 — 앱 안 「업데이트 소식」과 같은 글이 나간다.
+        version, build, notes = latest_notes()
+        print(f'{CHANGELOG}의 {version} ({build}) 항목을 씁니다:')
+        for l in notes.splitlines():
+            print(f'  {l}')
     if not notes:
         sys.exit('--notes 또는 --notes-file 이 필요합니다. '
                  '무엇이 바뀌었는지 모르면 사용자는 왜 업데이트하는지 모릅니다.')

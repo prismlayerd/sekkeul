@@ -37,14 +37,29 @@ void main() {
         reason: '홈에 빈 자리를 남기면 안 된다');
   });
 
-  testWidgets('받을 수 있을 때 이유와 기준 시점을 말한다', (t) async {
-    updateService.debugSet(UpdateState.flexible);
+  testWidgets('세법이 바뀐 릴리스면 이유와 기준 시점을 말한다', (t) async {
+    updateService.debugSet(UpdateState.flexible, tax: true);
     await pump(t, const UpdateCard());
     final text = plain(t);
     // Google 대화상자는 "업데이트 사용 가능"이라고만 한다. 이유는 우리가 말한다.
     expect(text, contains('세법·복지 기준이 바뀐 버전이 있어요'));
     expect(text, contains(DataVintage.label),
         reason: '지금 보는 값이 언제 것인지 함께 알려야 한다');
+    expect(text, contains('지금 받기'));
+  });
+
+  testWidgets('세법이 안 바뀐 릴리스에 세법 얘기를 하지 않는다', (t) async {
+    // 실기기에서 테마만 바꾼 업데이트에도 "세법·복지 기준이 바뀐 버전"이라고
+    // 떴다. 문구가 고정이었다. 세금 앱에서 이 거짓말은 다음번에 진짜 세법이
+    // 바뀌었을 때 안 믿게 만든다 — 그때가 정작 급한 때다.
+    updateService.debugSet(UpdateState.flexible);
+    await pump(t, const UpdateCard());
+    final text = plain(t);
+    expect(text, contains('새 버전이 있어요'));
+    expect(text, isNot(contains('세법')),
+        reason: '안 바뀐 걸 바뀌었다고 말하고 있다');
+    expect(text, isNot(contains(DataVintage.label)),
+        reason: '세법 얘기가 아닌데 기준 시점을 들이밀 이유가 없다');
     expect(text, contains('지금 받기'));
   });
 

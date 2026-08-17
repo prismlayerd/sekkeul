@@ -11,6 +11,7 @@ import '../components/expense_target_dialog.dart';
 import '../components/reminder_card.dart';
 import '../components/slip_ticks.dart';
 import '../components/section_accordion.dart';
+import '../components/just_updated_card.dart';
 import '../components/update_card.dart';
 import 'onboarding_screen.dart';
 import 'my_info_screen.dart';
@@ -975,6 +976,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         children: [
           // 업데이트가 있을 때만 그려진다. 없으면 자리를 차지하지 않는다.
           const UpdateCard(),
+          // 방금 업데이트하고 처음 열었을 때만. 누르면 사라진다.
+          const JustUpdatedCard(),
           HomeBannerCarousel(
             cards: _bannerCards(),
             activeIndex: _bannerIndex,

@@ -26,6 +26,10 @@ class UpdateCard extends StatelessWidget {
         final accent = AppTheme.accentColor(context);
         final ready = updateService.state == UpdateState.readyToInstall;
         final busy = updateService.state == UpdateState.downloading;
+        // **아는 것만 말한다.** 무엇이 바뀌었는지는 우리가 올릴 때 붙인
+        // 우선순위 하나로만 알 수 있다(Play는 출시 노트를 안 준다).
+        // 세법이 바뀐 릴리스일 때만 그렇게 말하고, 아니면 그냥 새 버전이다.
+        final tax = updateService.isTaxUpdate;
 
         // 여백을 카드 안에 둔다 — 안 보일 때 홈에 빈 자리가 남지 않는다.
         return Padding(
@@ -36,14 +40,22 @@ class UpdateCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  ready ? '새 버전을 받았어요' : '세법·복지 기준이 바뀐 버전이 있어요',
+                  ready
+                      ? '새 버전을 받았어요'
+                      : tax
+                          ? '세법·복지 기준이 바뀐 버전이 있어요'
+                          : '새 버전이 있어요',
                   style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   ready
-                      ? '다시 시작하면 새 기준으로 계산해요.'
-                      : '지금 보시는 값은 ${DataVintage.label} 기준이에요.',
+                      ? (tax
+                          ? '다시 시작하면 새 기준으로 계산해요.'
+                          : '다시 시작하면 적용돼요.')
+                      : tax
+                          ? '지금 보시는 값은 ${DataVintage.label} 기준이에요.'
+                          : '받아 두면 다음에 켤 때 적용돼요.',
                   style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.5),
                 ),
                 const SizedBox(height: 12),

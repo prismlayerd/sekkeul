@@ -5,6 +5,7 @@ import 'reminder_list_screen.dart';
 import 'tax_tools_screen.dart';
 import 'forms_screen.dart';
 import 'my_info_screen.dart';
+import 'update_notes_screen.dart';
 
 class AllScreen extends StatelessWidget {
   final String userType;
@@ -87,6 +88,15 @@ class AllScreen extends StatelessWidget {
             icon: Icons.settings_outlined,
             label: '설정',
             onTap: onOpenSettings,
+          ),
+          // 홈 카드는 한 번 보면 사라진다. 지난 소식을 다시 찾을 자리가
+          // 있어야 "언제부터 이 기준이었지"를 되짚을 수 있다.
+          _menuItem(
+            context,
+            icon: Icons.history_rounded,
+            label: '업데이트 소식',
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const UpdateNotesScreen())),
           ),
         ],
       ),

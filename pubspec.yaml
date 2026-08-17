@@ -37,6 +37,8 @@ flutter:
   assets:
     - assets/forms/
     - assets/textures/
+    # 앱 안 「업데이트 소식」과 Play의 「새로운 기능」이 같이 읽는 한 장.
+    - assets/changelog.md
   # 영수증 테마는 전부 고정폭이다. 라틴·숫자는 IBM Plex Mono,
   # 한글은 Nanum Gothic Coding으로 떨어진다(app_theme의 fontFamilyFallback).
   # DM Serif / DM Sans / Noto Serif KR은 v5.1에서 뺐다 — NotoSerifKR 하나가
