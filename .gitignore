@@ -73,3 +73,7 @@ design/icon_barcode_*.png
 design/launch_preview.png
 design/splash_*.png
 design/icon_ship_preview.png
+
+# 스토어 스크린샷 — 폰에서 옮겨 온 원본과 목업 결과물
+design/shots/
+design/store_shots/
