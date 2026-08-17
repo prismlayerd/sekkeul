@@ -27,6 +27,8 @@ void main() {
         home: Scaffold(
           body: SingleChildScrollView(
             child: HomeStatusSection(
+              yearCovered: true,
+              onFillPreviousMonths: () {},
               userType: userType,
               isEmployee: isEmployee,
               monthlyIncome: monthly,

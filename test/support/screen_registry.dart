@@ -259,4 +259,9 @@ Future<void> seedRealisticUser(String userType) async {
   await dbService.initDatabase();
   await dbService.saveProfile(filledProfile(userType));
   await seedLedger(userType);
+  // **이 사용자는 한 해를 다 적은 사람이다.**
+  //
+  // 안 그러면 홈이 연간 누적 숫자를 가리고 「1~7월 채우기」를 띄운다(그게 맞다).
+  // 그 게이트 자체를 시험하는 테스트는 이 플래그를 직접 지운다.
+  await dbService.setAppState('backfill_done_${DateTime.now().year}', 'y');
 }

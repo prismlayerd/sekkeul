@@ -32,6 +32,10 @@ class HomeStatusSection extends StatefulWidget {
   /// 결제수단이 '기타'이거나 비어 있는 이번 달 지출. 카드공제 대상은 아니지만
   /// **쓴 돈은 쓴 돈이다** — 합계에 넣고 줄로도 보여준다.
   final double otherPayTotal;
+  /// 가계부가 올 한 해를 덮는가. 안 덮으면 연간 누적 숫자를 내놓지 않는다.
+  final bool yearCovered;
+  final VoidCallback onFillPreviousMonths;
+
   final double creditCardYtdTotal;
   final double debitCashYtdTotal;
 
@@ -73,6 +77,8 @@ class HomeStatusSection extends StatefulWidget {
     required this.creditCardTotal,
     required this.debitCashTotal,
     this.otherPayTotal = 0,
+    required this.yearCovered,
+    required this.onFillPreviousMonths,
     required this.creditCardYtdTotal,
     required this.debitCashYtdTotal,
     this.excludedFromThresholdYtd = 0.0,
@@ -410,11 +416,50 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     );
   }
 
+  /// 1~지난달이 비어 있을 때 숫자 자리에 들어가는 안내.
+  Widget _fillPromptBlock(Color sub, Color accent) {
+    final last = DateTime.now().month - 1;
+    return Semantics(
+      button: true,
+      label: '이전 달 채우기',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onFillPreviousMonths,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('카드 공제 문턱 (연봉의 25%)',
+                style: AppTheme.sans(AppTheme.tsSM, sub)),
+            const SizedBox(height: 8),
+            Text('1~$last월 기록이 없어 아직 계산할 수 없어요'.keepWords,
+                style: AppTheme.sans(AppTheme.tsMD, AppTheme.ink(context),
+                    weight: FontWeight.w700, height: 1.4)),
+            const SizedBox(height: 4),
+            Text('카드사 앱에서 보고 옮기면 2분이면 끝나요.'.keepWords,
+                style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.5)),
+            const SizedBox(height: 10),
+            Text('1~$last월 채우기 →',
+                style: AppTheme.sans(AppTheme.tsXS, accent,
+                    weight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// 카드 공제 → "올해 쌓인 예상 환급" 3단계 블록.
   /// A: 문턱 전(진행바) → B: 문턱~한도(환급 카운터 자람) → C: 한도 도달(멈춤 안내).
   /// 복잡한 세법(문턱 순서·공제율·한도)은 엔진(estimateCreditCardRefund)이 삼키고,
   /// 화면엔 숫자 1개 + 안내 1줄만 노출한다.
   Widget _buildCardRefundBlock(double annualSalary, Color sub, Color tert, Color accent) {
+    // **한 해를 안 덮으면 숫자를 내놓지 않는다.**
+    //
+    // 문턱도 예상 환급도 1월부터의 누적으로 계산된다. 연중에 깐 사람의 가계부에
+    // 1~7월이 없으면 "아직 912만원 남았다"고 말하게 되는데, 실제로는 이미
+    // 넘겼을 수도 있다. 틀린 숫자를 자신 있게 보여주느니 비워 두고 채우라고
+    // 하는 편이 낫다 — 그래야 채울 이유도 생긴다.
+    if (!widget.yearCovered) return _fillPromptBlock(sub, accent);
+
     final r = EmployeeTaxCalculator.estimateCreditCardRefund(
       grossAnnual: annualSalary,
       dependentsIncludingSelf: 1 + widget.dependentCount,

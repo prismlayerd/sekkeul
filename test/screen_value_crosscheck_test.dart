@@ -73,6 +73,10 @@ void main() {
     List<(int month, int amount, String method)> earlier = const [],
   }) async {
     dbService = InMemoryDatabaseHelper();
+    // 이 테스트는 한 해를 다 적은 사용자를 가정한다 — 연중 가입 게이트는
+    // year_coverage_test가 따로 본다.
+    await dbService.initDatabase();
+    await dbService.setAppState('backfill_done_${DateTime.now().year}', 'y');
     await dbService.initDatabase();
     await dbService.saveProfile({
       'user_type': '직장인',
@@ -165,6 +169,10 @@ void main() {
 
   testWidgets('가계부 적립 카드 — 표시 금액이 ReserveEstimator 값과 같다', (t) async {
     dbService = InMemoryDatabaseHelper();
+    // 이 테스트는 한 해를 다 적은 사용자를 가정한다 — 연중 가입 게이트는
+    // year_coverage_test가 따로 본다.
+    await dbService.initDatabase();
+    await dbService.setAppState('backfill_done_${DateTime.now().year}', 'y');
     await dbService.initDatabase();
     await dbService.saveProfile({
       'user_type': '프리랜서',
@@ -199,6 +207,10 @@ void main() {
     const monthly = gross / 12;
 
     dbService = InMemoryDatabaseHelper();
+    // 이 테스트는 한 해를 다 적은 사용자를 가정한다 — 연중 가입 게이트는
+    // year_coverage_test가 따로 본다.
+    await dbService.initDatabase();
+    await dbService.setAppState('backfill_done_${DateTime.now().year}', 'y');
     await dbService.initDatabase();
     await pump(t, const SalaryNetScreen());
 

@@ -11,6 +11,8 @@ import '../components/expense_target_dialog.dart';
 import '../components/reminder_card.dart';
 import '../components/slip_ticks.dart';
 import '../components/section_accordion.dart';
+import '../../core/data/year_coverage.dart';
+import 'card_backfill_screen.dart';
 import '../components/just_updated_card.dart';
 import '../components/update_card.dart';
 import 'onboarding_screen.dart';
@@ -68,6 +70,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   // 체크+현금 연간 누계 — 카드공제 환급 추정에 신용(15%)/체크·현금(30%) 분리 필요.
   double _debitCashYtdTotal = 0.0;
   double _excludedYtdTotal = 0.0; // 결제수단 '기타'·미설정 — 문턱에서 빠진 금액
+  /// 가계부가 올 한 해를 덮는가. 안 덮으면 연간 누적 숫자를 안 보여준다.
+  bool _yearCovered = true;
+  /// 채워 넣은 1월~지난달 누계 — 가계부 기록이 아니라 요약이라 따로 더한다.
+  Backfill _backfill = const Backfill();
+  /// 공제율이 다른 세 갈래(전통시장·대중교통·도서공연)의 올해 누계.
+  CardSpecials _cardSpecials = const CardSpecials();
   // 프리랜서 '올해 쌓인 예상 환급'. null이면 계산 근거가 없다(업종·직전연도 수입 미입력 등).
   RefundProgress? _refundProgress;
   // N잡러 카드공제 절세액(종합 과세표준 기준). null이면 근로소득 기준 추정을 그대로 쓴다.
@@ -436,8 +444,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
+  /// 1월~지난달 채우기 — 홈 배너와 02 블록 둘 다 여기로 온다.
+  Future<void> _openCardBackfill() async {
+    final done = await Navigator.push<bool>(context,
+        MaterialPageRoute(builder: (_) => CardBackfillScreen(userType: _userType)));
+    if (done == true) {
+      await _loadMonthlyExpenses();
+      if (mounted) _calculateTax();
+    }
+  }
+
   Future<void> _loadMonthlyExpenses() async {
     final now = DateTime.now();
+    // 연간 누적을 셈하기 전에 먼저 안다 — 이 값들이 누계에 더해지고 빠진다.
+    _yearCovered = await YearCoverage.isComplete(now.year);
+    _backfill = await YearCoverage.backfill(now.year);
+    _cardSpecials = await YearCoverage.specials(now.year);
     final firstOfMonth = DateTime(now.year, now.month, 1);
     final nextMonth = now.month == 12
         ? DateTime(now.year + 1, 1, 1)
@@ -492,8 +514,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         _creditCardTotal = credit;
         _debitCashTotal = debit;
         _otherPayTotal = otherPay;
-        _creditCardYtdTotal = creditYtd;
-        _debitCashYtdTotal = debitYtd;
+        // 채워 넣은 1~지난달을 더한다. 그리고 전통시장·대중교통·도서공연은
+        // 신용카드 누계에서 **뺀다** — 카드로 긁은 돈이라 가계부에 이미
+        // 신용카드로 들어와 있고, 안 빼면 15%와 40%로 두 번 센다.
+        _creditCardYtdTotal =
+            (creditYtd + _backfill.credit - _cardSpecials.total)
+                .clamp(0.0, double.infinity);
+        _debitCashYtdTotal = debitYtd + _backfill.debit;
         _excludedYtdTotal = excludedYtd;
       });
       _checkCardThreshold();
@@ -989,6 +1016,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
           _slipRule(),
           HomeStatusSection(
+            yearCovered: _yearCovered,
+            onFillPreviousMonths: _openCardBackfill,
             userType: _userType,
             isEmployee: _isEmployee,
             monthlyIncome: double.tryParse(
@@ -1314,6 +1343,25 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           onTap: () => _go(TaxSimulatorScreen(userType: _userType)),
         ));
       }
+    }
+
+    // **1월~지난달이 비어 있으면 그 얘기를 맨 앞에 둔다.**
+    //
+    // 연중에 깐 사람에게는 이게 제일 급하다. 이걸 안 채우면 카드 공제도 예상
+    // 환급도 계산이 안 나오는데, 그 사실을 02 블록 안에서만 말하면 스크롤을
+    // 내려야 보인다. 배너는 앱을 켜자마자 눈에 닿는 유일한 자리다.
+    if (_isEmployee && !_yearCovered) {
+      final last = DateTime.now().month - 1;
+      cards.insert(
+        0,
+        BannerCardData(
+          label: '이전 달',
+          headline: '1~$last월을 채우면\n올해 환급이 보여요',
+          action: '2분이면 끝나요',
+          glyph: '채',
+          onTap: _openCardBackfill,
+        ),
+      );
     }
 
     // 유형별 도구 카드
