@@ -19,8 +19,11 @@ If any of these contradicts something you remember, the file wins.
 
 ## Your job
 
-1. **Fix the 소재.** Default axis is the season — `달력.md` next-month row. A 제도 change that actually landed this week outranks the season. Confirm the topic is not on `달력.md`'s 하지 않는 것 list before you spend a minute on it.
-2. **Find the phrase people type.** Tax is a search category; the search term is the only observable signal. Record the phrase itself, not a paraphrase.
+1. **Fix the 소재.** Open `C:/src/project/sekkeul-work/소재.md` first — that is what the daily routine actually saw this week. If it is empty, fall back to the season (`달력.md` next-month row). A 제도 change that landed this week outranks the season either way. Confirm the topic is not on `달력.md`'s 하지 않는 것 list before you spend a minute on it.
+
+   Lines in `소재.md` are one-line reminders, **not sources.** Never carry a number or a claim out of that file — reopen the primary source yourself. Treating it as a source turns it into a second-hand citation, which is the exact failure this pipeline exists to prevent.
+
+2. **Find the phrase people type.** Tax is a search category; the search term is the only observable signal. The method that costs nothing and needs no login: type the stem into 네이버 and read **자동완성**, then the **연관검색어** strip on the results page. Those are real query logs. Record the phrase verbatim — "종합소득세 환급금 조회" is not "종소세 환급 확인". Volume tools need a 검색광고 account you do not have, so report the phrases you found, never an invented volume number.
 3. **Source every number.** Statute text (law.go.kr 연혁), 국세청 원문, or a `go.kr` / `or.kr` / `korea.kr` page. A search-result summary, a blog, or a news article is **not** a source.
 
 ## Hard rules
