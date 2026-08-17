@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'core/data/db_helper.dart';
+import 'core/data/text_scale_pref.dart';
 import 'core/data/theme_pref.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/app_lock_screen.dart';
@@ -40,6 +41,9 @@ void main() async {
       // 저장된 화면 테마(시스템/라이트/다크) 복원 — 미설정 시 시스템(OS 따라감)
       themeModeNotifier.value =
           themeModeFromDb(await dbService.getAppState('theme_mode'));
+      // 저장된 글자 크기 복원 — 미설정 시 기존 크기(제일 작은 단계).
+      textScaleNotifier.value =
+          textScaleFromDb(await dbService.getAppState('text_scale'));
     } catch (e, stack) {
       // DB가 안 열린 기기에서는 이 기록도 실패한다 — 그때는 남길 자리가 없다.
       dbService.insertErrorLog('[시작 실패] $e', stack.toString());
@@ -67,12 +71,22 @@ class SeculApp extends StatelessWidget {
         darkTheme: AppTheme.darkTheme,
         themeMode: themeMode,
         navigatorObservers: [appRouteObserver],
-        // U-3 — 시스템 글자 확대를 1.3배까지만 허용(그 이상은 촘촘한 도면형 레이아웃이
-        // 깨질 수 있어 캡). 1.0~1.3 구간은 검증 완료.
+        // 글자 크기 = **기기 설정 x 앱 설정**, 상한은 maxTextScale.
+        //
+        // 기기 설정만 따르던 때는 "글자가 작다"는 의견에 답할 방법이 없었다.
+        // 안드로이드 글꼴 크기를 건드릴 줄 모르거나, 다른 앱까지 커지는 게 싫어
+        // 안 건드리는 사람이 많다. 앱 안에서 이 앱만 키울 수 있어야 한다.
+        //
+        // 상한은 text_scale_pref의 상수 하나를 넘침 테스트와 같이 본다 —
+        // 양쪽에 따로 박아 두면 한쪽만 올라가 검사를 빠져나간다.
         builder: (context, child) {
-          final scaler = MediaQuery.textScalerOf(context).clamp(minScaleFactor: 1.0, maxScaleFactor: 1.3);
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: scaler),
+          final system = MediaQuery.textScalerOf(context).scale(1.0);
+          return ValueListenableBuilder<double>(
+            valueListenable: textScaleNotifier,
+            builder: (context, step, _) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+                textScaler:
+                    TextScaler.linear(effectiveTextScale(system, step))),
             // 종이 바탕은 앱 **맨 밑**에 한 장만 깐다. 위에 덮으면 버튼·입력창·
             // 아이콘 위로 결이 지나가 표면이 지저분해진다. 화면들의 Scaffold는
             // 배경이 투명이라(app_theme) 이 한 장이 그대로 비친다.
@@ -84,6 +98,7 @@ class SeculApp extends StatelessWidget {
               AppTheme.paperBackdrop(context, child: child!),
               const SplashTear(),
             ]),
+          ),
           );
         },
         home: const _AppLockGate(child: HomeScreen()),

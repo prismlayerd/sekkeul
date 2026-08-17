@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../theme/app_theme.dart';
+import '../../core/data/text_scale_pref.dart';
 import '../../core/data/theme_pref.dart';
 import '../../core/data/backup_service.dart';
 import '../../core/data/db_helper.dart';
@@ -291,6 +292,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             AppTheme.hairline(context),
+            // 기기 글꼴 설정을 못 찾거나, 다른 앱까지 커지는 게 싫은 사람을 위해
+            // 이 앱만 키운다. 기기 설정과 곱해지고 상한에서 잘린다.
+            ValueListenableBuilder<double>(
+              valueListenable: textScaleNotifier,
+              builder: (context, step, _) => _glyphRow(
+                title: '글자 크기',
+                trailingTag: _tag(context, textScaleLabel(step)),
+                onTap: _showTextScalePicker,
+              ),
+            ),
+            AppTheme.hairline(context),
 
             if (!kIsWeb) ...[
               const SizedBox(height: 24),
@@ -487,6 +499,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (selected == null || selected == current) return;
     themeModeNotifier.value = selected;
     await dbService.setAppState('theme_mode', themeModeToDb(selected));
+  }
+
+  Future<void> _showTextScalePicker() async {
+    final current = textScaleNotifier.value;
+    final selected = await showDialog<double>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        backgroundColor: Theme.of(ctx).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        title: Text('글자 크기',
+            style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx), weight: FontWeight.w700)),
+        children: [
+          for (final step in textScaleSteps)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, step),
+              child: Row(children: [
+                Icon(
+                  step == current
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  size: 20,
+                  color: step == current
+                      ? AppTheme.accentColor(ctx)
+                      : AppTheme.inkTertiary(ctx),
+                ),
+                const SizedBox(width: 12),
+                // **고른 크기 그대로 보여준다.** 이름만 있으면 얼마나 커지는지
+                // 모르는 채 골라야 하고, 되돌리러 다시 들어와야 한다.
+                Text(textScaleLabel(step),
+                    textScaler: TextScaler.linear(step),
+                    style: AppTheme.sans(AppTheme.tsMD, AppTheme.ink(ctx))),
+              ]),
+            ),
+        ],
+      ),
+    );
+    if (selected == null || selected == current) return;
+    textScaleNotifier.value = selected;
+    await dbService.setAppState('text_scale', textScaleToDb(selected));
   }
 
   /// 설정 행 — 제목 한 줄 + 우측 컨트롤(스위치·태그·화살표)만 남긴 단순 리스트 행.
