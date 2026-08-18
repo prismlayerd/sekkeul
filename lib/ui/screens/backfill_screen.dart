@@ -176,14 +176,14 @@ class _BackfillScreenState extends State<BackfillScreen> {
                     const SizedBox(height: 24),
                   ],
                   if (_hasCard) ...[
-                  AppTheme.sectionHead(
-                      context, _hasBiz ? '03' : '02', '올해 이런 데 쓴 돈'),
+                  AppTheme.sectionHead(context, _hasBiz ? '03' : '02',
+                      '그중 이런 데 쓴 돈'),
                   const SizedBox(height: 6),
                   Text(
-                    '공제율이 더 높은 것들이에요. 위 신용카드 금액 **안에서** '
+                    '공제율이 더 높은 것들이에요. 위 신용카드 금액 안에서 '
                             '얼마인지 적어주세요 — 따로 더하는 게 아니에요. '
-                            '1월부터 오늘까지 전부요.'
-                        .replaceAll('**', '')
+                            '이번 달부터는 가계부에 적을 때 「공제 구분」으로 고르면 '
+                            '알아서 반영되니, 여기는 1~$_lastMonth월치만 적으시면 돼요.'
                         .keepWords,
                     style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.5),
                   ),

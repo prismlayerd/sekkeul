@@ -119,6 +119,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
         content: dr.content,
         category: dr.category,
         paymentMethod: dr.paymentMethod,
+        deductionType: dr.deductionType,
         isBusiness: dr.isBusiness,
         userType: widget.userType,
       );
@@ -135,6 +136,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
       content: dr.content,
       category: dr.category,
       paymentMethod: dr.paymentMethod,
+      deductionType: dr.deductionType,
       isBusiness: dr.isBusiness,
     );
     await dbService.updateExpense(item);
@@ -328,6 +330,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
               content: edit.content,
               category: edit.category,
               paymentMethod: edit.paymentMethod,
+              deductionType: edit.deductionType,
               isBusiness: edit.isBusiness),
       dayCount: edit == null ? widget.dates.length : 1,
       onCancel: _closeEditor,
@@ -564,12 +567,14 @@ class _ExpenseDraft {
     required this.category,
     required this.paymentMethod,
     required this.isBusiness,
+    this.deductionType,
   });
   int amount;
   String content;
   String category;
   String paymentMethod;
   bool isBusiness;
+  String? deductionType;
 }
 
 class _IncomeDraft {
@@ -710,6 +715,7 @@ class _ExpenseFormState extends State<_ExpenseForm> {
   late String _category = widget.initial.category;
   late String _payment = widget.initial.paymentMethod;
   late bool _isBusiness = widget.initial.isBusiness;
+  late String _deduction = widget.initial.deductionType ?? '';
 
   @override
   void dispose() {
@@ -724,6 +730,7 @@ class _ExpenseFormState extends State<_ExpenseForm> {
         category: _category,
         paymentMethod: _payment,
         isBusiness: _isBusiness,
+        deductionType: _deduction.isEmpty ? null : _deduction,
       );
 
   /// 화면 아래 버튼이 부른다 — 저장 버튼은 폼 안이 아니라 화면 밑에 있다.
@@ -771,6 +778,28 @@ class _ExpenseFormState extends State<_ExpenseForm> {
             values: _payments,
           ),
         ),
+        // **공제율이 다른 곳은 따로 표시한다.**
+        //
+        // 전통시장·대중교통·도서공연은 같은 카드로 긁어도 공제율이 40%·40%·30%다
+        // (조특법 §126의2). 표시를 안 하면 신용카드 15%로 계산돼 실제보다 적게
+        // 돌려받는 것으로 나온다.
+        //
+        // 카테고리로 대신할 수 없다. `교통`에는 택시·주차가 섞여 있는데 대중교통
+        // 공제는 버스·지하철·기차뿐이다.
+        //
+        // 근로소득자만 묻는다(카드공제는 그들만 받는다). 「기타(영수증 없음)」로
+        // 낸 것도 안 묻는다 — 애초에 공제 대상이 아니다.
+        if (widget.profile.showsCardThreshold && _payment != '기타')
+          _Field(
+            '공제 구분',
+            _Field.chips(
+              context,
+              const ['해당 없음', '전통시장', '대중교통', '도서·공연'],
+              _deduction,
+              (v) => setState(() => _deduction = v),
+              values: const ['', '전통시장', '대중교통', '도서공연'],
+            ),
+          ),
         if (widget.profile.tracksBusinessExpense)
           _Field(
             '사업경비',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/data/year_coverage.dart';
 import '../../theme/app_theme.dart';
 import '../../../core/tax_engine/tax_year.dart';
 import '../../../core/tax_engine/employee_tax.dart';
@@ -32,6 +33,9 @@ class HomeStatusSection extends StatefulWidget {
   /// 결제수단이 '기타'이거나 비어 있는 이번 달 지출. 카드공제 대상은 아니지만
   /// **쓴 돈은 쓴 돈이다** — 합계에 넣고 줄로도 보여준다.
   final double otherPayTotal;
+  /// 공제율이 다른 세 갈래의 올해 누계 — 전통시장·대중교통 40%, 도서공연 30%.
+  final CardSpecials specialsYtd;
+
   /// 가계부가 올 한 해를 덮는가. 안 덮으면 연간 누적 숫자를 내놓지 않는다.
   final bool yearCovered;
   final VoidCallback onFillPreviousMonths;
@@ -77,6 +81,7 @@ class HomeStatusSection extends StatefulWidget {
     required this.creditCardTotal,
     required this.debitCashTotal,
     this.otherPayTotal = 0,
+    required this.specialsYtd,
     required this.yearCovered,
     required this.onFillPreviousMonths,
     required this.creditCardYtdTotal,
@@ -470,6 +475,9 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
       childrenCount: widget.childrenCount,
       creditCardYtd: widget.creditCardYtdTotal,
       debitCashYtd: widget.debitCashYtdTotal,
+      traditionalMarket: widget.specialsYtd.market,
+      publicTransport: widget.specialsYtd.transport,
+      cultureExpense: widget.specialsYtd.culture,
     );
 
     // 문턱·공제액·한도는 총급여 기준이 맞다(조특법 §126의2). 절세액만 종합 과세표준

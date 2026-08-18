@@ -69,6 +69,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   // 체크+현금 연간 누계 — 카드공제 환급 추정에 신용(15%)/체크·현금(30%) 분리 필요.
   double _debitCashYtdTotal = 0.0;
   double _excludedYtdTotal = 0.0; // 결제수단 '기타'·미설정 — 문턱에서 빠진 금액
+  /// 공제율이 다른 세 갈래의 올해 누계 — 가계부 표식 + 채워 넣은 1~지난달.
+  CardSpecials _specialsYtd = const CardSpecials();
   /// 가계부가 올 한 해를 덮는가. 안 덮으면 연간 누적 숫자를 안 보여준다.
   bool _yearCovered = true;
   /// 채워 넣은 1월~지난달 누계 — 가계부 기록이 아니라 요약이라 따로 더한다.
@@ -417,6 +419,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     double creditYtd = 0.0;
     double debitYtd = 0.0;
     double excludedYtd = 0.0;
+    // 가계부에서 「공제 구분」이 붙은 지출 — 신용/체크에 넣지 않고 여기로 뺀다.
+    final ledgerSpecial = <String, double>{'전통시장': 0, '대중교통': 0, '도서공연': 0};
     DateTime? lastExpenseDate;
     for (final e in all) {
       final eStart = DateTime(e.date.year, e.date.month, e.date.day);
@@ -442,7 +446,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       // 카드공제는 연 누적 기준 — 올해 1월~오늘. 신용/체크·현금은 공제율이 달라 분리 집계.
       // ('기타' 결제수단은 현금영수증 없는 지출로 보아 공제 대상에서 제외.)
       if (!eStart.isBefore(firstOfYear) && !eStart.isAfter(now)) {
-        if (e.paymentMethod == '신용카드') {
+        // **공제 구분이 붙었으면 그 갈래로만 센다.**
+        //
+        // 전통시장에서 카드로 긁은 돈을 신용카드에도 넣으면 같은 돈이 15%와
+        // 40%로 두 번 계산된다. 세법은 이 셋을 신용카드등사용금액에서 빼고
+        // 따로 센다(조특법 §126의2). 「기타(영수증 없음)」는 애초에 공제 대상이
+        // 아니라 표식이 있어도 제외로 간다.
+        final dt = e.deductionType;
+        if (dt != null && ledgerSpecial.containsKey(dt) && e.paymentMethod != '기타') {
+          ledgerSpecial[dt] = ledgerSpecial[dt]! + e.amount;
+        } else if (e.paymentMethod == '신용카드') {
           creditYtd += e.amount;
         } else if (e.paymentMethod == '체크+현금') {
           debitYtd += e.amount;
@@ -464,6 +477,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             (creditYtd + _backfill.credit - _cardSpecials.total)
                 .clamp(0.0, double.infinity);
         _debitCashYtdTotal = debitYtd + _backfill.debit;
+        _specialsYtd = CardSpecials(
+          market: _cardSpecials.market + ledgerSpecial['전통시장']!,
+          transport: _cardSpecials.transport + ledgerSpecial['대중교통']!,
+          culture: _cardSpecials.culture + ledgerSpecial['도서공연']!,
+        );
         _excludedYtdTotal = excludedYtd;
       });
       _checkCardThreshold();
@@ -959,6 +977,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
           _slipRule(),
           HomeStatusSection(
+            specialsYtd: _specialsYtd,
             yearCovered: _yearCovered,
             onFillPreviousMonths: _openBackfill,
             userType: _userType,

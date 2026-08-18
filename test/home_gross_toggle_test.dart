@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/income_entry.dart';
 import 'package:secul/ui/screens/home/home_status_section.dart';
+import 'package:secul/core/data/year_coverage.dart';
 import 'package:secul/ui/theme/app_theme.dart';
 
 import 'support/ko_finder.dart';
@@ -27,6 +28,7 @@ void main() {
         home: Scaffold(
           body: SingleChildScrollView(
             child: HomeStatusSection(
+              specialsYtd: const CardSpecials(),
               yearCovered: true,
               onFillPreviousMonths: () {},
               userType: userType,

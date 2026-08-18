@@ -833,11 +833,24 @@ class EmployeeTaxCalculator {
     int dependentsIncludingSelf = 1,
     required double creditCardYtd,
     required double debitCashYtd,
+    /// 공제율이 다른 세 갈래(전통시장 40% · 대중교통 40% · 도서공연 30%).
+    ///
+    /// 예전에는 여기 0을 박아 넘겼다. 아래 [calculateCreditCardDeduction]은
+    /// 이 셋을 제대로 계산할 줄 아는데, 부르는 쪽이 값을 안 줘서 그 능력이
+    /// 통째로 죽어 있었다 — 전통시장에서 쓴 돈이 40%가 아니라 15%로 계산됐다.
+    double traditionalMarket = 0,
+    double publicTransport = 0,
+    double cultureExpense = 0,
     /// 자녀등 수 — 기본한도 상향(조특법 §126의2⑩, 2026 개정).
     int childrenCount = 0,
   }) {
     final double threshold = grossAnnual * 0.25;
-    final double totalEligible = creditCardYtd + debitCashYtd;
+    // 문턱 판정에는 다섯 갈래가 **다** 들어간다(조특법 §126의2). 공제율만 다르다.
+    final double totalEligible = creditCardYtd +
+        debitCashYtd +
+        traditionalMarket +
+        publicTransport +
+        cultureExpense;
     if (grossAnnual <= 0) {
       return const CreditCardRefundEstimate(
         deduction: 0, taxSaving: 0, isCapped: false, threshold: 0, totalEligibleSpend: 0);
@@ -847,7 +860,9 @@ class EmployeeTaxCalculator {
       grossIncome: grossAnnual,
       creditCard: creditCardYtd,
       debitCardAndCash: debitCashYtd,
-      traditionalMarket: 0, publicTransport: 0, cultureExpense: 0,
+      traditionalMarket: traditionalMarket,
+      publicTransport: publicTransport,
+      cultureExpense: cultureExpense,
       childrenCount: childrenCount,
     );
     final double deduction = cc.finalDeduction;

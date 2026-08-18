@@ -192,7 +192,9 @@ class SqfliteDatabaseHelper implements DatabaseService {
       payment_method TEXT NOT NULL DEFAULT '기타',
       day_of_month INTEGER NOT NULL DEFAULT 1,
       sort_order INTEGER DEFAULT 0,
-      is_business INTEGER DEFAULT 0
+      is_business INTEGER DEFAULT 0,
+      deduction_type TEXT,
+      deduction_type TEXT
     )
   ''';
 
@@ -216,6 +218,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
       category TEXT NOT NULL DEFAULT '기타',
       payment_method TEXT NOT NULL DEFAULT '기타',
       is_business INTEGER DEFAULT 0,
+      deduction_type TEXT,
       sort_order INTEGER DEFAULT 0
     )
   ''';
@@ -279,7 +282,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     // 기존 평문 DB가 있고 아직 암호화 전이면: 먼저 평문 상태로 최신 스키마까지 정규화한 뒤
     // SQLCipher 암호화 DB로 1회 이전한다(S-2). 신규 설치는 곧장 암호화 DB로 생성된다.
     if (await File(path).exists() && !await _isAlreadyEncrypted(path, key)) {
-      final normalizeDb = await openDatabase(path, version: 43, onCreate: _onCreate, onUpgrade: _onUpgrade);
+      final normalizeDb = await openDatabase(path, version: 44, onCreate: _onCreate, onUpgrade: _onUpgrade);
       await normalizeDb.close();
       await _encryptExistingPlaintextDb(path, key);
     }
@@ -287,7 +290,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     _db = await openDatabase(
       path,
       password: key,
-      version: 43,
+      version: 44,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -330,7 +333,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     }
     await plainDb.close();
 
-    final encDb = await openDatabase(tempEncPath, password: key, version: 43, onCreate: _onCreate);
+    final encDb = await openDatabase(tempEncPath, password: key, version: 44, onCreate: _onCreate);
     var insertedRows = 0;
     await encDb.transaction((txn) async {
       for (final entry in dump.entries) {
@@ -415,6 +418,8 @@ class SqfliteDatabaseHelper implements DatabaseService {
             category TEXT,
             payment_method TEXT,
             is_business INTEGER DEFAULT 0,
+            deduction_type TEXT,
+      deduction_type TEXT,
             user_type TEXT
           )
         ''');
@@ -907,6 +912,14 @@ class SqfliteDatabaseHelper implements DatabaseService {
             await db.execute('UPDATE user_profile SET pay_day = NULL WHERE pay_day = 25');
           });
         }
+        // v44 — 전통시장·대중교통·도서공연은 공제율이 따로다(조특법 §126의2).
+        // 결제수단으로도 카테고리로도 담을 수 없어 별도 표식을 둔다. 기존 기록은
+        // null(해당 없음)로 남는다 — 지난 것을 소급해 짐작하지 않는다.
+        if (oldVersion < 44) {
+          await _step('v44', () async {
+            await db.execute('ALTER TABLE expenses ADD COLUMN deduction_type TEXT');
+          });
+        }
   }
 
   @override
@@ -1119,6 +1132,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'content': item.content,
         'category': item.category,
         'payment_method': item.paymentMethod,
+        'deduction_type': item.deductionType,
         'is_business': item.isBusiness ? 1 : 0,
         'user_type': item.userType,
       },
@@ -1188,6 +1202,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'content': item.content,
         'category': item.category,
         'payment_method': item.paymentMethod,
+        'deduction_type': item.deductionType,
         'is_business': item.isBusiness ? 1 : 0,
         'user_type': item.userType,
       },
@@ -1965,6 +1980,7 @@ class InMemoryDatabaseHelper implements DatabaseService {
       'content': encryptedContent,
       'category': encryptedCategory,
       'payment_method': encryptedPayment,
+      'deduction_type': item.deductionType,
       'is_business': item.isBusiness,
       'user_type': item.userType,
     };
@@ -1996,6 +2012,7 @@ class InMemoryDatabaseHelper implements DatabaseService {
         content: decryptedContent,
         category: decryptedCategory,
         paymentMethod: paymentMethod,
+        deductionType: raw['deduction_type'] as String?,
         isBusiness: raw['is_business'] as bool? ?? false,
         userType: rawUserType,
       ));
