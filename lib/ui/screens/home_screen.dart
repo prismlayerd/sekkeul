@@ -7,7 +7,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../theme/app_theme.dart';
 import '../../core/update_service.dart';
-import '../components/expense_target_dialog.dart';
+
 import '../components/reminder_card.dart';
 import '../components/slip_ticks.dart';
 import '../components/section_accordion.dart';
@@ -833,15 +833,17 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         MaterialPageRoute(builder: (_) => ExpenseCalendarScreen(initialView: view)));
   }
 
-  /// 지출 목표를 **홈에 머문 채** 정한다.
+  /// 지출 목표를 **홈에 머문 채, 그 자리에서** 정한다.
   ///
-  /// 한동안 가계부 분석 탭으로 보냈는데, 홈에서 목표를 정하려던 사람이
-  /// 낯선 화면으로 끌려가는 게 실기기에서 확실히 어색했다. 입력칸을 두 곳에
-  /// 따로 두면 서로를 모르니, **같은 입력칸을 두 곳에서 부른다**
-  /// (`showExpenseTargetDialog`). 저장은 유형별 값 한 곳으로 간다.
-  Future<void> _editExpenseTarget() async {
-    final val = await showExpenseTargetDialog(context, _expenseTarget.toInt());
-    if (val == null || !mounted) return;
+  /// 한동안 가계부 분석 탭으로 보냈다가, 다음엔 팝업으로 띄웠다. 둘 다 틀렸다 —
+  /// 화면을 옮기면 낯선 데로 끌려가고, 팝업을 띄우면 지금 보고 있던 지출 합계가
+  /// 가려져 목표를 얼마로 잡을지 판단할 근거가 덮인다. 게다가 이 앱은 종이
+  /// 명세서라 위에 뜨는 창이 없다.
+  ///
+  /// 이제 02 블록이 그 줄을 입력칸으로 펼친다(`ExpenseTargetField`). 가계부
+  /// 분석 탭도 **같은 입력칸**을 쓰므로 두 곳이 어긋날 자리가 없다.
+  Future<void> _editExpenseTarget(double val) async {
+    if (!mounted) return;
     await dbService.setProfileTypeValues(_userType, expenseTarget: val);
     if (!mounted) return;
     setState(() {
@@ -1003,7 +1005,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             cardSavingCombined: _cardSavingCombined,
             onOpenLedger: _goToLedger,
             onOpenMyInfo: _openProfile,
-            onSetExpenseTarget: _editExpenseTarget,
+            onExpenseTargetChanged: _editExpenseTarget,
           ),
           _slipRule(),
           ReminderCard(userType: _userType),
@@ -1315,6 +1317,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           action: '2분이면 끝나요',
           glyph: '채',
           onTap: _openBackfill,
+          // 닫으면 연간 계산으로 가는 길이 사라진다.
+          dismissible: false,
         ),
       );
     }

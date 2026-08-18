@@ -13,7 +13,7 @@ import '../../core/data/ledger_profile.dart';
 import '../../core/notifications/reminder_scheduler.dart';
 import '../../core/tax_engine/bookkeeping_duty.dart';
 import '../../core/tax_engine/reserve_estimator.dart';
-import '../components/expense_target_dialog.dart';
+import '../components/expense_target_field.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import 'bookkeeping_guide_screen.dart';
@@ -2328,10 +2328,12 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     '기부':     '기부금 세액공제 (15%, 1천만 초과분 30%)',
   };
 
-  /// 지출 목표 설정/수정. 입력칸 자체는 홈과 **같은 것**을 쓴다.
-  Future<void> _showExpenseTargetDialog() async {
-    final val = await showExpenseTargetDialog(context, _expenseTarget);
-    if (val == null || !mounted) return;
+  /// 목표 입력칸이 열려 있는가 — **그 자리에서** 펼친다. 팝업이 아니다.
+  bool _editingTarget = false;
+
+  /// 지출 목표 저장. 입력칸 자체는 홈과 **같은 것**을 쓴다.
+  Future<void> _saveExpenseTarget(double val) async {
+    setState(() => _editingTarget = false);
     await dbService.setProfileTypeValues(_userType, expenseTarget: val);
     if (mounted) setState(() => _expenseTarget = val.toInt());
   }
@@ -2428,7 +2430,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           AppTheme.sectionHead(context, null, '지출 목표'),
           const Spacer(),
           GestureDetector(
-            onTap: _showExpenseTargetDialog,
+            onTap: () => setState(() => _editingTarget = true),
             behavior: HitTestBehavior.opaque,
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.tune_rounded, size: 13, color: accent),
@@ -2439,7 +2441,14 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           ),
         ]),
         const SizedBox(height: 10),
-        if (_expenseTarget > 0)
+        // 편집은 그 자리에서 펼친다 — 홈 02와 같은 입력칸이다.
+        if (_editingTarget)
+          ExpenseTargetField(
+            current: _expenseTarget,
+            onCancel: () => setState(() => _editingTarget = false),
+            onSubmit: _saveExpenseTarget,
+          )
+        else if (_expenseTarget > 0)
           _analysisSimpleBar(
             label: '목표 ${comma(_expenseTarget)}원',
             amount: totalExp,

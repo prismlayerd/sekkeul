@@ -35,8 +35,11 @@ class BackfillScreen extends StatefulWidget {
 }
 
 class _BackfillScreenState extends State<BackfillScreen> {
-  final _credit = TextEditingController();
-  final _debit = TextEditingController();
+  /// 달마다 한 줄. `_rows[3]!['credit']`처럼 쓴다.
+  ///
+  /// 합계 한 칸으로 받으면 사용자가 카드사 앱을 보며 일곱 달치를 손으로 더해야
+  /// 한다. 더하다 틀리면 그 값이 그대로 세금 계산에 들어간다 — 더하기는 앱이 한다.
+  final Map<int, Map<String, TextEditingController>> _rows = {};
   final _market = TextEditingController();
   final _transport = TextEditingController();
   final _culture = TextEditingController();
@@ -63,19 +66,52 @@ class _BackfillScreenState extends State<BackfillScreen> {
     _load();
   }
 
+  /// 이 유형이 달마다 채우는 칸 이름.
+  List<String> get _cols => [
+        if (_hasBiz) 'bizIncome',
+        if (_hasBiz) 'bizExpense',
+        if (_hasCard) 'credit',
+        if (_hasCard) 'debit',
+      ];
+
+  static const _colLabel = {
+    'bizIncome': '총수입',
+    'bizExpense': '경비',
+    'credit': '신용카드',
+    'debit': '체크·현금',
+  };
+
   @override
   void dispose() {
-    for (final c in [
-      _credit, _debit, _market, _transport, _culture, _bizIncome, _bizExpense
-    ]) {
+    for (final row in _rows.values) {
+      for (final c in row.values) {
+        c.dispose();
+      }
+    }
+    for (final c in [_market, _transport, _culture]) {
       c.dispose();
     }
     super.dispose();
   }
 
+  double _sum(String col) => _rows.values
+      .fold<double>(0, (t, r) => t + (_v(r[col]!)));
+
   Future<void> _load() async {
-    final b = await YearCoverage.backfill(_year);
+    final saved = await YearCoverage.monthly(_year);
     final s = await YearCoverage.specials(_year);
+    for (var m = 1; m <= _lastMonth; m++) {
+      _rows[m] = {for (final c in _cols) c: TextEditingController()};
+      final v = saved[m];
+      if (v == null) continue;
+      void put(String col, double n) {
+        if (n > 0) _rows[m]![col]?.text = n.toInt().toString();
+      }
+      put('credit', v.credit);
+      put('debit', v.debit);
+      put('bizIncome', v.bizIncome);
+      put('bizExpense', v.bizExpense);
+    }
     final firstOfYear = DateTime(_year, 1, 1);
     final now = DateTime.now();
     var credit = 0.0;
@@ -86,22 +122,18 @@ class _BackfillScreenState extends State<BackfillScreen> {
     if (!mounted) return;
     setState(() {
       _ledgerCredit = credit;
-      if (b.credit > 0) _credit.text = b.credit.toInt().toString();
-      if (b.debit > 0) _debit.text = b.debit.toInt().toString();
       if (s.market > 0) _market.text = s.market.toInt().toString();
       if (s.transport > 0) _transport.text = s.transport.toInt().toString();
       if (s.culture > 0) _culture.text = s.culture.toInt().toString();
-      if (b.bizIncome > 0) _bizIncome.text = b.bizIncome.toInt().toString();
-      if (b.bizExpense > 0) _bizExpense.text = b.bizExpense.toInt().toString();
       _loading = false;
     });
   }
 
-  double _v(TextEditingController c) =>
-      double.tryParse(c.text.replaceAll(',', '')) ?? 0;
+  double _v(TextEditingController? c) =>
+      double.tryParse((c?.text ?? '').replaceAll(',', '')) ?? 0;
 
   /// 특례 셋을 뺄 수 있는 신용카드 총액 — 채워 넣은 것 + 가계부에 있는 것.
-  double get _creditPool => _v(_credit) + _ledgerCredit;
+  double get _creditPool => _sum('credit') + _ledgerCredit;
 
   Future<void> _save() async {
     final specials = CardSpecials(
@@ -116,14 +148,15 @@ class _BackfillScreenState extends State<BackfillScreen> {
           '신용카드로 쓴 돈 안에서 나눠 적어주세요.');
       return;
     }
-    await YearCoverage.setBackfill(
-        _year,
-        Backfill(
-          credit: _v(_credit),
-          debit: _v(_debit),
-          bizIncome: _v(_bizIncome),
-          bizExpense: _v(_bizExpense),
-        ));
+    await YearCoverage.setMonthly(_year, {
+      for (final e in _rows.entries)
+        e.key: Backfill(
+          credit: _v(e.value['credit']),
+          debit: _v(e.value['debit']),
+          bizIncome: _v(e.value['bizIncome']),
+          bizExpense: _v(e.value['bizExpense']),
+        ),
+    });
     await YearCoverage.setSpecials(_year, specials);
     await YearCoverage.markComplete(_year);
     if (!mounted) return;
@@ -154,30 +187,24 @@ class _BackfillScreenState extends State<BackfillScreen> {
                     style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5),
                   ),
                   const SizedBox(height: 22),
-                  if (_hasBiz) ...[
-                    AppTheme.sectionHead(context, '01', '1~$_lastMonth월에 번 돈'),
-                    const SizedBox(height: 12),
-                    _field('사업 총수입', _bizIncome,
-                        hint: '3.3% 떼기 **전** 금액이에요. 입금액이 아니라 '
-                            '지급명세서에 찍히는 총액입니다'),
-                    _field('필요경비', _bizExpense,
-                        hint: '모르면 비워 두세요. 업종 경비율로 계산해드려요 — '
-                            '어림잡아 넣으면 오히려 손해일 수 있어요'),
-                    const SizedBox(height: 24),
-                  ],
+                  AppTheme.sectionHead(context, '01', '달마다 적어주세요'),
+                  const SizedBox(height: 4),
+                  Text(
+                    _hasBiz && _hasCard
+                        ? '지급명세서와 카드사 앱이 달별로 보여줘요. 그대로 옮기시면 돼요.'
+                        : _hasBiz
+                            ? '지급명세서가 달별로 나와요. 그대로 옮기시면 돼요.'
+                            : '카드사 앱이 달별 이용금액을 보여줘요. 그대로 옮기시면 돼요.'
+                            .keepWords,
+                    style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.5),
+                  ),
+                  const SizedBox(height: 14),
+                  for (var m = 1; m <= _lastMonth; m++) _monthRow(m),
+                  const SizedBox(height: 10),
+                  _totalsRow(),
+                  const SizedBox(height: 26),
                   if (_hasCard) ...[
-                    AppTheme.sectionHead(
-                        context, _hasBiz ? '02' : '01', '1~$_lastMonth월에 쓴 돈'),
-                    const SizedBox(height: 12),
-                    _field('신용카드로', _credit,
-                        hint: '카드사 앱의 그 기간 이용금액 합계'),
-                    _field('체크카드·현금으로', _debit,
-                        hint: '현금영수증을 낸 것만'),
-                    const SizedBox(height: 24),
-                  ],
-                  if (_hasCard) ...[
-                  AppTheme.sectionHead(context, _hasBiz ? '03' : '02',
-                      '그중 이런 데 쓴 돈'),
+                  AppTheme.sectionHead(context, '02', '그중 이런 데 쓴 돈'),
                   const SizedBox(height: 6),
                   Text(
                     '공제율이 더 높은 것들이에요. 위 신용카드 금액 안에서 '
@@ -206,6 +233,79 @@ class _BackfillScreenState extends State<BackfillScreen> {
                   ),
                 ],
               ),
+      ),
+    );
+  }
+
+  /// 한 달 = 한 줄. 왼쪽에 «3월», 오른쪽에 이 유형이 채울 칸들.
+  Widget _monthRow(int m) {
+    final row = _rows[m];
+    if (row == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          SizedBox(
+            width: 34,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text('$m월',
+                  style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+            ),
+          ),
+          for (final col in _cols) ...[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 이름은 **첫 줄에만** 단다. 일곱 줄에 같은 이름이 반복되면
+                  // 표가 아니라 목록처럼 읽혀 눈이 세로로 못 흐른다.
+                  if (m == 1)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: Text(_colLabel[col]!, style: AppTheme.label(context)),
+                    ),
+                  AmountField(
+                    controller: row[col]!,
+                    expand: true,
+                    onChanged: (_) => setState(() => _error = null),
+                  ),
+                ],
+              ),
+            ),
+            if (col != _cols.last) const SizedBox(width: 8),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// 앱이 더한다 — 사용자가 일곱 달치를 손으로 더하다 틀리면 그 값이 세금이 된다.
+  Widget _totalsRow() {
+    final ink = AppTheme.ink(context);
+    return Container(
+      padding: const EdgeInsets.only(top: 10),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: AppTheme.line(context))),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 34,
+            child: Text('합계', style: AppTheme.sans(AppTheme.tsSM, ink,
+                weight: FontWeight.w700)),
+          ),
+          for (final col in _cols) ...[
+            Expanded(
+              child: Text(comma(_sum(col).toInt()),
+                  textAlign: TextAlign.right,
+                  style: AppTheme.sans(AppTheme.tsSM, ink,
+                      weight: FontWeight.w700)),
+            ),
+            if (col != _cols.last) const SizedBox(width: 8),
+          ],
+        ],
       ),
     );
   }

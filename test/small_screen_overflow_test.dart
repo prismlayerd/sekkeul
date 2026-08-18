@@ -151,6 +151,9 @@ void main() {
       'dependents': 2,
     });
     final now = DateTime.now();
+    // 이 사람은 한 해를 다 적었다 — 안 그러면 홈이 문턱 진행바를 아예 안 그리고
+    // 「1~7월 채우기」로 바꾼다(그게 맞다). 여기서 보려는 건 그 진행바다.
+    await dbService.setAppState('backfill_done_${now.year}', 'y');
     for (int b = 0; b < 3; b++) {
       final d = DateTime(now.year, now.month - b, 1);
       await dbService.insertIncomeEntry(IncomeEntry(

@@ -96,6 +96,57 @@ class YearCoverage {
     }
   }
 
+  /// 달마다 적은 값 — `{"3": {"credit": 120000, ...}}`.
+  ///
+  /// **합계 한 칸으로 받지 않는다.** 카드사 앱도 통장도 월별로 보여주는데
+  /// 합계만 물으면 사용자가 일곱 달치를 손으로 더해야 한다. 더하다 틀리면
+  /// 그 틀린 값이 세금 계산에 그대로 들어간다 — 앱이 대신 더하면 될 일이다.
+  static Future<Map<int, Backfill>> monthly(int year) async {
+    final raw = await dbService.getAppState('${_backfillKey(year)}_m');
+    if (raw == null || raw.isEmpty) return {};
+    try {
+      final m = jsonDecode(raw) as Map<String, dynamic>;
+      return {
+        for (final e in m.entries)
+          int.parse(e.key): Backfill(
+            credit: ((e.value as Map)['credit'] as num?)?.toDouble() ?? 0,
+            debit: ((e.value as Map)['debit'] as num?)?.toDouble() ?? 0,
+            bizIncome: ((e.value as Map)['bizIncome'] as num?)?.toDouble() ?? 0,
+            bizExpense: ((e.value as Map)['bizExpense'] as num?)?.toDouble() ?? 0,
+          ),
+      };
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /// 달별 값을 저장하고 **합계도 같이 갱신한다.**
+  ///
+  /// 읽는 쪽(홈·엔진)은 합계만 쓴다. 합계를 따로 저장해 두지 않으면 읽을 때마다
+  /// 열두 달을 더해야 하고, 더하는 코드가 두 곳에 생기면 언젠가 갈라진다.
+  static Future<void> setMonthly(int year, Map<int, Backfill> rows) async {
+    await dbService.setAppState(
+        '${_backfillKey(year)}_m',
+        jsonEncode({
+          for (final e in rows.entries)
+            '${e.key}': {
+              'credit': e.value.credit,
+              'debit': e.value.debit,
+              'bizIncome': e.value.bizIncome,
+              'bizExpense': e.value.bizExpense,
+            },
+        }));
+    var c = 0.0, d = 0.0, bi = 0.0, be = 0.0;
+    for (final v in rows.values) {
+      c += v.credit;
+      d += v.debit;
+      bi += v.bizIncome;
+      be += v.bizExpense;
+    }
+    await setBackfill(
+        year, Backfill(credit: c, debit: d, bizIncome: bi, bizExpense: be));
+  }
+
   static Future<void> setBackfill(int year, Backfill v) =>
       dbService.setAppState(
           _backfillKey(year),

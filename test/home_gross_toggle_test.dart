@@ -46,7 +46,7 @@ void main() {
               debitCashYtdTotal: 0,
               onOpenLedger: () {},
               onOpenMyInfo: () {},
-              onSetExpenseTarget: () {},
+              onExpenseTargetChanged: (_) {},
             ),
           ),
         ),

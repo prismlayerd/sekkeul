@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/data/year_coverage.dart';
+import '../../components/expense_target_field.dart';
 import '../../theme/app_theme.dart';
 import '../../../core/tax_engine/tax_year.dart';
 import '../../../core/tax_engine/employee_tax.dart';
@@ -64,7 +65,8 @@ class HomeStatusSection extends StatefulWidget {
   /// 있어서 두 곳이 서로를 모르는 채로 같은 값을 고쳤다. 연봉이 「내 정보」
   /// 한 곳으로 간 것과 같은 이유로(2026-07-24) 여기도 한 곳으로 모은다 —
   /// 홈은 **얼마나 썼는지 보여주는 자리**지 설정하는 자리가 아니다.
-  final VoidCallback onSetExpenseTarget;
+  /// 목표를 정했을 때 — 값을 넘긴다. 예전에는 팝업을 여는 VoidCallback이었다.
+  final ValueChanged<double> onExpenseTargetChanged;
 
   const HomeStatusSection({
     super.key,
@@ -91,7 +93,7 @@ class HomeStatusSection extends StatefulWidget {
     this.cardSavingCombined,
     required this.onOpenLedger,
     required this.onOpenMyInfo,
-    required this.onSetExpenseTarget,
+    required this.onExpenseTargetChanged,
   });
 
   @override
@@ -135,6 +137,18 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     if (won <= 0) return '0원';
     return '${comma(won.toInt())}원';
   }
+
+  /// 목표 입력칸이 지금 열려 있는가 — **그 자리에서** 펼친다. 팝업이 아니다.
+  bool _editingTarget = false;
+
+  Widget _targetEditor() => ExpenseTargetField(
+        current: widget.expenseTarget.toInt(),
+        onCancel: () => setState(() => _editingTarget = false),
+        onSubmit: (v) {
+          setState(() => _editingTarget = false);
+          widget.onExpenseTargetChanged(v);
+        },
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -281,7 +295,13 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           _rightEmpty(tert, null),
 
         // ── 지출 목표 진행 + 수정 ──
-        if (hasBudget) ...[
+        //
+        // 편집은 **그 자리에서** 펼친다. 팝업을 띄우면 지금 보고 있던 지출 합계가
+        // 가려져서, 목표를 얼마로 잡을지 판단할 근거를 덮은 채 숫자를 물어보게 된다.
+        if (_editingTarget) ...[
+          const SizedBox(height: 14),
+          _targetEditor(),
+        ] else if (hasBudget) ...[
           const SizedBox(height: 14),
           _progressBlock(
             '지출 목표 ${_toWon(budget)}',
@@ -293,15 +313,16 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
                 : underBudget && totalSpent > 0
                     ? '목표 대비 ${_toWon(budget - totalSpent)} 절약 중이에요.'
                     : '지출을 추가해보세요.',
-            onEdit: widget.onSetExpenseTarget,
+            onEdit: () => setState(() => _editingTarget = true),
           ),
         ],
         // ── 지출 목표 유도 — 유형과 상관없이 처음부터 뜬다.
+        // (편집칸이 열려 있으면 위에서 이미 그렸다.)
         // 예전엔 직장인·N잡러에게 "연봉을 채운 뒤에만" 보여줬는데, 프리랜서는
         // 연봉 단계가 없어 바로 떴다. 같은 기능이 유형에 따라 있고 없어 보였고,
         // 연봉 저장이 막히면 지출 목표를 영영 못 만드는 잠금이 됐다 (2026-08-10).
         // 대신 빈 상태에서 유도가 둘(연봉·지출 목표) 뜬다 — 그건 감수한다.
-        if (needsBudget) ...[
+        if (needsBudget && !_editingTarget) ...[
           // 위 연봉 유도와 **같은 간격**. 둘은 같은 종류의 줄이라 하나만
           // 어긋나면 절이 삐뚤어 보인다.
           const SizedBox(height: 14),
@@ -320,9 +341,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         // 자세한 내역(적은 경비·분기점)은 가계부 적립 카드에 있고 여기선 숫자만 보여준다.
         // 프리랜서의 「올해 쌓인 예상 환급」도 1월부터의 누적이다. 안 덮이면
                   // 카드 쪽과 똑같이 숫자 대신 채우라고 한다.
-                  if (!widget.yearCovered)
-                    _fillPromptBlock(sub, accent)
-                  else if (widget.refundProgress != null) ...[
+                  if (widget.yearCovered && widget.refundProgress != null) ...[
           _rule(),
           _buildFreelancerRefundBlock(widget.refundProgress!, sub, tert, accent),
         ],
@@ -360,7 +379,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     return Semantics(
       button: true,
       child: GestureDetector(
-        onTap: widget.onSetExpenseTarget,
+        onTap: () => setState(() => _editingTarget = true),
         behavior: HitTestBehavior.opaque,
         child: Row(children: [
           Expanded(
@@ -425,37 +444,6 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     );
   }
 
-  /// 1~지난달이 비어 있을 때 숫자 자리에 들어가는 안내.
-  Widget _fillPromptBlock(Color sub, Color accent) {
-    final last = DateTime.now().month - 1;
-    return Semantics(
-      button: true,
-      label: '이전 달 채우기',
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onFillPreviousMonths,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.isEmployee ? '카드 공제 문턱 (연봉의 25%)' : '올해 쌓인 예상 환급',
-                style: AppTheme.sans(AppTheme.tsSM, sub)),
-            const SizedBox(height: 8),
-            Text('1~$last월 기록이 없어 아직 계산할 수 없어요'.keepWords,
-                style: AppTheme.sans(AppTheme.tsMD, AppTheme.ink(context),
-                    weight: FontWeight.w700, height: 1.4)),
-            const SizedBox(height: 4),
-            Text('카드사 앱에서 보고 옮기면 2분이면 끝나요.'.keepWords,
-                style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.5)),
-            const SizedBox(height: 10),
-            Text('1~$last월 채우기 →',
-                style: AppTheme.sans(AppTheme.tsXS, accent,
-                    weight: FontWeight.w600)),
-          ],
-        ),
-      ),
-    );
-  }
-
   /// 카드 공제 → "올해 쌓인 예상 환급" 3단계 블록.
   /// A: 문턱 전(진행바) → B: 문턱~한도(환급 카운터 자람) → C: 한도 도달(멈춤 안내).
   /// 복잡한 세법(문턱 순서·공제율·한도)은 엔진(estimateCreditCardRefund)이 삼키고,
@@ -467,7 +455,12 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     // 1~7월이 없으면 "아직 912만원 남았다"고 말하게 되는데, 실제로는 이미
     // 넘겼을 수도 있다. 틀린 숫자를 자신 있게 보여주느니 비워 두고 채우라고
     // 하는 편이 낫다 — 그래야 채울 이유도 생긴다.
-    if (!widget.yearCovered) return _fillPromptBlock(sub, accent);
+    // 안 덮이면 **아무것도 그리지 않는다.**
+    //
+    // 틀린 숫자를 보여줄 수는 없다. 그렇다고 여기서 «채우세요»까지 말하면 같은
+    // 얘기가 배너와 02 두 곳에 겹친다. 안내는 배너가 맡는다 — 돌면서 눈에 닿고,
+    // 닫히지도 않는다.
+    if (!widget.yearCovered) return const SizedBox.shrink();
 
     final r = EmployeeTaxCalculator.estimateCreditCardRefund(
       grossAnnual: annualSalary,

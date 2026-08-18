@@ -8,6 +8,8 @@ import 'package:secul/ui/theme/app_theme.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'package:secul/ui/screens/home/home_banner_carousel.dart';
+
 import 'support/ko_finder.dart';
 import 'support/screen_registry.dart';
 
@@ -91,9 +93,14 @@ void main() {
       await t.pump(const Duration(milliseconds: 250));
     }
 
-    expect(findKo('기록이 없어 아직 계산할 수 없어요'), findsWidgets,
-        reason: '1~7월이 비었는데 문턱 숫자를 그대로 보여주고 있다');
+    // 틀린 숫자는 안 그린다.
     expect(findKo('남음'), findsNothing,
         reason: '틀린 «OO원 남음»이 아직 화면에 있다');
+    // 채우라는 말은 **배너**가 한다 — 02에 겹쳐 넣으면 같은 얘기가 두 번이다.
+    final cards = t
+        .widget<HomeBannerCarousel>(find.byType(HomeBannerCarousel))
+        .cards;
+    expect(cards.any((c) => c.label == '이전 달'), isTrue,
+        reason: '숫자만 가리고 채우라는 말이 어디에도 없다');
   });
 }

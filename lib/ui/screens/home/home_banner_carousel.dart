@@ -15,6 +15,13 @@ class BannerCardData {
   /// 보조 문구 — 헤드라인 아래 한 줄(팁=본문, 그 외=액션 안내). 없으면 action 사용.
   final String? sub;
 
+  /// 닫을 수 있는가. 기본은 닫힌다 — 광고·팁은 안 보고 싶을 수 있다.
+  ///
+  /// **닫으면 길이 사라지는 카드는 false로 둔다.** 1~지난달 채우기가 그렇다.
+  /// 그걸 안 채우면 연간 계산이 통째로 안 나오는데, 실수로 ×를 누른 사람은
+  /// 다시 찾을 데가 없다.
+  final bool dismissible;
+
   const BannerCardData({
     required this.label,
     required this.headline,
@@ -22,6 +29,7 @@ class BannerCardData {
     required this.glyph,
     required this.onTap,
     this.sub,
+    this.dismissible = true,
   });
 
   /// 닫기 영구 저장용 안정 키 — 라벨+헤드라인 기반.
@@ -122,18 +130,19 @@ class HomeBannerCarousel extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(child: AppTheme.sectionHead(context, null, c.label)),
-                        Semantics(
-                          button: true,
-                          label: '이 카드 닫기',
-                          child: GestureDetector(
-                            onTap: () => onDismiss(c),
-                            behavior: HitTestBehavior.opaque,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8),
-                              child: Icon(Icons.close_rounded, size: 16, color: sub),
+                        if (c.dismissible)
+                          Semantics(
+                            button: true,
+                            label: '이 카드 닫기',
+                            child: GestureDetector(
+                              onTap: () => onDismiss(c),
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8),
+                                child: Icon(Icons.close_rounded, size: 16, color: sub),
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 7),
