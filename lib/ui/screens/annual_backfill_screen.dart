@@ -6,8 +6,18 @@ import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
 
-/// 연중 가입 사용자를 위한 1~N월 소급 입력 — 간단히 결제수단·소득유형별 총액만 받는다.
+/// 연중 가입 **프리랜서**를 위한 1~N월 소급 입력 — 소득유형·결제수단별 총액.
 /// 실제 expenses/income_entries에 매달 1건씩 기록(카테고리는 세분화하지 않음).
+///
+/// **직장인·N잡러는 여기로 오지 않는다.** 그쪽은 카드 공제가 걸려 있어서
+/// 결제수단 셋으로는 정확해지지 않는다 — 전통시장 40%·대중교통 40%·도서공연
+/// 30%가 신용카드 15%로 깎여 계산된다. 그래서 다섯 갈래를 받는 전용 화면을
+/// 따로 뒀다([CardBackfillScreen]).
+///
+/// 프리랜서는 카드 공제 대상이 아니라(조특법 §126의2는 근로소득자 전용) 이
+/// 화면이 채우는 매출·경비가 맞는 물음이다. 다만 지금은 종소세 계산이 연 수입
+/// 직접 입력을 쓰므로, 여기 넣은 값은 가계부 연간·분석 뷰에만 반영된다.
+/// 프리랜서 전용 화면이 생기면 이 화면은 없어진다.
 class AnnualBackfillScreen extends StatefulWidget {
   final String userType;
 

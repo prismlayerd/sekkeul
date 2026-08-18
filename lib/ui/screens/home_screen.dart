@@ -390,10 +390,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     });
   }
 
-  /// 연중 가입 사용자 — 1월~지난달 기록이 비어있으면 소급 입력 배너를 보여준다.
+  /// 연중 가입 **프리랜서** — 1월~지난달 기록이 비어있으면 소급 입력을 권한다.
+  ///
+  /// 직장인·N잡러는 이 길로 오지 않는다. 그쪽은 카드 공제가 걸려 있어서
+  /// 다섯 갈래(전통시장·대중교통·도서공연까지)를 받아야 정확해지고,
+  /// 그 화면이 따로 있다([CardBackfillScreen]). 두 배너가 같이 뜨면 사용자는
+  /// 무엇을 채워야 하는지 모른다.
+  ///
+  /// 프리랜서는 카드 공제 대상이 아니라(조특법 §126의2는 근로소득자 전용)
+  /// 받을 것이 매출·경비다. 전용 화면이 생기기 전까지 옛 화면을 쓴다.
   Future<void> _checkBackfillPrompt() async {
     final now = DateTime.now();
-    if (now.month <= 1) return;
+    if (now.month <= 1 || _isEmployee) return;
     final done = await dbService.getAppState('annual_backfill_done_${now.year}');
     final dismissed = await dbService.getAppState('annual_backfill_dismissed_${now.year}');
     if (done == 'true' || dismissed == 'true') return;
@@ -421,9 +429,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('지난 달 기록이 비어있어요'.keepWords, style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700)),
+                Text('1월~지난달 기록이 비어있어요'.keepWords, style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text('간단히 채우면 올해 판정이 더 정확해져요 →'.keepWords, style: AppTheme.sans(AppTheme.tsXS, accent)),
+                Text('매출과 경비를 채우면 연간 판정이 정확해져요 →'.keepWords, style: AppTheme.sans(AppTheme.tsXS, accent)),
               ],
             ),
           ),
