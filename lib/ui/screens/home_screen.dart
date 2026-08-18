@@ -12,7 +12,7 @@ import '../components/reminder_card.dart';
 import '../components/slip_ticks.dart';
 import '../components/section_accordion.dart';
 import '../../core/data/year_coverage.dart';
-import 'card_backfill_screen.dart';
+import 'backfill_screen.dart';
 import '../components/just_updated_card.dart';
 import '../components/update_card.dart';
 import 'onboarding_screen.dart';
@@ -21,7 +21,6 @@ import 'year_end_tax_screen.dart';
 import 'tax_simulator_screen.dart';
 import 'expense_calendar_screen.dart';
 import 'missed_deduction_diagnosis_screen.dart';
-import 'annual_backfill_screen.dart';
 import 'tax_tools_screen.dart' show taxRecordEntryFor;
 import 'settings_screen.dart';
 import 'benefit_screen.dart';
@@ -98,7 +97,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   int _childrenCount = 0;
   bool _isTypeIdentified = false;   // 유형 파악 완료 여부 (온보딩 1단계)
   bool _isProfileCompleted = false; // 프로필 완성 여부 (온보딩 2단계)
-  bool _showBackfillPrompt = false; // 연중 가입 — 지난 달 소급 입력 유도 배너
   Set<String> _hiddenBannerIds = {}; // X로 닫은 배너 카드(30일간 숨김)
   double _decidedTax = 0.0; // 결정세액 (연말정산 진단 데이터)
   double _grossIncome = 0.0; // 연소득(연봉) (연말정산 진단 데이터)
@@ -238,7 +236,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _calculateTax();
     _refreshReminders();
     _refreshUnreadCount();
-    _checkBackfillPrompt();
     _loadHiddenBanners();
   }
 
@@ -390,72 +387,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     });
   }
 
-  /// 연중 가입 **프리랜서** — 1월~지난달 기록이 비어있으면 소급 입력을 권한다.
-  ///
-  /// 직장인·N잡러는 이 길로 오지 않는다. 그쪽은 카드 공제가 걸려 있어서
-  /// 다섯 갈래(전통시장·대중교통·도서공연까지)를 받아야 정확해지고,
-  /// 그 화면이 따로 있다([CardBackfillScreen]). 두 배너가 같이 뜨면 사용자는
-  /// 무엇을 채워야 하는지 모른다.
-  ///
-  /// 프리랜서는 카드 공제 대상이 아니라(조특법 §126의2는 근로소득자 전용)
-  /// 받을 것이 매출·경비다. 전용 화면이 생기기 전까지 옛 화면을 쓴다.
-  Future<void> _checkBackfillPrompt() async {
-    final now = DateTime.now();
-    if (now.month <= 1 || _isEmployee) return;
-    final done = await dbService.getAppState('annual_backfill_done_${now.year}');
-    final dismissed = await dbService.getAppState('annual_backfill_dismissed_${now.year}');
-    if (done == 'true' || dismissed == 'true') return;
-    if (mounted) setState(() => _showBackfillPrompt = true);
-  }
-
-  Widget _buildBackfillPrompt() {
-    final ink = AppTheme.ink(context);
-    final sub = AppTheme.inkSecondary(context);
-    final accent = AppTheme.accentColor(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () async {
-              final changed = await Navigator.push<bool>(
-                  context, MaterialPageRoute(builder: (_) => AnnualBackfillScreen(userType: _userType)));
-              if (changed == true) {
-                await _loadMonthlyExpenses();
-                await _loadCurrentMonthIncome();
-              }
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('1월~지난달 기록이 비어있어요'.keepWords, style: AppTheme.sans(AppTheme.tsMD, ink, weight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                Text('매출과 경비를 채우면 연간 판정이 정확해져요 →'.keepWords, style: AppTheme.sans(AppTheme.tsXS, accent)),
-              ],
-            ),
-          ),
-        ),
-        Semantics(
-          button: true,
-          label: '안내 닫기',
-          child: GestureDetector(
-            onTap: () async {
-              await dbService.setAppState(
-                  'annual_backfill_dismissed_${DateTime.now().year}', 'true');
-              if (mounted) setState(() => _showBackfillPrompt = false);
-            },
-            child: Icon(Icons.close_rounded, size: 18, color: sub),
-          ),
-        ),
-      ],
-    );
-  }
-
   /// 1월~지난달 채우기 — 홈 배너와 02 블록 둘 다 여기로 온다.
-  Future<void> _openCardBackfill() async {
+  Future<void> _openBackfill() async {
     final done = await Navigator.push<bool>(context,
-        MaterialPageRoute(builder: (_) => CardBackfillScreen(userType: _userType)));
+        MaterialPageRoute(builder: (_) => BackfillScreen(userType: _userType)));
     if (done == true) {
       await _loadMonthlyExpenses();
       if (mounted) _calculateTax();
@@ -1025,7 +960,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           _slipRule(),
           HomeStatusSection(
             yearCovered: _yearCovered,
-            onFillPreviousMonths: _openCardBackfill,
+            onFillPreviousMonths: _openBackfill,
             userType: _userType,
             isEmployee: _isEmployee,
             monthlyIncome: double.tryParse(
@@ -1051,13 +986,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             onOpenMyInfo: _openProfile,
             onSetExpenseTarget: _editExpenseTarget,
           ),
-          // 상태 카드에 아직 유도가 떠 있으면 백필 유도는 뒤로 미룬다 —
-          // 요청은 한 번에 하나여야 눈에 들어온다(2026-07-25).
-          if (_showBackfillPrompt &&
-              !((_isEmployee && _grossIncome <= 0) || _expenseTarget <= 0)) ...[
-            _slipRule(),
-            _buildBackfillPrompt(),
-          ],
           _slipRule(),
           ReminderCard(userType: _userType),
           _slipFooter(),
@@ -1358,7 +1286,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     // 연중에 깐 사람에게는 이게 제일 급하다. 이걸 안 채우면 카드 공제도 예상
     // 환급도 계산이 안 나오는데, 그 사실을 02 블록 안에서만 말하면 스크롤을
     // 내려야 보인다. 배너는 앱을 켜자마자 눈에 닿는 유일한 자리다.
-    if (_isEmployee && !_yearCovered) {
+    if (!_yearCovered && DateTime.now().month > 1) {
       final last = DateTime.now().month - 1;
       cards.insert(
         0,
@@ -1367,7 +1295,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           headline: '1~$last월을 채우면\n올해 환급이 보여요',
           action: '2분이면 끝나요',
           glyph: '채',
-          onTap: _openCardBackfill,
+          onTap: _openBackfill,
         ),
       );
     }

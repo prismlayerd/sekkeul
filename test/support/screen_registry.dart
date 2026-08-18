@@ -7,7 +7,7 @@ export 'package:secul/ui/screens/home_screen.dart';
 import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/core/data/expense_item.dart';
 import 'package:secul/core/data/income_entry.dart';
-import 'package:secul/ui/screens/annual_backfill_screen.dart';
+import 'package:secul/ui/screens/backfill_screen.dart';
 import 'package:secul/ui/screens/benefit_screen.dart';
 import 'package:secul/ui/screens/bookkeeping_guide_screen.dart';
 import 'package:secul/ui/screens/correction_request_screen.dart';
@@ -162,7 +162,7 @@ final noArgScreens = <(String, Widget Function())>[
 
 /// 사용자 유형 하나를 받는 화면.
 final byTypeScreens = <(String, Widget Function(String))>[
-    ('AnnualBackfillScreen', (u) => AnnualBackfillScreen(userType: u)),
+    ('BackfillScreen', (u) => BackfillScreen(userType: u)),
     ('BenefitScreen', (u) => BenefitScreen(userType: u)),
     ('BookkeepingGuideScreen', (u) => BookkeepingGuideScreen(userType: u)),
     ('CorrectionRequestScreen', (u) => CorrectionRequestScreen(userType: u)),

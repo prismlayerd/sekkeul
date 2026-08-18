@@ -1,4 +1,5 @@
 import '../data/db_helper.dart';
+import '../data/year_coverage.dart';
 import '../data/occupation_data.dart';
 import 'bookkeeping_duty.dart';
 import 'combined_tax.dart';
@@ -201,14 +202,24 @@ class ReserveEstimator {
       }
     }
 
+    // **연중에 깐 사람의 1~지난달을 더한다.**
+    //
+    // 위 반복문은 실제 기록만 센다. 8월에 깐 사람에게는 1~7월이 통째로 없으니
+    // 총수입도 경비도 실제보다 작게 나오고, 그 위에 얹힌 「올해 쌓인 예상 환급」이
+    // 조용히 틀린다. 채워 넣은 요약을 여기서 합친다 — 가짜 월별 기록을 만드는
+    // 대신 합계로 들고 있기 때문에(YearCoverage 참조) 셈하는 자리에서 더한다.
+    final backfill = await YearCoverage.backfill(now.year);
+    ytdBusinessIncome += backfill.bizIncome;
+
     final allExpenses = await dbService.getExpenses(userType: userType);
     final thisMonthBusinessExpense = allExpenses
         .where((x) => x.isBusiness && x.date.year == now.year && x.date.month == now.month)
         .fold<double>(0, (s, x) => s + x.amount);
     // 성과 줄은 수입과 같은 기간(1월~이번 달)을 봐야 같은 기준에서 비교된다.
     final ytdBusinessExpense = allExpenses
-        .where((x) => x.isBusiness && x.date.year == now.year && x.date.month <= now.month)
-        .fold<double>(0, (s, x) => s + x.amount);
+            .where((x) => x.isBusiness && x.date.year == now.year && x.date.month <= now.month)
+            .fold<double>(0, (s, x) => s + x.amount) +
+        backfill.bizExpense;
     // N잡러 신용카드 소득공제용 연 누적 사용액 — 근로소득이 있으므로 카드공제 대상.
     // 0으로 넘기면 카드공제가 통째로 빠져 세액·적립액이 과대된다(2026-07-25 수정).
     final ytdCreditCard = allExpenses

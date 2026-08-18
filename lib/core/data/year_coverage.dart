@@ -85,6 +85,8 @@ class YearCoverage {
       return Backfill(
         credit: (m['credit'] as num?)?.toDouble() ?? 0,
         debit: (m['debit'] as num?)?.toDouble() ?? 0,
+        bizIncome: (m['bizIncome'] as num?)?.toDouble() ?? 0,
+        bizExpense: (m['bizExpense'] as num?)?.toDouble() ?? 0,
       );
     } catch (_) {
       return const Backfill();
@@ -92,15 +94,42 @@ class YearCoverage {
   }
 
   static Future<void> setBackfill(int year, Backfill v) =>
-      dbService.setAppState(_backfillKey(year),
-          jsonEncode({'credit': v.credit, 'debit': v.debit}));
+      dbService.setAppState(
+          _backfillKey(year),
+          jsonEncode({
+            'credit': v.credit,
+            'debit': v.debit,
+            'bizIncome': v.bizIncome,
+            'bizExpense': v.bizExpense,
+          }));
 }
 
-/// 채워 넣은 지난달까지의 합계.
+/// 채워 넣은 1월~지난달 합계.
+///
+/// 유형마다 쓰는 칸이 다르다. 직장인은 카드 둘, 프리랜서는 사업 둘,
+/// N잡러는 넷 다 — 근로소득이 있어 카드공제 대상이면서 사업소득도 있어서다.
 class Backfill {
+  /// 신용카드 사용액 — 카드 공제 문턱·공제율 계산에 들어간다(근로소득자만).
   final double credit;
+
+  /// 체크카드·현금(현금영수증) 사용액.
   final double debit;
-  const Backfill({this.credit = 0, this.debit = 0});
+
+  /// 사업 총수입금액. **떼기 전 금액**이다 — 3.3% 원천징수 후 입금액이 아니라
+  /// 지급명세서에 찍히는 총액. 세금은 총액 기준으로 계산된다.
+  final double bizIncome;
+
+  /// 사업 필요경비. 비워 두면 경비율로 계산되므로 **모르면 비워 두는 게 맞다** —
+  /// 어림잡아 넣으면 경비율보다 나쁜 답이 나올 수 있다.
+  final double bizExpense;
+
+  const Backfill({
+    this.credit = 0,
+    this.debit = 0,
+    this.bizIncome = 0,
+    this.bizExpense = 0,
+  });
+
   double get total => credit + debit;
 }
 

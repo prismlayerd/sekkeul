@@ -19,20 +19,35 @@ import '../theme/text_wrap.dart';
 /// 왜 다섯 갈래인가: 엔진은 이미 전통시장 40% · 대중교통 40% · 도서공연 30% ·
 /// 체크현금 30% · 신용카드 15%로 나눠 계산한다(`employee_tax.dart`). 가계부가
 /// 결제수단 셋만 받아서 그 정밀도를 못 쓰고 있었다. 여기서 받아 채운다.
-class CardBackfillScreen extends StatefulWidget {
+///
+/// **유형마다 묻는 것이 다르다.** 화면을 셋으로 쪼개는 대신 절을 갈랐다 —
+/// 같은 저장소·같은 검증·같은 완료 버튼을 세 번 베껴 쓰면 셋이 서로 어긋난다.
+///
+///   직장인   카드 다섯 갈래
+///   프리랜서 사업 총수입·필요경비 (카드공제는 근로소득자 전용이라 안 묻는다)
+///   N잡러   둘 다 — 근로소득이 있어 카드공제 대상이면서 사업소득도 있다
+class BackfillScreen extends StatefulWidget {
   final String userType;
-  const CardBackfillScreen({super.key, required this.userType});
+  const BackfillScreen({super.key, required this.userType});
 
   @override
-  State<CardBackfillScreen> createState() => _CardBackfillScreenState();
+  State<BackfillScreen> createState() => _BackfillScreenState();
 }
 
-class _CardBackfillScreenState extends State<CardBackfillScreen> {
+class _BackfillScreenState extends State<BackfillScreen> {
   final _credit = TextEditingController();
   final _debit = TextEditingController();
   final _market = TextEditingController();
   final _transport = TextEditingController();
   final _culture = TextEditingController();
+  final _bizIncome = TextEditingController();
+  final _bizExpense = TextEditingController();
+
+  /// 근로소득이 있는가 — 카드공제는 근로소득자만 받는다(조특법 §126의2).
+  bool get _hasCard => widget.userType == '직장인' || widget.userType == 'N잡러';
+
+  /// 사업소득이 있는가 — 총수입·경비를 채워야 종소세 셈이 맞는다.
+  bool get _hasBiz => widget.userType == '프리랜서' || widget.userType == 'N잡러';
 
   /// 가계부에 이미 들어와 있는 올해 신용카드 누계 — 특례 합의 상한이다.
   double _ledgerCredit = 0;
@@ -50,7 +65,9 @@ class _CardBackfillScreenState extends State<CardBackfillScreen> {
 
   @override
   void dispose() {
-    for (final c in [_credit, _debit, _market, _transport, _culture]) {
+    for (final c in [
+      _credit, _debit, _market, _transport, _culture, _bizIncome, _bizExpense
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -74,6 +91,8 @@ class _CardBackfillScreenState extends State<CardBackfillScreen> {
       if (s.market > 0) _market.text = s.market.toInt().toString();
       if (s.transport > 0) _transport.text = s.transport.toInt().toString();
       if (s.culture > 0) _culture.text = s.culture.toInt().toString();
+      if (b.bizIncome > 0) _bizIncome.text = b.bizIncome.toInt().toString();
+      if (b.bizExpense > 0) _bizExpense.text = b.bizExpense.toInt().toString();
       _loading = false;
     });
   }
@@ -98,7 +117,13 @@ class _CardBackfillScreenState extends State<CardBackfillScreen> {
       return;
     }
     await YearCoverage.setBackfill(
-        _year, Backfill(credit: _v(_credit), debit: _v(_debit)));
+        _year,
+        Backfill(
+          credit: _v(_credit),
+          debit: _v(_debit),
+          bizIncome: _v(_bizIncome),
+          bizExpense: _v(_bizExpense),
+        ));
     await YearCoverage.setSpecials(_year, specials);
     await YearCoverage.markComplete(_year);
     if (!mounted) return;
@@ -107,7 +132,6 @@ class _CardBackfillScreenState extends State<CardBackfillScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ink = AppTheme.ink(context);
     final sub = AppTheme.inkSecondary(context);
 
     return Scaffold(
@@ -130,14 +154,30 @@ class _CardBackfillScreenState extends State<CardBackfillScreen> {
                     style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5),
                   ),
                   const SizedBox(height: 22),
-                  AppTheme.sectionHead(context, '01', '1~$_lastMonth월에 쓴 돈'),
-                  const SizedBox(height: 12),
-                  _field('신용카드로', _credit,
-                      hint: '카드사 앱의 그 기간 이용금액 합계'),
-                  _field('체크카드·현금으로', _debit,
-                      hint: '현금영수증을 낸 것만'),
-                  const SizedBox(height: 24),
-                  AppTheme.sectionHead(context, '02', '올해 이런 데 쓴 돈'),
+                  if (_hasBiz) ...[
+                    AppTheme.sectionHead(context, '01', '1~$_lastMonth월에 번 돈'),
+                    const SizedBox(height: 12),
+                    _field('사업 총수입', _bizIncome,
+                        hint: '3.3% 떼기 **전** 금액이에요. 입금액이 아니라 '
+                            '지급명세서에 찍히는 총액입니다'),
+                    _field('필요경비', _bizExpense,
+                        hint: '모르면 비워 두세요. 업종 경비율로 계산해드려요 — '
+                            '어림잡아 넣으면 오히려 손해일 수 있어요'),
+                    const SizedBox(height: 24),
+                  ],
+                  if (_hasCard) ...[
+                    AppTheme.sectionHead(
+                        context, _hasBiz ? '02' : '01', '1~$_lastMonth월에 쓴 돈'),
+                    const SizedBox(height: 12),
+                    _field('신용카드로', _credit,
+                        hint: '카드사 앱의 그 기간 이용금액 합계'),
+                    _field('체크카드·현금으로', _debit,
+                        hint: '현금영수증을 낸 것만'),
+                    const SizedBox(height: 24),
+                  ],
+                  if (_hasCard) ...[
+                  AppTheme.sectionHead(
+                      context, _hasBiz ? '03' : '02', '올해 이런 데 쓴 돈'),
                   const SizedBox(height: 6),
                   Text(
                     '공제율이 더 높은 것들이에요. 위 신용카드 금액 **안에서** '
@@ -151,6 +191,7 @@ class _CardBackfillScreenState extends State<CardBackfillScreen> {
                   _field('전통시장', _market, tag: '40%'),
                   _field('대중교통', _transport, tag: '40%'),
                   _field('도서·공연·영화', _culture, tag: '30%'),
+                  ],
                   if (_error != null) ...[
                     const SizedBox(height: 14),
                     Text(_error!.keepWords,
@@ -188,7 +229,8 @@ class _CardBackfillScreenState extends State<CardBackfillScreen> {
           ]),
           if (hint != null) ...[
             const SizedBox(height: 3),
-            Text(hint, style: AppTheme.sans(AppTheme.tsXS, sub)),
+            Text(hint.replaceAll('**', '').keepWords,
+                style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.45)),
           ],
           const SizedBox(height: 6),
           AmountField(controller: c, expand: true, onChanged: (_) {

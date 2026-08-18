@@ -313,7 +313,11 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         // 같은 자리·같은 말이지만 자라는 기전이 다르다 — 직장인은 신용카드 소득공제,
         // 프리랜서는 그 제도 대상이 아니라 필요경비 → 이미 뗀 3.3% 환급으로 자란다.
         // 자세한 내역(적은 경비·분기점)은 가계부 적립 카드에 있고 여기선 숫자만 보여준다.
-        if (widget.refundProgress != null) ...[
+        // 프리랜서의 「올해 쌓인 예상 환급」도 1월부터의 누적이다. 안 덮이면
+                  // 카드 쪽과 똑같이 숫자 대신 채우라고 한다.
+                  if (!widget.yearCovered)
+                    _fillPromptBlock(sub, accent)
+                  else if (widget.refundProgress != null) ...[
           _rule(),
           _buildFreelancerRefundBlock(widget.refundProgress!, sub, tert, accent),
         ],
@@ -428,7 +432,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('카드 공제 문턱 (연봉의 25%)',
+            Text(widget.isEmployee ? '카드 공제 문턱 (연봉의 25%)' : '올해 쌓인 예상 환급',
                 style: AppTheme.sans(AppTheme.tsSM, sub)),
             const SizedBox(height: 8),
             Text('1~$last월 기록이 없어 아직 계산할 수 없어요'.keepWords,
