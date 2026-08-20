@@ -339,9 +339,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         // 같은 자리·같은 말이지만 자라는 기전이 다르다 — 직장인은 신용카드 소득공제,
         // 프리랜서는 그 제도 대상이 아니라 필요경비 → 이미 뗀 3.3% 환급으로 자란다.
         // 자세한 내역(적은 경비·분기점)은 가계부 적립 카드에 있고 여기선 숫자만 보여준다.
-        // 프리랜서의 「올해 쌓인 예상 환급」도 1월부터의 누적이다. 안 덮이면
-                  // 카드 쪽과 똑같이 숫자 대신 채우라고 한다.
-                  if (widget.yearCovered && widget.refundProgress != null) ...[
+        if (widget.refundProgress != null) ...[
           _rule(),
           _buildFreelancerRefundBlock(widget.refundProgress!, sub, tert, accent),
         ],
@@ -455,12 +453,14 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
     // 1~7월이 없으면 "아직 912만원 남았다"고 말하게 되는데, 실제로는 이미
     // 넘겼을 수도 있다. 틀린 숫자를 자신 있게 보여주느니 비워 두고 채우라고
     // 하는 편이 낫다 — 그래야 채울 이유도 생긴다.
-    // 안 덮이면 **아무것도 그리지 않는다.**
+    // **숨기지 않는다. 근거를 밝힌다.**
     //
-    // 틀린 숫자를 보여줄 수는 없다. 그렇다고 여기서 «채우세요»까지 말하면 같은
-    // 얘기가 배너와 02 두 곳에 겹친다. 안내는 배너가 맡는다 — 돌면서 눈에 닿고,
-    // 닫히지도 않는다.
-    if (!widget.yearCovered) return const SizedBox.shrink();
+    // 한때 안 덮이면 이 블록을 통째로 걷었다. 틀린 숫자를 안 보여주려던 것인데,
+    // 정작 사용자가 이 줄을 보는 이유를 없앴다 — 「지금 신용카드를 쓸까 체크를
+    // 쓸까」는 문턱을 넘었는지로 갈리고, 그건 매일 하는 판단이다.
+    //
+    // 그래서 보여주되 **무엇을 근거로 셌는지 아래 한 줄로 말한다.** 숫자가
+    // 확정인 척하지 않으면 거짓말이 아니다. 채우라는 재촉은 배너가 따로 한다.
 
     final r = EmployeeTaxCalculator.estimateCreditCardRefund(
       grossAnnual: annualSalary,
@@ -489,10 +489,13 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         '${_toWon(remaining)} 남음',
         progress,
         accent,
-        widget.excludedFromThresholdYtd > 0
-            ? '결제수단이 «기타»인 ${_toWon(widget.excludedFromThresholdYtd)}은 문턱에 안 들어가요 '
-                '— 현금영수증 없는 지출은 공제 대상이 아니에요. 가계부에서 결제수단을 바꾸면 반영돼요.'
-            : '문턱을 넘으면 여기에 올해 예상 환급이 쌓이기 시작해요.',
+        !widget.yearCovered
+            ? '${DateTime.now().month}월부터의 기록만 반영됐어요. '
+                '1~${DateTime.now().month - 1}월을 채우면 정확해져요.'
+            : widget.excludedFromThresholdYtd > 0
+                ? '결제수단이 «기타»인 ${_toWon(widget.excludedFromThresholdYtd)}은 문턱에 안 들어가요 '
+                    '— 현금영수증 없는 지출은 공제 대상이 아니에요. 가계부에서 결제수단을 바꾸면 반영돼요.'
+                : '문턱을 넘으면 여기에 올해 예상 환급이 쌓이기 시작해요.',
       );
     }
 
@@ -630,6 +633,14 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
       );
 
   /// 항목 … 금액 — 영수증의 기본 줄. 점선이 이름과 숫자를 잇는다.
+  /// 이름 왼쪽, 금액 오른쪽. **잇는 점선은 없다.**
+  ///
+  /// 영수증 문법이라 라벨과 금액 사이를 점으로 이었는데, 이 화면에는 절마다
+  /// 절취선(가로 점선)이 이미 있다. 세로로 흐르는 점선 여럿에 가로 점선이
+  /// 겹치니 무엇이 칸막이고 무엇이 잇는 선인지 구분이 안 됐다.
+  ///
+  /// 점을 지워도 읽는 데 지장이 없다 — 이름과 금액은 양 끝에 붙어 있고 줄 수도
+  /// 서넛뿐이다. 점선은 절을 가르는 데만 쓴다.
   Widget _leaderRow(String label, String value, Color labelColor, Color valueColor,
       {bool emphasize = false}) {
     return Padding(
@@ -641,27 +652,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           Text(label,
               style: AppTheme.sans(AppTheme.tsBase, labelColor,
                   weight: emphasize ? FontWeight.w700 : FontWeight.w400)),
-          const SizedBox(width: 8),
-          Expanded(
-            // 점선을 **글자로** 찍는다.
-            //
-            // 예전에는 CustomPaint로 그렸는데, 기준선 정렬 Row에서 기준선이 없는
-            // 자식은 맨 위에 붙는다(RenderFlex는 getDistanceToBaseline이 null이면
-            // 0을 쓴다). 그래서 점선만 글자 위로 떠 있었다.
-            //
-            // 글자로 두면 기준선을 저절로 따라가고, 고정폭이라 점 간격이 라벨의
-            // 글자 격자와도 맞는다. 넘치는 만큼은 잘라 낸다.
-            child: ClipRect(
-              child: Text(
-                '·' * 120,
-                maxLines: 1,
-                softWrap: false,
-                overflow: TextOverflow.clip,
-                style: AppTheme.sans(AppTheme.tsBase, AppTheme.lineStrong(context)),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
+          const Spacer(),
           Text(value,
               style: AppTheme.sans(emphasize ? AppTheme.tsLG : AppTheme.tsBase, valueColor,
                   weight: FontWeight.w700)),

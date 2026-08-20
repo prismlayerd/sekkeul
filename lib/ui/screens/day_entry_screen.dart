@@ -21,8 +21,19 @@ const _payments = [_catCredit, _catDebit, _catOther];
 /// **그날 기록을 전부 지우고 4칸을 다시 넣는** 방식이라 고정지출 등 다른
 /// 경로로 들어온 기록이 조용히 사라졌다.
 ///
-/// 그래서 화면을 목록으로 바꾸고 **항목 단위로 즉시 쓴다**. 일괄 저장 버튼이
-/// 없으니 "전부 지우고 다시 넣기"가 코드에 존재할 자리가 없다.
+/// 그래서 화면을 목록으로 바꿨다. 위험했던 것은 «일괄»이 아니라 **전부 지우고
+/// 다시 넣기**였다 — 그 경로는 이제 코드에 없다. 어느 쪽이든 항목 하나씩
+/// insert/update/delete로만 쓴다.
+///
+/// 쓰는 시점은 둘로 갈린다.
+///
+///   새로 적은 것   「확인」으로 목록에 쌓아 두고, 아래 「N건 저장」에 한꺼번에 쓴다.
+///   이미 저장된 것  고치거나 지우면 바로 쓴다.
+///
+/// 하루치를 몰아 적는 사람에게 항목마다 저장을 누르게 하면 «이게 뭐지» 싶다.
+/// 반대로 이미 확정된 줄을 고치는데 또 저장을 눌러야 하는 것도 어색하다.
+/// 화면을 나갈 때 안 쓴 것이 남아 있으면 조용히 써 준다 — 적어 놓은 걸 잃는
+/// 것보다 예상보다 일찍 저장되는 편이 낫다.
 ///
 /// 입력은 **목록 안에서 펼친다**(inline expand). 앱 하드 제약이 바텀시트 금지라
 /// 그렇기도 하고, 하루치를 연달아 적을 때 화면이 안 바뀌는 쪽이 훨씬 빠르다 —
@@ -105,6 +116,29 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
     if (mounted) setState(() => _presets = list);
   }
 
+  /// 아직 DB에 안 쓴 새 항목. 「확인」이 여기 쌓고 「저장」이 비운다.
+  final List<ExpenseItem> _pendingExp = [];
+  final List<IncomeEntry> _pendingInc = [];
+
+  bool get _hasPending => _pendingExp.isNotEmpty || _pendingInc.isNotEmpty;
+  int get _pendingCount => _pendingExp.length + _pendingInc.length;
+
+  /// 쌓아 둔 것을 한꺼번에 쓴다. 항목 하나씩 insert만 한다 — 지우는 경로는 없다.
+  Future<void> _flushPending() async {
+    if (!_hasPending) return;
+    for (final e in _pendingExp) {
+      await dbService.insertExpense(e);
+    }
+    for (final i in _pendingInc) {
+      await dbService.insertIncomeEntry(i);
+    }
+    if (!mounted) return;
+    setState(() {
+      _pendingExp.clear();
+      _pendingInc.clear();
+    });
+  }
+
   String _newId(DateTime d) =>
       '${DateTime.now().microsecondsSinceEpoch}_${_key(d)}_${_expenses.length + _incomes.length}';
 
@@ -123,7 +157,8 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
         isBusiness: dr.isBusiness,
         userType: widget.userType,
       );
-      await dbService.insertExpense(item);
+      // 아직 안 쓴다 — 목록에는 보이되 DB로는 「저장」이 보낸다.
+      _pendingExp.add(item);
       _expenses.add(item);
     }
     if (mounted) setState(() {});
@@ -139,12 +174,22 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
       deductionType: dr.deductionType,
       isBusiness: dr.isBusiness,
     );
-    await dbService.updateExpense(item);
+    final pi = _pendingExp.indexWhere((e) => e.id == old.id);
+    if (pi >= 0) {
+      _pendingExp[pi] = item; // 아직 안 쓴 것 — 쓸 내용만 바꿔 둔다.
+    } else {
+      await dbService.updateExpense(item);
+    }
     if (!mounted) return;
     setState(() => _expenses[_expenses.indexWhere((e) => e.id == old.id)] = item);
   }
 
   Future<void> _deleteExpense(ExpenseItem e) async {
+    // 아직 안 쓴 것은 지울 것도 없다 — 목록에서 빼면 끝이다.
+    if (_pendingExp.remove(e)) {
+      if (mounted) setState(() => _expenses.removeWhere((x) => x.id == e.id));
+      return;
+    }
     await dbService.deleteExpense(e.id);
     if (!mounted) return;
     setState(() => _expenses.removeWhere((x) => x.id == e.id));
@@ -161,7 +206,8 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
         isWithheld: dr.isWithheld,
         userType: widget.userType,
       );
-      await dbService.insertIncomeEntry(item);
+      // 지출과 같다 — 목록에는 보이되 DB로는 「저장」이 보낸다.
+      _pendingInc.add(item);
       _incomes.add(item);
     }
     if (mounted) setState(() {});
@@ -174,12 +220,21 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
       incomeType: dr.incomeType,
       isWithheld: dr.isWithheld,
     );
-    await dbService.updateIncomeEntry(item);
+    final pi = _pendingInc.indexWhere((e) => e.id == old.id);
+    if (pi >= 0) {
+      _pendingInc[pi] = item;
+    } else {
+      await dbService.updateIncomeEntry(item);
+    }
     if (!mounted) return;
     setState(() => _incomes[_incomes.indexWhere((e) => e.id == old.id)] = item);
   }
 
   Future<void> _deleteIncome(IncomeEntry e) async {
+    if (_pendingInc.remove(e)) {
+      if (mounted) setState(() => _incomes.removeWhere((x) => x.id == e.id));
+      return;
+    }
     await dbService.deleteIncomeEntry(e.id, e.date.year, e.date.month);
     if (!mounted) return;
     setState(() => _incomes.removeWhere((x) => x.id == e.id));
@@ -216,7 +271,17 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
         ? '${first.month}월 ${first.day}일 – ${last.month}월 ${last.day}일'
         : '${first.month}월 ${first.day}일 (${wd[first.weekday - 1]})';
 
-    return Scaffold(
+    // **나가면 잃는 일은 없다.**
+    //
+    // 뒤로 가기·제스처로 나가도 쌓아 둔 것을 조용히 써 준다. 「정말 나갈까요?」로
+    // 붙잡을 수도 있지만, 그건 사용자가 실수했다고 가정하는 창이다. 적어 놓은
+    // 걸 잃는 것보다 예상보다 일찍 저장되는 편이 낫다 — 잘못 적었으면 지우면
+    // 되고, 잃어버린 건 되돌릴 방법이 없다.
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) _flushPending();
+      },
+      child: Scaffold(
       appBar: AppBar(title: Text(title)),
       // **아래 바는 SafeArea로 감싼다.**
       //
@@ -249,6 +314,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
                 _row(
                   title: e.memo.isNotEmpty ? e.memo : e.incomeType,
                   sub: [
+                    if (_pendingInc.contains(e)) '저장 전',
                     if (e.memo.isNotEmpty) e.incomeType,
                     if (e.isWithheld) '원천징수',
                     if (e.endDate != null) '기간',
@@ -270,6 +336,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
                 _row(
                   title: e.content.isNotEmpty ? e.content : expenseCategoryById(e.category).label,
                   sub: [
+                    if (_pendingExp.contains(e)) '저장 전',
                     if (e.content.isNotEmpty) expenseCategoryById(e.category).label,
                     e.paymentMethod,
                     if (e.isBusiness) '사업경비',
@@ -308,6 +375,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
             ],
           ],
         ),
+      ),
       ),
     );
   }
@@ -395,12 +463,27 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
   ///
   /// 편집 중이면 삭제·취소·저장, 아니면 완료. 항목은 저장할 때 바로 쓰이므로
   /// 완료는 화면을 닫기만 한다.
+  /// 아래 바는 **지금 무엇을 할 수 있는지**만 말한다.
+  ///
+  ///   편집 중            삭제 · 취소 · 확인
+  ///   쌓아 둔 것이 있음   N건 저장
+  ///   아무것도 없음       완료
+  ///
+  /// 항목 버튼이 「저장」이 아니라 「확인」인 이유: 그걸 누른다고 아직 쓰이지
+  /// 않는다. 목록에 올라갈 뿐이다. 「저장」은 아래 하나뿐이어야 «저장»이라는
+  /// 말이 한 가지 뜻을 갖는다.
   Widget _bottomBar() {
     final editing = _open != null && _open != 'inc' && _open != 'exp';
 
     if (_open == null) {
       return _barShell([
-        Expanded(child: _barButton('완료', filled: true, onTap: () => Navigator.pop(context))),
+        Expanded(
+          child: _hasPending
+              // 저장은 저장만 한다. 닫는 건 「완료」의 일이다 — 저장하고 나서
+              // 한 건 더 적으려던 사람을 내쫓으면 안 된다.
+              ? _barButton('$_pendingCount건 저장', filled: true, onTap: _flushPending)
+              : _barButton('완료', filled: true, onTap: () => Navigator.pop(context)),
+        ),
       ]);
     }
 
@@ -411,7 +494,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
       const SizedBox(width: 8),
       SizedBox(
         width: 108,
-        child: _barButton('저장', filled: true, onTap: _submitOpen),
+        child: _barButton('확인', filled: true, onTap: _submitOpen),
       ),
     ]);
   }

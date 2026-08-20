@@ -42,7 +42,11 @@ void main() {
     // 결제수단 칸에서 '기타'를 고른다.
     await t.tap(findKo('기타').last);
     await t.pumpAndSettle();
-    await t.tap(findKo('저장'));
+    // 「확인」은 목록에 올릴 뿐이다 — DB로는 아래 「N건 저장」이 보낸다.
+    await t.tap(findKo('확인'));
+    await t.pumpAndSettle();
+    await t.tap(find.byWidgetPredicate(
+        (w) => w is Text && RegExp(r'^\d+건 저장$').hasMatch(w.data ?? '')));
     await t.pumpAndSettle();
 
     final saved = await dbService.getExpenses();

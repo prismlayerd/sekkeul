@@ -14,6 +14,22 @@ import 'support/screen_registry.dart';
 ///
 /// 목록형으로 바꾸면서 그 경로를 없앴는데, 없앤 걸 코드 읽기로만 확인하면
 /// 나중에 누가 "일괄 저장"을 다시 붙일 때 아무도 못 막는다. 이 테스트가 막는다.
+/// 「확인」으로 목록에 올리고, 쌓인 게 있으면 아래 「N건 저장」까지 눌러 준다.
+///
+/// 새 항목은 이제 바로 안 써진다 — 하루치를 몰아 적을 수 있게 담아 뒀다가 한
+/// 번에 쓴다(day_entry_batch_save_test). 이 파일이 보는 것은 «그렇게 써도 그날의
+/// 다른 기록이 안 사라지는가»다.
+Future<void> commit(WidgetTester t) async {
+  await t.tap(findKo('확인'));
+  await t.pumpAndSettle();
+  final save = find.byWidgetPredicate((w) =>
+      w is Text && RegExp(r'^\d+건 저장$').hasMatch(w.data ?? ''));
+  if (save.evaluate().isNotEmpty) {
+    await t.tap(save.first);
+    await t.pumpAndSettle();
+  }
+}
+
 void main() {
   ExpenseItem seed(String id, int amount, String category, {String content = ''}) =>
       ExpenseItem(
@@ -58,8 +74,7 @@ void main() {
     await t.pumpAndSettle();
     await t.enterText(find.byType(TextField).first, '5000');
     await t.pumpAndSettle();
-    await t.tap(findKo('저장'));
-    await t.pumpAndSettle();
+    await commit(t);
 
     final after = await dbService.getExpenses();
     final ids = after.map((e) => e.id).toSet();
@@ -94,8 +109,7 @@ void main() {
     await t.pumpAndSettle();
     await t.enterText(find.byType(TextField).first, '9000');
     await t.pumpAndSettle();
-    await t.tap(findKo('저장'));
-    await t.pumpAndSettle();
+    await commit(t);
 
     final after = await dbService.getExpenses();
     // 기간 항목 하나가 아니라 **날짜별 항목 셋**이어야 집계가 맞는다.
@@ -150,8 +164,7 @@ void main() {
     await openRow(t, '김밥');
     await t.enterText(find.byType(TextField).first, '20000');
     await t.pumpAndSettle();
-    await t.tap(findKo('저장'));
-    await t.pumpAndSettle();
+    await commit(t);
 
     final after = await dbService.getExpenses();
     expect(after.length, 2, reason: '수정이 항목을 하나 더 만들었다');
@@ -191,8 +204,7 @@ void main() {
     await openRow(t, '여행');
     await t.enterText(find.byType(TextField).first, '60000');
     await t.pumpAndSettle();
-    await t.tap(findKo('저장'));
-    await t.pumpAndSettle();
+    await commit(t);
 
     final after = (await dbService.getExpenses()).single;
     expect(after.amount, 60000);
@@ -206,8 +218,7 @@ void main() {
     await t.pumpAndSettle();
     await t.enterText(find.byType(TextField).first, '300000');
     await t.pumpAndSettle();
-    await t.tap(findKo('저장'));
-    await t.pumpAndSettle();
+    await commit(t);
 
     var rows = await dbService.getIncomeEntriesForMonth(2026, 8);
     expect(rows.length, 1);
@@ -217,8 +228,7 @@ void main() {
     await openRow(t, rows.single.incomeType);
     await t.enterText(find.byType(TextField).first, '250000');
     await t.pumpAndSettle();
-    await t.tap(findKo('저장'));
-    await t.pumpAndSettle();
+    await commit(t);
 
     rows = await dbService.getIncomeEntriesForMonth(2026, 8);
     expect(rows.single.amount, 250000, reason: '수익 수정이 안 먹었다');
