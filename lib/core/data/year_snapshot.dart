@@ -4,6 +4,16 @@ import 'residence.dart';
 import 'year_coverage.dart';
 import 'year_deductions.dart';
 
+/// **법이 카드공제에서 빼라는 카테고리** — 조특법 시행령 §121의2⑥.
+///
+/// - 보험/금융 → 1호(보험료·연금보험료) · 9호(차입금 이자, 금융·보험 수수료)
+/// - 통신 → 3호(전화료 · 정보사용료 · 인터넷이용료)
+/// - 주거/관리비 → 3호(전기·수도·가스료 · 아파트관리비)
+///
+/// 카드사 확인서가 정본이고 가계부는 근사치지만, 안 빼면 문턱이 실제보다 빨리
+/// 차서 「이제 체크카드 쓰세요」를 **일찍** 말한다. 그 판단이 02의 존재 이유다.
+const Set<String> kNotCardDeductible = {'보험/금융', '통신', '주거/관리비'};
+
 /// 카드공제에서 이 지출이 세어지는 갈래. `null`이면 공제 대상이 아니다.
 ///
 /// **이 규칙이 화면마다 따로 적혀 있었다.** 홈 02는 셋으로 갈랐는데 연말정산
@@ -15,6 +25,7 @@ import 'year_deductions.dart';
 /// (조특법 §126의2②). 안 빼면 같은 돈이 15%와 40%로 두 번 계산된다.
 String? cardBucket(ExpenseItem e) {
   if (e.paymentMethod == '기타') return null;
+  if (kNotCardDeductible.contains(e.category)) return null;
   final dt = e.deductionType;
   if (dt == '전통시장' || dt == '대중교통' || dt == '도서공연') return dt;
   if (e.paymentMethod == '신용카드') return '신용카드';
@@ -145,6 +156,12 @@ class YearSnapshot {
     }
     credit += backfill.credit;
     debit += backfill.debit;
+    // **월세 세액공제를 받으면 그 월세는 카드공제에서 빠진다** (시행령 §121의2⑥11).
+    // 현금영수증으로 받아 「체크+현금」에 들어와 있으면 두 번 받는 셈이라 뺀다.
+    final rentClaimed = (deductions['rent'] ?? 0).toDouble();
+    if (rentClaimed > 0) {
+      debit = (debit - rentClaimed).clamp(0.0, double.infinity);
+    }
 
     double bizIncome = backfill.bizIncome, other = 0;
     for (var m = 1; m <= 12; m++) {
@@ -228,7 +245,7 @@ class YearSnapshot {
       out.add(const MissingInput('부양가족 수', '내 정보'));
     }
     if (employee && deductions.isEmpty) {
-      out.add(const MissingInput('의료비·교육비 등 공제', '홈 02 · 올해 받을 공제'));
+      out.add(const MissingInput('놓치기 쉬운 공제', '홈 04'));
     }
     if (business && bizExpense <= 0) {
       out.add(const MissingInput('사업 경비', '가계부 · 지출에 「사업」 표시'));

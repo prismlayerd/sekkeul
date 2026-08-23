@@ -56,6 +56,7 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
   }
 
   double get _gross => (_profile?['gross_income'] as num?)?.toDouble() ?? 0.0;
+  int get _children => (_profile?['children_count_total'] as int?) ?? 0;
   int get _dependents => ((_profile?['dependents'] as int?) ?? 0) + 1;
 
   EmployeeRefundEstimate get _estimate => estimateYearRefund(
@@ -64,6 +65,7 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
         dependentsIncludingSelf: _dependents,
         isHouseholdHead: isHouseholdHead(_profile),
         ownsHome: ownsHome(_profile),
+        childrenCount: _children,
       );
 
   Future<void> _save() async {
@@ -95,12 +97,14 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
 
     final residence = residenceOf(_profile);
     final head = isHouseholdHead(_profile);
-    final cats = deductionsFor(
+    // **간소화가 놓치는 것만.** 자동으로 뜨는 금액을 앱에 옮겨 적게 하는 건
+    // 순수 손해다 — 홈택스에서 클릭 한 번이면 되는 걸 두 번 하게 만든다.
+    final cats = missableFor(
       residence: residence,
       isHouseholdHead: head,
       grossIncome: _gross,
+      childrenCount: _children,
     );
-    final hidden = kDeductionCatalog.length - cats.length;
     final est = _estimate;
 
     return Scaffold(
@@ -118,13 +122,14 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
           children: [
             AppTheme.ruleLabel(context, 'DEDUCTIONS $_year'),
             const SizedBox(height: 12),
-            Text('올해 받을 공제',
+            Text('놓치기 쉬운 공제',
                 textAlign: TextAlign.center,
                 style: AppTheme.display(AppTheme.serifLG, ink, spacing: 4)),
             const SizedBox(height: 10),
             Text(
-                '카드로 쌓이는 공제 말고, 증명서로 확인하는 것들이에요. '
-                        '해당하는 항목을 고르고 올해 들어간 금액을 적어주세요.'
+                '홈택스 간소화에 **안 나오는** 것들이에요. 몰라서 놓치기 쉬운데, '
+                        '적어 두면 5월 신고 때 그대로 쓸 수 있어요.'
+                    .replaceAll('**', '')
                     .keepWords,
                 style: AppTheme.sans(AppTheme.tsBase, sub, height: 1.55)),
 
@@ -137,7 +142,7 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
             const SizedBox(height: 22),
             AppTheme.dashRule(context),
             const SizedBox(height: 16),
-            AppTheme.sectionHead(context, '01', '확인 목록'),
+            AppTheme.sectionHead(context, '01', '챙길 목록'),
             const SizedBox(height: 6),
             Text(_basisLine(residence, head),
                 style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.45)),
@@ -149,11 +154,11 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
               onChanged: (a) => setState(() => _amounts = a),
             ),
 
-            if (hidden > 0) ...[
-              const SizedBox(height: 12),
-              Text('내 정보와 안 맞는 항목 $hidden개는 숨겼어요.'.keepWords,
-                  style: AppTheme.sans(AppTheme.tsXS, tert)),
-            ],
+            const SizedBox(height: 12),
+            Text('의료비·교육비·기부금·보험료처럼 간소화에서 자동으로 나오는 건 '
+                    '홈택스가 알아서 해줘요. 여기선 안 나오는 것만 챙기면 돼요.'
+                .keepWords,
+                style: AppTheme.sans(AppTheme.tsXS, tert, height: 1.45)),
 
             const SizedBox(height: 22),
             AppTheme.dashRule(context),
@@ -165,6 +170,19 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
                   style: AppTheme.sans(AppTheme.tsSM, tert))
             else ...[
               for (final l in est.lines) _row(l.label, l.amount, sub, ink),
+              // 의료비는 총급여 3%를 넘은 만큼만이라(§59의4②1) 간소화 자동분을
+              // 모르면 확정할 수 없다. **그래도 적게 둔다** — 돌려받을지는
+              // 몰라도 신고서를 완성해 두는 게 사용자의 일이고, 앱이 대신
+              // 결정할 일이 아니다. 대신 조건을 밝힌다.
+              for (final c in cats)
+                if (c.conditional != null && (_amounts[c.id] ?? 0) > 0) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                      '${c.name}: ${c.conditional} — '
+                              '간소화 의료비가 ${_won(_gross * 0.03)}을 넘었다면 반영돼요.'
+                          .keepWords,
+                      style: AppTheme.sans(AppTheme.tsXS, tert, height: 1.45)),
+                ],
               const SizedBox(height: 6),
               Container(height: 1, color: ink),
               const SizedBox(height: 6),

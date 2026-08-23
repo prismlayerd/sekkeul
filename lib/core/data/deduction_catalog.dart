@@ -12,12 +12,29 @@ class DeductionCategory {
   final String findHint;  // 어디서 찾나 (간소화 자료)
   final String fileHint;  // 홈택스 어디에 입력하나
 
+  /// **간소화가 놓치는가.** 참이면 홈 04 「놓치기 쉬운 공제」에 뜬다.
+  ///
+  /// 간소화에 자동으로 뜨는 금액을 앱에 옮겨 적게 하는 건 순수 손해다 —
+  /// 사용자는 홈택스에서 클릭 한 번이면 되는 걸 두 번 한다. 앱의 값어치는
+  /// **홈택스가 안 알려주는 것**에 있다.
+  final bool missable;
+
+  /// 금액을 넣어도 **단독으로는 환급액을 확정할 수 없을 때** 붙는 조건.
+  ///
+  /// 의료비만 그렇다 — 총급여 3%를 넘은 만큼만 공제되는데(소법 §59의4②1),
+  /// 간소화 자동분을 앱이 안 받으므로 넘겼는지 모른다. 그래도 금액은 받는다:
+  /// 「돌려받을지는 몰라도 일단 적어 두고 신고서를 완성한다」가 사용자의 일이고,
+  /// 앱이 대신 결정할 일이 아니다.
+  final String? conditional;
+
   const DeductionCategory({
     required this.id,
     required this.name,
     required this.summary,
     required this.findHint,
     required this.fileHint,
+    this.missable = false,
+    this.conditional,
   });
 }
 
@@ -64,6 +81,7 @@ const List<DeductionCategory> kDeductionCatalog = [
     summary: '무주택 세대주는 월세를 연 1천만 한도로 15~17% 공제받아요.',
     findHint: '임대차계약서·계좌이체 내역. 총급여 8천만원 이하·무주택 세대주만.',
     fileHint: '세액공제 → 월세액 칸에 1년치 월세 합계를 적어요.',
+    missable: true,
   ),
   DeductionCategory(
     id: 'housingSubscription',
@@ -71,6 +89,7 @@ const List<DeductionCategory> kDeductionCatalog = [
     summary: '납입액을 연 300만원 한도로 40% 소득공제받아요 (최대 120만원).',
     findHint: '가입 은행의 납입증명서. 은행에 무주택확인서를 먼저 내야 해요.',
     fileHint: '소득공제 → 주택마련저축 칸에 1년치 납입액을 적어요.',
+    missable: true,
   ),
   DeductionCategory(
     id: 'leaseLoan',
@@ -78,6 +97,49 @@ const List<DeductionCategory> kDeductionCatalog = [
     summary: '원리금 상환액의 40%를 청약저축과 합쳐 연 400만원까지 공제받아요.',
     findHint: '은행 원리금상환증명서. 은행이 집주인 계좌로 바로 넣어 준 대출만 돼요.',
     fileHint: '소득공제 → 주택임차차입금 원리금상환액 칸에 적어요.',
+    missable: true,
+  ),
+  DeductionCategory(
+    id: 'glasses',
+    name: '안경·콘택트렌즈',
+    summary: '가족 1명당 연 50만원까지 의료비로 인정돼요.',
+    findHint: '간소화에 안 나와요. 안경점 영수증(구입자 이름·시력교정용 표기)이 필요해요.',
+    fileHint: '세액공제 → 의료비 칸에 더해서 적어요.',
+    missable: true,
+    conditional: '의료비는 총급여의 3%를 넘은 만큼만 공제돼요',
+  ),
+  DeductionCategory(
+    id: 'postpartum',
+    name: '산후조리원',
+    summary: '출산 1회당 200만원까지 의료비로 인정돼요.',
+    findHint: '간소화에 안 나오는 경우가 많아요. 조리원 영수증을 챙기세요.',
+    fileHint: '세액공제 → 의료비 칸에 더해서 적어요.',
+    missable: true,
+    conditional: '의료비는 총급여의 3%를 넘은 만큼만 공제돼요',
+  ),
+  DeductionCategory(
+    id: 'uniform',
+    name: '교복·체육복',
+    summary: '중·고등학생 1명당 연 50만원까지 15% 공제받아요.',
+    findHint: '간소화에 안 나와요. 교복 구입 영수증이 필요해요.',
+    fileHint: '세액공제 → 교육비 칸에 더해서 적어요.',
+    missable: true,
+  ),
+  DeductionCategory(
+    id: 'preschoolAcademy',
+    name: '취학전 학원비·체육시설',
+    summary: '초등학교 들어가기 전 아이의 학원비도 교육비로 15% 공제돼요.',
+    findHint: '간소화에 안 나와요. 학원에서 교육비납입증명서를 받으세요.',
+    fileHint: '세액공제 → 교육비 칸에 더해서 적어요.',
+    missable: true,
+  ),
+  DeductionCategory(
+    id: 'religiousDonation',
+    name: '종교단체 기부금',
+    summary: '헌금·시주도 15% 공제받아요 (소득금액의 10% 한도).',
+    findHint: '간소화에서 자주 빠져요. 교회·성당·사찰에서 기부금영수증을 받으세요.',
+    fileHint: '세액공제 → 기부금 칸에 종교단체분으로 적어요.',
+    missable: true,
   ),
 ];
 
@@ -113,6 +175,30 @@ List<DeductionCategory> deductionsFor({
 
   return [for (final c in kDeductionCatalog) if (keep(c.id)) c];
 }
+
+/// 홈 04 「놓치기 쉬운 공제」에 그릴 목록 — 간소화가 놓치는 것만, 그중에서도
+/// 이 사람에게 걸리는 것만.
+///
+/// 경정청구는 이 목록을 안 쓴다. 거기는 **모든 항목이 빈 채로** 있어야 한다 —
+/// 「아 이것도 공제받을 수 있었어?」를 깨달았을 때 여는 화면이라, 목록이 좁으면
+/// 깨달을 기회 자체가 없다. 그리고 앱은 5년 전 지출을 알 리가 없다.
+List<DeductionCategory> missableFor({
+  String? residence,
+  bool isHouseholdHead = false,
+  double grossIncome = 0,
+  int childrenCount = 0,
+}) =>
+    [
+      for (final c in deductionsFor(
+          residence: residence,
+          isHouseholdHead: isHouseholdHead,
+          grossIncome: grossIncome))
+        if (c.missable)
+          // 자녀가 없으면 교복·취학전 학원비를 물어볼 이유가 없다.
+          if (childrenCount > 0 ||
+              (c.id != 'uniform' && c.id != 'preschoolAcademy'))
+            c,
+    ];
 
 /// 선택 금액(id→금액)으로 `GansoDeductions`(가능액) 구성.
 GansoDeductions gansoFromAmounts(Map<String, int> amounts) => GansoDeductions(
@@ -161,6 +247,7 @@ EmployeeRefundEstimate estimateYearRefund({
   bool isHouseholdHead = false,
   bool ownsHome = false,
   bool leaseLoanFromInstitution = true,
+  int childrenCount = 0,
 }) {
   double a(String id) => (amounts[id] ?? 0).toDouble();
 
@@ -184,21 +271,32 @@ EmployeeRefundEstimate estimateYearRefund({
     dependentsIncludingSelf: dependentsIncludingSelf,
     cardDeduction: cardDeduction,
     rentCredit: rentCredit,
+    // 새 항목은 **기존 버킷에 더한다.** 안경·산후조리원은 의료비고, 교복·취학전
+    // 학원비는 교육비고, 종교단체 기부금은 기부금이다 — 세법이 따로 두는 공제가
+    // 아니라 그 공제 안에서 사람들이 빠뜨리는 조각이다.
+    //
+    // 한도는 조각마다 따로 있다: 안경 1인 50만(시행령 §118의5①1), 산후조리원
+    // 출산 1회 200만(§118의5①9), 교복 1인 50만(§118의6②).
     medicalCredit: EmployeeTaxCalculator.calculateMedicalTaxCredit(
       grossIncome: grossIncome,
       infertilityExpense: 0,
       selfAndSeniorAndDisabledExpense: 0,
-      otherDependentExpense: a('medical'),
+      otherDependentExpense: a('medical') +
+          _cap(a('glasses'), 500000) +
+          _cap(a('postpartum'), 2000000),
     ),
     educationCredit: EmployeeTaxCalculator.calculateEducationTaxCredit(
-      preschoolExpense: 0, preschoolCount: 0,
-      childrenExpense: 0, childrenCount: 0,
+      preschoolExpense: a('preschoolAcademy'),
+      preschoolCount: childrenCount < 1 ? 1 : childrenCount,
+      childrenExpense: _cap(a('uniform'), 500000.0 * (childrenCount < 1 ? 1 : childrenCount)),
+      childrenCount: childrenCount < 1 ? 1 : childrenCount,
       collegeExpense: 0, collegeCount: 0,
       selfExpense: a('education'),
       disabledSpecialExpense: 0,
     ),
     donationCredit: EmployeeTaxCalculator.calculateDonationTaxCredit(
-      generalDonation: a('donation'), politicalDonation: 0),
+      generalDonation: a('donation') + a('religiousDonation'),
+      politicalDonation: 0),
     insurancePremiumCredit: EmployeeTaxCalculator.calculateInsurancePremiumTaxCredit(
       generalInsurancePremium: a('lifeInsurance'), disabledInsurancePremium: 0),
     pensionAccountCredit: EmployeeTaxCalculator.calculatePensionAccountTaxCredit(
@@ -213,3 +311,6 @@ EmployeeRefundEstimate estimateYearRefund({
     leaseLoanFromInstitution: leaseLoanFromInstitution,
   );
 }
+
+
+double _cap(double v, double limit) => v > limit ? limit : v;

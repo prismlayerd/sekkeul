@@ -154,6 +154,81 @@ void main() {
     });
   });
 
+  group('놓치기 쉬운 목록 — 간소화가 하는 건 앱이 안 한다', () {
+    List<String> ids({String? residence, bool head = true, int kids = 0}) =>
+        missableFor(
+                residence: residence,
+                isHouseholdHead: head,
+                grossIncome: 50000000,
+                childrenCount: kids)
+            .map((c) => c.id)
+            .toList();
+
+    test('간소화 자동분은 목록에 없다', () {
+      final r = ids(residence: '전세');
+      for (final auto in ['medical', 'education', 'donation', 'lifeInsurance',
+        'pensionSavings']) {
+        expect(r, isNot(contains(auto)),
+            reason: '$auto은 홈택스가 자동으로 주는데 앱에 또 적게 하면 손해다');
+      }
+    });
+
+    test('간소화가 놓치는 것은 목록에 있다', () {
+      expect(ids(residence: '전세'),
+          containsAll(['leaseLoan', 'housingSubscription', 'glasses',
+            'postpartum', 'religiousDonation']));
+    });
+
+    test('자녀가 없으면 교복·취학전 학원비를 안 묻는다', () {
+      expect(ids(residence: '자가', kids: 0), isNot(contains('uniform')));
+      expect(ids(residence: '자가', kids: 0), isNot(contains('preschoolAcademy')));
+      expect(ids(residence: '자가', kids: 2), containsAll(['uniform', 'preschoolAcademy']));
+    });
+
+    test('경정청구는 여전히 전부 본다', () {
+      // 「아 이것도 공제받을 수 있었어?」를 깨닫는 화면이라 목록이 좁으면 안 된다.
+      expect(kDeductionCatalog.map((c) => c.id), containsAll(['medical', 'glasses']));
+    });
+  });
+
+  group('조각은 제 버킷으로 들어간다', () {
+    test('교복은 교육비라 문턱 없이 바로 15%', () {
+      final r = estimateYearRefund(
+        amounts: const {'uniform': 500000},
+        grossIncome: 50000000,
+        childrenCount: 1,
+      );
+      expect(r.refund, 75000);
+    });
+
+    test('교복은 1인 50만까지만', () {
+      final r = estimateYearRefund(
+        amounts: const {'uniform': 2000000},
+        grossIncome: 50000000,
+        childrenCount: 1,
+      );
+      expect(r.refund, 75000, reason: '한도를 안 걸면 받을 수 없는 돈을 약속한다');
+    });
+
+    test('종교단체 기부금도 기부금 15%', () {
+      final r = estimateYearRefund(
+        amounts: const {'religiousDonation': 1000000},
+        grossIncome: 50000000,
+      );
+      expect(r.refund, 150000);
+    });
+
+    test('안경만 넣으면 0원이다 — 의료비 3% 문턱을 안 넘으니까', () {
+      // 그래도 금액은 받는다. 「돌려받을지는 몰라도 적어 두고 신고서를 완성한다」가
+      // 사용자의 일이고, 앱이 대신 결정할 일이 아니다 — 화면이 조건을 밝힌다.
+      final r = estimateYearRefund(
+        amounts: const {'glasses': 500000},
+        grossIncome: 50000000,
+      );
+      expect(r.refund, 0);
+    });
+  });
+
   test('모아 둔 금액이 환급으로 이어진다', () {
     final none = estimateYearRefund(amounts: const {}, grossIncome: 50000000);
     final some = estimateYearRefund(

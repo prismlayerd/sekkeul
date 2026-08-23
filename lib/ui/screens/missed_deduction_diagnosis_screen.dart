@@ -63,8 +63,10 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
       _snapshot = snap;
       // 총급여는 내 정보가 정본이고, 원천징수영수증을 넣은 사람은 그쪽이 이긴다.
       if (snap.laborIncome > 0) _grossCtrl.text = comma(snap.laborIncome.round());
-      // 「올해 받을 공제」에 모아 둔 것을 그대로 올린다.
-      _initialAmounts = {...snap.deductions};
+      // **「올해 받을 공제」는 안 끌어온다.** 이 화면은 5월 신고 대상인 **작년**을
+      // 다루는데 그 저장소는 올해 것이다 — 연도가 어긋난다. 경정청구가 저장된
+      // 기록 하나를 연도 상관없이 채우던 것과 같은 종류의 실수다.
+      _initialAmounts = const {};
       if (r != null) {
         final gross = (r['grossSalary'] as num?)?.toInt() ?? 0;
         final decided = (r['decidedTax'] as num?)?.toInt() ?? 0;

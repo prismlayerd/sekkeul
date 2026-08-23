@@ -4,6 +4,7 @@ import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/core/data/expense_item.dart';
 import 'package:secul/core/data/year_deductions.dart';
 import 'package:secul/ui/screens/home_screen.dart';
+import 'package:secul/ui/screens/home/missable_deduction_section.dart';
 import 'package:secul/ui/screens/year_deduction_screen.dart';
 import 'package:secul/ui/screens/year_end_tax_screen.dart';
 import 'package:secul/ui/theme/app_theme.dart';
@@ -24,8 +25,8 @@ void main() {
     tz.setLocalLocation(tz.getLocation('Asia/Seoul'));
   });
 
-  testWidgets('02에 「카드 말고도 받을 게 더 있어요」 길이 있다', (t) async {
-    t.view.physicalSize = const Size(390, 1400);
+  testWidgets('04 절이 홈 1장에 있고, 02는 카드만 말한다', (t) async {
+    t.view.physicalSize = const Size(390, 1600);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.resetPhysicalSize);
     addTearDown(t.view.resetDevicePixelRatio);
@@ -36,11 +37,14 @@ void main() {
       await t.pump(const Duration(milliseconds: 250));
     }
 
-    expect(findKo('카드 말고도 받을 게 더 있어요'), findsOneWidget);
+    expect(find.byType(MissableDeductionSection), findsOneWidget);
+    expect(findKo('놓치기 쉬운 공제'), findsWidgets);
+    // 02의 링크는 04가 가져갔다 — 상시 입구가 둘이면 서로를 모른다.
+    expect(findKo('카드 말고도 받을 게 더 있어요'), findsNothing);
   });
 
-  testWidgets('프리랜서에겐 안 보인다 — 특별세액공제는 근로소득자 전용', (t) async {
-    t.view.physicalSize = const Size(390, 1400);
+  testWidgets('프리랜서의 04는 장부 만들기다', (t) async {
+    t.view.physicalSize = const Size(390, 1600);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.resetPhysicalSize);
     addTearDown(t.view.resetDevicePixelRatio);
@@ -51,7 +55,9 @@ void main() {
       await t.pump(const Duration(milliseconds: 250));
     }
 
-    expect(findKo('카드 말고도 받을 게 더 있어요'), findsNothing);
+    // 의료비·교육비·기부금·월세는 §59의4가 근로소득자 전용이라 남는 게 없다.
+    expect(findKo('장부 만들기'), findsWidgets);
+    expect(findKo('놓치기 쉬운 공제'), findsNothing);
   });
 
   testWidgets('화면이 프로필에 맞는 항목만 그린다', (t) async {

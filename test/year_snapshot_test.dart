@@ -104,6 +104,49 @@ void main() {
     });
   });
 
+  group('법이 빼라는 것은 문턱에 안 넣는다 (시행령 §121의2⑥)', () {
+    setUp(() async {
+      dbService = InMemoryDatabaseHelper();
+      await dbService.initDatabase();
+      await dbService.saveProfile({'gross_income': 50000000.0, 'dependents': 0});
+      await YearCoverage.markComplete(year);
+    });
+
+    ExpenseItem cat(String id, int amount, String category) => ExpenseItem(
+          id: id,
+          date: DateTime(year, 3, 5),
+          amount: amount,
+          content: '',
+          category: category,
+          paymentMethod: '신용카드',
+          userType: '직장인',
+        );
+
+    test('보험료·통신비·관리비는 카드로 내도 문턱에 안 들어간다', () async {
+      await dbService.insertExpense(cat('a', 500000, '보험/금융'));
+      await dbService.insertExpense(cat('b', 100000, '통신'));
+      await dbService.insertExpense(cat('c', 300000, '주거/관리비'));
+      await dbService.insertExpense(cat('d', 200000, '마트'));
+      final s = await YearSnapshot.load('직장인');
+      expect(s.creditCard, 200000, reason: '안 빼면 문턱이 일찍 차서 체크카드 전환을 일찍 권한다');
+      expect(s.excluded, 900000);
+    });
+
+    test('월세 세액공제를 받으면 그 월세는 문턱에서 빠진다 (⑥11호)', () async {
+      await dbService.insertExpense(ExpenseItem(
+        id: 'r', date: DateTime(year, 3, 5), amount: 6000000,
+        content: '', category: '기타', paymentMethod: '체크+현금',
+        userType: '직장인',
+      ));
+      final before = await YearSnapshot.load('직장인');
+      expect(before.debitCash, 6000000);
+
+      await YearDeductions.save(year, {'rent': 6000000});
+      final after = await YearSnapshot.load('직장인');
+      expect(after.debitCash, 0, reason: '현금영수증 월세를 세액공제까지 받으면 두 번이다');
+    });
+  });
+
   group('무엇이 비었는지 앱이 말한다', () {
     setUp(() async {
       dbService = InMemoryDatabaseHelper();

@@ -12,11 +12,8 @@ import '../components/reminder_card.dart';
 import '../components/slip_ticks.dart';
 import '../components/section_accordion.dart';
 import '../../core/data/year_coverage.dart';
-import '../../core/data/year_deductions.dart';
 import '../../core/data/year_snapshot.dart';
-import '../../core/data/deduction_catalog.dart';
-import '../../core/data/residence.dart';
-import 'year_deduction_screen.dart';
+import 'home/missable_deduction_section.dart';
 import 'backfill_screen.dart';
 import '../components/just_updated_card.dart';
 import '../components/update_card.dart';
@@ -78,8 +75,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   CardSpecials _specialsYtd = const CardSpecials();
   /// 가계부가 올 한 해를 덮는가. 안 덮으면 연간 누적 숫자를 안 보여준다.
   bool _yearCovered = true;
-  /// 「올해 받을 공제」에 모아 둔 값의 예상 환급 — 카드공제와 별개로 자란다.
-  double _otherDeductionRefund = 0.0;
   /// 채워 넣은 1월~지난달 누계 — 가계부 기록이 아니라 요약이라 따로 더한다.
   Backfill _backfill = const Backfill();
   /// 공제율이 다른 세 갈래(전통시장·대중교통·도서공연)의 올해 누계.
@@ -406,44 +401,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  /// 카드 말고 따로 모아 둔 공제 — 근로소득자만 대상이다(소법 §59의4는
-  /// "근로소득이 있는 거주자"). 프리랜서에게 계산해 주면 안 되는 값이다.
-  Future<void> _loadOtherDeductions(int year) async {
-    if (!_isEmployee) {
-      _otherDeductionRefund = 0;
-      return;
-    }
-    final amounts = await YearDeductions.load(year);
-    if (amounts.isEmpty || _grossIncome <= 0) {
-      _otherDeductionRefund = 0;
-      return;
-    }
-    final p = await dbService.getProfile();
-    _otherDeductionRefund = estimateYearRefund(
-      amounts: amounts,
-      grossIncome: _grossIncome,
-      dependentsIncludingSelf: 1 + _dependentCount,
-      isHouseholdHead: isHouseholdHead(p),
-      ownsHome: ownsHome(p),
-    ).refund;
-  }
-
-  Future<void> _openYearDeductions() async {
-    final saved = await Navigator.push<bool>(context,
-        MaterialPageRoute(builder: (_) => const YearDeductionScreen()));
-    if (saved == true) {
-      await _loadOtherDeductions(DateTime.now().year);
-      if (mounted) setState(() {});
-    }
-  }
-
   Future<void> _loadMonthlyExpenses() async {
     final now = DateTime.now();
     // 연간 누적을 셈하기 전에 먼저 안다 — 이 값들이 누계에 더해지고 빠진다.
     _yearCovered = await YearCoverage.isComplete(now.year);
     _backfill = await YearCoverage.backfill(now.year);
     _cardSpecials = await YearCoverage.specials(now.year);
-    await _loadOtherDeductions(now.year);
     final firstOfMonth = DateTime(now.year, now.month, 1);
     final nextMonth = now.month == 12
         ? DateTime(now.year + 1, 1, 1)
@@ -1043,11 +1006,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             onOpenLedger: _goToLedger,
             onOpenMyInfo: _openProfile,
             onExpenseTargetChanged: _editExpenseTarget,
-            otherDeductionRefund: _otherDeductionRefund,
-            onOpenYearDeductions: _openYearDeductions,
           ),
           _slipRule(),
           ReminderCard(userType: _userType),
+          _slipRule(),
+          // 04는 유형에 따라 갈린다 — 직장인·N잡러는 놓치기 쉬운 공제,
+          // 프리랜서는 장부 만들기. 2장의 세무 도구·FAQ가 05·06으로 밀린다.
+          MissableDeductionSection(userType: _userType),
           _slipFooter(),
         ],
       ),
@@ -1445,7 +1410,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     // 03·04와 같은 몸을 쓴다. 예전엔 여기만 Material ExpansionTile이었는데
     // 그 타일은 최소 높이가 48dp라, 접힌 상태에서 05만 한 뼘 더 두꺼웠다.
     return SectionAccordion(
-      no: '05',
+      no: '06',
       title: '자주 묻는 질문',
       expanded: (_) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
