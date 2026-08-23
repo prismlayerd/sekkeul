@@ -10,6 +10,7 @@ import '../components/deduction_checklist.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/data/deduction_catalog.dart';
+import '../../core/parsing/correction_form_fill.dart';
 import '../../core/parsing/correction_pdf.dart';
 import '../../core/parsing/correction_report.dart';
 import '../../core/tax_engine/tax_year_rules.dart';
@@ -395,18 +396,19 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
           .keepWords,
           style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5)),
       const SizedBox(height: 16),
-      _wideButton('작성 내역 받기 (프린트·메일)', () => _sharePdf(c)),
-      const SizedBox(height: 8),
-      _wideButton('공식 경정청구서 양식 받기',
-          () => _shareAsset('assets/forms/gyeongjeong_national.pdf', '경정청구서'),
-          outlined: true),
+      _wideButton('경정청구서 받기 (프린트·메일)', () => _shareFilledForm(c)),
+      const SizedBox(height: 10),
+      Text('법정신고일 · 청구이유 · 세목 · 환급받을 세액과 오늘 날짜는 채워서 드려요. '
+              '이름·주민등록번호·환급 계좌는 앱이 갖고 있지 않아 비워 뒀어요 — 손으로 써주세요. '
+              '과세표준·산출세액 칸은 원천징수영수증을 보고 옮겨 적으시면 돼요.'
+          .keepWords,
+          style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context), height: 1.5)),
+      const SizedBox(height: 16),
+      _wideButton('작성 내역·서류 목록 받기', () => _sharePdf(c), outlined: true),
       const SizedBox(height: 8),
       _wideButton('지방세 경정청구서 양식 받기',
           () => _shareAsset('assets/forms/gyeongjeong_local.pdf', '지방세 경정청구서'),
           outlined: true),
-      const SizedBox(height: 10),
-      Text('작성 내역의 숫자를 공식 양식에 그대로 옮겨 적으시면 돼요.'.keepWords,
-          style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context), height: 1.45)),
     ]);
   }
 
@@ -423,6 +425,25 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
     final f = File('${dir.path}/경정청구_작성내역_$_selectedYear.pdf');
     await f.writeAsBytes(bytes);
     await Share.shareXFiles([XFile(f.path)], text: '$_selectedYear년 귀속 경정청구 작성 내역');
+  }
+
+  /// 공식 서식에 앱이 아는 칸만 찍어서 넘긴다.
+  Future<void> _shareFilledForm(CorrectionReport c) async {
+    final form = await rootBundle.load('assets/forms/gyeongjeong_national.pdf');
+    final font = await rootBundle.load('assets/fonts/NanumGothicCoding-Regular.ttf');
+    final bytes = await fillCorrectionForm(
+      formBytes: form.buffer.asUint8List(),
+      koreanFont: font.buffer.asUint8List(),
+      report: c,
+      itemNames: [
+        for (final cat in kDeductionCatalog)
+          if ((_amounts[cat.id] ?? 0) > 0) cat.name,
+      ],
+    );
+    final dir = await getTemporaryDirectory();
+    final f = File('${dir.path}/경정청구서_$_selectedYear.pdf');
+    await f.writeAsBytes(bytes);
+    await Share.shareXFiles([XFile(f.path)], text: '$_selectedYear년 귀속 경정청구서');
   }
 
   Future<void> _shareAsset(String assetPath, String name) async {
