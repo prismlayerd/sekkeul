@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/db_helper.dart';
+import 'package:secul/core/data/deduction_catalog.dart';
+import 'package:secul/core/parsing/correction_report.dart';
+import 'package:secul/core/parsing/simplified_data_parser.dart';
 import 'package:secul/core/tax_engine/tax_year_rules.dart';
 import 'package:secul/ui/screens/correction_request_screen.dart';
 import 'package:secul/ui/screens/missed_deduction_diagnosis_screen.dart';
@@ -42,23 +45,19 @@ void main() {
 
   // 이 화면은 연도를 물어보고, 되받아 보여주면서, 정작 계산에는 안 쓰고 있었다.
   // (v1에서 _selectedYear가 buildCorrectionReport로 전달되지 않았음)
-  testWidgets('경정청구 — 고른 귀속연도가 실제 계산에 반영된다', (t) async {
-    await dbService.saveAnnualRecord('직장인', {
-      'grossSalary': 40000000,
-      'decidedTax': 5000000,
-      'donation': 1000000,
-    });
-    await pump(t, const CorrectionRequestScreen(userType: '직장인'));
+  //
+  // 화면으로 확인하던 것을 순수 함수로 내렸다 — 프리필을 걷어서(앱은 5년 전
+  // 지출을 알 리가 없다) 위젯 테스트가 값을 넣을 길이 없어졌고, 애초에 연도별
+  // 공제율은 엔진의 일이라 여기서 재는 게 맞다.
+  test('고른 귀속연도의 공제율로 계산된다', () {
+    int refund(int year) => buildCorrectionReport(
+          const GansoDeductions(donation: 1000000),
+          forgottenReceipt(
+              accrualYear: year, grossSalary: 40000000, decidedTax: 5000000),
+        ).additionalRefund;
 
-    // 기본 선택은 가장 최근 연도(2023 귀속 이후) → 기부금 100만 × 15% = 15만
-    expect(find.textContaining('150,000'), findsWidgets);
-
-    // 2022 귀속은 코로나 한시 상향이 살아 있어 20% → 20만
-    await t.tap(find.text('2022'));
-    await t.pumpAndSettle();
-    expect(find.textContaining('200,000'), findsWidgets,
-        reason: '2022 귀속 기부금은 20%(조특 한시 상향)로 계산돼야 한다');
-    expect(find.textContaining('150,000'), findsNothing);
+    expect(refund(2023), 150000, reason: '기부금 100만 × 15%');
+    expect(refund(2022), 200000, reason: '2022 귀속은 코로나 한시 상향으로 20%');
   });
 
   testWidgets('빠진 공제 찾기 — 총급여를 아직 안 넣으면 사유를 보여준다', (t) async {

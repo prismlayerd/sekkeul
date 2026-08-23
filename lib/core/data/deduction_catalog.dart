@@ -19,6 +19,13 @@ class DeductionCategory {
   /// **홈택스가 안 알려주는 것**에 있다.
   final bool missable;
 
+  /// 세무서에 낼 때 **같이 내야 하는 서류.**
+  ///
+  /// 홈택스 경정청구는 첨부 파일로, 우편·방문은 종이로 낸다. 어느 쪽이든
+  /// 서류가 빠지면 보정 요구가 오고 환급이 몇 달 늦는다 — 고른 항목마다
+  /// 무엇이 필요한지 그 자리에서 말해 주는 게 이 필드의 일이다.
+  final List<String> documents;
+
   /// 금액을 넣어도 **단독으로는 환급액을 확정할 수 없을 때** 붙는 조건.
   ///
   /// 의료비만 그렇다 — 총급여 3%를 넘은 만큼만 공제되는데(소법 §59의4②1),
@@ -35,6 +42,7 @@ class DeductionCategory {
     required this.fileHint,
     this.missable = false,
     this.conditional,
+    this.documents = const [],
   });
 }
 
@@ -46,6 +54,10 @@ const List<DeductionCategory> kDeductionCatalog = [
     summary: '총급여 3% 초과분을 15% 돌려받아요 (난임시술 30%).',
     findHint: '홈택스 → 연말정산 간소화 → 의료비. 실손보험으로 받은 금액은 빼요.',
     fileHint: '세액공제 → 의료비 칸에 본인부담 의료비 합계를 적어요.',
+    documents: [
+      '의료비 지급명세서 (병원·약국 발급)',
+      '실손보험금 수령내역 (받았다면)',
+    ],
   ),
   DeductionCategory(
     id: 'education',
@@ -53,6 +65,9 @@ const List<DeductionCategory> kDeductionCatalog = [
     summary: '본인·자녀 교육비를 15% 공제받아요.',
     findHint: '홈택스 → 연말정산 간소화 → 교육비 (납입액 합계).',
     fileHint: '세액공제 → 교육비 칸에 대상자별 납입액을 적어요.',
+    documents: [
+      '교육비 납입증명서 (학교·학원 발급)',
+    ],
   ),
   DeductionCategory(
     id: 'donation',
@@ -60,6 +75,10 @@ const List<DeductionCategory> kDeductionCatalog = [
     summary: '기부금을 15% (1천만 초과분 30%) 공제받아요.',
     findHint: '홈택스 → 연말정산 간소화 → 기부금, 또는 기부금영수증 합계.',
     fileHint: '세액공제 → 기부금 칸에 기부처별 금액을 적어요.',
+    documents: [
+      '기부금영수증 (기부처 발급)',
+      '기부금 명세서',
+    ],
   ),
   DeductionCategory(
     id: 'lifeInsurance',
@@ -67,6 +86,9 @@ const List<DeductionCategory> kDeductionCatalog = [
     summary: '보장성보험료를 연 100만원 한도로 12% 공제받아요.',
     findHint: '홈택스 → 연말정산 간소화 → 보장성보험료.',
     fileHint: '세액공제 → 보험료 칸에 납입액(최대 100만원)을 적어요.',
+    documents: [
+      '보험료 납입증명서 (보험사 발급)',
+    ],
   ),
   DeductionCategory(
     id: 'pensionSavings',
@@ -74,6 +96,9 @@ const List<DeductionCategory> kDeductionCatalog = [
     summary: '연금저축 납입액을 600만원 한도로 12~15% 공제받아요.',
     findHint: '홈택스 → 연말정산 간소화 → 연금저축, 또는 금융사 납입증명.',
     fileHint: '세액공제 → 연금계좌 칸에 납입액을 적어요.',
+    documents: [
+      '연금저축 납입증명서 (금융사 발급)',
+    ],
   ),
   DeductionCategory(
     id: 'rent',
@@ -82,6 +107,11 @@ const List<DeductionCategory> kDeductionCatalog = [
     findHint: '임대차계약서·계좌이체 내역. 총급여 8천만원 이하·무주택 세대주만.',
     fileHint: '세액공제 → 월세액 칸에 1년치 월세 합계를 적어요.',
     missable: true,
+    documents: [
+      '임대차계약서 사본 (집주인 서명본)',
+      '월세 이체확인서 또는 계좌 거래내역',
+      '주민등록등본 (해당 주소지)',
+    ],
   ),
   DeductionCategory(
     id: 'housingSubscription',
@@ -90,6 +120,10 @@ const List<DeductionCategory> kDeductionCatalog = [
     findHint: '가입 은행의 납입증명서. 은행에 무주택확인서를 먼저 내야 해요.',
     fileHint: '소득공제 → 주택마련저축 칸에 1년치 납입액을 적어요.',
     missable: true,
+    documents: [
+      '주택마련저축 납입증명서 (가입 은행)',
+      '무주택확인서 제출 사실 확인',
+    ],
   ),
   DeductionCategory(
     id: 'leaseLoan',
@@ -98,6 +132,11 @@ const List<DeductionCategory> kDeductionCatalog = [
     findHint: '은행 원리금상환증명서. 은행이 집주인 계좌로 바로 넣어 준 대출만 돼요.',
     fileHint: '소득공제 → 주택임차차입금 원리금상환액 칸에 적어요.',
     missable: true,
+    documents: [
+      '원리금상환증명서 (대출 은행)',
+      '임대차계약서 사본',
+      '주민등록등본',
+    ],
   ),
   DeductionCategory(
     id: 'glasses',
@@ -107,6 +146,9 @@ const List<DeductionCategory> kDeductionCatalog = [
     fileHint: '세액공제 → 의료비 칸에 더해서 적어요.',
     missable: true,
     conditional: '의료비는 총급여의 3%를 넘은 만큼만 공제돼요',
+    documents: [
+      '안경점 영수증 (구입자 이름·시력교정용 표기 필수)',
+    ],
   ),
   DeductionCategory(
     id: 'postpartum',
@@ -116,6 +158,10 @@ const List<DeductionCategory> kDeductionCatalog = [
     fileHint: '세액공제 → 의료비 칸에 더해서 적어요.',
     missable: true,
     conditional: '의료비는 총급여의 3%를 넘은 만큼만 공제돼요',
+    documents: [
+      '산후조리원 이용 영수증',
+      '출산 사실 확인 서류 (가족관계증명서 등)',
+    ],
   ),
   DeductionCategory(
     id: 'uniform',
@@ -124,6 +170,9 @@ const List<DeductionCategory> kDeductionCatalog = [
     findHint: '간소화에 안 나와요. 교복 구입 영수증이 필요해요.',
     fileHint: '세액공제 → 교육비 칸에 더해서 적어요.',
     missable: true,
+    documents: [
+      '교복 구입 영수증 (학교명·학생명 표기)',
+    ],
   ),
   DeductionCategory(
     id: 'preschoolAcademy',
@@ -132,6 +181,9 @@ const List<DeductionCategory> kDeductionCatalog = [
     findHint: '간소화에 안 나와요. 학원에서 교육비납입증명서를 받으세요.',
     fileHint: '세액공제 → 교육비 칸에 더해서 적어요.',
     missable: true,
+    documents: [
+      '교육비 납입증명서 (학원·체육시설 발급)',
+    ],
   ),
   DeductionCategory(
     id: 'religiousDonation',
@@ -140,6 +192,9 @@ const List<DeductionCategory> kDeductionCatalog = [
     findHint: '간소화에서 자주 빠져요. 교회·성당·사찰에서 기부금영수증을 받으세요.',
     fileHint: '세액공제 → 기부금 칸에 종교단체분으로 적어요.',
     missable: true,
+    documents: [
+      '기부금영수증 (종교단체 고유번호증 사본 포함)',
+    ],
   ),
 ];
 
