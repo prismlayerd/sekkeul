@@ -282,7 +282,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     // 기존 평문 DB가 있고 아직 암호화 전이면: 먼저 평문 상태로 최신 스키마까지 정규화한 뒤
     // SQLCipher 암호화 DB로 1회 이전한다(S-2). 신규 설치는 곧장 암호화 DB로 생성된다.
     if (await File(path).exists() && !await _isAlreadyEncrypted(path, key)) {
-      final normalizeDb = await openDatabase(path, version: 44, onCreate: _onCreate, onUpgrade: _onUpgrade);
+      final normalizeDb = await openDatabase(path, version: 45, onCreate: _onCreate, onUpgrade: _onUpgrade);
       await normalizeDb.close();
       await _encryptExistingPlaintextDb(path, key);
     }
@@ -290,7 +290,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     _db = await openDatabase(
       path,
       password: key,
-      version: 44,
+      version: 45,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -333,7 +333,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     }
     await plainDb.close();
 
-    final encDb = await openDatabase(tempEncPath, password: key, version: 44, onCreate: _onCreate);
+    final encDb = await openDatabase(tempEncPath, password: key, version: 45, onCreate: _onCreate);
     var insertedRows = 0;
     await encDb.transaction((txn) async {
       for (final entry in dump.entries) {
@@ -394,6 +394,8 @@ class SqfliteDatabaseHelper implements DatabaseService {
             type_identified INTEGER DEFAULT 0,
             owns_car INTEGER,
             owns_house INTEGER,
+            residence_type TEXT,
+            is_household_head INTEGER,
             occupation_code TEXT,
             deduction_picks TEXT,
             property_value REAL,
@@ -920,6 +922,19 @@ class SqfliteDatabaseHelper implements DatabaseService {
             await db.execute('ALTER TABLE expenses ADD COLUMN deduction_type TEXT');
           });
         }
+        if (oldVersion < 45) {
+          await _step('v45', () async {
+            await db.execute('ALTER TABLE user_profile ADD COLUMN residence_type TEXT');
+            await db.execute('ALTER TABLE user_profile ADD COLUMN is_household_head INTEGER');
+            // 옛 불리언 두 개에서 읽어 온다. 「반전세」는 복원할 수 없다 —
+            // 애초에 저장된 적이 없어서 전세와 구분이 안 된다.
+            await db.execute("UPDATE user_profile SET residence_type = "
+                "CASE WHEN owns_house = 1 THEN '자가' "
+                "     WHEN is_monthly_rent = 1 THEN '월세' "
+                "     WHEN owns_house IS NULL AND is_monthly_rent IS NULL THEN NULL "
+                "     ELSE '전세' END");
+          });
+        }
   }
 
   @override
@@ -967,6 +982,8 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'type_identified': profile['type_identified'] == true ? 1 : 0,
         'owns_car': profile['owns_car'] == null ? null : (profile['owns_car'] == true ? 1 : 0),
         'owns_house': profile['owns_house'] == null ? null : (profile['owns_house'] == true ? 1 : 0),
+        'residence_type': profile['residence_type'],
+        'is_household_head': profile['is_household_head'] == null ? null : (profile['is_household_head'] == true ? 1 : 0),
         'occupation_code': profile['occupation_code'],
         'property_value': profile['property_value'],
         'pension_enrolled': profile['pension_enrolled'] == true ? 1 : 0,
@@ -1055,6 +1072,8 @@ class SqfliteDatabaseHelper implements DatabaseService {
       // null(마이그레이션 이전 기존 사용자, 미입력)은 그대로 null 유지 — 알림 필터링 쪽에서 "?? true"로 기본값 처리.
       'owns_car': map['owns_car'] == null ? null : map['owns_car'] == 1,
       'owns_house': map['owns_house'] == null ? null : map['owns_house'] == 1,
+      'residence_type': map['residence_type'],
+      'is_household_head': map['is_household_head'] == null ? null : map['is_household_head'] == 1,
       'occupation_code': map['occupation_code'] as String?,
       'property_value': map['property_value'],
       'pension_enrolled': map['pension_enrolled'] == 1,

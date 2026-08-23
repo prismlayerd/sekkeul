@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import '../../core/data/residence.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
 import '../components/amount_field.dart';
@@ -107,10 +108,12 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
         }
         final bool isRent = profile['is_monthly_rent'] == true;
         if (isRent) {
-          _residenceType = '월세';
           _isHeadOfHousehold = true;
         }
-        if (profile['owns_house'] == true) _residenceType = '자가';
+        _residenceType = residenceOf(profile) ?? _residenceType;
+        if (profile['is_household_head'] != null) {
+          _isHeadOfHousehold = profile['is_household_head'] == true;
+        }
         _ownsCar = profile['owns_car'] == true;
         _hasElderly70Plus = profile['has_elderly_70plus'] == true;
         _isFemaleHead = profile['is_female_head'] == true;
@@ -172,7 +175,10 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
       'is_sme_employee': _isSmeEmployee,
       'sme_start_year': _smeStartDate?.year,
       'owns_car': _ownsCar,
-      'owns_house': _residenceType == '자가',
+      ...residenceFields(_residenceType),
+      // 예전엔 이 답을 묻고 버렸다. 화면 부제가 "주택청약, 대출 공제를 받으려면
+      // 세대주여야 해요"라고 써 놓고 저장을 안 했다 — 그 공제들이 영영 안 뜬다.
+      'is_household_head': _isHeadOfHousehold,
     };
     await dbService.saveProfile(newProfile);
     // 홈 화면은 유형별 독립 저장(profile_type_values)을 출처로 쓰므로 함께 갱신.

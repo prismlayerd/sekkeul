@@ -181,10 +181,17 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
     if (expenses.isNotEmpty && mounted) {
       int creditTotal = 0;
       int debitTotal = 0;
+      final year = DateTime.now().year;
       for (final exp in expenses) {
+        // **올해 것만 센다.** 예전엔 연도를 안 가리고 전부 더해서, 두 해째 쓰는
+        // 사람의 카드 사용액이 두 배로 잡혔다.
+        if (exp.date.year != year) continue;
+        // '기타'는 현금영수증 없는 지출이라 공제 대상이 아니다(조특법 §126의2①).
+        // else로 받아 체크·현금에 섞으면 공제가 부풀어 오른다 — 홈 02는 이미
+        // 셋으로 가르고 있는데 여기만 둘로 갈라 두 화면이 다른 값을 말했다.
         if (exp.paymentMethod == '신용카드') {
           creditTotal += exp.amount;
-        } else {
+        } else if (exp.paymentMethod == '체크+현금') {
           debitTotal += exp.amount;
         }
       }

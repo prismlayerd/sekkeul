@@ -10,10 +10,15 @@ class DeductionChecklist extends StatefulWidget {
   final Map<String, int> initialAmounts;
   final ValueChanged<Map<String, int>> onChanged;
 
+  /// 그릴 항목. 안 주면 카탈로그 전부 — 이 사람에게 걸리는 것만 주려면
+  /// `deductionsFor(...)`로 걸러서 넘긴다.
+  final List<DeductionCategory>? categories;
+
   const DeductionChecklist({
     super.key,
     this.initialAmounts = const {},
     required this.onChanged,
+    this.categories,
   });
 
   @override
@@ -27,7 +32,7 @@ class _DeductionChecklistState extends State<DeductionChecklist> {
   @override
   void initState() {
     super.initState();
-    for (final c in kDeductionCatalog) {
+    for (final c in _cats) {
       _ctrls[c.id] = TextEditingController();
     }
     widget.initialAmounts.forEach((id, amt) {
@@ -45,6 +50,8 @@ class _DeductionChecklistState extends State<DeductionChecklist> {
     }
     super.dispose();
   }
+
+  List<DeductionCategory> get _cats => widget.categories ?? kDeductionCatalog;
 
   int _amount(String id) =>
       int.tryParse((_ctrls[id]?.text ?? '').replaceAll(',', '')) ?? 0;
@@ -74,7 +81,7 @@ class _DeductionChecklistState extends State<DeductionChecklist> {
     // 헤어라인 한 줄로 잇는다(목업 1e).
     return Column(
       children: [
-        for (final c in kDeductionCatalog) _categoryRow(c),
+        for (final c in _cats) _categoryRow(c),
       ],
     );
   }

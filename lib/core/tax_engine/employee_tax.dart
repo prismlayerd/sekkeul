@@ -682,6 +682,59 @@ class EmployeeTaxCalculator {
     return mortgageInterestExpense > limit ? limit : mortgageInterestExpense;
   }
 
+  /// 집에 들어간 돈으로 받는 **소득공제 셋을 한 번에** 계산한다.
+  ///
+  /// 셋이 한도를 나눠 쓰기 때문에 따로 계산하면 반드시 틀린다.
+  ///
+  /// - 주택청약종합저축 (조특법 §87②) — 납입액 연 300만 한도 × 40%
+  /// - 주택임차차입금 원리금 (소법 §52④) — 원리금 × 40%
+  /// - 장기주택저당차입금 이자 (소법 §52⑤⑥) — [mortgageDeductionLimit]
+  ///
+  /// 1차: 앞의 둘을 합쳐 **연 400만** (§52④ 단서 · §87⑤ 전단)
+  /// 2차: 셋을 합쳐 **연 800만**(고정금리·비거치식이면 2,000/1,800/600만, §87⑤ 후단)
+  ///
+  /// 요건이 항목마다 다르다 — 이게 함정이다.
+  /// 청약은 총급여 7천만 이하만이고, 전세는 **소득 요건이 없다.** 단, 개인에게
+  /// 빌린 돈(시행령 §112④2호)만 총급여 5천만 이하로 막힌다. 은행에서 빌려
+  /// 임대인 계좌로 바로 들어간 돈(1호)은 소득과 무관하다.
+  static double calculateHousingDeduction({
+    required double grossIncome,
+    double subscriptionPaid = 0,
+    double leaseLoanRepaid = 0,
+    double mortgageInterest = 0,
+    bool fixedRate = false,
+    bool nonDeferredRepayment = false,
+    bool isHouseholdHead = false,
+    bool ownsHome = false,
+    /// 시행령 §112④ 1호(대출기관 → 임대인 계좌 직접 입금)인가. 거짓이면 2호로 보고
+    /// 총급여 5천만 이하만 인정한다.
+    bool leaseLoanFromInstitution = true,
+  }) {
+    double subscription = 0, lease = 0;
+    // 무주택 세대주가 아니면 앞의 둘은 통째로 없다.
+    if (isHouseholdHead && !ownsHome) {
+      if (grossIncome <= 70000000) {
+        final paid = subscriptionPaid > 3000000 ? 3000000.0 : subscriptionPaid;
+        subscription = (paid < 0 ? 0 : paid) * 0.40;
+      }
+      if (leaseLoanFromInstitution || grossIncome <= 50000000) {
+        lease = (leaseLoanRepaid < 0 ? 0 : leaseLoanRepaid) * 0.40;
+      }
+    }
+    final double rentSide = subscription + lease;
+    final double capped400 = rentSide > 4000000 ? 4000000.0 : rentSide;
+
+    final double mortgage = calculateMortgageIncomeDeduction(
+      mortgageInterest,
+      fixedRate: fixedRate,
+      nonDeferredRepayment: nonDeferredRepayment,
+    );
+    final double outerLimit = mortgageDeductionLimit(
+        fixedRate: fixedRate, nonDeferredRepayment: nonDeferredRepayment);
+    final double total = capped400 + mortgage;
+    return TaxRates.truncateWon(total > outerLimit ? outerLimit : total);
+  }
+
   /// 특별공제 패키지 자동화 도출
   static SpecialDeductionResult calculateSpecialDeductions({
     required double grossIncome,
@@ -793,17 +846,26 @@ class EmployeeTaxCalculator {
 
     final double baseLimit =
         creditCardBaseLimit(grossIncome: grossIncome, childrenCount: childrenCount);
-    final double rawBaseDeduction = creditDeduction + debitDeduction;
-    final double baseDeduction = rawBaseDeduction > baseLimit ? baseLimit : rawBaseDeduction;
-
     // 추가공제 한도는 전통시장·대중교통·도서공연등을 **통합해** 총급여 7천만원
-    // 이하 300만원 / 초과 200만원이다 (조특법 §126의2, 개정세법 해설 2026 p.216).
+    // 이하 300만원 / 초과 200만원이다 (조특법 §126의2⑪1호).
     // 구간을 나누지 않고 300만원으로 두면 7천만원 초과자에게 100만원을 더 준다.
     final double extraLimit = grossIncome <= 70000000 ? 3000000.0 : 2000000.0;
-    final double rawExtraDeduction = transportDeduction + marketDeduction + cultureDeduction;
-    final double extraDeduction = rawExtraDeduction > extraLimit ? extraLimit : rawExtraDeduction;
+    final double rawExtra = transportDeduction + marketDeduction + cultureDeduction;
+    final double raw = creditDeduction + debitDeduction + rawExtra;
 
-    final double finalDeduction = baseDeduction + extraDeduction;
+    // **다 합쳐서 자르고, 잘린 것을 되돌려 준다.** 두 한도를 따로 씌워 더하는 게
+    // 아니다 — 조특법 §126의2⑩은 "제2항에 따른 신용카드등소득공제금액"(=1~5호
+    // 전부를 합친 금액) 하나에 기본한도를 걸고, ⑪이 그 **한도초과금액**을 특례
+    // 합계 범위에서 돌려준다.
+    //
+    // 따로 씌우면 기본공제가 한도에 못 미치는 사람의 특례분이 통째로 버려진다.
+    // 총급여 4천만·신용 1천만·전통시장 2천만이면 조문은 600만인데 300만만 줬다.
+    // 「공제 구분」 칸으로 전통시장·대중교통·도서공연을 직접 받기 시작하면서
+    // 이 갈래를 밟는 사람이 늘었다.
+    final double capped = raw > baseLimit ? baseLimit : raw;
+    final double over = raw - capped;
+    final double extraCap = rawExtra > extraLimit ? extraLimit : rawExtra;
+    final double finalDeduction = capped + (over > extraCap ? extraCap : over);
 
     final bool passedThreshold = totalSpend > 0 && totalSpend >= threshold;
 
@@ -1043,12 +1105,27 @@ class EmployeeTaxCalculator {
     double mortgageInterest = 0.0,
     bool mortgageFixedRate = false,
     bool mortgageNonDeferred = false,
+    /// 주택청약종합저축 납입액 (조특법 §87②).
+    double housingSubscription = 0.0,
+    /// 전세(주택임차)자금 대출 원리금 상환액 (소법 §52④).
+    double leaseLoanRepayment = 0.0,
+    bool isHouseholdHead = false,
+    bool ownsHome = false,
+    bool leaseLoanFromInstitution = true,
   }) {
-    // 주택담보대출 이자는 과세표준을 낮추는 소득공제라, 줄어드는 세액으로 환산한다.
-    final double mortgageDeduction = calculateMortgageIncomeDeduction(
-      mortgageInterest,
+    // 집에 들어간 돈은 과세표준을 낮추는 소득공제라, 줄어드는 세액으로 환산한다.
+    // 청약·전세·주담대는 한도를 나눠 쓰므로(§87⑤) 한 번에 계산한다 — 따로 더하면
+    // 800만 통합 한도를 넘겨 준다.
+    final double mortgageDeduction = calculateHousingDeduction(
+      grossIncome: grossIncome,
+      subscriptionPaid: housingSubscription,
+      leaseLoanRepaid: leaseLoanRepayment,
+      mortgageInterest: mortgageInterest,
       fixedRate: mortgageFixedRate,
       nonDeferredRepayment: mortgageNonDeferred,
+      isHouseholdHead: isHouseholdHead,
+      ownsHome: ownsHome,
+      leaseLoanFromInstitution: leaseLoanFromInstitution,
     );
     double mortgageSaving = 0.0;
     if (mortgageDeduction > 0) {
@@ -1079,7 +1156,11 @@ class EmployeeTaxCalculator {
       RefundLine('연금계좌 세액공제', pensionAccountCredit),
       RefundLine('보장성보험료 세액공제', insurancePremiumCredit),
       RefundLine('고향사랑기부금 세액공제', hometownDonationCredit),
-      RefundLine('주택담보대출 이자 소득공제', mortgageSaving),
+      RefundLine(
+          housingSubscription > 0 || leaseLoanRepayment > 0
+              ? '주택자금 소득공제'
+              : '주택담보대출 이자 소득공제',
+          mortgageSaving),
     ].where((l) => l.amount > 0).toList();
 
     final double totalCredit = lines.fold(0.0, (a, l) => a + l.amount);

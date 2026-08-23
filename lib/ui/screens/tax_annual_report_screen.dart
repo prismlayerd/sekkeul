@@ -120,9 +120,11 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       double debit = 0.0;
       for (final e in expenses) {
         if (e.date.year == _year) {
+          // '기타'(현금영수증 없음)는 공제 대상이 아니다 — else로 받으면
+          // 체크·현금에 섞여 공제가 부풀어 오른다.
           if (e.paymentMethod == '신용카드') {
             credit += e.amount;
-          } else {
+          } else if (e.paymentMethod == '체크+현금') {
             debit += e.amount;
           }
         }

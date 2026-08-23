@@ -21,6 +21,7 @@ import 'package:secul/ui/screens/tax_annual_report_screen.dart';
 import 'package:secul/ui/screens/tax_record_import_screen.dart';
 import 'package:secul/ui/screens/tax_simulator_screen.dart';
 import 'package:secul/ui/screens/tax_tools_screen.dart';
+import 'package:secul/ui/screens/year_deduction_screen.dart';
 import 'package:secul/ui/screens/year_end_tax_screen.dart';
 import 'package:secul/ui/screens/acquisition_tax_screen.dart';
 import 'package:secul/ui/screens/basic_pension_screen.dart';
@@ -156,6 +157,7 @@ final noArgScreens = <(String, Widget Function())>[
     ('UnemploymentBenefitScreen', () => const UnemploymentBenefitScreen()),
     ('WeeklyHolidayPayScreen', () => const WeeklyHolidayPayScreen()),
     ('WithholdingCalcScreen', () => const WithholdingCalcScreen()),
+    ('YearDeductionScreen', () => const YearDeductionScreen()),
     ('YouthHousingDreamScreen', () => const YouthHousingDreamScreen()),
     ('YouthLeapAccountScreen', () => const YouthLeapAccountScreen()),
 ];

@@ -130,8 +130,12 @@ void main() {
       final over = run(70000001);
       // ignore: avoid_print
       print('추가한도 — 7,000만 ${won(under.finalDeduction)} / +1원 ${won(over.finalDeduction)}');
-      expect(under.finalDeduction, 3000000, reason: '7,000만 "이하"는 300만');
-      expect(over.finalDeduction, 2000000, reason: '초과는 200만');
+      // 특례가 한도를 한참 넘으면 **기본한도까지 같이 찬다** — 조특법 §126의2⑩은
+      // 1~5호를 다 합친 금액에 기본한도를 걸고, ⑪이 그 초과분을 특례한도만큼
+      // 돌려주기 때문이다. 그래서 답은 기본 + 추가다.
+      // 예전 기대값(300만·200만)은 추가한도만 본 것이라 조문보다 작았다.
+      expect(under.finalDeduction, 6000000, reason: '7,000만 "이하"는 300만 + 300만');
+      expect(over.finalDeduction, 4500000, reason: '초과는 250만 + 200만');
     });
 
     test('문턱은 정확히 총급여의 25%이고, 딱 문턱이면 돌파로 본다', () {

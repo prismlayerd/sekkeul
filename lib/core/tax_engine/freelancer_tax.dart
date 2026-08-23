@@ -34,6 +34,9 @@ class FreelancerTaxCalculator {
     // 국민연금 지역가입자로 보험료를 내는가 (내 정보의 'pension_enrolled').
     // 참이면 납부 보험료를 연금보험료공제(소법 §51의3)로 전액 뺀다.
     bool paysNationalPension = false,
+    // 건강보험 지역가입자로 보험료를 내는가 (내 정보의 'health_enrolled').
+    // 참이고 **장부로 신고할 때만** 건보료·장기요양보험료를 필요경비에 넣는다.
+    bool paysLocalHealth = false,
   }) {
     // 0. 입력값 방어 코드
     final months = inputMonths < 1 ? 1 : (inputMonths > 12 ? 12 : inputMonths);
@@ -66,6 +69,23 @@ class FreelancerTaxCalculator {
     double estimatedExpense = 0.0;
     if (actualExpense != null) {
       estimatedExpense = actualExpense < 0 ? 0.0 : actualExpense;
+      // **지역가입자 건보료·장기요양보험료는 필요경비다** — 소득세법 시행령
+      // §55①11의3. 예전 주석은 "산입 대상이 아니다"라며 옛 예규(서면상담1팀-998)를
+      // 근거로 들었는데, 그 뒤 시행령에 이 호가 들어왔다. 조문이 이긴다.
+      //
+      // **추계에는 더하지 않는다.** 경비율이 이미 경비를 통째로 의제하므로
+      // 개별 경비를 얹으면 두 번 빼는 셈이다. 그래서 이 갈래 안에만 있다.
+      //
+      // ponytail: 건보료는 소득금액에 걸리고 소득금액은 다시 건보료에 걸린다 —
+      // 한 번만 돌려 근사한다. 정확히 풀려면 반복 수렴이 필요한데, 보험료가
+      // 소득의 8%대라 2회차 차이는 수천 원 수준이다.
+      if (paysLocalHealth) {
+        final ins = InsuranceEngine.calculateFreelancerInsurance(
+          annualIncome: annualEstimatedIncome - estimatedExpense,
+          propertyValue: 0,
+        );
+        estimatedExpense += (ins.healthInsurance + ins.longTermCare) * 12;
+      }
     } else if (useStandardExpenseRate) {
       // 기준경비율 소득금액에는 소득상한배율(시행령 §143③1)이 걸린다.
       estimatedExpense = annualEstimatedIncome -
@@ -356,6 +376,7 @@ class FreelancerTaxCalculator {
     // isSimpleExpenseRateEligible 판정 결과를 넘겨야 한다.
     bool forceStandardExpenseRate = false,
     bool paysNationalPension = false,
+    bool paysLocalHealth = false,
   }) {
     final months = inputMonths < 1 ? 1 : (inputMonths > 12 ? 12 : inputMonths);
     final rawExpense = accumulatedActualExpense < 0 ? 0.0 : accumulatedActualExpense;
@@ -375,6 +396,7 @@ class FreelancerTaxCalculator {
       disabledDependentCount: disabledDependentCount,
       hasSelfDisability: hasSelfDisability,
       paysNationalPension: paysNationalPension,
+      paysLocalHealth: paysLocalHealth,
     );
 
     // 추계는 적용 대상 경비율 하나로만 계산한다. 과거엔 단순/기준 중 세금이 낮은 쪽

@@ -67,6 +67,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
   bool _mortgageNonDeferred = false;
   /// 내 정보의 '국민연금' 토글 — 프리랜서 연금보험료공제(소법 §51의3) 판정.
   bool _paysNationalPension = false;
+  bool _paysLocalHealth = false;
   /// 게이트에서 고른 항목. null이면 게이트를 거치지 않고 바로 들어온 것 —
   /// 그때는 '안 고른 항목' 안내를 띄우지 않는다(고른 적이 없으니 놓친 것도 없다).
   Set<String>? _gatePicks;
@@ -189,6 +190,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     bool weddingCredit2426 = false;
     bool isSmeEmployee = false;
     bool paysNationalPension = false;
+    bool paysLocalHealth = false;
     int smeStartYear = 0;
     bool isYouthSme = false;
     OccupationInfo? profileOccupation;
@@ -222,6 +224,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       weddingCredit2426 = (wYear != null && wYear >= 2024 && wYear <= 2026);
       isSmeEmployee = profile['is_sme_employee'] == true;
       paysNationalPension = profile['pension_enrolled'] == true;
+      paysLocalHealth = profile['health_enrolled'] == true;
       smeStartYear = profile['sme_start_year'] as int? ?? 0;
       final age = profile['age'] as int? ?? 0;
       final militaryMonths = profile['military_months'] as int? ?? 0;
@@ -304,6 +307,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       _weddingCredit2426 = weddingCredit2426;
       _isSmeEmployee = isSmeEmployee;
       _paysNationalPension = paysNationalPension;
+      _paysLocalHealth = paysLocalHealth;
       _smeStartYear = smeStartYear;
       _isYouthSme = isYouthSme;
     });
@@ -548,6 +552,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           hasSelfDisability: _hasSelfDisability,
           forceStandardExpenseRate: !simpleRateEligible,
           paysNationalPension: _paysNationalPension,
+          paysLocalHealth: _paysLocalHealth,
           accumulatedOtherIncome: otherIncomeFree,
         );
         setState(() {

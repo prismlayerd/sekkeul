@@ -59,6 +59,13 @@ class HomeStatusSection extends StatefulWidget {
   final VoidCallback onOpenLedger;
   final VoidCallback onOpenMyInfo;
 
+  /// 카드 말고 따로 모아 둔 공제의 예상 환급 (「올해 받을 공제」 화면에서 저장한 값).
+  /// 0이면 아직 아무것도 안 넣은 것 — 링크만 보여준다.
+  final double otherDeductionRefund;
+
+  /// 「올해 받을 공제」로 간다.
+  final VoidCallback? onOpenYearDeductions;
+
   /// 지출 목표를 정하러 간다 — 가계부 분석 탭.
   ///
   /// 예전엔 홈에서 바로 적을 수 있었다. 그런데 가계부 분석 탭에도 같은 입력이
@@ -94,6 +101,8 @@ class HomeStatusSection extends StatefulWidget {
     required this.onOpenLedger,
     required this.onOpenMyInfo,
     required this.onExpenseTargetChanged,
+    this.otherDeductionRefund = 0,
+    this.onOpenYearDeductions,
   });
 
   @override
@@ -335,6 +344,16 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           _buildCardRefundBlock(annualSalary, sub, tert, accent),
         ],
 
+        // ── 카드 말고 받을 것 ──
+        //
+        // 「올해 쌓인 예상 환급」은 카드공제만 센 숫자다. 그 옆에 아무 말도 없으면
+        // 그게 올해 받을 전부라고 읽힌다. 의료비·교육비·청약·전세는 결제할 때마다
+        // 문턱이 움직이는 종류가 아니라 증명서로 확인하는 종류라 가계부가 못 본다.
+        if (hasThreshold && widget.onOpenYearDeductions != null) ...[
+          const SizedBox(height: 14),
+          _otherDeductionLink(accent, tert),
+        ],
+
         // ── 올해 쌓인 예상 환급 (프리랜서) ──
         // 같은 자리·같은 말이지만 자라는 기전이 다르다 — 직장인은 신용카드 소득공제,
         // 프리랜서는 그 제도 대상이 아니라 필요경비 → 이미 뗀 3.3% 환급으로 자란다.
@@ -362,6 +381,32 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         ],
 
       ],
+    );
+  }
+
+  /// 카드 말고 받을 공제로 가는 길.
+  Widget _otherDeductionLink(Color accent, Color tert) {
+    final has = widget.otherDeductionRefund > 0;
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        onTap: widget.onOpenYearDeductions,
+        behavior: HitTestBehavior.opaque,
+        child: Row(children: [
+          Expanded(
+            child: Text(
+                has
+                    ? '따로 모아 둔 공제 ${_toWon(widget.otherDeductionRefund)}'
+                    : '카드 말고도 받을 게 더 있어요',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTheme.sans(AppTheme.tsXS, has ? tert : accent,
+                    weight: FontWeight.w600)),
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.arrow_forward, size: 14, color: has ? tert : accent),
+        ]),
+      ),
     );
   }
 

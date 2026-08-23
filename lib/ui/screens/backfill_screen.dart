@@ -43,8 +43,6 @@ class _BackfillScreenState extends State<BackfillScreen> {
   final _market = TextEditingController();
   final _transport = TextEditingController();
   final _culture = TextEditingController();
-  final _bizIncome = TextEditingController();
-  final _bizExpense = TextEditingController();
 
   /// 근로소득이 있는가 — 카드공제는 근로소득자만 받는다(조특법 §126의2).
   bool get _hasCard => widget.userType == '직장인' || widget.userType == 'N잡러';

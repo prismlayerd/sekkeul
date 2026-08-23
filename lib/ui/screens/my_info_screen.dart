@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/data/residence.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/data/occupation_data.dart';
@@ -44,6 +45,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   final TextEditingController _ageEditCtrl = TextEditingController();
   int _dependentsEditValue = 0;
   String _residenceEditValue = '전세';
+  bool _headEditValue = true;
   int _payDayEditValue = 0;
   int _childrenTotalEditValue = 0;
   int _childrenForCreditEditValue = 0;
@@ -84,8 +86,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   /// 절세 진단에 직접 쓰이는 핵심 입력값들이 채워졌는지로 완성도를 읽는다.
   /// 프리랜서는 관련 없는 항목(예상 연봉·나이·급여일)을 완성도에서 뺀다.
   /// 거주 형태는 두 칸(월세 여부·자가 여부)에 나뉘어 있다 — 둘 다 비어 있으면 미설정.
-  bool _hasResidence(Map<String, dynamic> p) =>
-      p['is_monthly_rent'] != null || p['owns_house'] != null;
+  bool _hasResidence(Map<String, dynamic> p) => residenceOf(p) != null;
 
   List<({String label, bool filled})> get _checklist {
     final p = _profile ?? const {};
@@ -143,9 +144,9 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
         case 'dependents':
           _dependentsEditValue = (p['dependents'] as int?) ?? 0;
         case 'residence':
-          _residenceEditValue = p['owns_house'] == true
-              ? '자가'
-              : (p['is_monthly_rent'] == true ? '월세' : '전세');
+          _residenceEditValue = residenceOf(p) ?? '전세';
+        case 'household_head':
+          _headEditValue = p['is_household_head'] != false;
         case 'pay_day':
           _payDayEditValue = (p['pay_day'] as int?) ?? 0;
         case 'children':
@@ -192,10 +193,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   }
 
   Future<void> _saveResidenceInline() async {
-    await _updateProfileFields({
-      'is_monthly_rent': _residenceEditValue == '월세',
-      'owns_house': _residenceEditValue == '자가',
-    });
+    await _updateProfileFields(residenceFields(_residenceEditValue));
     if (mounted) setState(() => _editingKey = null);
   }
 
@@ -369,8 +367,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     final age = (p['age'] as int?) ?? 0;
     final dependents = p['dependents'] as int?;
     final hasResidence = _hasResidence(p);
-    // 전세·반전세는 저장상 구분되지 않아(둘 다 is_monthly_rent=false, owns_house=false) '전세'로 표시.
-    final residence = p['owns_house'] == true ? '자가' : (p['is_monthly_rent'] == true ? '월세' : '전세');
+    final residence = residenceOf(p) ?? '전세';
     final payDay = (p['pay_day'] as int?) ?? 0;
     // 항목엔 세전 연봉을 적었으니, 바로 아래에 4대보험·소득세 반영한 세후 추정치를 덧붙인다.
     double netAnnual = 0.0;
@@ -462,6 +459,24 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
         accent: accent,
         editor: _residenceEditor(ink),
       ),
+      // 세대주 — 거주 형태 바로 밑에 둔다. 주택 공제는 전부 세대주 요건이 걸려
+      // 있어(소법 §52④·⑤, 조특법 §87②·§95의2) 둘이 한 쌍으로 읽혀야 한다.
+      // 자가면 그 공제들이 통째로 없으니 묻지 않는다.
+      if (!ownsHome(p))
+        _infoRow(
+          icon: Icons.badge_outlined,
+          label: '세대주',
+          value: p['is_household_head'] == null
+              ? null
+              : (isHouseholdHead(p) ? '맞아요' : '아니에요'),
+          placeholder: '미설정 — 청약·전세·월세 공제 요건이에요',
+          isSet: p['is_household_head'] != null,
+          editKey: 'household_head',
+          ink: ink,
+          sub: sub,
+          accent: accent,
+          editor: _householdHeadEditor(ink),
+        ),
       if (!_isFreelancer)
         _infoRow(
           icon: Icons.calendar_today_outlined,
@@ -666,8 +681,42 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     ]);
   }
 
+  Widget _householdHeadEditor(Color ink) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        for (final v in [true, false])
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () => setState(() => _headEditValue = v),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+                decoration: BoxDecoration(
+                  color: _headEditValue == v ? ink : null,
+                  border: Border.all(
+                      color: _headEditValue == v ? ink : AppTheme.line(context), width: 1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(v ? '맞아요' : '아니에요',
+                    style: AppTheme.sans(AppTheme.tsSM,
+                        _headEditValue == v ? Theme.of(context).cardColor : ink,
+                        weight: _headEditValue == v ? FontWeight.w700 : FontWeight.w500)),
+              ),
+            ),
+          ),
+      ]),
+      const SizedBox(height: 10),
+      _editActions(
+          onCancel: () => setState(() => _editingKey = null),
+          onSave: () async {
+            await _updateProfileFields({'is_household_head': _headEditValue});
+            if (mounted) setState(() => _editingKey = null);
+          }),
+    ]);
+  }
+
   Widget _residenceEditor(Color ink) {
-    const types = ['전세', '월세', '반전세', '자가'];
+    const types = kResidenceTypes;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       GridView.count(
         crossAxisCount: 2,

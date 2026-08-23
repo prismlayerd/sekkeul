@@ -556,6 +556,9 @@ class ReserveEstimator {
           disabledDependentCount: disabledDeps,
           hasSelfDisability: selfDisability,
           forceStandardExpenseRate: pinnedStandardRate,
+          // 시뮬레이터와 같은 조건이어야 두 화면이 같은 숫자를 말한다.
+          paysNationalPension: pensionEnrolled,
+          paysLocalHealth: healthEnrolled,
         );
         final gain = cmp.estimate.annualTotalTax - cmp.bookkeeping.annualTotalTax;
         refundProgress = RefundProgress(
