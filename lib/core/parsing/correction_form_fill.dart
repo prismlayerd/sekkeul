@@ -102,3 +102,58 @@ String _comma(int n) {
   }
   return b.toString();
 }
+
+/// 지방세 「과세표준 및 세액 등의 결정 또는 경정 청구서」 — 지방세기본법
+/// 시행규칙 별지 제14호서식, 개정 2019.12.31. 1쪽짜리다.
+///
+/// **금액 칸은 비운다.** 개인지방소득세를 「소득세 결정세액의 10%」로 안내하는
+/// 곳이 많지만, 조문상 산출세액은 지방소득세율표로 따로 계산하고 세액공제도
+/// 지방세법이 따로 정한다(§103의19 등). 그 대응을 확인하지 않은 채 근사치를
+/// 찍는 건 국세 서식에서 과세표준·산출세액을 비워 둔 것과 같은 이유로 안 한다.
+///
+/// 청구 이유를 적을 칸도 없다 — 서식이 「내용이 많은 경우 별지 기재」라고만
+/// 하고 입력란을 두지 않았다. 앱의 「작성 내역」이 그 별지 노릇을 한다.
+///
+/// 청구 기한은 국세와 같다 — 법정신고기한이 지난 후 5년 이내(지방세기본법 §50①).
+Future<Uint8List> fillLocalCorrectionForm({
+  required Uint8List formBytes,
+  required Uint8List koreanFont,
+  required int accrualYear,
+  DateTime? claimedOn,
+}) async {
+  final doc = PdfDocument(inputBytes: formBytes);
+  final g = doc.pages[0].graphics;
+  final font = PdfTrueTypeFont(koreanFont, 9.5);
+  final tiny = PdfTrueTypeFont(koreanFont, 7);
+  final black = PdfBrushes.black;
+  final today = claimedOn ?? DateTime.now();
+
+  void put(double x, double y, double w, String s,
+      {PdfFont? f, PdfTextAlignment align = PdfTextAlignment.left}) {
+    g.drawString(s, f ?? font,
+        brush: black,
+        bounds: Rect.fromLTWH(x + 5, y + 4.5, w - 10, 13),
+        format: PdfStringFormat(alignment: align));
+  }
+
+  // 법정신고일 — 개인지방소득세도 5월 31일까지다(지방세법 §95①).
+  put(170, 228.3, 150, '${accrualYear + 1}. 5. 31.');
+
+  // 경정청구 대상(과세물건)
+  put(256.7, 243.9, 534.1 - 256.7, '개인지방소득세');
+
+  // (  )세 — 괄호 사이가 24pt뿐이다. 「지방소득」 네 글자는 7pt로 줄여도
+  // 「지방」에서 잘렸다(렌더링해서 확인). 지방세 서식의 ( )세는 「(취득)세」·
+  // 「(재산)세」처럼 쓰므로 여기서는 「(소득)세」가 맞고, 바로 위 과세물건 칸에
+  // 「개인지방소득세」가 적혀 있어 뜻이 흐려지지 않는다.
+  put(118, 310.5, 28, '소득', f: tiny, align: PdfTextAlignment.center);
+
+  // 청구일 — 「년 월 일」 글자 윗변이 435.4다.
+  put(398, 430.9, 36, '${today.year}', align: PdfTextAlignment.right);
+  put(439, 430.9, 26, '${today.month}', align: PdfTextAlignment.right);
+  put(489, 430.9, 26, '${today.day}', align: PdfTextAlignment.right);
+
+  final bytes = Uint8List.fromList(await doc.save());
+  doc.dispose();
+  return bytes;
+}

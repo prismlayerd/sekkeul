@@ -406,9 +406,13 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
       const SizedBox(height: 16),
       _wideButton('작성 내역·서류 목록 받기', () => _sharePdf(c), outlined: true),
       const SizedBox(height: 8),
-      _wideButton('지방세 경정청구서 양식 받기',
-          () => _shareAsset('assets/forms/gyeongjeong_local.pdf', '지방세 경정청구서'),
-          outlined: true),
+      _wideButton('지방세 경정청구서 받기', _shareLocalForm, outlined: true),
+      const SizedBox(height: 8),
+      Text('지방소득세는 지자체에 따로 냅니다. 금액 칸은 국세 경정 결과에 따라 정해져서 '
+              '비워 뒀어요 — 청구 이유는 이 서식에 칸이 없고 별지로 내라고 되어 있어, '
+              '위 「작성 내역」을 같이 내시면 돼요.'
+          .keepWords,
+          style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkTertiary(context), height: 1.5)),
     ]);
   }
 
@@ -446,12 +450,19 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
     await Share.shareXFiles([XFile(f.path)], text: '$_selectedYear년 귀속 경정청구서');
   }
 
-  Future<void> _shareAsset(String assetPath, String name) async {
-    final bytes = await rootBundle.load(assetPath);
+  Future<void> _shareLocalForm() async {
+    final form = await rootBundle.load('assets/forms/gyeongjeong_local.pdf');
+    final font = await rootBundle.load('assets/fonts/NanumGothicCoding-Regular.ttf');
+    final bytes = await fillLocalCorrectionForm(
+      formBytes: form.buffer.asUint8List(),
+      koreanFont: font.buffer.asUint8List(),
+      accrualYear: _selectedYear,
+    );
     final dir = await getTemporaryDirectory();
-    final f = File('${dir.path}/$name.pdf');
-    await f.writeAsBytes(bytes.buffer.asUint8List());
-    await Share.shareXFiles([XFile(f.path)], text: name);
+    final f = File('${dir.path}/지방세_경정청구서_$_selectedYear.pdf');
+    await f.writeAsBytes(bytes);
+    await Share.shareXFiles([XFile(f.path)],
+        text: '$_selectedYear년 귀속 지방세 경정청구서');
   }
 
   Widget _wideButton(String label, VoidCallback onTap, {bool outlined = false}) {

@@ -50,6 +50,24 @@ void main() {
     expect(PdfDocument(inputBytes: bytes).pages.count, 4);
   });
 
+  test('지방세 서식에도 값이 찍힌다', () async {
+    final form = await rootBundle.load('assets/forms/gyeongjeong_local.pdf');
+    final font = await rootBundle.load('assets/fonts/NanumGothicCoding-Regular.ttf');
+    final bytes = await fillLocalCorrectionForm(
+      formBytes: form.buffer.asUint8List(),
+      koreanFont: font.buffer.asUint8List(),
+      accrualYear: 2024,
+      claimedOn: DateTime(2026, 8, 24),
+    );
+    final text = PdfTextExtractor(PdfDocument(inputBytes: bytes))
+        .extractText(startPageIndex: 0, endPageIndex: 0);
+    expect(text, contains('개인지방소득세'));
+    expect(text, contains('2025. 5. 31.'));
+
+    final out = Platform.environment['SEKKEUL_LOCAL_OUT'];
+    if (out != null) await File(out).writeAsBytes(bytes);
+  });
+
   test('청구이유에 고른 항목 이름이 들어간다', () async {
     // 「공제 누락」만 쓰면 세무서가 무엇을 뺐는지 몰라 보정을 요구한다.
     final form = await rootBundle.load('assets/forms/gyeongjeong_national.pdf');
