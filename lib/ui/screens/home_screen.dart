@@ -13,6 +13,7 @@ import '../components/slip_ticks.dart';
 import '../components/section_accordion.dart';
 import '../../core/data/year_coverage.dart';
 import '../../core/data/year_deductions.dart';
+import '../../core/data/year_snapshot.dart';
 import '../../core/data/deduction_catalog.dart';
 import '../../core/data/residence.dart';
 import 'year_deduction_screen.dart';
@@ -484,22 +485,20 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       // 카드공제는 연 누적 기준 — 올해 1월~오늘. 신용/체크·현금은 공제율이 달라 분리 집계.
       // ('기타' 결제수단은 현금영수증 없는 지출로 보아 공제 대상에서 제외.)
       if (!eStart.isBefore(firstOfYear) && !eStart.isAfter(now)) {
-        // **공제 구분이 붙었으면 그 갈래로만 센다.**
-        //
-        // 전통시장에서 카드로 긁은 돈을 신용카드에도 넣으면 같은 돈이 15%와
-        // 40%로 두 번 계산된다. 세법은 이 셋을 신용카드등사용금액에서 빼고
-        // 따로 센다(조특법 §126의2). 「기타(영수증 없음)」는 애초에 공제 대상이
-        // 아니라 표식이 있어도 제외로 간다.
-        final dt = e.deductionType;
-        if (dt != null && ledgerSpecial.containsKey(dt) && e.paymentMethod != '기타') {
-          ledgerSpecial[dt] = ledgerSpecial[dt]! + e.amount;
-        } else if (e.paymentMethod == '신용카드') {
-          creditYtd += e.amount;
-        } else if (e.paymentMethod == '체크+현금') {
-          debitYtd += e.amount;
-        } else {
-          // '기타'·미설정 — 문턱에 안 들어간다. 왜 안 줄어드는지 화면에서 말해주려고 센다.
-          excludedYtd += e.amount;
+        // 갈래를 나누는 규칙은 [cardBucket] 하나뿐이다. 예전엔 이 규칙이
+        // 화면마다 따로 적혀 있어서, 연말정산 진단과 홈택스 가이드가 「기타」를
+        // 체크·현금에 섞고 특례 셋을 아예 못 봤다 — 같은 앱의 두 화면이 다른
+        // 카드공제액을 말했다.
+        switch (cardBucket(e)) {
+          case '신용카드':
+            creditYtd += e.amount;
+          case '체크+현금':
+            debitYtd += e.amount;
+          case final String dt when ledgerSpecial.containsKey(dt):
+            ledgerSpecial[dt] = ledgerSpecial[dt]! + e.amount;
+          default:
+            // '기타'·미설정 — 문턱에 안 들어간다. 왜 안 줄어드는지 말해주려고 센다.
+            excludedYtd += e.amount;
         }
       }
     }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../components/amount_field.dart';
 import '../../core/data/db_helper.dart';
+import '../../core/data/year_snapshot.dart';
+import '../components/missing_input_notice.dart';
 import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/tax_rates.dart';
 import 'tax_simulator_screen.dart';
@@ -59,6 +61,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
   double _personalExemption = 0.0;
   double _insuranceDeduction = 0.0;
   double _creditCardDeduction = 0.0;
+  YearSnapshot? _snapshot;
   double _mortgageDeduction = 0.0;
   double _taxableIncome = 0.0;
   double _calculatedTax = 0.0;
@@ -114,23 +117,11 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
         }
       }
 
-      // 연간 지출 합산 (지출 달력 + expenses 테이블)
-      final expenses = await dbService.getExpenses(userType: widget.userType);
-      double credit = 0.0;
-      double debit = 0.0;
-      for (final e in expenses) {
-        if (e.date.year == _year) {
-          // '기타'(현금영수증 없음)는 공제 대상이 아니다 — else로 받으면
-          // 체크·현금에 섞여 공제가 부풀어 오른다.
-          if (e.paymentMethod == '신용카드') {
-            credit += e.amount;
-          } else if (e.paymentMethod == '체크+현금') {
-            debit += e.amount;
-          }
-        }
-      }
-      _annualCreditCard = credit;
-      _annualDebitCash = debit;
+      // 가계부·백필·공제 목록을 한 곳에서 받는다. 직접 세면 규칙이 갈린다.
+      final snap = await YearSnapshot.load(widget.userType, year: _year);
+      _snapshot = snap;
+      _annualCreditCard = snap.creditCard;
+      _annualDebitCash = snap.debitCash;
     } catch (e, st) {
       // 여기서 던지면 카드 사용액이 0으로 남아 환급 추정이 조용히 작아진다.
       // 화면은 계속 띄우되(0이라도 다른 칸은 쓸모 있다) 흔적은 남긴다.
@@ -161,9 +152,11 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       grossIncome: gross,
       creditCard: _annualCreditCard,
       debitCardAndCash: _annualDebitCash,
-      traditionalMarket: 0,
-      publicTransport: 0,
-      cultureExpense: 0,
+      // 예전엔 여기 0을 박아 넘겼다. 전통시장에서 쓴 돈이 40%가 아니라 15%로
+      // 계산됐고, 「공제 구분」으로 받기 시작한 값이 이 화면에만 안 들어왔다.
+      traditionalMarket: _snapshot?.market ?? 0,
+      publicTransport: _snapshot?.transport ?? 0,
+      cultureExpense: _snapshot?.culture ?? 0,
     );
     _creditCardDeduction = cardResult.finalDeduction;
 
@@ -460,6 +453,12 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           style: TextStyle(color: subColor, fontSize: 13, height: 1.5),
         ),
         const SizedBox(height: 20),
+
+        // 이 화면의 숫자는 그대로 홈택스에 옮겨 적힌다. 비어 있는 칸을 먼저 말한다.
+        if (_snapshot != null && _snapshot!.missing.isNotEmpty) ...[
+          MissingInputNotice(_snapshot!.missing),
+          const SizedBox(height: 20),
+        ],
 
         // ── 자동 수집 현황 ──
         _buildAutoDataSection(primary, textColor, subColor, cardColor, bgColor),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
+import '../../core/data/deduction_catalog.dart';
+import '../../core/data/year_snapshot.dart';
+import '../components/missing_input_notice.dart';
 import 'tax_simulator_screen.dart';
 import 'tax_annual_report_screen.dart';
 import 'tax_tools_screen.dart';
@@ -20,6 +23,10 @@ class TaxReportFormScreen extends StatelessWidget {
   final bool isRefund;
   final String? userType; // 빈 상태에서 ②진단으로 보낼 때 사용
 
+  /// 올해 가계부·백필·공제 목록에 모인 것. 진단을 안 돌려도 **여기까지는 보인다** —
+  /// 「연말에 열면 내 올해가 보인다」가 이 화면의 일이다.
+  final YearSnapshot? snapshot;
+
   const TaxReportFormScreen({
     super.key,
     required this.reportType,
@@ -27,6 +34,7 @@ class TaxReportFormScreen extends StatelessWidget {
     required this.finalAmount,
     required this.isRefund,
     this.userType,
+    this.snapshot,
   });
 
 
@@ -70,6 +78,16 @@ class TaxReportFormScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Text(_officialName, style: AppTheme.serif(AppTheme.serifXL, ink, spacing: -0.5, height: 1.2)),
             const SizedBox(height: 22),
+
+            // ── 올해 모인 것 ──
+            //
+            // 계산이 아니라 **합계**다. 진단을 돌렸든 안 돌렸든 사용자가 일 년
+            // 내내 넣은 것은 여기 그대로 보여야 한다. 예전엔 진단을 안 돌리면
+            // 이 화면이 통째로 비어 있어서, 꾸준히 쓴 사람도 볼 게 없었다.
+            if (snapshot != null) ...[
+              ..._snapshotBlock(context, snapshot!),
+              const SizedBox(height: 22),
+            ],
 
             // ── 열 캡션 ──
             Padding(
@@ -120,6 +138,48 @@ class TaxReportFormScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// 올해 모인 것 — 순수 합계라 세금 엔진을 안 탄다.
+  List<Widget> _snapshotBlock(BuildContext context, YearSnapshot s) {
+    final ink = AppTheme.ink(context);
+    final sub = AppTheme.inkSecondary(context);
+    final rows = <(String, double)>[
+      if (s.isEmployee && s.laborIncome > 0) ('근로소득 총급여', s.laborIncome),
+      if (s.hasBusiness && s.businessIncome > 0) ('사업 총수입', s.businessIncome),
+      if (s.otherIncome > 0) ('기타소득', s.otherIncome),
+      if (s.hasBusiness && s.businessExpense > 0) ('사업 필요경비', s.businessExpense),
+      if (s.isEmployee && s.creditCard > 0) ('신용카드', s.creditCard),
+      if (s.isEmployee && s.debitCash > 0) ('체크·현금', s.debitCash),
+      if (s.market > 0) ('전통시장', s.market),
+      if (s.transport > 0) ('대중교통', s.transport),
+      if (s.culture > 0) ('도서·공연', s.culture),
+      for (final c in kDeductionCatalog)
+        if ((s.deductions[c.id] ?? 0) > 0) (c.name, (s.deductions[c.id] ?? 0).toDouble()),
+    ];
+    return [
+      Text('${s.year}년에 모인 것', style: AppTheme.label(context)),
+      const SizedBox(height: 10),
+      if (rows.isEmpty)
+        Text('아직 넣은 게 없어요. 가계부와 내 정보를 채우면 여기 쌓여요.'.keepWords,
+            style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkTertiary(context)))
+      else
+        for (final r in rows)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: Row(children: [
+              Expanded(
+                  child: Text(r.$1.keepWords,
+                      style: AppTheme.sans(AppTheme.tsSM, sub))),
+              Text(comma(r.$2),
+                  style: AppTheme.serif(AppTheme.serifSM, ink, spacing: -0.5)),
+            ]),
+          ),
+      if (s.missing.isNotEmpty) ...[
+        const SizedBox(height: 14),
+        MissingInputNotice(s.missing),
+      ],
+    ];
   }
 
   /// 빈 상태 — 아직 계산 전인 '안 채워진 서식'. 흐린 플레이스홀더 행이
@@ -363,9 +423,12 @@ class _ReportFormLoaderState extends State<ReportFormLoader> {
     _load();
   }
 
+  YearSnapshot? _snapshot;
+
   Future<void> _load() async {
     final d = await dbService.getReportDraft(widget.userType);
-    if (mounted) setState(() { _draft = d; _loading = false; });
+    final s = await YearSnapshot.load(widget.userType);
+    if (mounted) setState(() { _draft = d; _snapshot = s; _loading = false; });
   }
 
   @override
@@ -383,6 +446,7 @@ class _ReportFormLoaderState extends State<ReportFormLoader> {
         finalAmount: 0,
         isRefund: true,
         userType: widget.userType,
+        snapshot: _snapshot,
       );
     }
     return TaxReportFormScreen(
@@ -391,6 +455,7 @@ class _ReportFormLoaderState extends State<ReportFormLoader> {
       finalAmount: (d['final_amount'] as num).toDouble(),
       isRefund: d['is_refund'] == true,
       userType: widget.userType,
+      snapshot: _snapshot,
     );
   }
 }

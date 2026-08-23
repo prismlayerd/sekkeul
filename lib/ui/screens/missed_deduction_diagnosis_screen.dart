@@ -5,6 +5,9 @@ import '../components/deduction_checklist.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/data/deduction_catalog.dart';
+import '../../core/data/residence.dart';
+import '../../core/data/year_snapshot.dart';
+import '../components/missing_input_notice.dart';
 import '../../core/parsing/correction_report.dart';
 import 'tax_report_form_screen.dart';
 import 'tax_simulator_screen.dart';
@@ -28,6 +31,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
   final _decidedCtrl = TextEditingController();
 
   Map<String, int> _amounts = {};
+  YearSnapshot? _snapshot;
   Map<String, int> _initialAmounts = {};
 
   @override
@@ -47,14 +51,27 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
   int get _decided => int.tryParse(_decidedCtrl.text.replaceAll(',', '')) ?? 0;
 
   Future<void> _prefillFromRecord() async {
+    // **일 년 내내 쓴 것이 여기로 올라와야 한다.**
+    //
+    // 예전엔 이 화면이 `annual_records`(PDF로 가져왔거나 손으로 적은 연말정산
+    // 결과)만 봤다. 그래서 01·02를 아무리 꾸준히 써도 직장인 파이프라인의
+    // 첫 단계에 아무것도 안 넘어왔다 — 사용자는 여기서 다시 처음부터 적었다.
+    final snap = await YearSnapshot.load(widget.userType);
     final r = await dbService.getAnnualRecord(widget.userType);
-    if (r == null || !mounted) return;
+    if (!mounted) return;
     setState(() {
-      final gross = (r['grossSalary'] as num?)?.toInt() ?? 0;
-      final decided = (r['decidedTax'] as num?)?.toInt() ?? 0;
-      if (gross > 0) _grossCtrl.text = comma(gross);
-      if (decided > 0) _decidedCtrl.text = comma(decided);
-      _initialAmounts = amountsFromAnnualRecord(r);
+      _snapshot = snap;
+      // 총급여는 내 정보가 정본이고, 원천징수영수증을 넣은 사람은 그쪽이 이긴다.
+      if (snap.laborIncome > 0) _grossCtrl.text = comma(snap.laborIncome.round());
+      // 「올해 받을 공제」에 모아 둔 것을 그대로 올린다.
+      _initialAmounts = {...snap.deductions};
+      if (r != null) {
+        final gross = (r['grossSalary'] as num?)?.toInt() ?? 0;
+        final decided = (r['decidedTax'] as num?)?.toInt() ?? 0;
+        if (gross > 0) _grossCtrl.text = comma(gross);
+        if (decided > 0) _decidedCtrl.text = comma(decided);
+        _initialAmounts = {..._initialAmounts, ...amountsFromAnnualRecord(r)};
+      }
       _amounts = Map.of(_initialAmounts);
     });
   }
@@ -146,9 +163,19 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
                 style: AppTheme.sans(AppTheme.tsSM, sub)),
             const SizedBox(height: 10),
             DeductionChecklist(
+              key: ValueKey(_snapshot?.profile['residence_type']),
+              categories: deductionsFor(
+                residence: residenceOf(_snapshot?.profile),
+                isHouseholdHead: isHouseholdHead(_snapshot?.profile),
+                grossIncome: _gross.toDouble(),
+              ),
               initialAmounts: _initialAmounts,
               onChanged: (a) => setState(() => _amounts = a),
             ),
+            if (_snapshot != null && _snapshot!.missing.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              MissingInputNotice(_snapshot!.missing),
+            ],
 
             // ── 결과 ──
             const SizedBox(height: 16),

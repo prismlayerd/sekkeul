@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/data/db_helper.dart';
+import '../../core/data/year_snapshot.dart';
+import '../components/missing_input_notice.dart';
 import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/tax_rates.dart';
 import '../components/amount_field.dart';
@@ -87,6 +89,7 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
   double _laborDeduction = 0.0;        // 근로소득공제
   double _personalExemption = 0.0;     // 인적공제
   double _cardDeduction = 0.0;         // 신용카드 소득공제
+  YearSnapshot? _snapshot;
   double _taxableIncome = 0.0;         // 과세표준
   double _calculatedTax = 0.0;         // 산출세액
   double _laborTaxCredit = 0.0;        // 근로소득세액공제
@@ -177,24 +180,15 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
       });
     }
 
-    final expenses = await dbService.getExpenses(userType: widget.userType);
-    if (expenses.isNotEmpty && mounted) {
-      int creditTotal = 0;
-      int debitTotal = 0;
-      final year = DateTime.now().year;
-      for (final exp in expenses) {
-        // **올해 것만 센다.** 예전엔 연도를 안 가리고 전부 더해서, 두 해째 쓰는
-        // 사람의 카드 사용액이 두 배로 잡혔다.
-        if (exp.date.year != year) continue;
-        // '기타'는 현금영수증 없는 지출이라 공제 대상이 아니다(조특법 §126의2①).
-        // else로 받아 체크·현금에 섞으면 공제가 부풀어 오른다 — 홈 02는 이미
-        // 셋으로 가르고 있는데 여기만 둘로 갈라 두 화면이 다른 값을 말했다.
-        if (exp.paymentMethod == '신용카드') {
-          creditTotal += exp.amount;
-        } else if (exp.paymentMethod == '체크+현금') {
-          debitTotal += exp.amount;
-        }
-      }
+    // 가계부·백필·공제 목록을 한 곳에서 받는다(`YearSnapshot`). 예전엔 여기서
+    // 직접 `getExpenses`를 돌렸는데, 연도를 안 가려 두 해째 사용자의 카드
+    // 사용액이 두 배였고, 「기타」를 체크·현금에 섞었고, 전통시장·대중교통·
+    // 도서공연과 백필을 아예 못 봤다 — 홈 02와 다른 값을 말한 이유다.
+    final snap = await YearSnapshot.load(widget.userType);
+    if (mounted) {
+      _snapshot = snap;
+      final creditTotal = snap.creditCard.round();
+      final debitTotal = snap.debitCash.round();
       setState(() {
         if (creditTotal > 0) {
           _creditCardController.text = comma(creditTotal);
@@ -202,6 +196,16 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
         if (debitTotal > 0) {
           _debitCardController.text = comma(debitTotal);
         }
+        // 「올해 받을 공제」에 모아 둔 값을 마법사 칸에 끌어온다 — 같은 걸
+        // 두 번 묻지 않는다.
+        void seed(String id, TextEditingController c) {
+          final v = snap.deductions[id] ?? 0;
+          if (v > 0 && c.text.isEmpty) c.text = comma(v);
+        }
+        seed('medical', _otherDependentMedicalController);
+        seed('education', _selfEduController);
+        seed('donation', _donationController);
+        seed('rent', _wizardRentController);
       });
     }
   }
@@ -482,6 +486,11 @@ class _YearEndTaxScreenState extends State<YearEndTaxScreen> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       children: [
+        // 반쯤 채운 진단이 다 채운 것처럼 보이면 그 숫자가 그대로 홈택스로 간다.
+        if (_snapshot != null && _snapshot!.missing.isNotEmpty) ...[
+          MissingInputNotice(_snapshot!.missing),
+          const SizedBox(height: 20),
+        ],
         if (_isMarried)
           Container(
             margin: const EdgeInsets.only(bottom: 24),
