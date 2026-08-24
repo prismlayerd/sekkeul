@@ -431,8 +431,11 @@ void main() {
       // ── 유형 경계 ──
       expect(lp.tracksBusinessExpense, isFalse, reason: '${p.name}: 직장인은 사업경비 없음');
       expect(lp.showsReserveCard, isFalse, reason: '${p.name}: 직장인은 적립카드 없음');
-      expect(lp.incomeTypes, isNot(contains('사업소득')),
-          reason: '${p.name}: 직장인 소득 종류에 사업소득 없음');
+      // 사업소득은 **받는다**(2026-08-24). 적을 데가 없으면 부업이 생긴 걸 앱이
+      // 영영 모르고, 근로소득「만」이 깨진 것도 못 알린다(소법 §73①1).
+      // 다만 사업경비·적립카드는 여전히 없다 — 그건 N잡러로 옮겨야 열린다.
+      expect(lp.incomeTypes, contains('사업소득'),
+          reason: '${p.name}: 부업을 적을 데가 없으면 신고 의무를 못 알린다');
 
       // ── 값 불변식 ──
       expect(cc.taxSaving, greaterThanOrEqualTo(0));

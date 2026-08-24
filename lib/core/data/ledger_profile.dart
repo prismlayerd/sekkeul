@@ -70,7 +70,11 @@ class LedgerProfile {
       case '직장인':
       default:
         return const LedgerProfile(
-          incomeTypes: ['급여', '기타소득'],
+          // **사업소득도 받는다.** 직장인이 부업으로 번 돈을 적을 곳이 없으면
+          // 앱이 그 사실을 영영 모르고, 확정신고 의무가 생긴 것도 못 알린다
+          // (소법 §73①1은 근로소득「만」 있는 사람만 면제한다).
+          // 적히면 홈 02가 판정하고 N잡러 전환을 제안한다.
+          incomeTypes: ['급여', '사업소득', '기타소득'],
           showsSalaryInput: true,
           tracksBusinessExpense: false,
           showsReserveCard: false,

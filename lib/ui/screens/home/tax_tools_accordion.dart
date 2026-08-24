@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../tax_tools_screen.dart';
 
-/// 홈 2장의 `05 · 세무 도구` — **늘 펼쳐져 있다.**
+/// 홈 2장의 `06 · 세무 도구` — **늘 펼쳐져 있다.**
 ///
 /// 예전에는 접히는 절이었다. 홈이 한 장이던 시절, 다섯 절이 다 펼쳐져 있으면
 /// 손댈 수 없이 길어져서였다.
@@ -21,7 +21,7 @@ class TaxToolsAccordion extends StatelessWidget {
       children: [
         // 절 머리 하나로 충분하다. 오른쪽에 붙어 있던 '기록 · 신고 준비 ·
         // 경정청구 · 양식' 요약은 바로 아래 보이는 것을 한 번 더 말하는 줄이라 뺐다.
-        AppTheme.sectionHead(context, '05', '세무 도구'),
+        AppTheme.sectionHead(context, '06', '세무 도구'),
         const SizedBox(height: 14),
         TaxToolsMenu(userType: userType),
       ],

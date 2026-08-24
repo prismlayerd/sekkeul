@@ -59,6 +59,9 @@ class HomeStatusSection extends StatefulWidget {
   final VoidCallback onOpenLedger;
   final VoidCallback onOpenMyInfo;
 
+  /// 01 수입과 03 지출 사이에 끼울 절 (02 다른 소득).
+  final Widget? between;
+
   /// 지출 목표를 정하러 간다 — 가계부 분석 탭.
   ///
   /// 예전엔 홈에서 바로 적을 수 있었다. 그런데 가계부 분석 탭에도 같은 입력이
@@ -94,6 +97,7 @@ class HomeStatusSection extends StatefulWidget {
     required this.onOpenLedger,
     required this.onOpenMyInfo,
     required this.onExpenseTargetChanged,
+    this.between,
   });
 
   @override
@@ -272,10 +276,18 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
           ),
         ],
 
+        // 02 「다른 소득」이 01과 03 사이에 낀다. 이 위젯이 두 절을 같이 그리고
+        // 있어서 밖에서 사이에 끼울 수가 없다 — 자리를 하나 내준다. 절을 둘로
+        // 쪼개는 것보다 짧고, 지출 목표 편집 상태(_editingTarget)를 안 건드린다.
+        if (widget.between != null) ...[
+          _rule(),
+          widget.between!,
+        ],
+
         _rule(),
 
         // ── 지출 — 명세서의 소계 블록. 결제수단별로 한 줄씩 찍고 실선 위에 합계. ──
-        AppTheme.sectionHead(context, '02', '이번 달 지출'),
+        AppTheme.sectionHead(context, '03', '이번 달 지출'),
         const SizedBox(height: 10),
         if (totalSpent > 0) ...[
           if (widget.creditCardTotal > 0)

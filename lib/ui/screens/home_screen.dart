@@ -14,6 +14,7 @@ import '../components/section_accordion.dart';
 import '../../core/data/year_coverage.dart';
 import '../../core/data/year_snapshot.dart';
 import 'home/missable_deduction_section.dart';
+import 'home/other_income_section.dart';
 import 'backfill_screen.dart';
 import '../components/just_updated_card.dart';
 import '../components/update_card.dart';
@@ -74,6 +75,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   CardSpecials _specialsYtd = const CardSpecials();
   /// 가계부가 올 한 해를 덮는가. 안 덮으면 연간 누적 숫자를 안 보여준다.
   bool _yearCovered = true;
+
+  /// 올해 숫자 한 벌 — 02 「다른 소득」이 가계부 합계를 여기서 읽는다.
+  YearSnapshot? _snapshot;
   /// 채워 넣은 1월~지난달 누계 — 가계부 기록이 아니라 요약이라 따로 더한다.
   Backfill _backfill = const Backfill();
   /// 공제율이 다른 세 갈래(전통시장·대중교통·도서공연)의 올해 누계.
@@ -400,12 +404,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
+  Future<void> _loadSnapshot() async {
+    final s = await YearSnapshot.load(_userType);
+    if (mounted) setState(() => _snapshot = s);
+  }
+
   Future<void> _loadMonthlyExpenses() async {
     final now = DateTime.now();
     // 연간 누적을 셈하기 전에 먼저 안다 — 이 값들이 누계에 더해지고 빠진다.
     _yearCovered = await YearCoverage.isComplete(now.year);
     _backfill = await YearCoverage.backfill(now.year);
     _cardSpecials = await YearCoverage.specials(now.year);
+    await _loadSnapshot();
     final firstOfMonth = DateTime(now.year, now.month, 1);
     final nextMonth = now.month == 12
         ? DateTime(now.year + 1, 1, 1)
@@ -677,6 +687,27 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   /// 유형별(직장인/N잡러/프리랜서) 독립 저장된 예상연봉·지출목표를 불러와 반영.
+  /// 유형을 옮길 때 **내 정보도 따라간다.**
+  ///
+  /// 연봉·지출 목표는 유형별로 따로 저장한다(서로 섞이면 안 되니까). 그런데
+  /// 부업이 생겨 직장인 → N잡러로 옮기는 사람은 **같은 사람이고 연봉도 같다** —
+  /// 새 유형에서 빈 칸을 다시 채우게 하면 옮긴 걸 후회한다.
+  ///
+  /// 이미 값이 있는 쪽은 안 건드린다. N잡러로 살다가 잠깐 직장인을 봤다가
+  /// 돌아온 사람의 값을 덮으면 안 된다.
+  Future<void> _carryTypeValues({required String from, required String to}) async {
+    if (from == to) return;
+    final old = await dbService.getProfileTypeValues(from);
+    final now = await dbService.getProfileTypeValues(to);
+    final gross = (now['gross_income'] ?? 0) > 0 ? null : old['gross_income'];
+    final target = (now['expense_target'] ?? 0) > 0 ? null : old['expense_target'];
+    if ((gross ?? 0) <= 0 && (target ?? 0) <= 0) return;
+    await dbService.setProfileTypeValues(to,
+        grossIncome: (gross ?? 0) > 0 ? gross : null,
+        expenseTarget: (target ?? 0) > 0 ? target : null);
+    await _loadTypeValues(to);
+  }
+
   Future<void> _loadTypeValues(String userType) async {
     final values = await dbService.getProfileTypeValues(userType);
     if (!mounted) return;
@@ -689,11 +720,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   void _setUserType(String type) {
+    final from = _userType;
     setState(() {
       _userType = type;
       _bannerIndex = 0;
       _calculateTax();
     });
+    _carryTypeValues(from: from, to: type);
     _loadTypeValues(type);
     _startBannerRotation();
     _saveProfileToDB();
@@ -1005,6 +1038,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             onOpenLedger: _goToLedger,
             onOpenMyInfo: _openProfile,
             onExpenseTargetChanged: _editExpenseTarget,
+            between: OtherIncomeSection(
+              snapshot: _snapshot,
+              onChanged: _loadSnapshot,
+              // 직장인에게만 「N잡러로」를 권한다. 이미 N잡러·프리랜서면
+              // 사업소득을 다룰 화면을 이미 갖고 있다.
+              onSwitchType: _userType == '직장인' ? _openOnboarding : null,
+            ),
           ),
           _slipRule(),
           ReminderCard(userType: _userType),
@@ -1409,7 +1449,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     // 03·04와 같은 몸을 쓴다. 예전엔 여기만 Material ExpansionTile이었는데
     // 그 타일은 최소 높이가 48dp라, 접힌 상태에서 05만 한 뼘 더 두꺼웠다.
     return SectionAccordion(
-      no: '06',
+      no: '07',
       title: '자주 묻는 질문',
       expanded: (_) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

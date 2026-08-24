@@ -56,21 +56,22 @@ void main() {
 
   test('새 유형이 못 다루는 수입은 옮기지 않고 원래 자리에 둔다', () async {
     for (final e in [
-      inc('i1', '프리랜서', '사업소득', 1000000),
-      inc('i2', '프리랜서', '기타소득', 200000),
+      inc('i1', '직장인', '급여', 3000000),
+      inc('i2', '직장인', '사업소득', 1000000),
     ]) {
       await dbService.insertIncomeEntry(e);
     }
 
-    // 직장인은 사업소득을 다루지 않는다.
-    await dbService.moveLedgerRecords(from: '프리랜서', to: '직장인');
+    // 프리랜서는 급여를 다루지 않는다. (직장인은 2026-08-24부터 사업소득을
+    // 받는다 — 부업이 생긴 걸 앱이 알아야 신고 의무를 알릴 수 있다.)
+    await dbService.moveLedgerRecords(from: '직장인', to: '프리랜서');
 
     final all = await dbService.getIncomeEntriesForMonth(2026, 8);
     expect(all.length, 2, reason: '수입이 사라지거나 복제됐다');
 
     final byId = {for (final e in all) e.id: e};
-    expect(byId['i1']!.userType, '프리랜서', reason: '사업소득이 직장인에게 넘어갔다');
-    expect(byId['i2']!.userType, '직장인', reason: '기타소득은 직장인도 다룬다');
+    expect(byId['i1']!.userType, '직장인', reason: '급여가 프리랜서에게 넘어갔다');
+    expect(byId['i2']!.userType, '프리랜서', reason: '사업소득은 프리랜서도 다룬다');
   });
 
   test('미리보기 숫자가 실제로 옮겨지는 수와 같다', () async {

@@ -97,7 +97,7 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
 
     // 머리와 여닫는 몸은 04·05와 같은 것을 쓴다.
     return SectionAccordion(
-      no: '03',
+      no: '05',
       title: '리마인더',
       collapsed: Padding(
         padding: const EdgeInsets.only(top: 8),
