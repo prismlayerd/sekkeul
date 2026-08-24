@@ -417,22 +417,11 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           _step('1', 'hometax.go.kr 접속 → 로그인\n(공동인증서 또는 카카오·네이버 간편인증)', primary, textColor),
           _step('2', '세금신고 > 종합소득세 신고 > 일반신고서\n> 정기신고 (5.1~5.31)', primary, textColor),
           _step('3', '종합소득금액 입력 — 사업소득 명세\n(지급명세서 불러오기 또는 직접입력, 위 ①~③ 숫자 참고)', primary, textColor),
-          _step('4', '소득공제 입력 — 인적공제는 자동, 노란우산 등은 직접입력', primary, textColor),
+          _step('4', '소득공제 입력 — ${_businessDeductionNames()}', primary, textColor),
           _step('5', '세액공제·감면 입력 후 계산 결과 확인', primary, textColor),
           _step('6', '신고서 제출 → 환급 시 환급계좌 등록', primary, textColor),
           const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Icon(Icons.schedule_rounded, color: Colors.orange, size: 16),
-              const SizedBox(width: 8),
-              Expanded(child: Text(
-                '신고 기한: 매년 5월 1일 ~ 5월 31일\n기한 초과 시 무신고 가산세 20% + 납부 지연 가산세 발생'.keepWords,
-                style: const TextStyle(color: Colors.orange, fontSize: 12, height: 1.5),
-              )),
-            ]),
-          ),
+          _deadlineNotice(),
         ],
       ),
     );
@@ -631,7 +620,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           if (gross <= 0) ...[
             const SizedBox(height: 8),
             Text('총급여를 입력해야 계산이 시작됩니다.'.keepWords,
-                style: const TextStyle(color: Colors.orange, fontSize: 12)),
+                style: AppTheme.sans(AppTheme.tsXS, AppTheme.colorWarning)),
           ],
         ],
       ),
@@ -642,7 +631,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(children: [
-        const Icon(Icons.check_circle_rounded, color: Colors.green, size: 15),
+        Icon(Icons.check_rounded, size: 15, color: AppTheme.colorSuccess),
         const SizedBox(width: 8),
         Expanded(child: Text(label, style: TextStyle(color: subColor, fontSize: 13))),
         const SizedBox(width: 8),
@@ -684,7 +673,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(4)),
       child: Row(children: [
-        const Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
+        Icon(Icons.check_rounded, size: 20, color: AppTheme.colorSuccess),
         const SizedBox(width: 12),
         Expanded(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -696,7 +685,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
         Text(
           amount > 0 ? '-${comma(amount.toInt())}원' : '—',
           style: TextStyle(
-            color: amount > 0 ? Colors.green : subColor,
+            color: amount > 0 ? AppTheme.colorSuccess : subColor,
             fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
@@ -818,7 +807,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
                   Icons.description_outlined,
                   '필요 서류',
                   documents.map((d) => '• $d').join('\n'),
-                  Colors.orange, textColor, subColor,
+                  AppTheme.colorWarning, textColor, subColor,
                 ),
               ],
             ),
@@ -952,7 +941,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
         Text(
           '${minus ? '-' : ''}${comma(amount.toInt())}원',
           style: TextStyle(
-            color: green ? Colors.green : (highlight ? textColor : subColor),
+            color: green ? AppTheme.colorSuccess : (highlight ? textColor : subColor),
             fontSize: 13,
             fontWeight: bold ? FontWeight.bold : FontWeight.normal,
           ),
@@ -985,28 +974,98 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
           _step('1', 'hometax.go.kr 접속 → 로그인\n(공동인증서 또는 카카오·네이버 간편인증)', primary, textColor),
           _step('2', '상단 메뉴: 세금신고 > 종합소득세 신고\n> 일반신고서 > 정기신고 (5.1~5.31)', primary, textColor),
           _step('3', '기본정보 확인 → 근로소득 조회\n(회사가 신고한 내역이 자동으로 뜹니다)', primary, textColor),
-          _step('4', '소득공제 명세서 작성\n(주택자금·신용카드 등 — 앱의 \'소득공제\' 참고)', primary, textColor),
-          _step('5', '세액공제 명세서 작성\n(연금계좌·보험료·의료비 등 — 앱의 \'세액공제\' 참고)', primary, textColor),
+          // **고른 항목 이름을 그대로 넣는다.** 모두에게 같은 일곱 줄이면 그건
+          // 가이드가 아니라 매뉴얼이다. 「앱의 '소득공제' 참고」는 앱 안 어디를
+          // 보라는 건지도 모호했다.
+          _step('4', '소득공제 명세서 — ${_incomeDeductionNames()}', primary, textColor),
+          _step('5', '세액공제 명세서 — ${_taxCreditNames()}', primary, textColor),
           _step('6', '계산 결과 확인 → 납부·환급세액 확인', primary, textColor),
           _step('7', '신고서 제출 → 환급 시 환급계좌 등록', primary, textColor),
           const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Icon(Icons.schedule_rounded, color: Colors.orange, size: 16),
-              const SizedBox(width: 8),
-              Expanded(child: Text(
-                '신고 기한: 매년 5월 1일 ~ 5월 31일\n기한 초과 시 무신고 가산세 20% + 납부 지연 가산세 발생'.keepWords,
-                style: const TextStyle(color: Colors.orange, fontSize: 12, height: 1.5),
-              )),
-            ]),
-          ),
+          _deadlineNotice(),
         ],
       ),
+    );
+  }
+
+  /// 4단계에서 넣을 소득공제 — 이 사람에게 실제로 값이 있는 것만.
+  String _incomeDeductionNames() {
+    final v = <String>[
+      if (_creditCardDeduction > 0) '신용카드 등 ${comma(_creditCardDeduction)}원',
+      if (_mortgageDeduction > 0) '주택자금 ${comma(_mortgageDeduction)}원',
+      if (_insuranceDeduction > 0) '4대보험 ${comma(_insuranceDeduction)}원',
+    ];
+    return v.isEmpty ? '해당 없음 — 인적공제는 홈택스가 채워줘요' : v.join(' · ');
+  }
+
+  /// 사업자 가이드 4단계 — 인적공제는 홈택스가 채우니 직접 넣을 것만 짚는다.
+  String _businessDeductionNames() {
+    final items =
+        (_businessDraft?['items'] as List<Map<String, dynamic>>?) ?? const [];
+    final names = [
+      for (final it in items)
+        if (it['isHeader'] != true &&
+            (it['title'] as String? ?? '').contains(RegExp('노란우산|연금')))
+          it['title'] as String,
+    ];
+    return names.isEmpty
+        ? '인적공제는 자동, 노란우산·연금보험료는 직접입력'
+        : '인적공제는 자동 · ${names.join(' · ')}는 직접입력';
+  }
+
+  /// 5단계에서 넣을 세액공제.
+  String _taxCreditNames() {
+    final v = <String>[
+      if (_pensionCredit > 0) '연금계좌 ${comma(_pensionCredit)}원',
+      if (_insurancePremiumCredit > 0) '보장성보험 ${comma(_insurancePremiumCredit)}원',
+      if (_medicalCredit > 0) '의료비 ${comma(_medicalCredit)}원',
+      if (_donationCredit > 0) '기부금 ${comma(_donationCredit)}원',
+      if (_rentCredit > 0) '월세액 ${comma(_rentCredit)}원',
+      if (_childTaxCredit > 0) '자녀 ${comma(_childTaxCredit)}원',
+    ];
+    return v.isEmpty
+        ? '아직 넣은 게 없어요 — 홈 04 「놓치기 쉬운 공제」를 먼저 보세요'
+        : v.join(' · ');
+  }
+
+  /// 신고 기한 안내.
+  ///
+  /// **「기한 초과 시 무신고 가산세 20%」는 모두에게 참이 아니다.**
+  /// 국세기본법 §47의2①은 가산세를 「그 신고로 **납부하여야 할 세액**」에
+  /// 곱한다. 돌려받을 사람은 납부할 세액이 없어 가산세도 0이다. 환급 신고를
+  /// 하러 온 사람에게 20%를 경고하면 겁만 주고 정확하지도 않다.
+  ///
+  /// 이 화면은 기납부세액을 안 받아 환급인지 납부인지 단정할 수 없다. 그래서
+  /// 한쪽으로 단정하는 대신 **규칙을 그대로 쓴다** — 어느 쪽이든 참이다.
+  ///
+  /// (예외는 복식부기의무자 — §47의2②1호가 「수입금액 × 7/10000」과 20% 중
+  /// 큰 금액을 매겨서 환급이어도 붙는다. 이 앱은 복식부기의무자면 계산을
+  /// 멈추므로 여기까지 오지 않는다.)
+  ///
+  /// 그리고 환급이면 기한을 놓쳐도 길이 있다 — 5년 내 경정청구(§45의2).
+  Widget _deadlineNotice() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.line(context)),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(Icons.schedule_rounded, size: 16, color: AppTheme.inkTertiary(context)),
+        const SizedBox(width: 8),
+        Expanded(
+          // **조건을 나누지 않고 규칙을 그대로 쓴다.** 이 화면은 기납부세액을
+          // 안 받아서 이 사람이 환급인지 납부인지 단정할 수 없다. 단정하지
+          // 못하면 규칙을 말하는 게 맞다 — 어느 쪽이든 참이다.
+          child: Text(
+              ('신고 기한은 5월 1일~31일이에요. 무신고 가산세 20%는 «납부할 세액»이 '
+                      '있을 때 붙어요 — 돌려받는 신고라면 늦어도 가산세는 안 붙고, '
+                      '5년 안에 경정청구로 받을 수 있어요.')
+                  .keepWords,
+              style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context),
+                  height: 1.55)),
+        ),
+      ]),
     );
   }
 

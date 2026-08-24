@@ -440,11 +440,15 @@ class _ReportFormLoaderState extends State<ReportFormLoader> {
     }
     final d = _draft;
     if (d == null) {
+      // **진단을 안 돌렸어도 채운다.** 입력은 이미 스냅샷 한 곳에 모여 있으니
+      // 유형에 맞는 엔진을 부르기만 하면 된다 — 신고서에 세금 계산을 복제하는
+      // 게 아니다. 진단 초안이 있으면 그쪽이 이긴다(손으로 넣은 값까지 있다).
+      final auto = _snapshot == null ? null : draftFromSnapshot(_snapshot!);
       return TaxReportFormScreen(
         reportType: '종합소득세',
-        items: const [],
-        finalAmount: 0,
-        isRefund: true,
+        items: auto?.items ?? const [],
+        finalAmount: auto?.finalAmount ?? 0,
+        isRefund: auto?.isRefund ?? true,
         userType: widget.userType,
         snapshot: _snapshot,
       );

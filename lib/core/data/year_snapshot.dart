@@ -1,4 +1,6 @@
+import '../tax_engine/freelancer_tax.dart';
 import 'db_helper.dart';
+import 'deduction_catalog.dart';
 import 'expense_item.dart';
 import 'residence.dart';
 import 'year_coverage.dart';
@@ -252,4 +254,78 @@ class YearSnapshot {
     }
     return out;
   }
+}
+
+
+/// 스냅샷만으로 **가상 신고서를 채운다.**
+///
+/// 예전엔 신고서가 `getReportDraft` 하나만 읽어서, 진단을 안 돌리면 빈 서식이
+/// 떴다. 「연말에 열면 내 올해가 보인다」가 그 화면의 일인데 볼 게 없었다.
+///
+/// 세금 엔진을 신고서에 복제하는 게 아니다 — **입력을 한 곳에서 모았으니
+/// 부르기만 하면 된다.** 진단을 돌렸으면 그 초안이 이긴다(사용자가 손으로
+/// 넣은 값까지 들어 있어 더 정확하다).
+({List<Map<String, dynamic>> items, double finalAmount, bool isRefund})?
+    draftFromSnapshot(YearSnapshot s) {
+  if (s.isEmployee && s.laborIncome > 0) {
+    final est = estimateYearRefund(
+      amounts: s.deductions,
+      grossIncome: s.laborIncome,
+      dependentsIncludingSelf: 1 + ((s.profile['dependents'] as int?) ?? 0),
+      isHouseholdHead: isHouseholdHead(s.profile),
+      ownsHome: ownsHome(s.profile),
+      childrenCount: (s.profile['children_count_total'] as int?) ?? 0,
+    );
+    if (est.lines.isEmpty) return null;
+    return (
+      items: [
+        for (final l in est.lines) {'title': l.label, 'amount': l.amount},
+        {
+          'title': '환급받을 세액',
+          'amount': est.refund,
+          'isHeader': true,
+          'highlight': true,
+        },
+      ],
+      finalAmount: est.refund,
+      isRefund: true,
+    );
+  }
+
+  if (s.hasBusiness && s.businessIncome > 0) {
+    final code = s.profile['occupation_code'] as String?;
+    if (code == null) return null; // 업종을 모르면 경비율을 못 고른다
+    final months = s.year == DateTime.now().year ? DateTime.now().month : 12;
+    final r = FreelancerTaxCalculator.calculateTaxSimulation(
+      accumulatedIncome: s.businessIncome,
+      accumulatedOtherIncome: s.otherIncome,
+      inputMonths: months,
+      allowanceCount: (s.profile['dependents'] as int?) ?? 0,
+      occupationCode: code,
+      actualExpense: s.businessExpense > 0
+          ? (s.businessExpense / months) * 12
+          : null,
+      paysNationalPension: s.profile['pension_enrolled'] == true,
+      paysLocalHealth: s.profile['health_enrolled'] == true,
+    );
+    final refund = r.expectedRefundOrPayment >= 0;
+    return (
+      items: [
+        {'title': '사업 총수입', 'amount': r.annualEstimatedIncome},
+        {'title': '필요경비', 'amount': -r.estimatedExpense},
+        {'title': '과세표준', 'amount': r.taxBase},
+        {'title': '산출세액 (지방세 포함)', 'amount': r.annualTotalTax},
+        {'title': '이미 뗀 원천징수', 'amount': -r.annualEstimatedTotalWithholding},
+        {
+          'title': refund ? '환급받을 세액' : '더 낼 세액',
+          'amount': r.expectedRefundOrPayment.abs(),
+          'isHeader': true,
+          'highlight': true,
+        },
+      ],
+      finalAmount: r.expectedRefundOrPayment.abs(),
+      isRefund: refund,
+    );
+  }
+  return null;
 }
