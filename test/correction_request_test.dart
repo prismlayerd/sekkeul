@@ -64,6 +64,34 @@ void main() {
     }
   });
 
+  testWidgets('항목만 고르면 서류와 내는 방법이 보인다', (t) async {
+    t.view.physicalSize = const Size(390, 3000);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    await seedRealisticUser('직장인');
+    await t.pumpWidget(MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: const CorrectionRequestScreen(userType: '직장인')));
+    await t.pumpAndSettle();
+
+    // 열자마자는 「총급여를 읽지 못했습니다」만 — 여기까진 맞다.
+    expect(findKo('어떻게 내실 건가요?'), findsNothing);
+
+    // 항목 하나만 고르면 서류와 방식이 나와야 한다. 예전엔 총급여·결정세액·
+    // 금액을 전부 채워야(c.hasMissed) 나타나서, 만들어 놓고도 아무도 못 봤다.
+    await t.tap(findKo('월세액').first);
+    await t.pumpAndSettle();
+    await t.enterText(find.byType(TextField).last, '6000000');
+    await t.pumpAndSettle();
+
+    expect(findKo('같이 낼 서류'), findsWidgets);
+    expect(findKo('어떻게 내실 건가요?'), findsWidgets);
+    expect(findKo('세무서에 직접 내기'), findsWidgets);
+    expect(findKo('홈택스로 내기'), findsWidgets);
+  });
+
   test('고른 항목의 서류만 나온다', () {
     final picked = kDeductionCatalog.where((c) => c.id == 'rent').single;
     expect(picked.documents, isNotEmpty);

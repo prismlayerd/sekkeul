@@ -151,7 +151,13 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
             ] else
               _emptyMissed(),
 
-            if (c.hasMissed) ...[
+            // **항목만 고르면 보여준다.**
+            //
+            // 예전엔 이 아래 전부를 `c.hasMissed` 뒤에 숨겼다. 총급여·결정세액·
+            // 금액을 다 채워야 참이 되는 조건이라, 화면을 열면 「총급여를 읽지
+            // 못했습니다」 한 줄만 뜨고 서류도 방식 선택도 통째로 없었다.
+            // 무엇이 필요하고 어떻게 내는지는 금액과 상관없이 말할 수 있다.
+            if (_amounts.isNotEmpty) ...[
               // ── 같이 낼 서류 ──
               const SizedBox(height: 30),
               _documentSection(),
@@ -161,9 +167,16 @@ class _CorrectionRequestScreenState extends State<CorrectionRequestScreen> {
               _methodSection(c),
 
               const SizedBox(height: 22),
-              if (_method == _Method.hometax) _guideSection(c),
-              if (_method == _Method.paper) _paperSection(c),
+              if (c.isBlocked)
+                _blockedNotice('위 「그 해 기준 금액」을 채우면 환급액을 계산하고 '
+                    '서식까지 만들어 드려요.')
+              else ...[
+                if (_method == _Method.hometax) _guideSection(c),
+                if (_method == _Method.paper) _paperSection(c),
+              ],
+            ],
 
+            if (c.hasMissed) ...[
               const SizedBox(height: 28),
               _saveButton(c),
             ],

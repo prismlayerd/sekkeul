@@ -345,9 +345,16 @@ List<TaxStage> taxPipelineFor(String userType) {
       TaxStage(title: '홈택스 제출 가이드', subtitle: '5월 종합소득세를 어디에 어떻게 낼지 안내', badge: '5월 신고', build: _annualReport, railKey: 'annual', railLabel: '홈택스'),
     ];
   } else if (userType == 'N잡러') {
+    // **「빠진 공제 항목 찾기」를 뺐다.** 그 체크리스트(의료비·교육비·기부금·
+    // 보장성보험·연금저축·월세)를 합산 진단의 「공제 고르기」가 전부 다시
+    // 묻고 있었다 — 같은 걸 두 번 물은 것이다.
+    //
+    // 게다가 N잡러는 근로소득「만」이 아니라 확정신고가 의무다(소법 §73①1의
+    // 예외에 안 들어간다). 그러니 놓친 공제도 그 신고 하나에 다 넣으면 끝난다.
+    // 직장인은 다르다 — 확정신고 의무가 없어 「일부러 뺀 항목만 따로 신고」가
+    // 독립된 일이고, 그래서 그쪽은 그 단계를 유지한다.
     return const [
-      TaxStage(title: '빠진 공제 항목 찾기', subtitle: '연말정산에 안 넣은 공제로 추가 환급 진단', build: _missedDiagnosis, railKey: 'missed', railLabel: '빠진공제'),
-      TaxStage(title: '합산 진단', subtitle: '합치면 세율이 얼마나 오르는지 계산', build: _simulator, railKey: 'simulator', railLabel: '합산진단'),
+      TaxStage(title: '합산 진단', subtitle: '근로+사업을 합쳐 세금과 놓친 공제를 계산', build: _simulator, railKey: 'simulator', railLabel: '합산진단'),
       TaxStage(title: '가상 신고서', subtitle: '합산 결과가 자동 채워진 신고서 미리보기', build: _emptyForm, railKey: 'form', railLabel: '신고서'),
       TaxStage(title: '홈택스 신고 가이드', subtitle: '합산 신고 항목을 1:1 안내', badge: '5월 신고', build: _annualReport, railKey: 'annual', railLabel: '홈택스'),
     ];
