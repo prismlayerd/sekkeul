@@ -205,7 +205,9 @@ class _OtherIncomeSectionState extends State<OtherIncomeSection> {
             const SizedBox(height: 10),
             _field('보증금 (합계)', _deposit),
             const SizedBox(height: 4),
-            Text('3채부터는 보증금 중 3억원 초과분도 총수입에 들어가요 (시행령 §53③1).'
+            Text('3채부터는 보증금 중 3억원 초과분의 3.1%(그중 60%)가 총수입에 '
+                    '들어가요. 연중 보증금이 같다고 보고 계산하니, 중간에 바뀌었으면 '
+                    '실제와 조금 다를 수 있어요.'
                 .keepWords,
                 style: AppTheme.sans(AppTheme.tsXS, tert, height: 1.45)),
           ],

@@ -99,20 +99,29 @@ void main() {
           isTrue);
     });
 
-    test('3주택 + 보증금 3억 초과면 판정을 보류한다', () {
-      // 간주임대료에 쓰이는 정기예금이자율은 재정경제부령 고시라 앱이 검증한
-      // 값을 갖고 있지 않다. 모르는 값으로 단정하느니 모른다고 말한다.
-      final t = only(const OtherIncome(
-          rentalRent: 15000000, houseCount: 3, deposit: 500000000));
-      expect(t.undecided, isTrue);
-      expect(hasUndecided([t]), isTrue);
+    test('간주임대료는 (보증금 − 3억) × 60% × 3.1% (시행령 §53③1, 규칙 §23①)', () {
+      // 5억이면 (5억 − 3억) × 0.6 × 0.031 = 372만원.
+      expect(deemedRentalIncome(500000000), closeTo(3720000, 1));
+      // 3억 이하면 0 — 뺄 게 없다.
+      expect(deemedRentalIncome(300000000), 0);
+      expect(deemedRentalIncome(100000000), 0);
+    });
 
-      // 보증금이 3억 이하면 간주임대료가 0이라 보류할 이유가 없다.
-      expect(
-          only(const OtherIncome(
-                  rentalRent: 15000000, houseCount: 3, deposit: 200000000))
-              .undecided,
-          isFalse);
+    test('3주택은 보증금이 총수입에 더해져 문턱을 넘길 수 있다', () {
+      // 월세 1,800만은 아래인데 간주임대료 372만을 더하면 2,172만 → 넘는다.
+      final t = only(const OtherIncome(
+          rentalRent: 18000000, houseCount: 3, deposit: 500000000));
+      expect(t.over, isTrue);
+      expect(t.amount, closeTo(21720000, 1));
+      expect(t.consequence, contains('간주임대료'));
+    });
+
+    test('2주택은 보증금을 안 센다', () {
+      // 간주임대료는 3주택 이상만이다(시행령 §53③1).
+      final t = only(const OtherIncome(
+          rentalRent: 18000000, houseCount: 2, deposit: 500000000));
+      expect(t.over, isFalse);
+      expect(t.amount, 18000000);
     });
 
     test('아무것도 없으면 목록도 비어 있다', () {

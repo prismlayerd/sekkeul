@@ -118,6 +118,25 @@ class OtherIncomeStore {
 
 const double _twentyMillion = 20000000;
 
+/// 간주임대료 계산에 쓰는 정기예금이자율 — **연 3.1%**.
+///
+/// 소득세법 시행규칙 §23① 「연 1천분의 31」 (시행 2026-07-01, 확인일 2026-08-24).
+/// 재정경제부령이라 **해마다 바뀔 수 있다** — 세법 유지보수 때 같이 본다.
+const double kDepositInterestRate = 0.031;
+
+/// 간주임대료 — 3주택 이상일 때 보증금이 총수입에 들어가는 몫.
+///
+/// 시행령 §53③1: (보증금 − 3억) × 60% × 정기예금이자율.
+///
+/// ponytail: 조문은 **적수**(월말 잔액 × 경과일수 ÷ 365)로 재는데, 여기서는
+/// 연중 보증금이 같다고 보고 근사한다. 앱이 월별 보증금 변동을 받지 않아서다 —
+/// 보증금이 중간에 바뀐 사람은 실제와 다를 수 있고, 화면이 그렇게 밝힌다.
+double deemedRentalIncome(double deposit) {
+  final over = deposit - 300000000;
+  if (over <= 0) return 0;
+  return over * 0.6 * kDepositInterestRate;
+}
+
 /// **급여 말고 들어온 돈이 신고 의무를 만드는가.**
 ///
 /// 근로소득「만」 있는 사람은 확정신고를 안 해도 된다(소법 §73①1). 그 「만」이
@@ -191,33 +210,35 @@ IncomeThreshold _rental(OtherIncome o) {
     );
   }
 
-  // 시행령 §53③1 — 3주택 이상이면 보증금도 총수입에 들어간다:
-  // (보증금 − 3억) × 60% × 정기예금이자율. **그 이자율은 재정경제부령 고시라
-  // 앱이 검증한 값을 갖고 있지 않다.** 모르는 값을 지어내 판정하느니 보류한다.
-  if (o.houseCount >= 3 && o.deposit > 300000000) {
-    return IncomeThreshold(
-      label: '주택임대소득',
-      amount: o.rentalRent,
-      limit: _twentyMillion,
-      over: o.rentalRent > _twentyMillion,
-      undecided: true,
-      consequence: '3주택 이상이라 보증금 중 3억원 초과분도 총수입에 들어가요'
-          '(간주임대료). 그 계산에 쓰이는 이자율은 해마다 고시돼서 앱이 단정할 수 '
-          '없어요 — 월세만으로는 ${o.rentalRent > _twentyMillion ? '이미 넘었고' : '아직 아래인데'}, '
-          '보증금까지 더하면 달라질 수 있어요.',
-    );
-  }
+  // 시행령 §53③1 — 3주택 이상이면 보증금 중 3억 초과분도 총수입에 들어간다.
+  final deemed = o.houseCount >= 3 ? deemedRentalIncome(o.deposit) : 0.0;
+  final total = o.rentalRent + deemed;
+  final over = total > _twentyMillion;
 
-  final over = o.rentalRent > _twentyMillion;
   return IncomeThreshold(
     label: '주택임대소득',
-    amount: o.rentalRent,
+    amount: total,
     limit: _twentyMillion,
     over: over,
-    consequence: over
-        ? '총수입 2,000만원을 넘어 종합과세예요.'
-        : '총수입 2,000만원까지는 14% 분리과세를 고를 수 있어요 (필요경비 50% 인정).',
+    consequence: [
+      if (deemed > 0)
+        '보증금 중 3억원 초과분의 간주임대료 ${_comma(deemed.round())}원이 '
+            '총수입에 더해졌어요 (시행령 §53③1).',
+      over
+          ? '총수입 2,000만원을 넘어 종합과세예요.'
+          : '총수입 2,000만원까지는 14% 분리과세를 고를 수 있어요 (필요경비 50% 인정).',
+    ].join(' '),
   );
+}
+
+String _comma(int n) {
+  final s = n.toString();
+  final b = StringBuffer();
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
+    b.write(s[i]);
+  }
+  return b.toString();
 }
 
 /// 확정신고를 해야 하는가 — 하나라도 문턱을 넘었으면 참.
