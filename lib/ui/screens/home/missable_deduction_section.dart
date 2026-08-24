@@ -12,7 +12,7 @@ import '../year_deduction_screen.dart';
 
 /// 홈 1장의 `04` — 유형에 따라 다른 것이 들어온다.
 ///
-/// - 직장인·N잡러 → **놓치기 쉬운 공제**
+/// - 직장인·N잡러 → **공제**
 /// - 프리랜서 → **장부 만들기** (세무 도구에도 그대로 남는다. 04는 지름길이고
 ///   05는 색인이다)
 ///
@@ -20,6 +20,10 @@ import '../year_deduction_screen.dart';
 /// 뒤에만 있었다. 연말정산 전에나 한 번 열어 볼 이름이라 아무도 미리 안 열었다.
 /// 「미리 돌려받을 금액이 보여야 앱을 더 쓴다」는 게 이 절을 홈으로 올린 이유고,
 /// 그래서 **접힌 상태에서 숫자가 보인다.**
+///
+/// **펼쳐도 목록을 늘어놓지 않는다.** 예전엔 후보 전부를 폈는데, 안경·산후조리원
+/// 처럼 해당하는 사람이 드문 이름이 첫 화면에 박혔다. 홈은 **적어 둔 것만**
+/// 보여주고, 고르는 일은 화면 안에서 한다.
 class MissableDeductionSection extends StatefulWidget {
   final String userType;
   const MissableDeductionSection({super.key, required this.userType});
@@ -59,12 +63,18 @@ class _MissableDeductionSectionState extends State<MissableDeductionSection> {
   double get _gross => (_profile?['gross_income'] as num?)?.toDouble() ?? 0;
   int get _children => (_profile?['children_count_total'] as int?) ?? 0;
 
+  /// 이 사람에게 걸리는 후보 — 개수를 세는 데만 쓴다(접힌 안내 문구).
   List<DeductionCategory> get _items => missableFor(
         residence: residenceOf(_profile),
         isHouseholdHead: isHouseholdHead(_profile),
         grossIncome: _gross,
         childrenCount: _children,
       );
+
+  /// **적어 둔 것만.** 카탈로그 전체에서 찾는다 — 거주 형태를 바꿨다고 이미
+  /// 적어 둔 금액이 홈에서 소리 없이 사라지면 안 된다.
+  List<DeductionCategory> get _entered =>
+      [for (final c in kDeductionCatalog) if ((_amounts[c.id] ?? 0) > 0) c];
 
   double get _refund => estimateYearRefund(
         amounts: _amounts,
@@ -93,7 +103,7 @@ class _MissableDeductionSectionState extends State<MissableDeductionSection> {
 
     return SectionAccordion(
       no: '04',
-      title: '놓치기 쉬운 공제',
+      title: '공제',
       // **아무것도 안 넣었으면 안내, 넣었으면 숫자.**
       // 빈 상태에 0원을 찍으면 "받을 게 없다"로 읽힌다 — 아직 안 물어봤을 뿐인데.
       collapsed: Padding(
@@ -110,7 +120,8 @@ class _MissableDeductionSectionState extends State<MissableDeductionSection> {
             : Text(
                 filled
                     ? '적어 두셨어요. 홈택스 신고 때 그대로 쓰시면 돼요.'.keepWords
-                    : '간소화에 안 나오는 것들이에요. ${_items.length}가지 확인해보세요.'
+                    : '홈택스가 자동으로 안 챙겨주는 공제예요. '
+                            '${_items.length}가지 해당돼요.'
                         .keepWords,
                 style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5)),
       ),
@@ -123,37 +134,33 @@ class _MissableDeductionSectionState extends State<MissableDeductionSection> {
     final sub = AppTheme.inkSecondary(context);
     final tert = AppTheme.inkTertiary(context);
     final accent = AppTheme.accentColor(context);
-    final items = _items;
+    final entered = _entered;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (items.isEmpty)
-          Text('내 정보를 채우면 해당하는 항목을 골라드려요.'.keepWords,
-              style: AppTheme.sans(AppTheme.tsSM, tert))
+        // 적어 둔 게 없으면 **아무 이름도 부르지 않는다.** 후보를 늘어놓으면
+        // 안 하는 항목이 대부분이라 홈이 남의 얘기로 채워진다.
+        if (entered.isEmpty)
+          Text(
+              _items.isEmpty
+                  ? '내 정보를 채우면 해당하는 공제를 골라드려요.'.keepWords
+                  : '아직 적어 둔 게 없어요. 들어가서 해당하는 것만 고르시면 돼요.'
+                      .keepWords,
+              style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5))
         else
-          for (final c in items)
+          for (final c in entered)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 7),
-              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              child: Row(children: [
                 Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(c.name.keepWords,
-                        style: AppTheme.sans(AppTheme.tsSM, ink,
-                            weight: FontWeight.w600)),
-                    const SizedBox(height: 2),
-                    Text(c.summary.keepWords,
-                        style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4)),
-                  ]),
+                  child: Text(c.name.keepWords,
+                      style: AppTheme.sans(AppTheme.tsSM, ink,
+                          weight: FontWeight.w600)),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                    (_amounts[c.id] ?? 0) > 0
-                        ? _won((_amounts[c.id] ?? 0).toDouble())
-                        : '—',
-                    style: AppTheme.serif(AppTheme.serifSM,
-                        (_amounts[c.id] ?? 0) > 0 ? ink : tert,
-                        spacing: -0.5)),
+                Text(_won((_amounts[c.id] ?? 0).toDouble()),
+                    style: AppTheme.serif(AppTheme.serifSM, ink, spacing: -0.5)),
               ]),
             ),
         const SizedBox(height: 10),
@@ -167,7 +174,7 @@ class _MissableDeductionSectionState extends State<MissableDeductionSection> {
               child: Row(children: [
                 const SizedBox(width: 14),
                 Expanded(
-                  child: Text(_amounts.isEmpty ? '금액 적어보기' : '고치기',
+                  child: Text(_amounts.isEmpty ? '공제 챙기러 가기' : '고치기',
                       style: AppTheme.sans(AppTheme.tsSM, sub)),
                 ),
                 const SizedBox(width: 8),

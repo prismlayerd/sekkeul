@@ -28,8 +28,13 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
   final int _year = DateTime.now().year;
   Map<String, dynamic>? _profile;
   Map<String, int> _saved = {};
-  Map<String, int> _amounts = {};
+  // 체크리스트를 둘로 나눴다. 각자 자기 맵만 올리므로 여기서 합친다 —
+  // 한쪽이 올린 맵으로 통째로 덮으면 다른 쪽 금액이 지워진다.
+  Map<String, int> _notAuto = {};
+  Map<String, int> _easyToMiss = {};
   bool _loading = true;
+
+  Map<String, int> get _amounts => {..._notAuto, ..._easyToMiss};
 
   @override
   void initState() {
@@ -50,7 +55,14 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
     setState(() {
       _profile = p;
       _saved = saved;
-      _amounts = Map.of(saved);
+      _notAuto = {
+        for (final e in saved.entries)
+          if (kNotAutoLoaded.contains(e.key)) e.key: e.value
+      };
+      _easyToMiss = {
+        for (final e in saved.entries)
+          if (!kNotAutoLoaded.contains(e.key)) e.key: e.value
+      };
       _loading = false;
     });
   }
@@ -105,6 +117,7 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
       grossIncome: _gross,
       childrenCount: _children,
     );
+    final split = splitMissable(cats);
     final est = _estimate;
 
     return Scaffold(
@@ -122,14 +135,13 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
           children: [
             AppTheme.ruleLabel(context, 'DEDUCTIONS $_year'),
             const SizedBox(height: 12),
-            Text('놓치기 쉬운 공제',
+            Text('공제',
                 textAlign: TextAlign.center,
                 style: AppTheme.display(AppTheme.serifLG, ink, spacing: 4)),
             const SizedBox(height: 10),
             Text(
-                '홈택스 간소화에 **안 나오는** 것들이에요. 몰라서 놓치기 쉬운데, '
-                        '적어 두면 5월 신고 때 그대로 쓸 수 있어요.'
-                    .replaceAll('**', '')
+                '홈택스 간소화에 안 나오는 것들이에요. 해당하는 것만 골라 적어 두면 '
+                        '5월 신고 때 그대로 쓸 수 있어요.'
                     .keepWords,
                 style: AppTheme.sans(AppTheme.tsBase, sub, height: 1.55)),
 
@@ -142,17 +154,49 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
             const SizedBox(height: 22),
             AppTheme.dashRule(context),
             const SizedBox(height: 16),
-            AppTheme.sectionHead(context, '01', '챙길 목록'),
+            AppTheme.sectionHead(context, '01', '자동으로 안 불러와져요'),
             const SizedBox(height: 6),
+            Text(
+                '집 관련 공제는 제도상 간소화에 안 실려요. 증명서를 직접 떼야 하는 '
+                        '대신 금액이 커요.'
+                    .keepWords,
+                style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.45)),
+            const SizedBox(height: 4),
             Text(_basisLine(residence, head),
                 style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.45)),
             const SizedBox(height: 10),
-            DeductionChecklist(
-              key: ValueKey('${residence}_$head'),
-              categories: cats,
-              initialAmounts: _saved,
-              onChanged: (a) => setState(() => _amounts = a),
-            ),
+            if (split.notAuto.isEmpty)
+              Text('지금 내 정보로는 해당하는 게 없어요.'.keepWords,
+                  style: AppTheme.sans(AppTheme.tsSM, tert))
+            else
+              DeductionChecklist(
+                key: ValueKey('notAuto_${residence}_$head'),
+                categories: split.notAuto,
+                initialAmounts: _saved,
+                onChanged: (a) => setState(() => _notAuto = a),
+              ),
+
+            const SizedBox(height: 22),
+            AppTheme.dashRule(context),
+            const SizedBox(height: 16),
+            AppTheme.sectionHead(context, '02', '놓치기 쉬워요'),
+            const SizedBox(height: 6),
+            Text(
+                '영수증을 직접 챙겨야 하는 것들이에요. 해당하는 게 없으면 '
+                        '그냥 넘어가세요.'
+                    .keepWords,
+                style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.45)),
+            const SizedBox(height: 10),
+            if (split.easyToMiss.isEmpty)
+              Text('지금 내 정보로는 해당하는 게 없어요.'.keepWords,
+                  style: AppTheme.sans(AppTheme.tsSM, tert))
+            else
+              DeductionChecklist(
+                key: ValueKey('easy_$_children'),
+                categories: split.easyToMiss,
+                initialAmounts: _saved,
+                onChanged: (a) => setState(() => _easyToMiss = a),
+              ),
 
             const SizedBox(height: 12),
             Text('의료비·교육비·기부금·보험료처럼 간소화에서 자동으로 나오는 건 '
@@ -163,7 +207,7 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
             const SizedBox(height: 22),
             AppTheme.dashRule(context),
             const SizedBox(height: 16),
-            AppTheme.sectionHead(context, '02', '예상 환급'),
+            AppTheme.sectionHead(context, '03', '예상 환급'),
             const SizedBox(height: 12),
             if (est.lines.isEmpty)
               Text('아직 고른 항목이 없어요.'.keepWords,

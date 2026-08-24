@@ -1047,7 +1047,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ),
           ),
           _slipRule(),
-          // 04는 유형에 따라 갈린다 — 직장인·N잡러는 놓치기 쉬운 공제,
+          // 04는 유형에 따라 갈린다 — 직장인·N잡러는 공제,
           // 프리랜서는 장부 만들기. 2장의 세무 도구·FAQ는 06·07이다.
           MissableDeductionSection(userType: _userType),
           _slipRule(),

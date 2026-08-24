@@ -36,7 +36,7 @@ void main() {
     }
 
     expect(find.byType(MissableDeductionSection), findsOneWidget);
-    expect(findKo('놓치기 쉬운 공제'), findsWidgets);
+    expect(findKo('공제'), findsWidgets);
     // 02의 링크는 04가 가져갔다 — 상시 입구가 둘이면 서로를 모른다.
     expect(findKo('카드 말고도 받을 게 더 있어요'), findsNothing);
   });
@@ -55,7 +55,7 @@ void main() {
 
     // 의료비·교육비·기부금·월세는 §59의4가 근로소득자 전용이라 남는 게 없다.
     expect(findKo('장부 만들기'), findsWidgets);
-    expect(findKo('놓치기 쉬운 공제'), findsNothing);
+    expect(find.byType(MissableDeductionSection), findsOneWidget);
   });
 
   testWidgets('화면이 프로필에 맞는 항목만 그린다', (t) async {
@@ -87,6 +87,83 @@ void main() {
   // 「올해 것만·공제 대상만」을 연말정산 진단 화면으로 보던 케이스가 있었다.
   // 그 화면이 사라졌고, 지금은 규칙이 cardBucket 하나에 모여 있어
   // year_snapshot_test가 같은 것을 더 촘촘히 지킨다.
+
+  testWidgets('홈 04는 적어 둔 것만 부른다', (t) async {
+    // 안경·산후조리원·종교기부금은 **해당하는 사람이 드물다.** 후보를 홈에
+    // 늘어놓으면 첫 화면이 남의 얘기로 찬다. 홈은 적어 둔 것만 말하고,
+    // 고르는 일은 04 화면 안에서 한다.
+    t.view.physicalSize = const Size(390, 1600);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    await seedRealisticUser('직장인');
+    await t.pumpWidget(MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+            body: SingleChildScrollView(
+                child: MissableDeductionSection(userType: '직장인')))));
+    await t.pumpAndSettle();
+
+    await t.tap(findKo('공제').first);
+    await t.pumpAndSettle();
+
+    expect(findKo('안경·콘택트렌즈'), findsNothing);
+    expect(findKo('산후조리원'), findsNothing);
+    expect(findKo('종교단체 기부금'), findsNothing);
+    expect(findKo('아직 적어 둔 게 없어요'), findsWidgets);
+  });
+
+  testWidgets('적어 두면 그것만 홈에 뜬다', (t) async {
+    t.view.physicalSize = const Size(390, 1600);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    await seedRealisticUser('직장인');
+    await YearDeductions.save(
+        DateTime.now().year, {'religiousDonation': 300000});
+
+    await t.pumpWidget(MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+            body: SingleChildScrollView(
+                child: MissableDeductionSection(userType: '직장인')))));
+    await t.pumpAndSettle();
+
+    await t.tap(findKo('공제').first);
+    await t.pumpAndSettle();
+
+    expect(findKo('종교단체 기부금'), findsWidgets);
+    // 안 적은 이웃 항목은 여전히 안 부른다.
+    expect(findKo('안경·콘택트렌즈'), findsNothing);
+  });
+
+  testWidgets('04 화면은 두 갈래로 나뉜다', (t) async {
+    t.view.physicalSize = const Size(390, 2400);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    await seedRealisticUser('직장인');
+    final p = await dbService.getProfile() ?? {};
+    await dbService.saveProfile({
+      ...p,
+      'residence_type': '월세',
+      'owns_house': false,
+      'is_household_head': true,
+    });
+
+    await t.pumpWidget(
+        MaterialApp(theme: AppTheme.lightTheme, home: const YearDeductionScreen()));
+    await t.pumpAndSettle();
+
+    expect(findKo('자동으로 안 불러와져요'), findsWidgets);
+    expect(findKo('놓치기 쉬워요'), findsWidgets);
+    // 갈래가 섞이지 않는다 — 월세는 앞쪽, 안경은 뒤쪽이다.
+    expect(findKo('월세액'), findsWidgets);
+    expect(findKo('안경·콘택트렌즈'), findsWidgets);
+  });
 
   test('저장한 값은 그대로 돌아오고, 0원은 남지 않는다', () async {
     dbService = InMemoryDatabaseHelper();

@@ -1030,7 +1030,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       if (_childTaxCredit > 0) '자녀 ${comma(_childTaxCredit)}원',
     ];
     return v.isEmpty
-        ? '아직 넣은 게 없어요 — 홈 04 「놓치기 쉬운 공제」를 먼저 보세요'
+        ? '아직 넣은 게 없어요 — 홈 04 「공제」를 먼저 보세요'
         : v.join(' · ');
   }
 

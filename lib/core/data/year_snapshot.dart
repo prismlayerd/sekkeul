@@ -247,7 +247,7 @@ class YearSnapshot {
       out.add(const MissingInput('부양가족 수', '내 정보'));
     }
     if (employee && deductions.isEmpty) {
-      out.add(const MissingInput('놓치기 쉬운 공제', '홈 04'));
+      out.add(const MissingInput('공제', '홈 04'));
     }
     if (business && bizExpense <= 0) {
       out.add(const MissingInput('사업 경비', '가계부 · 지출에 「사업」 표시'));

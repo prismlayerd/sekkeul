@@ -12,7 +12,7 @@ class DeductionCategory {
   final String findHint;  // 어디서 찾나 (간소화 자료)
   final String fileHint;  // 홈택스 어디에 입력하나
 
-  /// **간소화가 놓치는가.** 참이면 홈 04 「놓치기 쉬운 공제」에 뜬다.
+  /// **간소화가 놓치는가.** 참이면 04 「공제」 화면에 뜬다.
   ///
   /// 간소화에 자동으로 뜨는 금액을 앱에 옮겨 적게 하는 건 순수 손해다 —
   /// 사용자는 홈택스에서 클릭 한 번이면 되는 걸 두 번 한다. 앱의 값어치는
@@ -231,7 +231,25 @@ List<DeductionCategory> deductionsFor({
   return [for (final c in kDeductionCatalog) if (keep(c.id)) c];
 }
 
-/// 홈 04 「놓치기 쉬운 공제」에 그릴 목록 — 간소화가 놓치는 것만, 그중에서도
+/// 04 「공제」 안의 두 갈래.
+///
+/// - **자동으로 안 불러와지는 것** (월세·청약·전세대출): 제도상 간소화에 실리지
+///   않아 증명서를 직접 떼야 한다. 금액이 커서 놓치면 손해가 크고, 해당하는
+///   사람이면 거의 다 해당한다.
+/// - **놓치기 쉬운 것** (안경·산후조리원·교복·학원비·종교기부금): 영수증을 직접
+///   챙겨야 하는 자잘한 것들. **해당하는 사람이 적어 홈 밖으로 꺼내지 않는다** —
+///   안 하는 사람이 대부분인 항목을 첫 화면에 늘어놓으면 그게 소음이다.
+const Set<String> kNotAutoLoaded = {'rent', 'housingSubscription', 'leaseLoan'};
+
+/// [missableFor] 결과를 위 두 갈래로 가른다.
+({List<DeductionCategory> notAuto, List<DeductionCategory> easyToMiss}) splitMissable(
+        List<DeductionCategory> items) =>
+    (
+      notAuto: [for (final c in items) if (kNotAutoLoaded.contains(c.id)) c],
+      easyToMiss: [for (final c in items) if (!kNotAutoLoaded.contains(c.id)) c],
+    );
+
+/// 04 「공제」 화면에 그릴 목록 — 간소화가 놓치는 것만, 그중에서도
 /// 이 사람에게 걸리는 것만.
 ///
 /// 경정청구는 이 목록을 안 쓴다. 거기는 **모든 항목이 빈 채로** 있어야 한다 —
