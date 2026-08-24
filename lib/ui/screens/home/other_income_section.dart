@@ -41,9 +41,15 @@ class OtherIncomeSection extends StatefulWidget {
 class _OtherIncomeSectionState extends State<OtherIncomeSection> {
   final _financial = TextEditingController();
   final _rental = TextEditingController();
+  final _deposit = TextEditingController();
   OtherIncome _other = const OtherIncome();
   bool _editing = false;
   bool _loaded = false;
+
+  // 편집 중인 갈래 선택값 — 저장 전까지는 여기 있는다.
+  bool _withheld = true;
+  int _houses = 0;
+  bool _overHighValue = false;
 
   int get _year => widget.snapshot?.year ?? DateTime.now().year;
 
@@ -57,6 +63,7 @@ class _OtherIncomeSectionState extends State<OtherIncomeSection> {
   void dispose() {
     _financial.dispose();
     _rental.dispose();
+    _deposit.dispose();
     super.dispose();
   }
 
@@ -66,15 +73,26 @@ class _OtherIncomeSectionState extends State<OtherIncomeSection> {
     setState(() {
       _other = v;
       _loaded = true;
+      _withheld = v.financialWithheld;
+      _houses = v.houseCount;
+      _overHighValue = v.overHighValue;
       if (v.financial > 0) _financial.text = comma(v.financial.round());
-      if (v.rental > 0) _rental.text = comma(v.rental.round());
+      if (v.rentalRent > 0) _rental.text = comma(v.rentalRent.round());
+      if (v.deposit > 0) _deposit.text = comma(v.deposit.round());
     });
   }
 
   Future<void> _save() async {
     double read(TextEditingController c) =>
         double.tryParse(c.text.replaceAll(',', '')) ?? 0;
-    final v = OtherIncome(financial: read(_financial), rental: read(_rental));
+    final v = OtherIncome(
+      financial: read(_financial),
+      financialWithheld: _withheld,
+      rentalRent: read(_rental),
+      houseCount: _houses,
+      overHighValue: _houses == 1 && _overHighValue,
+      deposit: _houses >= 3 ? read(_deposit) : 0,
+    );
     await OtherIncomeStore.save(_year, v);
     if (!mounted) return;
     setState(() {
@@ -110,7 +128,11 @@ class _OtherIncomeSectionState extends State<OtherIncomeSection> {
                 ? '급여 말고 들어온 돈이 있으면 여기서 챙겨요.'.keepWords
                 : must
                     ? '5월에 종합소득세를 신고해야 해요.'.keepWords
-                    : '${list.length}가지가 있어요. 아직은 분리과세로 끝나요.'.keepWords,
+                    : hasUndecided(list)
+                        // 앱이 못 정한 게 있으면 「안 해도 된다」도 단정 못 한다.
+                        ? '확인이 더 필요한 게 있어요.'.keepWords
+                        : '${list.length}가지가 있어요. 아직은 분리과세로 끝나요.'
+                            .keepWords,
             style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5)),
       ),
       expanded: (_) => _expanded(context, list, must),
@@ -145,9 +167,49 @@ class _OtherIncomeSectionState extends State<OtherIncomeSection> {
         const SizedBox(height: 10),
         if (_editing) ...[
           _field('금융소득 (이자·배당)', _financial),
-          const SizedBox(height: 10),
-          _field('주택임대소득 (총수입)', _rental),
+          // §14③6 — 2,000만원 이하「이면서 원천징수된」 둘 다여야 분리과세다.
+          // 국외 계좌 이자·배당은 원천징수가 없어 금액과 무관하게 종합과세다.
+          if ((double.tryParse(_financial.text.replaceAll(',', '')) ?? 0) > 0) ...[
+            const SizedBox(height: 6),
+            _check('국내 은행·증권사에서 받았어요 (세금 떼고 들어옴)', _withheld,
+                (v) => setState(() => _withheld = v)),
+          ],
+          const SizedBox(height: 14),
+          AppTheme.dashRule(context),
           const SizedBox(height: 12),
+          // **주택 수를 먼저 묻는다.** 1주택은 대개 비과세라(§12 2호 나목)
+          // 금액을 물어봐야 소용이 없다 — 없는 신고 의무를 만들 뿐이다.
+          Text('임대하는 집이 몇 채인가요?'.keepWords,
+              style: AppTheme.sans(AppTheme.tsSM, ink)),
+          const SizedBox(height: 8),
+          Row(children: [
+            for (final n in [0, 1, 2, 3])
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: _chip(n == 0 ? '없음' : (n == 3 ? '3채+' : '$n채'),
+                      _houses == n, () => setState(() => _houses = n)),
+                ),
+              ),
+          ]),
+          if (_houses == 1) ...[
+            const SizedBox(height: 8),
+            _check('기준시가 12억원을 넘어요 (또는 국외 주택)', _overHighValue,
+                (v) => setState(() => _overHighValue = v)),
+          ],
+          if (_houses > 0) ...[
+            const SizedBox(height: 10),
+            _field('월세 (연 합계)', _rental),
+          ],
+          if (_houses >= 3) ...[
+            const SizedBox(height: 10),
+            _field('보증금 (합계)', _deposit),
+            const SizedBox(height: 4),
+            Text('3채부터는 보증금 중 3억원 초과분도 총수입에 들어가요 (시행령 §53③1).'
+                .keepWords,
+                style: AppTheme.sans(AppTheme.tsXS, tert, height: 1.45)),
+          ],
+          const SizedBox(height: 14),
           Row(children: [
             Expanded(child: _button('취소', () => setState(() => _editing = false),
                 outlined: true)),
@@ -156,7 +218,9 @@ class _OtherIncomeSectionState extends State<OtherIncomeSection> {
           ]),
         ] else ...[
           if (_other.financial > 0) _row('금융소득', _other.financial, ink, sub),
-          if (_other.rental > 0) _row('주택임대소득', _other.rental, ink, sub),
+          if (_other.rentalRent > 0)
+            _row('주택임대 월세', _other.rentalRent, ink, sub),
+          if (_other.deposit > 0) _row('임대보증금', _other.deposit, ink, sub),
           const SizedBox(height: 8),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -197,11 +261,18 @@ class _OtherIncomeSectionState extends State<OtherIncomeSection> {
                         weight: FontWeight.w600)),
               ),
               Text(
-                  t.limit <= 0
-                      ? '문턱 없음'
-                      : '${_won(t.amount)} / ${_won(t.limit)}',
-                  style: AppTheme.sans(AppTheme.tsXS,
-                      t.over ? AppTheme.colorDanger : tert)),
+                  t.undecided
+                      ? '확인 필요'
+                      : t.limit <= 0
+                          ? (t.over ? '문턱 없음' : '비과세')
+                          : '${_won(t.amount)} / ${_won(t.limit)}',
+                  style: AppTheme.sans(
+                      AppTheme.tsXS,
+                      t.undecided
+                          ? AppTheme.colorWarning
+                          : t.over
+                              ? AppTheme.colorDanger
+                              : tert)),
             ]),
             const SizedBox(height: 3),
             Text(t.consequence.keepWords,
@@ -249,6 +320,45 @@ class _OtherIncomeSectionState extends State<OtherIncomeSection> {
           Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
           Text(_won(amount),
               style: AppTheme.serif(AppTheme.serifSM, ink, spacing: -0.5)),
+        ]),
+      );
+
+  Widget _chip(String label, bool on, VoidCallback onTap) {
+    final ink = AppTheme.ink(context);
+    final accent = AppTheme.accentColor(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: on ? accent.withValues(alpha: 0.12) : null,
+          border: Border.all(
+              color: on ? accent : AppTheme.line(context), width: on ? 1.4 : 1.0),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(label,
+            style: AppTheme.sans(AppTheme.tsSM, on ? ink : AppTheme.inkSecondary(context),
+                weight: on ? FontWeight.w700 : FontWeight.w500)),
+      ),
+    );
+  }
+
+  Widget _check(String label, bool on, ValueChanged<bool> onChanged) =>
+      GestureDetector(
+        onTap: () => onChanged(!on),
+        behavior: HitTestBehavior.opaque,
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(on ? Icons.check_box_outlined : Icons.check_box_outline_blank_rounded,
+              size: 18,
+              color: on ? AppTheme.accentColor(context) : AppTheme.inkTertiary(context)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(label.keepWords,
+                style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context),
+                    height: 1.45)),
+          ),
         ]),
       );
 

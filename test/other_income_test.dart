@@ -58,19 +58,61 @@ void main() {
           isTrue);
     });
 
-    test('금융소득·임대소득은 2,000만이 문턱이다', () {
-      final under = incomeThresholds(
-          businessIncome: 0,
-          otherIncomeAmount: 0,
-          other: const OtherIncome(financial: 20000000, rental: 20000000));
-      expect(under.every((t) => !t.over), isTrue);
-      expect(mustFileReturn(under), isFalse, reason: '분리과세로 끝나는데 신고하라고 하면 안 된다');
+    IncomeThreshold only(OtherIncome o) => incomeThresholds(
+        businessIncome: 0, otherIncomeAmount: 0, other: o).single;
 
-      final over = incomeThresholds(
-          businessIncome: 0,
-          otherIncomeAmount: 0,
-          other: const OtherIncome(financial: 20000001));
-      expect(over.single.over, isTrue);
+    test('금융소득은 2,000만이 문턱이다', () {
+      expect(only(const OtherIncome(financial: 20000000)).over, isFalse);
+      expect(only(const OtherIncome(financial: 20000001)).over, isTrue);
+    });
+
+    test('원천징수 안 된 금융소득은 금액과 무관하게 종합과세 (§14③6)', () {
+      // 조문은 「2천만원 이하이면서 원천징수된」 **둘 다**를 요구한다.
+      // 국외 계좌 이자·배당은 원천징수가 없어 1원부터 종합과세다.
+      final t = only(const OtherIncome(financial: 1000000, financialWithheld: false));
+      expect(t.over, isTrue);
+      expect(t.limit, 0);
+    });
+
+    test('1주택은 비과세다 — 없는 신고 의무를 만들지 않는다 (§12 2호 나목)', () {
+      final t = only(const OtherIncome(rentalRent: 18000000, houseCount: 1));
+      expect(t.over, isFalse);
+      expect(t.consequence, contains('비과세'));
+      // 기준시가 12억을 넘으면 그 예외가 깨진다.
+      expect(
+          only(const OtherIncome(
+                  rentalRent: 18000000, houseCount: 1, overHighValue: true))
+              .over,
+          isFalse,
+          reason: '12억 초과라도 2,000만원 이하면 분리과세를 고를 수 있다');
+      expect(
+          only(const OtherIncome(
+                  rentalRent: 21000000, houseCount: 1, overHighValue: true))
+              .over,
+          isTrue);
+    });
+
+    test('2주택부터는 2,000만이 문턱이다', () {
+      expect(only(const OtherIncome(rentalRent: 20000000, houseCount: 2)).over,
+          isFalse);
+      expect(only(const OtherIncome(rentalRent: 20000001, houseCount: 2)).over,
+          isTrue);
+    });
+
+    test('3주택 + 보증금 3억 초과면 판정을 보류한다', () {
+      // 간주임대료에 쓰이는 정기예금이자율은 재정경제부령 고시라 앱이 검증한
+      // 값을 갖고 있지 않다. 모르는 값으로 단정하느니 모른다고 말한다.
+      final t = only(const OtherIncome(
+          rentalRent: 15000000, houseCount: 3, deposit: 500000000));
+      expect(t.undecided, isTrue);
+      expect(hasUndecided([t]), isTrue);
+
+      // 보증금이 3억 이하면 간주임대료가 0이라 보류할 이유가 없다.
+      expect(
+          only(const OtherIncome(
+                  rentalRent: 15000000, houseCount: 3, deposit: 200000000))
+              .undecided,
+          isFalse);
     });
 
     test('아무것도 없으면 목록도 비어 있다', () {
@@ -91,10 +133,19 @@ void main() {
 
     test('넣은 값이 그대로 돌아온다', () async {
       await OtherIncomeStore.save(
-          year, const OtherIncome(financial: 5000000, rental: 12000000));
+          year,
+          const OtherIncome(
+              financial: 5000000,
+              financialWithheld: false,
+              rentalRent: 12000000,
+              houseCount: 3,
+              deposit: 400000000));
       final v = await OtherIncomeStore.load(year);
       expect(v.financial, 5000000);
-      expect(v.rental, 12000000);
+      expect(v.financialWithheld, isFalse);
+      expect(v.rentalRent, 12000000);
+      expect(v.houseCount, 3);
+      expect(v.deposit, 400000000);
       expect(v.isEmpty, isFalse);
     });
 
