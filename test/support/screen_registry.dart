@@ -22,7 +22,6 @@ import 'package:secul/ui/screens/tax_record_import_screen.dart';
 import 'package:secul/ui/screens/tax_simulator_screen.dart';
 import 'package:secul/ui/screens/tax_tools_screen.dart';
 import 'package:secul/ui/screens/year_deduction_screen.dart';
-import 'package:secul/ui/screens/year_end_tax_screen.dart';
 import 'package:secul/ui/screens/acquisition_tax_screen.dart';
 import 'package:secul/ui/screens/basic_pension_screen.dart';
 import 'package:secul/ui/screens/beotimmok_loan_screen.dart';
@@ -178,7 +177,6 @@ final byTypeScreens = <(String, Widget Function(String))>[
     ('TaxRecordImportScreen', (u) => TaxRecordImportScreen(userType: u)),
     ('TaxSimulatorScreen', (u) => TaxSimulatorScreen(userType: u)),
     ('TaxToolsScreen', (u) => TaxToolsScreen(userType: u)),
-    ('YearEndTaxScreen', (u) => YearEndTaxScreen(userType: u)),
 ];
 
 /// 실제 사용자에 가까운 프로필 — **모든 불리언·카운트 컬럼을 채운다.**

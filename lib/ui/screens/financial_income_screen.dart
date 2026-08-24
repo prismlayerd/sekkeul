@@ -145,13 +145,13 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: (isOverThreshold ? Colors.redAccent : primary).withValues(alpha: 0.08),
+                        color: (isOverThreshold ? AppTheme.colorDanger : primary).withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(children: [
                         Icon(
                           isOverThreshold ? Icons.warning_rounded : Icons.check_circle_outline_rounded,
-                          color: isOverThreshold ? Colors.redAccent : primary,
+                          color: isOverThreshold ? AppTheme.colorDanger : primary,
                           size: 16,
                         ),
                         const SizedBox(width: 8),
@@ -160,7 +160,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
                               ? '합계 ${_toManwon(totalFinancial)} — 2,000만원 초과, 종합과세 의무 신고'
                               : '합계 ${_toManwon(totalFinancial)} — 2,000만원 이하, 분리과세 완납',
                           style: TextStyle(
-                            color: isOverThreshold ? Colors.redAccent : primary,
+                            color: isOverThreshold ? AppTheme.colorDanger : primary,
                             fontSize: 12, fontWeight: FontWeight.w600,
                           ),
                         )),
@@ -199,12 +199,12 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
+                  color: AppTheme.colorWarning.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                  border: Border.all(color: AppTheme.colorWarning.withValues(alpha: 0.3)),
                 ),
                 child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+                  const Icon(Icons.warning_amber_rounded, color: AppTheme.colorWarning, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -271,14 +271,14 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            const Icon(Icons.assignment_rounded, color: Colors.redAccent, size: 20),
+            const Icon(Icons.assignment_rounded, color: AppTheme.colorDanger, size: 20),
             const SizedBox(width: 8),
             Text('종합과세 대상 — 5월 신고 필요'.keepWords,
                 style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 12),
           Text('5월에 더 낼 세금 ${_toManwon(r.additionalTaxBurden)}',
-              style: const TextStyle(color: Colors.redAccent, fontSize: 30, fontWeight: FontWeight.w900)),
+              style: const TextStyle(color: AppTheme.colorDanger, fontSize: 30, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
           Text('(지방소득세 10% 별도)'.keepWords,
               style: TextStyle(color: subColor, fontSize: 12)),
@@ -287,18 +287,18 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
           const SizedBox(height: 6),
           _resultRow('비교과세로 매겨진 세금', _toManwon(r.comprehensiveTaxAmount), subColor, textColor),
           const SizedBox(height: 6),
-          _resultRow('차액 — 5월에 더 낼 세금', _toManwon(r.additionalTaxBurden), subColor, Colors.redAccent),
+          _resultRow('차액 — 5월에 더 낼 세금', _toManwon(r.additionalTaxBurden), subColor, AppTheme.colorDanger),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.redAccent.withValues(alpha: 0.1),
+              color: AppTheme.colorDanger.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.event_note_rounded, color: Colors.redAccent, size: 14),
+              const Icon(Icons.event_note_rounded, color: AppTheme.colorDanger, size: 14),
               const SizedBox(width: 6),
-              Text('5월 종합소득세 신고 대상'.keepWords, style: const TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600)),
+              Text('5월 종합소득세 신고 대상'.keepWords, style: const TextStyle(color: AppTheme.colorDanger, fontSize: 12, fontWeight: FontWeight.w600)),
             ]),
           ),
         ],

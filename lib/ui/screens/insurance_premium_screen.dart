@@ -127,7 +127,7 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
                         '보장성보험 (12%) ${general > 1000000 ? "— 한도 100만 초과" : ""}',
                         _toManwon(generalCredit),
                         subColor,
-                        general > 1000000 ? Colors.orange : textColor,
+                        general > 1000000 ? AppTheme.colorWarning : textColor,
                       ),
                     if (disabled > 0) ...[
                       const SizedBox(height: 8),
@@ -135,7 +135,7 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
                         '장애인전용보험 (15%) ${disabled > 1000000 ? "— 한도 100만 초과" : ""}',
                         _toManwon(disabledCredit),
                         subColor,
-                        disabled > 1000000 ? Colors.orange : textColor,
+                        disabled > 1000000 ? AppTheme.colorWarning : textColor,
                       ),
                     ],
                     if (credit >= 270000) ...[

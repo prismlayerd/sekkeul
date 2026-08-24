@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/db_helper.dart';
-import 'package:secul/ui/screens/year_end_tax_screen.dart';
+import 'package:secul/core/data/expense_item.dart';
+import 'package:secul/ui/screens/tax_annual_report_screen.dart';
 
 import 'support/tax_law_reference.dart';
 
-/// **연말정산 화면 — 공제 내역표 전체를 조문과 대조한다.**
+/// **홈택스 가이드 — 공제 내역표 전체를 조문과 대조한다.**
 ///
-/// 이 화면은 사용자가 직접 타이핑해야 값이 나와서, 다른 화면을 훑던 값 대조가
-/// 닿지 않았다. 그런데 여기는 총급여부터 추가납부까지 **계산 사슬 전체**를
-/// 한 화면에 늘어놓는다 — 중간 한 칸만 틀려도 아래가 전부 어긋나므로,
-/// 앱에서 값 검증 밀도가 가장 높은 자리다.
+/// 총급여부터 결정세액까지 **계산 사슬 전체**를 한 화면에 늘어놓는 자리라,
+/// 중간 한 칸만 틀려도 아래가 전부 어긋난다 — 앱에서 값 검증 밀도가 가장 높다.
+/// 게다가 이 화면의 숫자는 사용자가 그대로 홈택스에 옮겨 적는다.
+///
+/// 원래 「연말정산 진단」 화면을 대상으로 하던 테스트다. 그 화면을 지우면서
+/// (하는 일이 전부 홈 02·04와 겹쳤다) 사슬이 남아 있는 이 화면으로 옮겼다.
+/// 옮기다 인적공제에서 본인이 빠진 것을 찾았다.
 ///
 /// 기대값은 `tax_law_reference.dart`에서 온다. 엔진 상수를 빌려오지 않는다 —
 /// 빌려오면 양쪽이 같이 틀린다.
@@ -18,18 +22,25 @@ void main() {
   /// `.keepWords`가 U+2060(word joiner)을 끼워 넣어서 그냥 비교하면 안 맞는다.
   String plain(String s) => s.replaceAll('⁠', '');
 
-  /// 화면의 모든 Text를 훑어 라벨 다음에 오는 금액을 집는다.
-  /// 표가 라벨/금액 두 Text를 나란히 그리므로 순서로 짝을 짓는다.
+  /// 화면의 모든 Text를 훑어 라벨 뒤에 오는 첫 금액을 집는다.
+  ///
+  /// 행이 「라벨 · 설명 · 금액」 세 조각으로 그려지는 자리가 있어서, 바로
+  /// 다음 하나만 보면 설명에 걸려 못 찾는다. 두 칸까지 본다.
   Map<String, String> readRows(WidgetTester t) {
     final texts = <String>[
       for (final w in t.allWidgets)
         if (w is Text)
           plain((w.data ?? w.textSpan?.toPlainText() ?? '').trim()),
     ];
+    final money = RegExp(r'^-?[\d,]+원?$');
     final rows = <String, String>{};
     for (var i = 0; i < texts.length - 1; i++) {
-      if (texts[i].isNotEmpty && RegExp(r'^-?[\d,]+원?$').hasMatch(texts[i + 1])) {
-        rows.putIfAbsent(texts[i], () => texts[i + 1]);
+      if (texts[i].isEmpty || money.hasMatch(texts[i])) continue;
+      for (var j = i + 1; j <= i + 2 && j < texts.length; j++) {
+        if (money.hasMatch(texts[j])) {
+          rows.putIfAbsent(texts[i], () => texts[j]);
+          break;
+        }
       }
     }
     return rows;
@@ -42,13 +53,13 @@ void main() {
     await dbService.initDatabase();
   });
 
-  testWidgets('공제 내역 11행이 전부 조문값과 일치한다', (t) async {
+  testWidgets('공제 내역 8행이 전부 조문값과 일치한다', (t) async {
     t.view.physicalSize = const Size(390, 6000);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.resetPhysicalSize);
 
     const gross = 50000000.0;
-    const credit = 12000000.0, debit = 6000000.0, prepaid = 1500000.0;
+    const credit = 12000000.0, debit = 6000000.0;
     const dependents = 1; // 부양가족 1명 → 인적공제는 본인 포함 2명
 
     await dbService.saveProfile({
@@ -56,21 +67,27 @@ void main() {
       'gross_income': gross,
       'dependents': dependents,
     });
+    // 카드 사용액은 타이핑이 아니라 가계부에서 온다(YearSnapshot). 화면 구성이
+    // 바뀌어도 안 흔들리고, 실제 사용자가 겪는 경로와 같다.
+    final y = DateTime.now().year;
+    for (final (id, amount, pay) in [
+      ('c', credit.toInt(), '신용카드'),
+      ('d', debit.toInt(), '체크+현금'),
+    ]) {
+      await dbService.insertExpense(ExpenseItem(
+        id: id,
+        date: DateTime(y, 3, 5),
+        amount: amount,
+        content: '',
+        category: '마트',
+        paymentMethod: pay,
+        userType: '직장인',
+      ));
+    }
 
     await t.pumpWidget(
-        const MaterialApp(home: YearEndTaxScreen(userType: '직장인')));
-    await t.pump(const Duration(milliseconds: 400));
-
-    final fields = find.byType(TextField);
-    expect(fields, findsNWidgets(4), reason: '입력칸 구성이 바뀌면 이 대조가 헛돈다');
-    for (final (i, v) in [gross, credit, debit, prepaid].indexed) {
-      await t.enterText(fields.at(i), v.toInt().toString());
-      await t.pump(const Duration(milliseconds: 200));
-    }
-    await t.tap(find.text('연말정산 진단하기'));
-    for (var i = 0; i < 6; i++) {
-      await t.pump(const Duration(milliseconds: 300));
-    }
+        const MaterialApp(home: TaxAnnualReportScreen(userType: '직장인')));
+    await t.pumpAndSettle();
 
     final rows = readRows(t);
 
@@ -100,17 +117,14 @@ void main() {
           reason: '"$label" — 조문 기대 ${expected.round()}');
     }
 
-    row('총급여', gross);
     row('근로소득공제', labor);
     row('인적공제 (본인 포함 ${1 + dependents}인)', personal);
     row('4대보험 소득공제', insurance);
-    row('신용카드 소득공제', card);
+    row('신용카드 등 소득공제', card);
     row('과세표준', base);
     row('산출세액', calculated);
     row('근로소득세액공제', laborCredit);
     row('결정세액', decided);
-    row('기납부세액', prepaid);
-    row('추가 납부', decided - prepaid);
   });
 
   /// 값이 맞아도 라벨이 틀리면 사용자는 틀린 걸 읽는다.
@@ -133,19 +147,9 @@ void main() {
 
       await t.pumpWidget(MaterialApp(
         // 키를 안 주면 State가 재사용돼 initState가 다시 안 돈다.
-        home: YearEndTaxScreen(key: ValueKey(deps), userType: '직장인'),
+        home: TaxAnnualReportScreen(key: ValueKey(deps), userType: '직장인'),
       ));
-      await t.pump(const Duration(milliseconds: 400));
-
-      final fields = find.byType(TextField);
-      for (final (i, v) in ['50000000', '0', '0', '0'].indexed) {
-        await t.enterText(fields.at(i), v);
-        await t.pump(const Duration(milliseconds: 200));
-      }
-      await t.tap(find.text('연말정산 진단하기'));
-      for (var i = 0; i < 6; i++) {
-        await t.pump(const Duration(milliseconds: 300));
-      }
+      await t.pumpAndSettle();
 
       final rows = readRows(t);
       final label = rows.keys.firstWhere((k) => k.startsWith('인적공제'),

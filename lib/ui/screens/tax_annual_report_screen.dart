@@ -32,6 +32,12 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
 
   // ── 자동 수집 데이터 ──
   double _grossIncome = 0.0;
+  /// **본인을 포함한** 인적공제 대상 인원.
+  ///
+  /// 프로필의 `dependents`는 본인을 뺀 부양가족 수다. 예전엔 그 값을 그대로
+  /// 150만원에 곱해서 **본인 기본공제 150만원이 통째로 빠졌다**(소법 §50①1).
+  /// 부양가족 0명인 사람은 인적공제가 0원으로 찍혔고, 과세표준이 그만큼 커져
+  /// 세금이 과대 계산됐다. 이 화면의 숫자는 그대로 홈택스에 옮겨 적힌다.
   int _dependentCount = 1;
   bool _isMonthlyRent = false;
   double _monthlyRent = 0.0;
@@ -108,7 +114,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
       final profile = await dbService.getProfile();
       if (profile != null) {
         _grossIncome = profile['gross_income'] as double? ?? 0.0;
-        _dependentCount = profile['dependents'] as int? ?? 1;
+        _dependentCount = 1 + ((profile['dependents'] as int?) ?? 0);
         _isMonthlyRent = profile['is_monthly_rent'] == true;
         _monthlyRent = profile['monthly_rent'] as double? ?? 0.0;
         _isHomeless = _isMonthlyRent;
@@ -458,7 +464,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
         const SizedBox(height: 10),
         _buildAutoItem('근로소득공제', '총급여 구간별 자동 계산', _laborDeduction, primary, textColor, subColor, cardColor),
         const SizedBox(height: 8),
-        _buildAutoItem('인적공제 $_dependentCount인', '1인당 150만원 × $_dependentCount인', _personalExemption, primary, textColor, subColor, cardColor),
+        _buildAutoItem('인적공제 (본인 포함 $_dependentCount인)', '1인당 150만원 × $_dependentCount인', _personalExemption, primary, textColor, subColor, cardColor),
         const SizedBox(height: 8),
         _buildAutoItem('4대보험 소득공제', '연금·건강·고용보험 자동 계산', _insuranceDeduction, primary, textColor, subColor, cardColor),
         const SizedBox(height: 8),
@@ -607,7 +613,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
                 style: TextStyle(color: primary, fontSize: 13, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 14),
-          _autoRow('부양가족', '$_dependentCount인 (인적공제 ${comma((_dependentCount * TaxRates.basicDeductionPerPerson).toInt())}원)', textColor, subColor),
+          _autoRow('인적공제 대상', '본인 포함 $_dependentCount인 (인적공제 ${comma((_dependentCount * TaxRates.basicDeductionPerPerson).toInt())}원)', textColor, subColor),
           _autoRow('연간 신용카드 지출', _annualCreditCard > 0 ? '${comma(_annualCreditCard.toInt())}원' : '기록 없음', textColor, subColor),
           _autoRow('연간 체크카드·현금', _annualDebitCash > 0 ? '${comma(_annualDebitCash.toInt())}원' : '기록 없음', textColor, subColor),
           if (_isMonthlyRent && _monthlyRent > 0)

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/db_helper.dart';
-import 'package:secul/core/data/expense_item.dart';
 import 'package:secul/core/data/year_deductions.dart';
 import 'package:secul/ui/screens/home_screen.dart';
 import 'package:secul/ui/screens/home/missable_deduction_section.dart';
 import 'package:secul/ui/screens/year_deduction_screen.dart';
-import 'package:secul/ui/screens/year_end_tax_screen.dart';
 import 'package:secul/ui/theme/app_theme.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -86,45 +84,9 @@ void main() {
     expect(findKo('주택청약저축'), findsNothing);
   });
 
-  testWidgets('연말정산 진단은 올해 것만, 공제 대상만 센다', (t) async {
-    t.view.physicalSize = const Size(390, 1600);
-    t.view.devicePixelRatio = 1.0;
-    addTearDown(t.view.resetPhysicalSize);
-    addTearDown(t.view.resetDevicePixelRatio);
-
-    await seedRealisticUser('직장인');
-    final year = DateTime.now().year;
-    for (final e in [
-      (DateTime(year, 3, 2), 1000000, '신용카드'),
-      (DateTime(year - 1, 3, 2), 5000000, '신용카드'), // 작년 — 세면 안 된다
-      (DateTime(year, 4, 2), 700000, '기타'),          // 영수증 없음 — 공제 대상 아님
-    ]) {
-      await dbService.insertExpense(ExpenseItem(
-        id: 'x${e.$1.year}${e.$1.month}${e.$3}',
-        date: e.$1,
-        amount: e.$2,
-        content: '',
-        category: '기타',
-        paymentMethod: e.$3,
-        userType: '직장인',
-      ));
-    }
-
-    await t.pumpWidget(MaterialApp(
-        theme: AppTheme.lightTheme,
-        home: const YearEndTaxScreen(userType: '직장인')));
-    await t.pumpAndSettle();
-
-    final ctrls = t
-        .widgetList<TextField>(find.byType(TextField))
-        .map((w) => w.controller?.text ?? '')
-        .toList();
-    expect(ctrls.any((c) => c.contains('5,000,000') || c.contains('6,000,000')),
-        isFalse,
-        reason: '작년 지출이 올해 카드 사용액에 섞였다');
-    expect(ctrls.any((c) => c.contains('700,000')), isFalse,
-        reason: '「기타」 결제수단은 카드공제 대상이 아니다');
-  });
+  // 「올해 것만·공제 대상만」을 연말정산 진단 화면으로 보던 케이스가 있었다.
+  // 그 화면이 사라졌고, 지금은 규칙이 cardBucket 하나에 모여 있어
+  // year_snapshot_test가 같은 것을 더 촘촘히 지킨다.
 
   test('저장한 값은 그대로 돌아오고, 0원은 남지 않는다', () async {
     dbService = InMemoryDatabaseHelper();

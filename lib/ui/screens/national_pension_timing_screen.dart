@@ -157,7 +157,7 @@ class _NationalPensionTimingScreenState
                 isEarly
                     ? Icons.arrow_back_rounded
                     : Icons.arrow_forward_rounded,
-                color: isEarly ? Colors.orange : primary,
+                color: isEarly ? AppTheme.colorWarning : primary,
                 size: 18,
               ),
               const SizedBox(width: 8),
@@ -231,14 +231,14 @@ class _NationalPensionTimingScreenState
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                   color:
-                                      isEarly ? Colors.orange : primary,
+                                      isEarly ? AppTheme.colorWarning : primary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600)),
                           Text(diffPct,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                   color:
-                                      isEarly ? Colors.orange : primary,
+                                      isEarly ? AppTheme.colorWarning : primary,
                                   fontSize: 12)),
                         ],
                       )),

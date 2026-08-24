@@ -147,18 +147,18 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.redAccent.withValues(alpha: 0.1),
+                        color: AppTheme.colorDanger.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(children: [
                         const Icon(Icons.warning_rounded,
-                            color: Colors.redAccent, size: 14),
+                            color: AppTheme.colorDanger, size: 14),
                         const SizedBox(width: 6),
                         Text(
                             '최저임금 미달 (${won(_minimumWage2026)} 이상이어야 합니다)'
                                 .keepWords,
                             style: const TextStyle(
-                                color: Colors.redAccent,
+                                color: AppTheme.colorDanger,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500)),
                       ]),

@@ -19,7 +19,6 @@ import '../components/just_updated_card.dart';
 import '../components/update_card.dart';
 import 'onboarding_screen.dart';
 import 'my_info_screen.dart';
-import 'year_end_tax_screen.dart';
 import 'tax_simulator_screen.dart';
 import 'expense_calendar_screen.dart';
 import 'missed_deduction_diagnosis_screen.dart';
@@ -1259,16 +1258,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ? BannerCardData(
                 label: '신카 공제',
                 headline: '공제 문턱까지\n${_toWanWon(remaining)} 남았어요',
-                action: '신용카드 공제 확인',
+                action: '가계부에 기록하기',
                 glyph: '카',
-                onTap: () => _go(YearEndTaxScreen(userType: _userType)),
+                onTap: _goToLedger,
               )
             : BannerCardData(
                 label: '신카 공제',
                 headline: '공제 문턱 돌파!\n체크카드로 2배 공제예요',
-                action: '연말정산 진단',
+                action: '가계부에 기록하기',
                 glyph: '↑',
-                onTap: () => _go(YearEndTaxScreen(userType: _userType)),
+                onTap: _goToLedger,
               ));
       } else if (_userType == 'N잡러') {
         final rate = _marginalRate(_grossIncome);
@@ -1284,16 +1283,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ? BannerCardData(
                 label: '신카 공제',
                 headline: '공제 문턱까지\n${_toWanWon(remaining)} 남았어요',
-                action: '신용카드 공제 확인',
+                action: '가계부에 기록하기',
                 glyph: '카',
-                onTap: () => _go(YearEndTaxScreen(userType: _userType)),
+                onTap: _goToLedger,
               )
             : BannerCardData(
                 label: '신카 공제',
                 headline: '공제 문턱 돌파!\n체크카드로 2배 공제예요',
-                action: '연말정산 진단',
+                action: '가계부에 기록하기',
                 glyph: '↑',
-                onTap: () => _go(YearEndTaxScreen(userType: _userType)),
+                onTap: _goToLedger,
               ));
       } else {
         cards.add(BannerCardData(

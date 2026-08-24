@@ -164,7 +164,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color:
-                            (workDays >= 365 ? primary : Colors.orange)
+                            (workDays >= 365 ? primary : AppTheme.colorWarning)
                                 .withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(4),
                       ),
@@ -173,7 +173,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
                           workDays >= 365
                               ? Icons.check_circle_outline_rounded
                               : Icons.warning_amber_rounded,
-                          color: workDays >= 365 ? primary : Colors.orange,
+                          color: workDays >= 365 ? primary : AppTheme.colorWarning,
                           size: 16,
                         ),
                         const SizedBox(width: 8),
@@ -184,7 +184,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
                           style: TextStyle(
                             color: workDays >= 365
                                 ? primary
-                                : Colors.orange,
+                                : AppTheme.colorWarning,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -256,7 +256,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
                   ),
                   if (severance != null && workDays != null && workDays < 365)
                     Text('1년 미만 — 퇴직금 미발생'.keepWords,
-                        style: const TextStyle(color: Colors.orange, fontSize: 12)),
+                        style: const TextStyle(color: AppTheme.colorWarning, fontSize: 12)),
                   const SizedBox(height: 16),
                   if (severance != null && avgDailyWage != null) ...[
                     _row('1일 평균임금', _won(avgDailyWage), subColor, textColor),

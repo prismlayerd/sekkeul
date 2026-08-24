@@ -88,6 +88,19 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
             decidedTax: _decided),
       );
 
+  /// **철이 지나면 길이 바뀐다.**
+  ///
+  /// 5월 확정신고와 경정청구는 다른 절차다. 작년 귀속분은 5월 31일까지는
+  /// 확정신고로, 그 뒤엔 경정청구로 낸다(국세기본법 §45의2 — 법정신고기한이
+  /// **지난 후** 5년). 8월에 「5월 종합소득세 신고로」라고 하면 이미 닫힌 문을
+  /// 가리키는 것이고, 사용자는 내년 5월까지 기다려야 하는 줄 안다.
+  String _routeLine() {
+    final now = DateTime.now();
+    return now.month <= 5
+        ? '${now.year - 1}년 귀속은 5월 31일까지 종합소득세 확정신고로 내면 돼요.'
+        : '${now.year - 1}년 귀속은 5월이 지나서 경정청구로 내요 — 5년 안이면 아무 때나 돼요.';
+  }
+
   Future<void> _continueToForm(CorrectionReport c) async {
     await dbService.saveReportDraft(widget.userType,
         reportType: '종합소득세',
@@ -139,7 +152,9 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
                 textAlign: TextAlign.center,
                 style: AppTheme.display(AppTheme.serifLG, ink, spacing: 4)),
             const SizedBox(height: 10),
-            Text('깜빡해서 빠뜨렸거나, 회사에 알리고 싶지 않아 일부러 뺀 공제를 고르면, 5월 종합소득세 신고로 얼마를 더 돌려받을 수 있는지 계산해드려요.'.keepWords,
+            Text('깜빡해서 빠뜨렸거나, 회사에 알리고 싶지 않아 일부러 뺀 공제를 고르면 '
+                    '얼마를 더 돌려받을 수 있는지 계산해드려요. ${_routeLine()}'
+                .keepWords,
                 style: AppTheme.sans(AppTheme.tsBase, sub, height: 1.55)),
 
             // ── 기준 금액 ──
@@ -273,7 +288,7 @@ class _MissedDeductionDiagnosisScreenState extends State<MissedDeductionDiagnosi
           const SizedBox(height: 10),
           AppTheme.amount(context, comma(refund), color: accent),
           const SizedBox(height: 6),
-          Text('5월 종합소득세 신고로 돌려받을 수 있어요.'.keepWords,
+          Text(_routeLine(),
               style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
         ],
       ),

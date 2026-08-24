@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/db_helper.dart';
 import 'package:secul/ui/screens/tax_simulator_screen.dart';
-import 'package:secul/ui/screens/year_end_tax_screen.dart';
 import 'support/ko_finder.dart';
 
 /// 주택담보대출 한도를 가르는 두 조건(소법 §52⑥)을 **두 화면이 똑같이** 묻는지 본다.
@@ -48,41 +47,7 @@ void main() {
     expect(findKo('지금 한도: 연 2000만원'), findsOneWidget);
   });
 
-  testWidgets('연말정산 진단 — 같은 질문을 같은 문구로 묻는다', (t) async {
-    await seed();
-    sizeUp(t);
-    await t.pumpWidget(
-        const MaterialApp(home: YearEndTaxScreen(userType: '직장인', directWizardMode: true)));
-    await t.pumpAndSettle();
-
-    // 주담대 단계까지 '다음'을 눌러 이동한다.
-    var reached = false;
-    for (var i = 0; i < 10; i++) {
-      if (findKo('주담대·고향사랑을 확인할게요').evaluate().isNotEmpty) {
-        reached = true;
-        break;
-      }
-      final next = findKo('다음');
-      if (next.evaluate().isEmpty) break;
-      await t.tap(next.first);
-      await t.pumpAndSettle();
-    }
-    expect(reached, isTrue, reason: '위저드의 주담대 단계에 도달하지 못했다');
-
-    expect(findKo('금리가 고정이에요'), findsNothing, reason: '금액 전에는 묻지 않는다');
-
-    // 이 단계의 첫 금액칸이 주담대다.
-    await t.enterText(find.byType(TextField).first, '10000000');
-    await t.pumpAndSettle();
-
-    // 계산기와 **글자 그대로 같은** 질문이어야 한다 — 공용 위젯을 쓰므로 어긋날 수 없다.
-    expect(findKo('금리가 고정이에요'), findsOneWidget);
-    expect(findKo('처음부터 원금도 같이 갚아요'), findsOneWidget);
-    expect(findKo('지금 한도: 연 800만원'), findsOneWidget);
-
-    await t.tap(findKo('금리가 고정이에요'));
-    await t.tap(findKo('처음부터 원금도 같이 갚아요'));
-    await t.pumpAndSettle();
-    expect(findKo('지금 한도: 연 2000만원'), findsOneWidget);
-  });
+  // 「연말정산 진단」 화면이 같은 질문을 하는지 보던 케이스가 있었다. 그 화면을
+  // 지우면서(2026-08-24) 같이 걷었다 — MortgageConditionRows는 이제 종소세
+  // 진단 한 곳에서만 쓰이고, 위 케이스가 그걸 지킨다.
 }

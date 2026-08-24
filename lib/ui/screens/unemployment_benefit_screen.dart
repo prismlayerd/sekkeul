@@ -192,16 +192,16 @@ class _UnemploymentBenefitScreenState
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.1),
+                        color: AppTheme.colorWarning.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(children: [
                         const Icon(Icons.warning_amber_rounded,
-                            color: Colors.orange, size: 16),
+                            color: AppTheme.colorWarning, size: 16),
                         const SizedBox(width: 8),
                         Text('피보험기간 12개월 미만 — 수급 자격 없음'.keepWords,
                             style: const TextStyle(
-                                color: Colors.orange,
+                                color: AppTheme.colorWarning,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600)),
                       ]),
@@ -393,7 +393,7 @@ class _UnemploymentBenefitScreenState
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: r[1] == '수급 불가'
-                                    ? Colors.orange
+                                    ? AppTheme.colorWarning
                                     : textColor,
                                 fontSize: 13))),
                     Expanded(
@@ -401,7 +401,7 @@ class _UnemploymentBenefitScreenState
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: r[2] == '수급 불가'
-                                    ? Colors.orange
+                                    ? AppTheme.colorWarning
                                     : primary,
                                 fontSize: 13,
                                 fontWeight: r[2] == '수급 불가'

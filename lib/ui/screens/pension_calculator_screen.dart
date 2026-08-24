@@ -179,7 +179,7 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
                     if (savings > 6000000.0) ...[
                       const SizedBox(height: 8),
                       _resultRow('연금저축 한도 초과', '+${_toManwon(savings - 6000000.0)}는 공제 제외',
-                          subColor, Colors.orange),
+                          subColor, AppTheme.colorWarning),
                     ],
                     if (remainingRoom > 0) ...[
                       const SizedBox(height: 8),

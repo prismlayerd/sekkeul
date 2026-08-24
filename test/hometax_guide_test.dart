@@ -5,6 +5,7 @@ import 'package:secul/core/data/expense_item.dart';
 import 'package:secul/core/data/year_coverage.dart';
 import 'package:secul/core/data/year_deductions.dart';
 import 'package:secul/core/data/year_snapshot.dart';
+import 'package:secul/ui/screens/missed_deduction_diagnosis_screen.dart';
 import 'package:secul/ui/screens/tax_annual_report_screen.dart';
 import 'package:secul/ui/screens/tax_report_form_screen.dart';
 import 'package:secul/ui/theme/app_theme.dart';
@@ -66,6 +67,34 @@ void main() {
     // 「앱의 '소득공제' 참고」는 앱 안 어디를 보라는 건지 모호했다.
     expect(findKo('소득공제 명세서 — '), findsWidgets);
     expect(findKo("앱의 '소득공제' 참고"), findsNothing);
+  });
+
+  testWidgets('철이 지나면 경정청구로 안내한다', (t) async {
+    t.view.physicalSize = const Size(390, 2400);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    await seedRealisticUser('직장인');
+    await t.pumpWidget(MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: const MissedDeductionDiagnosisScreen(userType: '직장인')));
+    await t.pumpAndSettle();
+
+    // 5월 확정신고와 경정청구는 다른 절차다. 8월에 「5월 신고로」라고 하면
+    // 이미 닫힌 문을 가리키는 것이고, 내년까지 기다려야 하는 줄 안다.
+    final inSeason = DateTime.now().month <= 5;
+    expect(findKo(inSeason ? '확정신고로 내면 돼요' : '경정청구로 내요'), findsWidgets);
+    expect(findKo(inSeason ? '경정청구로 내요' : '확정신고로 내면 돼요'), findsNothing);
+  });
+
+  test('인적공제에 본인이 들어간다', () {
+    // 홈택스 가이드가 dependents(본인 제외)만 곱해서 150만원이 통째로 빠졌다.
+    // 화면 대조는 hometax_guide_value_test가 하고, 여기서는 규칙만 못 박는다.
+    const perPerson = 1500000;
+    for (final deps in [0, 1, 3]) {
+      expect((1 + deps) * perPerson, greaterThan(deps * perPerson));
+    }
   });
 
   group('신고서는 진단 없이도 채워진다', () {

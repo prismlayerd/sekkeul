@@ -9,15 +9,10 @@ import 'deduction_gate_screen.dart';
 import 'missed_deduction_diagnosis_screen.dart';
 import 'tax_annual_report_screen.dart';
 import 'tax_report_form_screen.dart';
-import 'pension_calculator_screen.dart';
-import 'dependent_deduction_screen.dart';
-import 'insurance_premium_screen.dart';
-import 'financial_income_screen.dart';
 import 'bookkeeping_guide_screen.dart';
 import '../theme/text_wrap.dart';
 
 /// 세무 도구 — 상단 4단계 신고 파이프라인(기록→진단→신고서→경정청구) +
-/// 하단 빠르게 계산(단발 계산기). 구 "5월에 챙길 항목" 나열을 대체.
 class TaxToolsScreen extends StatelessWidget {
   final String userType;
 
@@ -58,7 +53,11 @@ class TaxToolsScreen extends StatelessWidget {
 }
 
 /// 세무 도구 메뉴 본문 — 홈(리마인더 아래)과 '세무' 탭이 함께 쓰는 단일 위젯.
-/// 기록 -> 종합소득세 신고 준비(3단계) -> 경정청구 -> 빠르게 계산(서랍).
+/// 기록 → 종합소득세 신고 준비(3~4단계) → 경정청구 → 서류 준비 → 양식.
+///
+/// 「빠르게 계산」 서랍이 있었는데 **아무도 안 불렀다** — 화면에서 빠진 채
+/// 코드만 남아 있었다. 게다가 그 다섯 중 넷은 계산기 탭(56개)에 그대로
+/// 있어서, 살렸어도 같은 화면을 두 곳에서 여는 것이었다 (2026-08-24 삭제).
 class TaxToolsMenu extends StatefulWidget {
   final String userType;
   const TaxToolsMenu({super.key, required this.userType});
@@ -327,14 +326,6 @@ int taxRailIndex(String userType, String railKey) {
   return 1;
 }
 
-/// 빠른 계산 항목 (단발 계산기).
-class TaxItem {
-  final String title;
-  final String subtitle;
-  final Widget Function(String userType) build;
-  const TaxItem({required this.title, required this.subtitle, required this.build});
-}
-
 /// 홈 카드 라벨.
 String taxToolsLabel() => '세무 도구';
 
@@ -383,29 +374,6 @@ TaxStage? taxAmendedEntryFor(String userType) {
   return const TaxStage(title: '경정청구 준비하기', subtitle: '이전 연도에 놓친 공제를 5년 내 돌려받기', build: _amended);
 }
 
-/// 유형별 빠른 계산기 (평면, 무분류). 모두 기존 화면 재사용.
-/// 항목은 소득 종류에 맞춰 분기한다:
-/// - 간편장부·경비율: 사업소득이 있는 프리랜서·N잡러만 (직장인 제외).
-/// - 보험료 세액공제: 보장성보험은 근로소득 특별세액공제라 근로분이 있는
-///   직장인·N잡러만 (순수 사업소득자인 프리랜서 제외).
-List<TaxItem> taxQuickCalcsFor(String userType) {
-  const book = TaxItem(title: '간편장부·경비율', subtitle: '장부를 쓰면 경비 인정 폭이 넓어져요', build: _freelancerBook);
-  const pension = TaxItem(title: '연금저축·IRP 세액공제', subtitle: '연금계좌 납입액으로 줄어드는 세금', build: _pension);
-  const insurance = TaxItem(title: '보험료 세액공제', subtitle: '보장성보험 납입액 공제 (최대 27만원)', build: _insurance);
-  const dependent = TaxItem(title: '부양가족·자녀 공제', subtitle: '기본·추가 인적공제와 자녀세액공제', build: _dependent);
-  const financial = TaxItem(title: '금융소득 종합과세', subtitle: '이자·배당 2,000만원 초과 여부 판정', build: _financial);
-
-  if (userType == '프리랜서') {
-    // 사업소득만 → 간편장부 추가, 보장성보험 세액공제는 비대상이라 제외.
-    return const [book, pension, dependent, financial];
-  } else if (userType == 'N잡러') {
-    // 근로+사업 → 간편장부(사업분)와 보험료(근로분) 모두 적절.
-    return const [book, pension, insurance, dependent, financial];
-  }
-  // 직장인 — 사업소득 없음.
-  return const [pension, insurance, dependent, financial];
-}
-
 // const 참조용 top-level 빌더.
 // ① 기록(입력): 직장인만. 프리랜서·N잡러는 ①진단에 흡수됨.
 Widget _record(String u) => TaxRecordImportScreen(userType: u);
@@ -416,10 +384,3 @@ Widget _amended(String u) => CorrectionRequestScreen(userType: u);
 // ③ 가상 신고서: 저장된 ②진단 결과가 있으면 자동기입, 없으면 빈 상태로 안내.
 Widget _emptyForm(String u) => ReportFormLoader(userType: u);
 Widget _annualReport(String u) => TaxAnnualReportScreen(userType: u);
-Widget _pension(String u) => const PensionCalculatorScreen();
-Widget _dependent(String u) => const DependentDeductionScreen();
-Widget _insurance(String u) => const InsurancePremiumScreen();
-Widget _financial(String u) => const FinancialIncomeScreen();
-// 과거엔 가계부를 그대로 열었는데, 제목이 약속하는 "간편장부"는 나오지 않았다.
-// 기장의무 판정 + 가계부 기록으로 만든 장부(CSV)를 내주는 화면으로 연결한다.
-Widget _freelancerBook(String u) => BookkeepingGuideScreen(userType: u);
