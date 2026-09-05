@@ -12,7 +12,7 @@ class DidimdolLoanScreen extends StatefulWidget {
 
 class _DidimdolLoanScreenState extends State<DidimdolLoanScreen> {
   final _principalCtrl = TextEditingController();
-  final _rateCtrl = TextEditingController(text: '2.55');
+  final _rateCtrl = TextEditingController(text: _rateMin);
   final _yearsCtrl = TextEditingController(text: '30');
 
   /// 주택도시기금이 공시하는 금리 **범위**만 적는다.
@@ -21,9 +21,14 @@ class _DidimdolLoanScreenState extends State<DidimdolLoanScreen> {
   /// 두면 반드시 낡는데(종전 표는 2024년 값이라 1%p 가까이 낮았다), 정작 이
   /// 화면의 계산은 사용자가 넣은 금리로 한다. 그래서 범위 + 출처만 남긴다.
   ///
-  /// 출처: 주택도시기금 「내집마련 디딤돌대출」 상품 안내 — 확인일 2026-07-28.
-  static const _rateRange = '연 2.85% ~ 연 4.15%';
-  static const _rateSource = '주택도시기금 공시 (2026-07-28 확인)';
+  /// **입력 기본값도 여기서 끌어간다.** 범위만 갱신하고 기본값을 두면 갈라진다 —
+  /// 실제로 2.55%가 남아 범위(2.85~) 아래에서 이자가 적게 나왔다.
+  ///
+  /// 출처: 주택도시기금 「내집마련 디딤돌대출」 상품 안내 — 확인일 2026-09-05.
+  static const _rateMin = '2.85';
+  static const _rateMax = '4.15';
+  static const _rateRange = '연 $_rateMin% ~ 연 $_rateMax%';
+  static const _rateSource = '주택도시기금 공시 (2026-09-05 확인)';
 
   @override
   void dispose() {
@@ -35,7 +40,7 @@ class _DidimdolLoanScreenState extends State<DidimdolLoanScreen> {
 
   void _reset() => setState(() {
         _principalCtrl.clear();
-        _rateCtrl.text = '2.55';
+        _rateCtrl.text = _rateMin;
         _yearsCtrl.text = '30';
       });
 

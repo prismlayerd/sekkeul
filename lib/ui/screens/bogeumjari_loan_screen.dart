@@ -12,11 +12,23 @@ class BogeumjariLoanScreen extends StatefulWidget {
 
 class _BogeumjariLoanScreenState extends State<BogeumjariLoanScreen> {
   final _principalCtrl = TextEditingController();
-  final _rateCtrl = TextEditingController(text: '4.25');
+  final _rateCtrl = TextEditingController(text: _rateMin);
   final _yearsCtrl = TextEditingController(text: '30');
 
+  /// 한국주택금융공사가 공시하는 기본 금리 **범위**만 적는다.
+  ///
+  /// 만기(10~50년)·상품(u·아낌e·t)별 세부 표는 매월 공시로 바뀐다. 앱에 박아
+  /// 두면 반드시 낡고, 정작 이 화면의 계산은 사용자가 넣은 금리로 한다.
+  ///
+  /// **입력 기본값도 여기서 끌어간다.** 범위만 갱신하고 기본값을 두면 갈라진다 —
+  /// 실제로 4.25%가 남아 범위(4.90~) 아래에서 이자가 적게 나왔다.
+  ///
+  /// 출처: 한국주택금융공사 보금자리론 금리안내 — 공시일 2026-09-01, 확인일 2026-09-05.
+  static const _rateMin = '4.90';
+  static const _rateMax = '5.30';
+
   static const _rates = [
-    ('기본 금리', '4.90~5.30%'),
+    ('기본 금리', '$_rateMin~$_rateMax%'),
     ('전자약정·MyHome 앱', '-0.10%p'),
     ('신혼부부 (혼인 7년 이내)', '-0.20%p'),
     ('다자녀 (2자녀 이상)', '-0.40%p (3자녀 -0.50%p)'),
@@ -34,7 +46,7 @@ class _BogeumjariLoanScreenState extends State<BogeumjariLoanScreen> {
 
   void _reset() => setState(() {
         _principalCtrl.clear();
-        _rateCtrl.text = '4.25';
+        _rateCtrl.text = _rateMin;
         _yearsCtrl.text = '30';
       });
 
