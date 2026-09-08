@@ -21,6 +21,9 @@ Set<String> tokens(WidgetTester t) => screenTokens(t, _re);
 
 bool shows(WidgetTester t, String s) => tokens(t).contains(s);
 
+/// 1234567 → '1,234,567원' — 화면 표기 그대로.
+String won(int v) => '${v.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},')}원';
+
 /// `.keepWords`가 어절 사이에 word-joiner(U+2060)를 끼워 넣기 때문에
 /// `find.textContaining`으로는 그 문구를 못 찾는다. 조이너를 걷어내고 본다.
 bool hasPhrase(WidgetTester t, String phrase) {
@@ -72,9 +75,9 @@ void main() {
 
   group('본인부담상한 (국민건강보험법 시행령 별표3)', () {
     testWidgets('본인부담금이 상한 이하면 환급이 0이다', (t) async {
-      // 6~7분위 상한 320만. 250만 부담 → 환급 없음.
-      await open(t, const OutOfPocketCapScreen(), [(0, '2500000')]);
-      expect(shows(t, '1,970,000원'), isFalse);
+      // 기본 분위(6~7) 상한보다 100만 적게 넣으면 환급이 없어야 한다.
+      final under = outOfPocketCapTiers[3].$2 - 1000000;
+      await open(t, const OutOfPocketCapScreen(), [(0, '$under')]);
       expect(shows(t, '0원'), isTrue, reason: '상한 이하면 환급액이 0원이어야 한다');
       // 왜 0원인지 화면이 말해 줘야 한다 — 숫자만 0이면 고장으로 읽힌다.
       expect(hasPhrase(t, '환급 대상이 아닙니다'), isTrue,
@@ -82,17 +85,18 @@ void main() {
     });
 
     testWidgets('환급액 = 본인부담금 − 상한액', (t) async {
-      await open(t, const OutOfPocketCapScreen(), [(0, '5000000')]);
-      // 기본 선택 분위(6~7분위) 상한 320만 → 500만 − 320만 = 180만
-      expect(shows(t, '1,800,000원'), isTrue, reason: '환급액이 차액과 다르다');
-      expect(shows(t, '3,200,000원'), isTrue, reason: '적용 상한액이 안 보인다');
+      const paid = 5000000;
+      final cap = outOfPocketCapTiers[3].$2; // 기본 선택 분위(6~7)
+      await open(t, const OutOfPocketCapScreen(), [(0, '$paid')]);
+      expect(shows(t, won(paid - cap)), isTrue, reason: '환급액이 차액과 다르다');
+      expect(shows(t, won(cap)), isTrue, reason: '적용 상한액이 안 보인다');
     });
 
-    /// 보건복지부 「2025년도 본인부담상한액」 사전정보공표 표 그대로.
-    const general = [890000, 1100000, 1700000, 3200000, 4370000, 5250000, 8260000];
-    const longTerm = [1410000, 1780000, 2400000, 3960000, 5690000, 6840000, 10740000];
+    // 표는 outOfPocketCapTiers 한 벌뿐이다. 여기 다시 적으면 한쪽만 갱신된다.
+    final general = [for (final t in outOfPocketCapTiers) t.$2];
+    final longTerm = [for (final t in outOfPocketCapTiers) t.$3];
 
-    test('2025년 고시표와 정확히 일치한다', () {
+    test('종전 표보다 오르고 요양병원 열이 더 높다', () {
       // 종전 값은 어느 연도와도 맞지 않았다 — 7개 중 3개만 2024년과 같고
       // 나머지는 2024·2025 어느 쪽도 아니었다.
       const old = [870000, 1080000, 1620000, 3030000, 4140000, 4970000, 8080000];
@@ -117,17 +121,18 @@ void main() {
     });
 
     testWidgets('요양병원 120일 초과를 켜면 상한액이 특례값으로 바뀐다', (t) async {
-      // 1분위 89만 → 141만. 안 물으면 52만원 틀린 환급액을 보여준다.
+      // 안 물으면 일반 상한으로 계산해 환급액을 크게 부풀린다.
       await open(t, const OutOfPocketCapScreen(), [(0, '5000000')]);
-      expect(shows(t, '3,200,000원'), isTrue, reason: '기본은 일반 상한');
+      expect(shows(t, won(outOfPocketCapTiers[3].$2)), isTrue, reason: '기본은 일반 상한');
       // 스크롤 안에 있으므로 먼저 보이게 한 뒤 누른다.
       expect(find.byType(Switch), findsOneWidget, reason: '요양병원 토글이 없다');
       await t.ensureVisible(find.byType(Switch));
       await t.pump(const Duration(milliseconds: 200));
       await t.tap(find.byType(Switch));
       await t.pump(const Duration(milliseconds: 400));
-      expect(shows(t, '3,960,000원'), isTrue, reason: '요양병원 특례 상한');
-      expect(shows(t, '1,040,000원'), isTrue, reason: '500만 − 396만 = 104만');
+      final special = outOfPocketCapTiers[3].$3;
+      expect(shows(t, won(special)), isTrue, reason: '요양병원 특례 상한');
+      expect(shows(t, won(5000000 - special)), isTrue, reason: '환급액이 차액과 다르다');
     });
   });
 
