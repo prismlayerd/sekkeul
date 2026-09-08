@@ -55,6 +55,19 @@ void main() {
         [52000, 49000, 44000, 41000, 35000, 32000, 17000, 27000, 50000]);
   });
 
+  test('운전면허 수수료가 설명문과 계산기에서 같다', () {
+    // 공단 수수료표(safedriving larGuide011·larGuide02)와 시행규칙 별표36 제7호.
+    // 이 화면은 금액을 int가 아니라 '10,000원' 문자열로 들고 있어 ints()가 못 본다.
+    // 안 보는 사이 2종 8,000 · 1종 12,500 · 국제 8,500으로 굳어 있었다.
+    const fees = [10000, 15000, 16000, 21000, 8000, 7000, 9000];
+    final calc = won(read('driver_license_renewal_screen'));
+    final desc = won(benefit);
+    expect(fees.where((v) => !calc.contains(v)).toList(), isEmpty,
+        reason: '운전면허 수수료 — 계산기 화면에 없다');
+    expect(fees.where((v) => !desc.contains(v)).toList(), isEmpty,
+        reason: '운전면허 수수료 — 혜택 설명문에 없다');
+  });
+
   test('보육료 지원단가가 설명문과 계산기에서 같다', () {
     // 2026년 기본보육 단가(아이사랑). 0~2세는 3~5% 인상됐다.
     agree('보육료', 'daycare_fee_screen', [584000, 515000, 426000, 280000]);
