@@ -13,15 +13,24 @@ class JeonseInsuranceScreen extends StatefulWidget {
 class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
   final _depositCtrl = TextEditingController();
   final _monthsCtrl = TextEditingController(text: '24');
-  bool _isYouth = false;
+  int _ltvIdx = 0;
 
   /// HUG 전세보증금반환보증 요율은 보증금·주택유형·부채비율에 따라
   /// 0.115~0.154%로 갈린다(khug.or.kr). 계산기는 중간값을 쓴다 —
   /// 정확한 요율은 신청 시 산출되므로 예상액으로만 본다.
   static const _hugRate = 0.128;
-  static const _hfRateGeneral = 0.04;
-  static const _hfRateYouth = 0.02;
-  static const _sgiRate = 0.183;
+
+  /// HF 「일반전세지킴보증」 요율 — LTV 구간 → (표기, 연 %).
+  ///
+  /// 2025.3.1 신규 신청분부터 LTV로 갈린다(hf.go.kr 공지 597995).
+  /// 종전에는 0.04% 한 줄에 "청년 0.02%" 토글이 달려 있었다. 0.04%는
+  /// LTV 70% 이하일 때뿐이고, 80~90%면 0.18%로 네 배 반이다.
+  /// 청년 0.02%라는 요율은 안내에 없다 — 우대가구는 0.01~0.03%p 인하다.
+  static const _hfBands = <(String, double)>[
+    ('LTV 70% 이하', 0.04),
+    ('70% 초과 80% 이하', 0.11),
+    ('80% 초과 90% 이하', 0.18),
+  ];
 
   @override
   void dispose() {
@@ -33,20 +42,20 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
   void _reset() => setState(() {
         _depositCtrl.clear();
         _monthsCtrl.text = '24';
-        _isYouth = false;
+        _ltvIdx = 0;
       });
 
   int get _deposit => int.tryParse(_depositCtrl.text.replaceAll(',', '')) ?? 0;
   int get _months => int.tryParse(_monthsCtrl.text.replaceAll(',', '')) ?? 0;
 
-  ({int hug, int hf, int sgi})? get _result {
+  double get _hfRate => _hfBands[_ltvIdx].$2;
+
+  ({int hug, int hf})? get _result {
     if (_deposit <= 0 || _months <= 0 || _months > 120) return null;
     final years = _months / 12;
-    final hfRate = _isYouth ? _hfRateYouth : _hfRateGeneral;
     return (
       hug: (_deposit * _hugRate / 100 * years).round(),
-      hf: (_deposit * hfRate / 100 * years).round(),
-      sgi: (_deposit * _sgiRate / 100 * years).round(),
+      hf: (_deposit * _hfRate / 100 * years).round(),
     );
   }
 
@@ -77,7 +86,7 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('전세보증금과 보증기간을 입력하면\nHUG·HF·SGI 3개 기관 보증료를 한눈에 비교해드려요.'.keepWords,
+            Text('전세보증금과 보증기간을 입력하면\nHUG·HF 보증료를 나란히 볼 수 있어요.'.keepWords,
                 style: AppTheme.sans(AppTheme.tsLG, ink, height: 1.5)),
             const SizedBox(height: 24),
             Divider(height: 1, thickness: 1, color: line),
@@ -87,49 +96,43 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
             Divider(height: 1, thickness: 1, color: line),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('청년 할인 (HF)', style: AppTheme.sans(AppTheme.tsBase, ink)),
-                        const SizedBox(height: 2),
-                        Text('만 34세 이하 · HF 요율 0.02% 적용'.keepWords,
-                            style: AppTheme.sans(AppTheme.tsSM, sub)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () => setState(() => _isYouth = !_isYouth),
-                    child: Container(
-                      width: 44,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        color: _isYouth ? accent : line,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: AnimatedAlign(
-                        duration: const Duration(milliseconds: 180),
-                        alignment: _isYouth
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 3),
-                          child: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: AppTheme.backgroundColor(context),
-                              shape: BoxShape.circle,
+                  Text('HF 요율 구간 (LTV)', style: AppTheme.sans(AppTheme.tsBase, ink)),
+                  const SizedBox(height: 2),
+                  Text('LTV = (선순위채권 + 전세보증금) ÷ 주택가격'.keepWords,
+                      style: AppTheme.sans(AppTheme.tsSM, sub)),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      for (var i = 0; i < _hfBands.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 6),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _ltvIdx = i),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: _ltvIdx == i ? accentSoft : null,
+                                border: Border.all(
+                                    color: _ltvIdx == i ? accent : line),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text('${_hfBands[i].$2}%',
+                                  style: AppTheme.sans(AppTheme.tsSM,
+                                      _ltvIdx == i ? accent : sub,
+                                      weight: FontWeight.w600)),
                             ),
                           ),
                         ),
-                      ),
-                    ),
+                      ],
+                    ],
                   ),
+                  const SizedBox(height: 6),
+                  Text(_hfBands[_ltvIdx].$1,
+                      style: AppTheme.sans(AppTheme.tsSM, sub)),
                 ],
               ),
             ),
@@ -148,18 +151,7 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
               _institutionCard('HUG (주택도시보증공사)', _hugRate, r.hug, true,
                   accent, accentSoft, ink, sub, line),
               const SizedBox(height: 8),
-              _institutionCard(
-                  'HF (한국주택금융공사)',
-                  _isYouth ? _hfRateYouth : _hfRateGeneral,
-                  r.hf,
-                  false,
-                  accent,
-                  AppTheme.surface(context),
-                  ink,
-                  sub,
-                  line),
-              const SizedBox(height: 8),
-              _institutionCard('SGI (서울보증보험)', _sgiRate, r.sgi, false,
+              _institutionCard('HF (한국주택금융공사)', _hfRate, r.hf, false,
                   accent, AppTheme.surface(context), ink, sub, line),
               const SizedBox(height: 12),
               Container(
@@ -170,14 +162,12 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('3개 기관 비교',
+                    Text('두 기관 비교',
                         style: AppTheme.sans(AppTheme.tsMD, ink,
                             weight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     _compareRow('HUG', r.hug, r.hug, ink, sub, line),
-                    _compareRow(
-                        _isYouth ? 'HF (청년)' : 'HF', r.hf, r.hug, ink, sub, line),
-                    _compareRow('SGI', r.sgi, r.hug, ink, sub, line, last: true),
+                    _compareRow('HF', r.hf, r.hug, ink, sub, line, last: true),
                   ],
                 ),
               ),
@@ -186,10 +176,11 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
             _rateTable(sub, ink, line),
             const SizedBox(height: 16),
             _notice(sub, ink, const [
-              'HUG: 아파트 위주, 보증금 수도권 7억·지방 5억 이하.',
-              'HF: 아파트·다세대 등, 보증금 수도권 7억·지방 5억 이하.',
-              'SGI: 제한 없으나 보증료가 가장 높습니다.',
-              '청년 할인은 HF만 해당 (만 34세 이하 단독세대주).',
+              'HUG 보증한도: 수도권 7억원·그 밖의 지역 5억원.',
+              'HF 보증한도: 수도권 7억원·그 밖의 지역 5억원, 그리고 주택가액의 90%에서 선순위채권을 뺀 금액.',
+              'HF 요율은 2025.3.1 신규 신청분부터 LTV로 갈립니다. 우대가구는 0.01~0.03%p 더 내려갑니다.',
+              'HUG는 모바일 신청 3%, 보증료 일시납 3%를 깎아 줍니다.',
+              'SGI서울보증도 같은 보증을 팔지만 요율표를 원문으로 확인하지 못해 뺐습니다.',
               '정확한 요율·가입 조건은 각 기관 홈페이지를 확인하세요.',
             ]),
           ],
@@ -275,10 +266,8 @@ class _JeonseInsuranceScreenState extends State<JeonseInsuranceScreen> {
 
   Widget _rateTable(Color sub, Color ink, Color line) {
     final rows = [
-      ('HUG', '0.128%', '-'),
-      ('HF (일반)', '0.040%', '-'),
-      ('HF (청년)', '0.020%', '만 34세 이하'),
-      ('SGI', '0.183%', '-'),
+      ('HUG', '0.115~0.154%', '보증금·주택유형·부채비율'),
+      for (final (label, rate) in _hfBands) ('HF', '$rate%', label),
     ];
     return Container(
       decoration: BoxDecoration(
