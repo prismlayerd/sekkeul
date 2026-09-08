@@ -1526,10 +1526,10 @@ class _BenefitScreenState extends State<BenefitScreen> {
             child: Text(l.text, style: body));
       case BenefitLineKind.item:
         // 번호 항목은 번호가 곧 마커다. `·`를 덧붙이면 "· 1." 이 된다.
-        final m = RegExp(r'^(\d+)\.\s*').firstMatch(l.text);
-        return m == null
+        final n = l.numbering;
+        return n == null
             ? marked('·', l.text, body)
-            : marked('${m.group(1)}.', l.text.substring(m.end), body, width: 20);
+            : marked('${n.$1}.', n.$2, body, width: 20);
       case BenefitLineKind.sub:
         return marked('→', l.text, small, width: 14, indent: 12);
       case BenefitLineKind.note:

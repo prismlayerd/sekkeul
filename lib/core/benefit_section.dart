@@ -32,6 +32,16 @@ class BenefitLine {
   final String text;
 
   const BenefitLine(this.kind, this.text);
+
+  /// 번호 항목이면 `(번호, 본문)`, 아니면 null.
+  ///
+  /// **`1.7억원`은 번호가 아니다.** 마침표 뒤에 공백이 있어야 번호로 본다.
+  /// 판정을 화면 쪽에서 따로 하다가 재산 요건의 `· 1.7억원 미만`이
+  /// `1.` + `7억원 미만`으로 쪼개져 화면에 **7억원**으로 나왔다. 규칙은 여기 하나뿐이다.
+  (String, String)? get numbering {
+    final m = _numbered.firstMatch(text);
+    return m == null ? null : (m.group(1)!, text.substring(m.end));
+  }
 }
 
 class BenefitSection {
@@ -46,7 +56,7 @@ class BenefitSection {
   bool get isSummary => title == null && lines.every((l) => l.kind == BenefitLineKind.prose);
 }
 
-final _numbered = RegExp(r'^\d+\.\s');
+final _numbered = RegExp(r'^(\d+)\.\s');
 
 BenefitLine _lineOf(String raw) {
   final s = raw.trim();
@@ -56,6 +66,14 @@ BenefitLine _lineOf(String raw) {
   if (_numbered.hasMatch(s)) return BenefitLine(BenefitLineKind.item, s);
   return BenefitLine(BenefitLineKind.prose, s);
 }
+
+/// 뒤가 전부 산문이어도 제목인 줄이 있다 — 「신청 방법」·「취급 은행」처럼
+/// 항목 없이 설명만 딸린 절이 17개다(카탈로그 전수 확인).
+///
+/// 가르는 것은 **짧고 문장으로 안 끝난다**는 것뿐이다. 카드 맨 앞의 요약은
+/// 길거나 `.`·`요`·`다`로 끝나서 여기 안 걸린다 — 걸리면 요약을 잃는다.
+bool _looksLikeTitle(String s) =>
+    s.length <= 20 && !s.endsWith('.') && !s.endsWith('요') && !s.endsWith('다');
 
 /// [desc]를 절 목록으로 쪼갠다. 빈 줄 두 개가 절의 경계다.
 ///
@@ -70,7 +88,8 @@ List<BenefitSection> parseBenefitDesc(String desc) {
     final parsed = raw.map(_lineOf).toList();
     final headed = parsed.first.kind == BenefitLineKind.prose &&
         parsed.length > 1 &&
-        parsed.skip(1).any((l) => l.kind != BenefitLineKind.prose);
+        (parsed.skip(1).any((l) => l.kind != BenefitLineKind.prose) ||
+            _looksLikeTitle(parsed.first.text));
 
     out.add(BenefitSection(
       title: headed ? parsed.first.text : null,
