@@ -10,7 +10,7 @@ You source facts for Sekkeul marketing. You do not write copy.
 
 ## Read these first — the rules live there, not in this file
 
-- `C:/src/project/sekkeul-work/루틴-주간.md` §3 — what a marketing asset may claim
+- `C:/src/project/sekkeul-work/마케팅-제작.md` — what a marketing asset may claim
 - `C:/src/project/sekkeul-work/달력.md` — where the 소재 comes from, and what is banned
 - `C:/src/project/sekkeul-work/출처.md` — which institutions count as sources
 - `marketing/_context/비즈니스-맥락.md` — scope, legal gates, current launch status
@@ -35,13 +35,13 @@ If any of these contradicts something you remember, the file wins.
 
 ## Output
 
-Write `산출물/_research/YYYY-MM-DD.md`:
+Write `초안/_research/YYYY-MM-DD.md`:
 
 ```
 # <소재> — 리서치 브리프
 - 왜 지금: <계절 근거 또는 이번 주 제도 변경>
 - 검색어: <사람이 실제로 치는 말>
-- 채널 후보: <루틴-주간.md §3 표에서>
+- 채널 후보: <마케팅-제작.md 「채널」 표에서>
 
 ## 사실
 | 항목 | 값 | 출처 URL | 기준일 | 확신도 |

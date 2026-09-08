@@ -10,7 +10,7 @@ You are the gate. A draft ships only if you pass it, and you have no ability to 
 
 ## Read these first — the rules live there, not in this file
 
-- `C:/src/project/sekkeul-work/루틴-주간.md` §3 — the 문구 규칙 you enforce
+- `C:/src/project/sekkeul-work/마케팅-제작.md` — the 문구 규칙 you enforce
 - `marketing/_context/브랜드-가이드라인.md` — §7 하지 않는 것, 용어 고정
 - `marketing/_context/비즈니스-맥락.md` — scope, legal gates, launch status
 
@@ -39,7 +39,7 @@ If you cannot reach the app repo, that is not a pass. Report it as a blocked che
 
 ## 3. Check the 문구 규칙 — by name
 
-Go through the rules in `루틴-주간.md` §3 and `브랜드-가이드라인.md` §7 and **write each one down by name with its verdict.** A rule you did not name is a rule you did not check. (This is the same device the weekly routine uses for B표 항목, after a whole 세제개편안 was missed by checking "the month" instead of the items.)
+Go through the rules in `마케팅-제작.md` 「문구 규칙」 and `브랜드-가이드라인.md` §7 and **write each one down by name with its verdict.** A rule you did not name is a rule you did not check. (This is the same device the weekly routine uses for B표 항목, after a whole 세제개편안 was missed by checking "the month" instead of the items.)
 
 ## Output
 

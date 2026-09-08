@@ -50,7 +50,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SERIF = str(ROOT / "assets/fonts/NotoSerifKR-Variable.ttf")
 SANS = str(ROOT / "assets/fonts/DMSans-Variable.ttf")
 
-MAX_CARDS = 7              # 루틴-주간.md §3: 5~7장
+MAX_CARDS = 7              # 마케팅-제작.md 「채널」: 5~7장
 HEAD_PX = 46               # 레퍼런스는 작다. 여백이 주인공이고 글자는 손님이다
 BODY_PX = 24
 MICRO_PX = 15              # 라벨층 — 앱 테마의 11px/자간2.0 주석 라벨과 같은 장치
