@@ -22,19 +22,26 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
   double get _months => saneInput(
       double.tryParse(_monthsCtrl.text.replaceAll(',', '')) ?? 0, InputMax.months);
 
-  // 드림 통장: 연 4.5% 단리
-  double get _dreamInterest => _monthly * _months * 0.045 / 2 / 12 * _months;
-  double get _dreamTotal => _monthly * _months + _dreamInterest;
+  /// 기금 상품안내(FP07010301) 이율표의 '2년 이상~10년 이내' 칸.
+  /// 같은 표에서 주택청약종합저축은 3.1%다 — 2.8%는 1~2년 구간 값이라
+  /// 2년을 넘겨 비교하는 이 화면에서는 차이를 부풀린다.
+  static const _dreamRate = 0.045;
+  static const _normalRate = 0.031;
 
-  // 일반 통장: 연 2.8% 단리
-  double get _normalInterest => _monthly * _months * 0.028 / 2 / 12 * _months;
-  double get _normalTotal => _monthly * _months + _normalInterest;
+  /// 조특법 §87② — 주택청약종합저축 납입액 연 300만원 한도의 40%.
+  /// 240만원은 2023년까지의 한도였다.
+  static const _deductionCap = 3000000.0;
+
+  double _interest(double rate) =>
+      _monthly * _months * rate / 2 / 12 * _months;
+
+  double get _dreamTotal => _monthly * _months + _interest(_dreamRate);
+  double get _normalTotal => _monthly * _months + _interest(_normalRate);
 
   double get _diff => _dreamTotal - _normalTotal;
 
-  // 소득공제 환급: 연납입액 최대 240만원 × 40% × 16.5%
   double get _annualDeposit => _monthly * 12;
-  double get _deductionBase => _annualDeposit.clamp(0, 2400000) * 0.40;
+  double get _deductionBase => _annualDeposit.clamp(0, _deductionCap) * 0.40;
   double get _taxRefund => _deductionBase * 0.165;
 
   bool get _hasInput => _monthly > 0 && _months > 0;
@@ -94,9 +101,11 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
                         style:
                             AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
-                    _row('드림 통장 (연 4.5%)', _manwon(_dreamTotal), ink, sub),
+                    _row('드림 통장 (연 ${_dreamRate * 100}%)',
+                        _manwon(_dreamTotal), ink, sub),
                     const SizedBox(height: 8),
-                    _row('일반 통장 (연 2.8%)', _manwon(_normalTotal), ink, sub),
+                    _row('종합저축 (연 ${(_normalRate * 100).toStringAsFixed(1)}%)',
+                        _manwon(_normalTotal), ink, sub),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
@@ -131,7 +140,7 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                        '* 소득공제 한도 연 240만원. 세율 16.5%(소득세 15%+지방세 1.5%) 기준.'.keepWords,
+                        '* 소득공제 한도 연 300만원. 세율 16.5%(소득세 15%+지방세 1.5%) 기준.'.keepWords,
                         style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
@@ -141,11 +150,11 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
             _infoBox(
               '자격 및 혜택',
               [
-                '만 19~34세 무주택자',
+                '만 19~34세 무주택자 (병역 이행기간 최대 6년 인정)',
                 '연소득 5,000만원 이하',
-                '금리: 연 최대 4.5%',
-                '월 2만~100만원 자유납입',
-                '24개월 납입 시 청약 1순위 자격',
+                '2년 이상~10년 이내 연 4.5%, 그 전에는 2.3~2.8%',
+                '월 2만~50만원 자유납입',
+                '청약 1순위: 수도권 1년·그 밖 6개월·규제지역 2년',
               ],
               line,
               sub,
@@ -155,9 +164,9 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
             _infoBox(
               '소득공제 & 대출 연계',
               [
-                '연 납입액 최대 240만원 한도, 40% 소득공제',
-                '납입 240만원 기준 연 최대 약 396,000원 환급',
-                '당첨 후 분양가 80%까지 연 2%대 저금리 대출 연계',
+                '연 납입액 300만원 한도의 40% 소득공제 (총급여 7천만원 이하 무주택)',
+                '300만원을 채우면 120만원 공제 — 연 약 198,000원 환급',
+                '당첨 후 청년 주택드림 디딤돌: 연 2.4~4.15%, 미혼 3억·신혼 4억원',
               ],
               line,
               sub,
