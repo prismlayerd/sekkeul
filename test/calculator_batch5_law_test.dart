@@ -8,11 +8,11 @@ import 'package:secul/ui/screens/light_car_fuel_refund_screen.dart';
 
 import 'support/screen_probe.dart';
 
-/// 배치 5 — 경차 유류세 환급 · K-패스 · 복리.
+/// 배치 5 — 경차 유류세 환급 · 모두의카드 · 복리.
 ///
 /// 근거: 조세특례제한법 §111의2③ · 시행령 §112의2③ 경형자동차 유류세 환급
 ///        (휘발유·경유 리터당 250원, 부탄은 개별소비세 전액, 연 30만원 한도)
-///      / K-패스 — 월 15회 이상 60회까지 인정, 유형별 환급률
+///      / 모두의카드(옛 K-패스) — 기본형은 월 15회 이상, 유형별 환급률
 final _re = RegExp(r'\d+(,\d{3})*(\.\d+)?(만원|원|%|회)?');
 
 Set<String> tokens(WidgetTester t) => screenTokens(t, _re);
@@ -52,25 +52,28 @@ void main() {
     });
   });
 
-  group('K-패스', () {
-    testWidgets('일반 20% 환급 — 월 60회 상한이 걸린다', (t) async {
-      // 월 100회 이용 → 60회만 인정. 1회 1,500원 → 인정액 90,000원 × 20% = 18,000원
-      await open(t, const KpassClimateCardScreen(), [(0, '100'), (1, '1500')]);
-      const recognized = 60 * 1500.0;
-      // ignore: avoid_print
-      print('월 100회 → 60회 인정 · ${comma(recognized)} × 20% = ${comma(recognized * 0.2)}');
-      expectToken(t, '${comma(recognized * 0.2)}원', 'K패스 환급액(60회 상한)');
-      expectToken(t, '${comma(recognized * 0.8)}원', 'K패스 실질 부담액');
+  group('모두의카드', () {
+    testWidgets('기본형 일반 20% 환급', (t) async {
+      // 월 40회 × 1,500원 = 60,000원 → 20% = 12,000원, 실부담 48,000원.
+      await open(t, const KpassClimateCardScreen(), [(0, '40'), (1, '1500')]);
+      expectToken(t, '${comma(40 * 1500 * 0.2)}원', '기본형 환급액');
+      expectToken(t, '${comma(40 * 1500 * 0.8)}원', '기본형 실부담');
+    });
+
+    testWidgets('월 15회 미만이면 기본형 환급이 없다', (t) async {
+      // korea-pass.kr 환급기준 — "월 15회 이상 이용 시 지급".
+      await open(t, const KpassClimateCardScreen(), [(0, '14'), (1, '1500')]);
+      expectToken(t, '0원', '14회 이용 시 기본형 환급액');
+      expect(tokens(t).contains('${comma(14 * 1500 * 0.2)}원'), isFalse,
+          reason: '14회인데 환급액이 잡혔다');
     });
 
     testWidgets('유형이 오를수록 환급률도 오른다', (t) async {
       await open(t, const KpassClimateCardScreen(), [(0, '40'), (1, '1500')]);
       final base = tokens(t);
-      await t.tap(find.text('청년'));
+      await t.tap(find.text('청년·2자녀·어르신'));
       await t.pump(const Duration(milliseconds: 400));
-      final youth = tokens(t);
-      // 일반 20% → 청년 30%. 같은 이용량이면 환급액이 커져야 한다.
-      expect(youth, isNot(equals(base)),
+      expect(tokens(t), isNot(equals(base)),
           reason: '유형을 바꿨는데 환급액이 그대로다');
       expectToken(t, '${comma(40 * 1500 * 0.3)}원', '청년 30% 환급액');
     });
