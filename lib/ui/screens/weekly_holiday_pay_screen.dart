@@ -98,7 +98,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
                     height: 1.4)),
             const SizedBox(height: 8),
             Text(
-                '주 15시간 이상 일하면 주휴수당이 발생합니다. (${TaxRates.minimumWageYear} 최저임금 ${won(_minimumWage2026)})'
+                '4주 평균 주 15시간 이상 일하면 주휴수당이 발생합니다. (${TaxRates.minimumWageYear} 최저임금 ${won(_minimumWage2026)})'
                     .keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
@@ -286,7 +286,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
             const SizedBox(height: 20),
 
             CalcNote(
-              '• 주 15시간 이상 근무 시 주휴수당이 발생합니다.\n'
+              '• 4주 평균 주 15시간 이상 근무 시 주휴수당이 발생합니다(매주 근무시간이 같다고 가정한 계산입니다).\n'
               '• 주휴수당 = (주 근로시간 ÷ 40) × 8 × 시급\n'
               '• 최저임금 미달 시 사업주가 법적 책임을 집니다.\n'
               '• 하루 근무시간 8시간 초과분은 계산에서 제외했습니다.'.keepWords,
