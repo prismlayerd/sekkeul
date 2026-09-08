@@ -18,7 +18,7 @@ class DataVintage {
   /// 항목만큼만 진실이라서다 — 53개 중 12개만 다시 보고 이 값을 올리면
   /// 앱이 나머지 41개까지 그날 확인한 것처럼 말한다.
   /// 전수 대조를 끝낸 날에만 올라간다. `test/data_vintage_test.dart`가 지킨다.
-  static const String checkedOn = '2026-08-02';
+  static const String checkedOn = '2026-09-08';
 
   /// "2026년 8월" — 사용자에게 보여줄 짧은 표기.
   static String get label {

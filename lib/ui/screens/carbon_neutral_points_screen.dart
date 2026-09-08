@@ -139,7 +139,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('전자영수증(연 상한 10,000원)', won(_receiptPoints), ink, sub),
+                    _row('전자영수증(연 상한 70,000원)', won(_receiptPoints), ink, sub),
                     const SizedBox(height: 8),
                     _row('텀블러·다회용컵', won(_tumblerPoints), ink, sub),
                     const SizedBox(height: 8),
@@ -163,16 +163,21 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
               const SizedBox(height: 24),
             ],
             _infoBox('참여 방법', const [
-              '탄소중립포인트 녹색생활 실천 포털(cpoint.or.kr)에서 본인인증 후 회원가입',
-              '카드 포인트, 계좌이체, 그린카드 상품권 등 지급 방식 선택',
-              '제휴 소매점·배달앱·카드사 서비스와 연동하여 실적이 자동 집계됩니다.',
-              '만 14세 이상 대한민국 국민이 대상입니다.',
+              '탄소중립포인트 녹색생활 실천 포털(cpoint.or.kr)에서 회원가입',
+              '실천항목마다 참여 방법이 다릅니다 — 포털 매뉴얼을 보고 설정해야 적립됩니다',
+              '전자영수증은 참여기업 앱에서 전자영수증 발급을 켜 두어야 합니다',
+              '친환경제품 구매는 그린카드 실물카드로 에코머니 100포인트 이상 적립 +'
+                  ' 총 결제 2,000원 이상이거나, 참여기업에서 결제수단과 무관하게 2,000원 이상',
+              '지급은 한국환경산업기술원이 하고, 실천한 달의 다음 달 말일부터 들어옵니다',
             ], line, sub, ink),
             const SizedBox(height: 12),
             _infoBox('주요 유의사항', const [
               '1인당 연간 지급 한도는 7만원입니다.',
-              '전자영수증은 건당 10원이며 연간 7만원까지 인정됩니다.',
-              '적립 포인트는 매월 자동 정산되며, 세부 단가는 환경부 고시에 따라 변동될 수 있습니다.',
+              '여기 없는 실천항목도 있습니다 — 고품질 재활용품 300원/kg, 폐휴대폰 1,000원/개,'
+                  ' 공유자전거 100원/km, 잔반제로 100원/회, 무공해차 대여 100원/km,'
+                  ' 나무심기 3,000원/회, 장바구니 50원/회, 개인용기 식품포장 500원/회,'
+                  ' 재생원료 사용제품 100원/건',
+              '단가는 참여실적과 예산집행 상황에 따라 바뀔 수 있습니다.',
             ], line, sub, ink),
             const CalcDisclaimer(),
           ],
