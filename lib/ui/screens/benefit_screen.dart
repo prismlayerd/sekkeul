@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/benefit_section.dart';
 import '../../core/tax_engine/tax_rates.dart';
 import '../theme/app_theme.dart';
 import '../components/search_field.dart';
@@ -1359,6 +1360,9 @@ class _BenefitScreenState extends State<BenefitScreen> {
   String _query = '';
   bool _searchExpanded = false;
 
+  /// 지금 펼쳐진 카드 이름. 접혔을 때는 요약을 두 줄로 자른다.
+  final _openCards = <String>{};
+
   @override
   void dispose() {
     _searchCtrl.dispose();
@@ -1484,8 +1488,66 @@ class _BenefitScreenState extends State<BenefitScreen> {
     );
   }
 
+  /// 절 목록을 그린다. 제목은 굵게, 항목은 마커를 왼쪽에 세워 줄이 넘어가도
+  /// 본문이 어긋나지 않게 한다 — 문자열 한 덩어리로는 이게 안 됐다.
+  List<Widget> _descWidgets(List<BenefitSection> sections, Color ink, Color sub) {
+    final out = <Widget>[];
+    for (final s in sections) {
+      if (out.isNotEmpty) out.add(const SizedBox(height: 14));
+      if (s.title != null) {
+        out.add(Text(s.title!,
+            style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)));
+        out.add(const SizedBox(height: 6));
+      }
+      out.addAll(s.lines.map((l) => _descLine(l, sub)));
+    }
+    return out;
+  }
+
+  Widget _descLine(BenefitLine l, Color sub) {
+    final body = AppTheme.sans(AppTheme.tsSM, sub, height: 1.6);
+    final small = AppTheme.sans(AppTheme.tsXS, sub, height: 1.5);
+
+    Widget marked(String mark, String text, TextStyle st,
+        {double width = 12, double indent = 0}) {
+      return Padding(
+        padding: EdgeInsets.only(left: indent, bottom: 4),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(width: width, child: Text(mark, style: st)),
+          Expanded(child: Text(text, style: st)),
+        ]),
+      );
+    }
+
+    switch (l.kind) {
+      case BenefitLineKind.prose:
+        return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(l.text, style: body));
+      case BenefitLineKind.item:
+        // 번호 항목은 번호가 곧 마커다. `·`를 덧붙이면 "· 1." 이 된다.
+        final m = RegExp(r'^(\d+)\.\s*').firstMatch(l.text);
+        return m == null
+            ? marked('·', l.text, body)
+            : marked('${m.group(1)}.', l.text.substring(m.end), body, width: 20);
+      case BenefitLineKind.sub:
+        return marked('→', l.text, small, width: 14, indent: 12);
+      case BenefitLineKind.note:
+        return marked('※', l.text, small, width: 14);
+    }
+  }
+
   Widget _buildItem(BuildContext context, _Benefit benefit, Color ink,
       Color sub, Color line, Color accent) {
+    // 설명 한 덩어리를 절로 쪼갠다. 맨 앞 산문 덩어리는 요약이라 제목 옆으로 올린다 —
+    // 목록이 이름만 늘어서 있으면 무엇을 눌러야 할지 이름으로만 골라야 한다.
+    final sections = parseBenefitDesc(benefit.desc);
+    final hasLead = sections.isNotEmpty && sections.first.isSummary;
+    final summary =
+        hasLead ? sections.first.lines.map((l) => l.text).join(' ') : null;
+    final body = hasLead ? sections.sublist(1) : sections;
+    final open = _openCards.contains(benefit.name);
+
     return Column(
       children: [
         Theme(
@@ -1496,6 +1558,9 @@ class _BenefitScreenState extends State<BenefitScreen> {
             tilePadding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
             childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             expandedCrossAxisAlignment: CrossAxisAlignment.start,
+            onExpansionChanged: (v) => setState(() => v
+                ? _openCards.add(benefit.name)
+                : _openCards.remove(benefit.name)),
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1504,6 +1569,13 @@ class _BenefitScreenState extends State<BenefitScreen> {
                 const SizedBox(height: 2),
                 Text(benefit.amount,
                     style: AppTheme.sans(AppTheme.tsXS, accent, weight: FontWeight.w500)),
+                if (summary != null) ...[
+                  const SizedBox(height: 6),
+                  Text(summary,
+                      maxLines: open ? null : 2,
+                      overflow: open ? TextOverflow.clip : TextOverflow.ellipsis,
+                      style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.5)),
+                ],
               ],
             ),
             children: [
@@ -1511,7 +1583,7 @@ class _BenefitScreenState extends State<BenefitScreen> {
                 Builder(builder: benefit.eligibilityBuilder!),
                 const SizedBox(height: 12),
               ],
-              Text(benefit.desc, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.7)),
+              ..._descWidgets(body, ink, sub),
               if (benefit.calcBuilder != null) ...[
                 const SizedBox(height: 16),
                 GestureDetector(
