@@ -75,13 +75,24 @@ void main() {
       expectToken(t, '${comma(5 * rateAt(67) * 10000)}원', '67세 선형보간');
     });
 
-    testWidgets('월 375만원 상한이 걸린다', (t) async {
-      // 가입 상한인 공시가격 12억 · 75세 → 12 × 38.4만 = 460.8만원이지만 상한 375만.
+    testWidgets('상한은 나이마다 다르다 — 375만원 한 줄이 아니다', (t) async {
+      // HF 표의 12억원 열이 그대로 연령별 상한이다. 70세는 11억에서, 75세는
+      // 10억에서, 80세는 9억에서 꺾인다. 55~65세는 12억까지 꺾이지 않는다.
+      //   70세 341.4만 · 75세 366.6만 · 80세 406.0만
+      // 종전에는 375만원 하나로 잘라서, 80세 12억이면 31만원을 적게 말하고
+      // 70세 12억이면 341.4만원인데 375만원까지 열어 줬다.
       await open(t, const HousingPensionScreen(), [(0, '75'), (1, '120000')]);
       expect(12 * rateAt(75) * 10000, closeTo(4572000, 1));
-      expectToken(t, '3,750,000원', '월지급금 상한');
-      expect(tokens(t).contains('4,608,000원'), isFalse,
-          reason: '상한을 안 걸면 460.8만원이 나온다');
+      expectToken(t, '3,666,000원', '75세 상한');
+      expect(tokens(t).contains('3,750,000원'), isFalse,
+          reason: '375만원은 어느 나이의 상한도 아니다');
+
+      await open(t, const HousingPensionScreen(), [(0, '80'), (1, '120000')]);
+      expectToken(t, '4,060,000원', '80세 상한');
+
+      // 65세는 12억까지 상한에 닿지 않는다 — 25.2만 × 12 = 302.4만.
+      await open(t, const HousingPensionScreen(), [(0, '65'), (1, '120000')]);
+      expectToken(t, '3,024,000원', '65세는 상한이 안 걸린다');
     });
 
     testWidgets('공시가격 12억을 넘으면 가입 대상이 아니다', (t) async {

@@ -7,8 +7,8 @@ import '../theme/text_wrap.dart';
 
 /// 주택연금(역모기지) 예상 월지급금 참고 추정기.
 /// HF 공시 종신·정액형 참고 데이터포인트(3억/60세=63만, 3억/70세=90만,
-/// 5억/65세=125만, 5억/75세=192만, 9억/70세=270만)로부터 연령별 억당 지급률을
-/// 선형보간하고, 월 375만원 상한(2026 HF 공시)을 적용한 단순 추정치.
+/// HF 「월지급금 예시」(2026.3.1 기준) 종신·정액·일반주택 표에서 연령별
+/// 억당 지급률과 연령별 상한을 읽어 선형보간한 참고 추정치.
 class HousingPensionScreen extends StatefulWidget {
   const HousingPensionScreen({super.key});
 
@@ -20,7 +20,6 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
   final _ageCtrl = TextEditingController();
   final _priceCtrl = TextEditingController(); // 만원 단위
 
-  static const int _capWon = 3750000;
   /// 연령 → 1억원당 월지급금(만원) — 종신지급·정액형·일반주택.
   ///
   /// 출처: 한국주택금융공사 「월지급금 예시」(hf.go.kr/ko/sub03/sub03_01_01_02.do),
@@ -35,6 +34,15 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
   static const _rateAges = [55, 60, 65, 70, 75, 80];
   static const _rates = [15.6, 21.0, 25.2, 30.7, 38.1, 48.3];
 
+  /// 연령 → 월지급금 상한(만원). 같은 표의 **12억원 열** 값이다.
+  ///
+  /// 상한은 나이마다 다르다. 70세는 11억(338.6만)까지 억당 30.7만으로 오르다
+  /// 12억에서 341.4만으로 멈추고, 75세는 10억부터 366.6만, 80세는 9억부터
+  /// 406.0만에서 멈춘다. 55~65세는 12억까지 꺾이지 않는다.
+  /// 종전에는 375만원 한 줄이었다 — 80세 12억이면 31만원을 적게 말하고,
+  /// 70세 12억이면 341.4만원인데 375만원까지 열어 줬다.
+  static const _caps = [187.2, 252.8, 303.5, 341.4, 366.6, 406.0];
+
   int get _age => int.tryParse(_ageCtrl.text.replaceAll(',', '')) ?? 0;
   double get _priceManwon =>
       double.tryParse(_priceCtrl.text.replaceAll(',', '')) ?? 0;
@@ -42,24 +50,28 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
   bool get _ageEligible => _age >= 55;
   bool get _priceEligible => _priceManwon <= 120000;
 
-  double get _rate {
-    if (_age <= _rateAges.first) return _rates.first;
-    if (_age >= _rateAges.last) return _rates.last;
+  /// 나이로 [table]을 선형보간한다. 표 밖은 양 끝 값으로 잘린다.
+  double _byAge(List<double> table) {
+    if (_age <= _rateAges.first) return table.first;
+    if (_age >= _rateAges.last) return table.last;
     for (int i = 0; i < _rateAges.length - 1; i++) {
       final a0 = _rateAges[i], a1 = _rateAges[i + 1];
       if (_age >= a0 && _age <= a1) {
         final t = (_age - a0) / (a1 - a0);
-        return _rates[i] + (_rates[i + 1] - _rates[i]) * t;
+        return table[i] + (table[i + 1] - table[i]) * t;
       }
     }
-    return _rates.last;
+    return table.last;
   }
+
+  double get _rate => _byAge(_rates);
 
   int get _monthlyPaymentWon {
     if (!_ageEligible || _priceManwon <= 0) return 0;
     final eok = _priceManwon / 10000;
-    final raw = (eok * _rate * 10000).round();
-    return raw > _capWon ? _capWon : raw;
+    final manwon = eok * _rate;
+    final cap = _byAge(_caps);
+    return ((manwon < cap ? manwon : cap) * 10000).round();
   }
 
 
@@ -194,7 +206,7 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
                 '종신지급 — 평생 매월 동일 금액 수령(가장 일반적)',
                 '확정기간혼합 — 일정 기간 집중 수령 후 잔여기간 감액',
                 '대출상환방식 — 주택담보대출 잔액 일시 상환 + 잔여분 월지급',
-                '우대지급방식 — 부부 중 1명 만 65세 이상 + 기초연금 수급자, 월지급금 최대 20% 증액',
+                '우대지급방식 — 기초연금 수급자(65세 이상) + 부부기준 2억5천만원 미만 1주택, 월지급금 약 20% 증액',
               ],
               line,
               sub,
@@ -204,8 +216,9 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
             _infoBox(
               '비용 구조',
               [
-                '초기보증료: 주택가격의 1.5% (최초 1회, 분할납부 가능)',
-                '연보증료: 보증잔액의 0.75%/년',
+                '초기보증료: 주택가격의 1.0% (최초 연금지급일에 납부)',
+                '연보증료: 보증잔액의 연 0.95% (대출상환·대출상환우대 방식은 1.0%)',
+                '금융기관이 가입자 부담으로 공사에 내므로 현금으로 따로 낼 일은 없다',
                 '집값 하락으로 처분가가 지급액 합계보다 낮아도 차액은 HF·정부가 부담(추가 청구 없음)',
               ],
               line,
