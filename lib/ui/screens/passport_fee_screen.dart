@@ -23,7 +23,7 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
     ('복수여권(만 8세 미만) 58면', '5년', 35000),
     ('복수여권(만 8세 미만) 26면', '5년', 32000),
     ('단수여권', '1년', 17000),
-    ('잔여유효기간 재발급', '이전 여권 잔여기간', 27000),
+    ('남은 유효기간 부여 여권', '이전 여권 잔여기간', 27000),
     ('긴급여권', '1년', 50000),
   ];
 
@@ -96,7 +96,7 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
                   const SizedBox(height: 12),
                   _row('유효기간', selected.$2, ink, sub),
                   const SizedBox(height: 8),
-                  Text('* 2026.3.1부터 재외공관 발급 여권 수수료는 USD 2 인상되었습니다.'.keepWords,
+                  Text('* 재외공관에서 신청하면 같은 숫자를 달러로 냅니다(성인 10년 58면 52달러).'.keepWords,
                       style: AppTheme.sans(AppTheme.tsXS, sub)),
                 ],
               ),

@@ -14,12 +14,23 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
   final _taxCtrl = TextEditingController();
   int _month = 1;
 
-  static const Map<int, double> _rates = {1: 4.57, 3: 3.76, 6: 2.51, 9: 1.26};
+  /// 신청 시기 → (신청 기간, 연세액 대비 공제율 %).
+  ///
+  /// 지방세법 §128③ 계산식에 시행령 §125⑥ 이자율 5%를 넣은 값이다.
+  /// 나눗셈을 그대로 남겨 둔다 — 6·9월은 계산식의 기준이 제2기분(연세액의
+  /// 절반)이라, 1·3월처럼 365로 나누면 각각 2.52%·1.26%가 나와서 틀린다.
+  /// 일수는 납부기한 다음 날부터 12월 31일까지. 2026년은 평년이라 365일.
+  static const _rates = <int, (String, double)>{
+    1: ('1.16~1.31', 334 / 365 * 5),      // 2.1~12.31
+    3: ('3.16~3.31', 275 / 365 * 5),      // 4.1~12.31
+    6: ('6.16~6.30', 5 / 2),              // 제2기분 × 이자율
+    9: ('9.16~9.30', 92 / 184 * 5 / 2),   // 제2기분 × 92/184 × 이자율
+  };
 
   double _num(TextEditingController c) => double.tryParse(c.text.replaceAll(',', '')) ?? 0;
 
   double get _annualTax => _num(_taxCtrl);
-  double get _rate => _rates[_month]!;
+  double get _rate => _rates[_month]!.$2;
   double get _discount => _annualTax * _rate / 100;
   double get _payAmount => _annualTax - _discount;
 
@@ -98,19 +109,17 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox('2026년 신청 일정', const [
-              '1월: 1.16~1.31 (공제율 약 4.57%)',
-              '3월: 3.16~3.31 (공제율 약 3.76%)',
-              '6월: 6.16~6.30 (공제율 약 2.51%)',
-              '9월: 9.16~9.30 (공제율 약 1.26%)',
-              '기준 이자율 연 3.65%로 일할 계산합니다.',
+            _infoBox('2026년 신청 일정', [
+              for (final e in _rates.entries)
+                '${e.key}월: ${e.value.$1} (공제율 ${e.value.$2.toStringAsFixed(2)}%)',
+              '이자율 연 5%로 남은 기간을 일할 계산합니다(지방세법 시행령 §125⑥).',
             ], line, sub, ink),
             const SizedBox(height: 12),
             _infoBox('신청 방법', const [
               '위택스(wetax.go.kr) - 신고/납부 → 자동차세 연세액',
               '서울은 이택스(etax.seoul.go.kr) 이용',
               '차량등록지 관할 구청·시청 세무과 방문 신청 가능',
-              '2024년 1월부터 10% 일괄 할인은 폐지되고 일할 계산 방식으로 변경되었습니다.',
+              '옛 10% 일괄 할인은 없어졌고, 지방세법 §128③ 계산식으로 공제액을 냅니다.',
               '체납액이 있으면 신청이 제한될 수 있습니다.',
             ], line, sub, ink),
             const CalcDisclaimer(),

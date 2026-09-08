@@ -92,11 +92,10 @@ void main() {
     testWidgets('공제액 = 연세액 × 공제율, 납부액 = 연세액 − 공제액', (t) async {
       await open(t, const CarTaxAnnualScreen(), ['520000']);
 
-      // 화면의 1월 공제율 4.57%는 334/365 × 5%에서 나온다.
-      // ⚠ 2025년 이후 기준이 3%라는 2차 자료가 있으나 원문이 불명확해 고치지 않았다.
-      //   추적: test/notice_expiry_test.dart (1차 미확인)
+      // 1월 공제율은 334/365 × 5% = 4.5753…%이고 화면은 4.58%로 반올림해 적는다.
+      // 이자율 5%는 시행령 §125⑥ — 「2025년 이후 3%」라던 옛 사다리는 없어졌다.
       const annual = 520000.0;
-      const rate = 4.57;
+      const rate = 334 / 365 * 5;
       const discount = annual * rate / 100;
       // ignore: avoid_print
       print('연세액 ${comma(annual)} × $rate% = 공제 ${comma(discount)}'
@@ -104,12 +103,14 @@ void main() {
 
       expectToken(t, '-${comma(discount)}원', '연납 공제액');
       expectToken(t, '${comma(annual - discount)}원', '실제 납부액');
-      expectToken(t, '4.57%', '1월 공제율');
+      expectToken(t, '4.58%', '1월 공제율');
     });
 
     testWidgets('늦게 신청할수록 공제율이 낮아진다', (t) async {
       await open(t, const CarTaxAnnualScreen(), ['520000']);
-      for (final (label, rate) in [('3월', '3.76%'), ('6월', '2.51%'), ('9월', '1.26%')]) {
+      // 6·9월은 계산식의 기준이 연세액이 아니라 제2기분(연세액의 절반)이다.
+      // 네 시기 모두 1월 식으로 계산해서 2.51%·1.26%가 나와 있었다.
+      for (final (label, rate) in [('3월', '3.77%'), ('6월', '2.50%'), ('9월', '1.25%')]) {
         await t.tap(find.text(label).first);
         await t.pump(const Duration(milliseconds: 300));
         expectToken(t, rate, '$label 공제율');
