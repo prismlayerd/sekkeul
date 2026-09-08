@@ -21,7 +21,15 @@ class _EmploymentSupportProgramScreenState
   static const int _months = 6;
   static const int _dependentBonusPerPerson = 100000;
   static const int _successBonus = 1500000;
-  static const int _typeIIAmount = 1954000;
+  /// II형은 총액이 없다. 시행규칙 §12②가 금액을 고용노동부장관에게 넘겨 두었고
+  /// 법령·고시 어디에도 표가 없다. 종전에 1,954,000원 한 줄로 적어 두었으나
+  /// 그 숫자가 어디서 왔는지 찾지 못해 고용24가 밝힌 항목으로 바꿨다.
+  static const _typeIIItems = <(String, String)>[
+    ('참여수당', '15만원 + 프로그램별 3~10만원'),
+    ('참여장려수당', '월 2만원 · 최대 5회'),
+    ('훈련참여지원수당', '1일 1만원 · 월 최대 20만원 · 6개월'),
+    ('취업성공수당', '6개월 50만원 + 12개월 100만원'),
+  ];
 
   int get _typeITotal {
     const base = _monthlyAllowance * _months;
@@ -115,12 +123,19 @@ class _EmploymentSupportProgramScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('예상 총 수령액',
+                  Text(_typeIdx == 0 ? '예상 총 수령액' : '받을 수 있는 수당',
                       style:
                           AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                   const SizedBox(height: 12),
-                  Text(_typeIdx == 0 ? won(_typeITotal) : won(_typeIIAmount),
-                      style: AppTheme.sans(AppTheme.tsXL, accent, weight: FontWeight.w700)),
+                  if (_typeIdx == 0)
+                    Text(won(_typeITotal),
+                        style: AppTheme.sans(AppTheme.tsXL, accent,
+                            weight: FontWeight.w700))
+                  else
+                    for (final (label, amount) in _typeIIItems) ...[
+                      _row(label, amount, ink, sub),
+                      const SizedBox(height: 8),
+                    ],
                   const SizedBox(height: 12),
                   if (_typeIdx == 0) ...[
                     Divider(height: 1, color: line),
@@ -137,7 +152,9 @@ class _EmploymentSupportProgramScreenState
                         sub),
                   ],
                   const SizedBox(height: 12),
-                  Text('* 실지급액은 참여자 상황·출석·구직활동 이행 여부에 따라 달라지는 추정치입니다.'.keepWords,
+                  Text(_typeIdx == 0
+                          ? '* 실지급액은 참여자 상황·출석·구직활동 이행 여부에 따라 달라지는 추정치입니다.'.keepWords
+                          : '* II형은 정해진 총액이 없습니다. 어떤 프로그램에 참여하느냐에 따라 달라집니다.'.keepWords,
                       style: AppTheme.sans(AppTheme.tsXS, sub)),
                 ],
               ),
@@ -146,8 +163,8 @@ class _EmploymentSupportProgramScreenState
             _infoBox(
               '대상 요건 비교',
               [
-                'I형: 만 15~69세(청년특례 18~34세), 중위소득 60%(청년 120%) 이하, 재산 4억(청년 5억) 이하, 최근 2년 내 취업경험 100일·800시간 이상',
-                'II형: 만 15~69세, 중위소득 100% 이하, 취업경험 요건 없음, 재산 기준 완화',
+                'I형: 15~64세(취업취약계층 69세까지), 청년은 15~34세, 중위소득 60%(청년 120%) 이하, 재산 4억(청년 5억) 이하, 최근 2년 내 취업경험 100일·800시간 이상',
+                'II형: 15~64세(취업취약계층 69세까지), 중위소득 100% 이하, 취업경험 요건 없음',
               ],
               line,
               sub,

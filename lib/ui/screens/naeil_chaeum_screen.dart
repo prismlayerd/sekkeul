@@ -36,7 +36,7 @@ class NaeilChaeumScreen extends StatelessWidget {
                   Text('⚠️ ', style: AppTheme.sans(AppTheme.tsMD, ink)),
                   Expanded(
                     child: Text(
-                      '2024년부터 신규 가입이 종료되었습니다.\n기존 가입자만 만기까지 유지 가능합니다.'.keepWords,
+                      '청년내일채움공제(2년형)는 2024년 사업 일몰로 끝났지만,\n내일채움공제는 지금도 가입할 수 있습니다.'.keepWords,
                       style: AppTheme.sans(AppTheme.tsSM, ink, height: 1.6),
                     ),
                   ),
@@ -45,12 +45,11 @@ class NaeilChaeumScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             _infoBox(
-              '기존 가입자 정보 (2년형 기준)',
+              '납입 구조',
               [
-                '청년 적립: 300만원',
-                '기업 적립: 400만원',
-                '정부 지원 포함 만기 수령: 약 1,200만원 이상',
-                '세금: 원금 비과세, 이자·기업기여금에 15.4% 원천징수',
+                '최소 3년 공동납입 · 1년 단위 연장 · 최대 10년',
+                '근로자 : 사업주 = 1 : 2 이상 (예: 10만원 대 24만원)',
+                '만기에 사업주 기여금 + 본인 납입금 + 연복리 이자를 근로자가 전액 수령',
               ],
               line,
               sub,
@@ -58,11 +57,25 @@ class NaeilChaeumScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _infoBox(
-              '대체 상품',
+              '세금 (조특법 §29의6)',
               [
-                '청년도약계좌 (5년, 월 최대 70만)',
-                '청년내일저축계좌 (복지부 소관)',
-                '청년일자리도약장려금',
+                '사업주 기여금은 근로소득 — 소득세를 감면한다',
+                '청년: 중소기업 90% · 중견기업 50% 감면',
+                '청년이 아니면: 중소기업 50% · 중견기업 30% 감면',
+                '3년 이상 납입 + 2027.12.31까지 가입한 경우',
+                '기여금과 본인 납입금을 뺀 나머지는 이자소득으로 과세',
+              ],
+              line,
+              sub,
+              ink,
+            ),
+            const SizedBox(height: 12),
+            _infoBox(
+              '끝난 청년내일채움공제(2년형)',
+              [
+                '2024년 사업 일몰로 신규가입 불가',
+                '기존 가입자는 청년 400만 + 기업 400만 + 정부 400만',
+                '만기 1,200만원 + 이자',
               ],
               line,
               sub,
