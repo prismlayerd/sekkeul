@@ -5,6 +5,23 @@ import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
 
+/// 6+6 부모육아휴직제 월별 상한(원) — 고용보험법 시행령 §95의3①1 바목.
+///
+/// 부모가 **각각 6개월을 다 쓴 경우**의 사다리다. 덜 쓰면 가목~마목이라
+/// 사다리가 짧아진다(1~2개월만 쓰면 250만원에서 멈춘다).
+/// 첫 **두 달**이 250만원이다 — 1개월차를 200만원으로 두면 한 달치가 50만원 적어진다.
+const parentalLeave6Plus6Caps = [
+  2500000,
+  2500000,
+  3000000,
+  3500000,
+  4000000,
+  4500000,
+];
+
+/// 같은 항이 정한 하한 — 통상임금이 이보다 적어도 이 금액은 나온다.
+const parentalLeave6Plus6Floor = 700000;
+
 class ParentalLeave6Plus6Screen extends StatefulWidget {
   const ParentalLeave6Plus6Screen({super.key});
 
@@ -17,16 +34,14 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
   final _p1Ctrl = TextEditingController();
   final _p2Ctrl = TextEditingController();
 
-  // 6+6 부모육아휴직제: 첫 6개월 통상임금 100%, 월별 상한 단계 상향
-  static const _caps = [2000000, 2500000, 3000000, 3500000, 4000000, 4500000];
-
   double get _p1 => double.tryParse(_p1Ctrl.text.replaceAll(',', '')) ?? 0;
   double get _p2 => double.tryParse(_p2Ctrl.text.replaceAll(',', '')) ?? 0;
 
   double _sixMonth(double wage) {
     double sum = 0;
-    for (final cap in _caps) {
-      sum += wage < cap ? wage : cap;
+    for (final cap in parentalLeave6Plus6Caps) {
+      sum += (wage < cap ? wage : cap)
+          .clamp(parentalLeave6Plus6Floor.toDouble(), cap.toDouble());
     }
     return sum;
   }
@@ -105,7 +120,7 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text('* 통상임금 100%, 월 상한 1→6개월차 200만~450만원 단계 적용. 7개월차부터는 일반 육아휴직급여로 전환.'.keepWords,
+                    Text('* 통상임금 100%, 월 상한 1→6개월차 250만~450만원 단계 적용(하한 월 70만원). 7개월차부터는 통상임금 80%, 상한 월 160만원.'.keepWords,
                         style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
@@ -127,12 +142,10 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
             _infoBox(
               '월별 상한액',
               [
-                '1개월차: 월 200만원',
-                '2개월차: 월 250만원',
-                '3개월차: 월 300만원',
-                '4개월차: 월 350만원',
-                '5개월차: 월 400만원',
-                '6개월차: 월 450만원',
+                for (var i = 0; i < parentalLeave6Plus6Caps.length; i++)
+                  '${i + 1}개월차: 월 ${parentalLeave6Plus6Caps[i] ~/ 10000}만원',
+                '하한은 부모 각각 월 ${parentalLeave6Plus6Floor ~/ 10000}만원',
+                '부모가 각각 6개월을 다 쓴 경우다 — 덜 쓰면 사다리가 짧아진다',
               ],
               line,
               sub,

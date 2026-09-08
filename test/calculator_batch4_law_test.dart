@@ -137,32 +137,35 @@ void main() {
   });
 
   group('6+6 부모육아휴직급여 (고용보험법 시행령 §95의3)', () {
-    testWidgets('월별 상한이 200만부터 50만씩 올라 6개월차 450만이 된다', (t) async {
+    // 사다리는 parentalLeave6Plus6Caps 한 벌뿐이다. 시행령 §95의3①1 바목이
+    // 첫 **두 달**을 250만원으로 정한다 — 1개월차를 200만원으로 두면 50만원 적다.
+    test('상한 사다리가 시행령 바목과 같다', () {
+      expect(parentalLeave6Plus6Caps,
+          [2500000, 2500000, 3000000, 3500000, 4000000, 4500000]);
+      expect(parentalLeave6Plus6Floor, 700000);
+    });
+
+    testWidgets('월별 상한이 안내에 그대로 나온다', (t) async {
       await open(t, const ParentalLeave6Plus6Screen(),
           [(0, '4500000'), (1, '3000000')]);
-
-      const caps = [200, 250, 300, 350, 400, 450];
-      for (var i = 0; i < caps.length; i++) {
-        expect(caps[i], 200 + i * 50, reason: '${i + 1}개월차 상한');
-        expect(hasPhrase(t, '${caps[i]}만원'), isTrue,
-            reason: '${i + 1}개월차 상한 ${caps[i]}만원이 안내에 없다');
+      for (var i = 0; i < parentalLeave6Plus6Caps.length; i++) {
+        final man = parentalLeave6Plus6Caps[i] ~/ 10000;
+        expect(hasPhrase(t, '$man만원'), isTrue,
+            reason: '${i + 1}개월차 상한 $man만원이 안내에 없다');
       }
     });
 
     testWidgets('통상임금이 상한보다 낮으면 통상임금이 지급된다', (t) async {
-      // 부모 B 월 300만 → 1~3개월차는 상한(200/250/300)에 걸리고
+      // 부모 B 월 300만 → 앞 세 달은 상한(250/250/300)에 걸리고
       // 4개월차부터는 통상임금 300만이 상한(350만)보다 낮아 300만을 받는다.
       await open(t, const ParentalLeave6Plus6Screen(),
           [(0, '4500000'), (1, '3000000')]);
       const b = 3000000.0;
       var sum = 0.0;
-      for (var m = 0; m < 6; m++) {
-        final cap = (200 + m * 50) * 10000.0;
+      for (final cap in parentalLeave6Plus6Caps) {
         sum += b < cap ? b : cap;
       }
-      // ignore: avoid_print
-      print('부모 B 통상임금 ${comma(b)} → 6개월 합계 ${comma(sum)}');
-      expect(sum, 16500000.0, reason: '200+250+300+300+300+300 만원');
+      expect(sum, 17000000.0, reason: '250+250+300+300+300+300 만원');
       expect(shows(t, '${comma(sum / 10000)}만원'), isTrue,
           reason: '6개월 합계가 상한·통상임금 중 작은 값의 합과 다르다');
     });
