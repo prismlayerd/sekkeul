@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
 
-/// 신혼부부 특별공급 자격 참고 진단.
-/// 2024년 고시 기준 도시근로자 가구원수별 월평균소득(100%) 근사치와
-/// 자산 기준(부동산 2.155억·자동차 3,683만)을 사용한 단순 추정.
+/// 신혼부부 특별공급(공공분양) 자격 참고 진단.
+///
+/// 소득·자산은 LH청약플러스 분양가이드의 2026년 적용표를 쓴다.
+/// 민영·국민주택은 기준이 달라(소득 140%/맞벌이 160%) 이 화면이 다루지 않는다.
 class NewlywedSpecialSupplyScreen extends StatefulWidget {
   const NewlywedSpecialSupplyScreen({super.key});
 
@@ -26,19 +27,24 @@ class _NewlywedSpecialSupplyScreenState
   bool _noHouse = true;
   int _householdIdx = 0;
 
-  // 3인 이하, 4인, 5인, 6인, 7인, 8인 이상 -> 도시근로자 월평균소득 100%(원, 2024년 고시 참고치)
+  // 도시근로자 가구당 월평균소득 100%(원) — LH청약플러스 2026년 적용표.
+  // 종전 값은 2024년 고시라 7%쯤 낮았다. 분모가 낮으면 소득비율이 부풀려져
+  // 자격이 되는 사람에게 "미달"이라고 답한다.
   static const _householdLabels = ['3인 이하', '4인', '5인', '6인', '7인', '8인 이상'];
   static const _avgIncomes = [
-    6981301,
-    8248467,
-    8775071,
-    9563282,
-    10351493,
-    11139704,
+    7533763,
+    8802202,
+    9326985,
+    9906263,
+    10485541,
+    11064819,
   ];
 
+  // LH청약플러스 자산기준(2026년 적용): 부동산 215,500천원 · 자동차 45,420천원.
+  // 자동차는 3,683만원(2022년 값)으로 굳어 있었다 — 설명문은 4,542만원이라
+  // 적어 두고 판정만 옛 값으로 해서, 4천만원짜리 차를 잘못 떨어뜨렸다.
   static const int _realEstateLimit = 21550; // 만원
-  static const int _carLimit = 3683; // 만원
+  static const int _carLimit = 4542; // 만원
 
   int get _marriageYears => int.tryParse(_marriageYearsCtrl.text.replaceAll(',', '')) ?? -1;
   int get _children => int.tryParse(_childrenCtrl.text.replaceAll(',', '')) ?? 0;
@@ -77,7 +83,7 @@ class _NewlywedSpecialSupplyScreenState
     }
     if (_incomeRatio <= _generalThreshold) {
       final rank = _children >= 1 ? '1순위' : '2순위';
-      return '일반공급(30%) 대상 · $rank';
+      return '일반공급(20%) 대상 · $rank';
     }
     return '자격 미달 — 소득 기준 초과';
   }
@@ -217,9 +223,9 @@ class _NewlywedSpecialSupplyScreenState
             _infoBox(
               '대상 요건',
               [
-                '혼인 7년 이내(예비신혼·재혼·한부모 포함), 세대구성원 모두 무주택',
-                '청약통장 6개월 이상 가입(지역·면적별 12·24개월 요구 가능)',
-                '자산: 부동산 2억 1,550만원 이하 · 자동차 4,542만원 이하 (2026년도 적용)',
+                '혼인 7년 이내 또는 6세 이하 자녀 (예비신혼부부·한부모가족 포함)',
+                '세대구성원 모두 무주택, 청약통장 6개월 경과 + 6회 이상 납입',
+                '자산: 부동산 2억 1,550만원 이하 · 자동차 4,542만원 이하 (2026년 적용)',
               ],
               line,
               sub,
@@ -229,9 +235,10 @@ class _NewlywedSpecialSupplyScreenState
             _infoBox(
               '순위·공급 비중',
               [
-                '1순위: 미성년 자녀(태아 포함) 1명 이상 또는 한부모 — 가점제(공공분양)',
-                '2순위: 자녀 없음 — 1순위 미달 시 배정, 민영주택은 동일순위 추첨제',
-                '공공분양 신혼특공 30%(우선 70%·일반 30%) / 민영주택 18%(우선 50%·일반 50%)',
+                '1순위: 혼인기간 중 출산(임신·입양 포함)한 자녀가 있거나 한부모가족',
+                '2순위: 그 밖 — 1순위에서 남은 물량을 받는다',
+                '공공분양은 건설량의 10% 범위 — 우선 70% · 일반 20% · 추첨 10%',
+                '민영 15%·국민주택 20% 범위는 소득 140%(맞벌이 160%)로 기준이 다르다',
               ],
               line,
               sub,
