@@ -15,19 +15,22 @@ class FreshStartFundScreen extends StatefulWidget {
 class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
   final _debtCtrl = TextEditingController();
   final _yearsCtrl = TextEditingController(text: '10');
-  int _statusIdx = 1; // 0=부실(저소득), 1=부실(일반), 2=부실우려, 3=정상
+  final _cutCtrl = TextEditingController(text: '0');
 
-  static const _statuses = [
-    // 저소득 부실차주의 무담보 채무 감면율이 80%에서 90%로 올랐다(금융위).
-    ('부실 (저소득)', 0.90),
-    ('부실 (일반)', 0.70),
-    ('부실우려', 0.30),
-    ('정상 차주', 0.0),
-  ];
+  /// 부실차주(90일 이상 연체)인지. 부실우려차주는 원금조정이 아예 없다 —
+  /// 종전에는 "부실우려 30% 감면"이라고 적어 두어, 캠코가 주지 않는 돈을
+  /// 계산해서 보여 주고 있었다.
+  bool _isDefault = true;
+
+  /// 원금조정 폭은 보유재산과 상환능력을 봐서 정해진다(0~80%).
+  /// 저소득자·사회취약계층은 신용대출 순부채의 90%까지 간다.
+  int get _maxCut => 90;
 
   double get _debt => double.tryParse(_debtCtrl.text.replaceAll(',', '')) ?? 0;
   int get _years => int.tryParse(_yearsCtrl.text.replaceAll(',', '')) ?? 0;
-  double get _rate => _statuses[_statusIdx].$2;
+  double get _rate => _isDefault
+      ? (double.tryParse(_cutCtrl.text) ?? 0).clamp(0, _maxCut) / 100
+      : 0;
 
   double get _reduction => _debt * _rate;
   double get _afterDebt => _debt - _reduction;
@@ -40,6 +43,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
   void dispose() {
     _debtCtrl.dispose();
     _yearsCtrl.dispose();
+    _cutCtrl.dispose();
     super.dispose();
   }
 
@@ -62,7 +66,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('현재 상황 (차주 분류)'.keepWords,
+            Text('차주 분류'.keepWords,
                 style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Container(
@@ -72,23 +76,52 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
                   border: Border.all(color: line),
                   borderRadius: BorderRadius.circular(4)),
               child: DropdownButtonHideUnderline(
-                child: DropdownButton<int>(
-                  value: _statusIdx,
+                child: DropdownButton<bool>(
+                  value: _isDefault,
                   isExpanded: true,
                   style: AppTheme.sans(AppTheme.tsMD, ink),
                   dropdownColor: AppTheme.backgroundColor(context),
-                  items: [
-                    for (int i = 0; i < _statuses.length; i++)
-                      DropdownMenuItem(
-                          value: i,
-                          child: Text(
-                              '${_statuses[i].$1} (${(_statuses[i].$2 * 100).round()}% 감면)')),
+                  items: const [
+                    DropdownMenuItem(
+                        value: true, child: Text('부실차주 (90일 이상 연체)')),
+                    DropdownMenuItem(
+                        value: false, child: Text('부실우려차주 (원금조정 없음)')),
                   ],
-                  onChanged: (v) => setState(() => _statusIdx = v!),
+                  onChanged: (v) => setState(() => _isDefault = v!),
                 ),
               ),
             ),
             const SizedBox(height: 16),
+            if (_isDefault) ...[
+              Text('원금 감면율 (심사로 정해집니다)'.keepWords,
+                  style:
+                      AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _cutCtrl,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.right,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                style: AppTheme.sans(AppTheme.tsMD, ink),
+                decoration: InputDecoration(
+                  suffixText: '% (보유재산 반영 0~80, 취약계층 최대 90)',
+                  suffixStyle: AppTheme.sans(AppTheme.tsXS, sub),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4),
+                      borderSide: BorderSide(color: line)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4),
+                      borderSide: BorderSide(color: line)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4),
+                      borderSide: BorderSide(color: ink)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 16),
+            ],
             Text('총 사업자 채무',
                 style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
             const SizedBox(height: 8),
@@ -137,7 +170,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: AppTheme.sans(AppTheme.tsMD, ink),
               decoration: InputDecoration(
-                suffixText: '년 (최대 20년)',
+                suffixText: '년 (무담보 1~10년 · 부동산담보 1~20년)',
                 suffixStyle: AppTheme.sans(AppTheme.tsMD, sub),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
@@ -179,7 +212,10 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
                     const SizedBox(height: 8),
                     _row('감면 후 원금', won(_afterDebt), ink, sub),
                     const SizedBox(height: 12),
-                    Text('* 무이자 분할 가정 단순 추정치. 약정 후 연 1~3%대 이자가 붙을 수 있습니다.'.keepWords,
+                    Text(
+                        '* 무이자 분할 가정 단순 추정치. 부실우려차주는 원금이 아니라 금리가'
+                                ' 조정됩니다(연체 30일 이후 3.9~4.7%).'
+                            .keepWords,
                         style: AppTheme.sans(AppTheme.tsXS, sub)),
                   ],
                 ),
@@ -189,10 +225,13 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
             _infoBox(
               '대상 요건',
               [
-                '코로나19 방역조치 등 피해 소상공인·자영업자, 개인사업자 및 일부 법인 대표',
-                '부실 차주: 90일 이상 연체 / 부실우려 차주: 90일 미만 연체 + 폐업·매출급감 등',
-                '정상 차주는 감면 없이 장기 분할(최대 20년)만 가능',
-                '채무 한도: 1인당 최대 15억원(사업자 10억 + 개인 5억)',
+                '2020년 4월~2025년 6월 중 사업을 영위한 개인사업자 또는 법인 소상공인',
+                '프리랜서·특수형태근로종사자도 됩니다. 폐업 법인은 안 됩니다',
+                '부동산 임대·매매업, 금융업, 법무·회계·세무·의료 등 전문직종은 제외',
+                '부실차주: 1개 이상 대출에서 3개월 이상 장기연체',
+                '부실우려차주: 폐업·6개월 이상 휴업, 만기연장이 어려운 차주, 세금 체납 등',
+                '조정한도: 총 채무액 15억원 (담보 10억 + 무담보 5억)',
+                '신청은 평생 1회만 가능합니다',
               ],
               line,
               sub,
@@ -200,13 +239,14 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
             ),
             const SizedBox(height: 12),
             _infoBox(
-              '신청 절차',
+              '차주 분류에 따라 창구가 다릅니다',
               [
-                '새출발기금 콜센터(1660-1378)·공식 사이트에서 자격 확인',
-                '사업자등록증·금융거래확인서·소득증빙 제출',
-                '한국자산관리공사(KAMCO) 심사 (약 30~60일)',
-                '감면율·이자율·상환기간 확정 후 약정 체결',
-                '매월 자동이체로 분할 상환 시작',
+                '부실차주 — 새출발기금.kr 또는 캠코. 전체 채무를 매입해 조정하며 채무를 골라낼 수 없습니다',
+                '부실우려차주 — 신용회복위원회. 조정할 대출을 직접 고르고, 원금이 아니라 금리를 조정합니다',
+                '취업·재창업 교육을 이수한 부실 폐업자는 원금을 최대 10% 더 감면받습니다',
+                '신청 다음 날부터 추심과 강제집행이 멈춥니다',
+                '약정하면 공공정보로 등록되고, 1년간 성실상환하면 해제됩니다',
+                '문의: 새출발기금 콜센터 1660-1378',
               ],
               line,
               sub,
