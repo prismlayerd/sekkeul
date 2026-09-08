@@ -114,7 +114,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '연금저축·IRP 세액공제',
-      verified: (source: 'https://www.law.go.kr/법령/소득세법', on: '2026-08-02'),
+      verified: (source: 'https://www.law.go.kr/법령/소득세법', on: '2026-09-08'),
       amount: '납입액 최대 16.5% 환급',
       desc: '총급여 5,500만원 이하 16.5%, 초과 13.2% 공제율. 연금저축 단독 최대 600만원, IRP 포함 합산 최대 900만원까지 공제 가능.\n\n'
           '한도 구조\n'
@@ -139,14 +139,14 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '보험료 세액공제',
-      verified: (source: 'https://www.law.go.kr/법령/소득세법', on: '2026-08-02'),
+      verified: (source: 'https://www.law.go.kr/법령/소득세법', on: '2026-09-08'),
       amount: '연 최대 27만원',
       desc: '보장성보험료 연 100만 한도, 12% 공제 (장애인 15%)',
       calcBuilder: (_) => const InsurancePremiumScreen(),
     ),
     _Benefit(
       name: '부양가족 공제',
-      verified: (source: 'https://www.law.go.kr/법령/소득세법', on: '2026-08-02'),
+      verified: (source: 'https://www.law.go.kr/법령/소득세법', on: '2026-09-08'),
       amount: '기본 1인당 150만원 + 추가공제',
       desc: '기본공제 대상에 해당하는 가족 1인당 연 150만원 소득공제. 본인은 요건 없이 항상 적용.\n\n'
           '기본공제 대상 요건 (소득금액 연 100만원 이하)\n'
@@ -195,7 +195,7 @@ final _categories = <_BenefitCategory>[
     ),
     const _Benefit(
       name: 'ISA 비과세 혜택',
-      verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-08-02'),
+      verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-09-08'),
       amount: '200~400만원 비과세',
       desc: '만기 시 이자·배당·매매차익 손익통산 후 비과세 또는 9.9% 분리과세. 일반형 200만원, 서민·농어민형 400만원 비과세.\n\n'
           '유형별 혜택\n'
@@ -249,7 +249,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '월세 세액공제',
-      verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-08-02'),
+      verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-09-08'),
       amount: '연 최대 170만원',
       desc: '무주택 세대주(또는 세대원)가 낸 월세액의 일부를 연말정산·종합소득세 신고 시 세액에서 공제.\n\n'
           '공제율 및 한도\n'
@@ -460,7 +460,7 @@ final _categories = <_BenefitCategory>[
   _BenefitCategory(label: '출산·육아', items: [
     const _Benefit(
       name: '부모급여',
-      verified: (source: 'https://www.mohw.go.kr/menu.es?mid=a10711030600', on: '2026-08-02'),
+      verified: (source: 'https://www.mohw.go.kr/menu.es?mid=a10711030600', on: '2026-09-08'),
       amount: '0세 월 100만 / 1세 월 50만',
       desc: '출생 후 자동 신청, 소득·재산 무관 전 가구 지급',
     ),
@@ -505,8 +505,8 @@ final _categories = <_BenefitCategory>[
     ),
     const _Benefit(
       name: '아동수당',
-      verified: (source: 'https://www.mohw.go.kr/board.es?mid=a10503010100&bid=0027&act=view&list_no=1490257', on: '2026-08-02'),
-      amount: '월 10만~12만원(거주지역별)',
+      verified: (source: 'https://www.mohw.go.kr/board.es?mid=a10503010100&bid=0027&act=view&list_no=1490257', on: '2026-09-08'),
+      amount: '월 10만~13만원(거주지역별)',
       desc: '모든 아동에게 소득·재산 무관 매월 지급하는 현금 수당. 대상 연령이 2030년까지 '
           '매년 한 살씩 올라간다(아동수당법 개정, 법률 제21489호).\n\n'
           '지급 내용\n'
@@ -528,8 +528,8 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '자녀세액공제·자녀장려금',
-      verified: (source: 'https://www.law.go.kr/법령/소득세법', on: '2026-08-02'),
-      amount: '세액공제 25~55만원 / 장려금 최대 100만원',
+      verified: (source: 'https://www.law.go.kr/법령/소득세법', on: '2026-09-08'),
+      amount: '세액공제 25~95만원 / 장려금 최대 100만원',
       desc: '일정 연령 이상 자녀는 자녀세액공제(연말정산), 18세 미만 자녀를 둔 소득 7,000만원 미만 가구는 자녀장려금(5월 신청)이 별도 적용됨.\n\n'
           '자녀세액공제 기준\n'
           '· 대상: ${TaxRates.childTaxCreditEligibilityLabel()} '
@@ -578,7 +578,7 @@ final _categories = <_BenefitCategory>[
     ),
     const _Benefit(
       name: '임신·출산 진료비 바우처',
-      verified: (source: 'https://www.nhis.or.kr/static/html/wbma/c/wbmac0212.html', on: '2026-08-02'),
+      verified: (source: 'https://www.law.go.kr/법령/국민건강보험법시행령', on: '2026-09-08'),
       amount: '임신 1회당 100만원 (다태아 140만원)',
       desc: '국민행복카드로 지급되는 임신·출산 의료비 바우처.\n\n'
           '지원액\n'
@@ -762,7 +762,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '기초연금',
-      verified: (source: 'https://www.mohw.go.kr/board.es?mid=a10503000000&bid=0027&list_no=1488478&act=view', on: '2026-08-02'),
+      verified: (source: 'https://www.law.go.kr/행정규칙/기초연금지급대상자선정기준액,기준연금액및소득인정액산정세부기준에관한고시', on: '2026-09-08'),
       amount: '월 최대 34.97만원(단독)',
       desc: '만 65세 이상 소득 하위 70% 어르신에게 매월 지급하는 공적 노령연금.\n\n'
           '대상 요건\n'
@@ -788,7 +788,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '장애인연금·장애수당',
-      verified: (source: 'https://www.mohw.go.kr/menu.es?mid=a10710030100', on: '2026-08-02'),
+      verified: (source: 'https://www.law.go.kr/법령/장애인연금법시행령', on: '2026-09-08'),
       amount: '중증 월 최대 43.97만원',
       desc: '만 18세 이상 등록 장애인에게 장애 정도에 따라 지급하는 현금 지원. 중증은 장애인연금, 경증은 장애수당.\n\n'
           '대상 및 소득 기준\n'
@@ -1318,7 +1318,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '에너지바우처',
-      verified: (source: 'https://www.energyv.or.kr/info/support_info.do', on: '2026-08-02'),
+      verified: (source: 'https://www.energyv.or.kr/info/support_info.do', on: '2026-09-08'),
       amount: '연간 최대 약 70.1만원',
       desc: '냉방·난방비 부담이 큰 저소득 취약가구에 전기·가스·등유 등 에너지 비용을 지원하는 바우처 제도.\n\n'
           '대상 요건(모두 충족)\n'
