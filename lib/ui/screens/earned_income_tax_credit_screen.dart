@@ -139,7 +139,7 @@ class _EarnedIncomeTaxCreditScreenState
                     fontWeight: FontWeight.bold,
                     height: 1.4)),
             const SizedBox(height: 8),
-            Text('근로장려금과 자녀장려금은 매년 5월에 신청합니다.'.keepWords,
+            Text('근로장려금과 자녀장려금은 매년 5월에 신청합니다. 근로소득만 있다면 9월·3월 반기신청도 가능해요.'.keepWords,
                 style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
             const SizedBox(height: 24),
 
