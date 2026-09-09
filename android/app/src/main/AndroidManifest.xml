@@ -7,6 +7,11 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- 앱 잠금(S-3) 생체 인증 -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- 알림 카드 원문만 받아온다. 사용자가 적은 것은 아무것도 나가지 않는다.
+         debug·profile 매니페스트에는 Flutter가 이걸 자동으로 넣어 주므로
+         **릴리스에서만 조용히 실패한다** — 예전에 피드백 메뉴가 이걸로 죽었고,
+         디버그에서는 멀쩡해서 올리고 나서야 알았다. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="세끌"
         android:name="${applicationName}"

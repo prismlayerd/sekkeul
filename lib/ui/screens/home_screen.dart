@@ -40,6 +40,8 @@ import '../../core/tax_engine/reserve_estimator.dart';
 import '../../core/security/notification_helper.dart';
 import '../../core/notifications/reminder_scheduler.dart';
 import '../../core/navigation/app_route_observer.dart';
+import '../../core/data/remote_notices.dart';
+import 'notice_detail_screen.dart';
 import '../theme/text_wrap.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -105,6 +107,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   bool _isTypeIdentified = false;   // 유형 파악 완료 여부 (온보딩 1단계)
   bool _isProfileCompleted = false; // 프로필 완성 여부 (온보딩 2단계)
   Set<String> _hiddenBannerIds = {}; // X로 닫은 배너 카드(30일간 숨김)
+  List<Notice> _notices = const []; // 원격 소식(앱 업데이트 없이 바뀐다)
   double _decidedTax = 0.0; // 결정세액 (연말정산 진단 데이터)
   double _grossIncome = 0.0; // 연소득(연봉) (연말정산 진단 데이터)
   double _laborIncome = 0.0; // 이번 달 근로소득(급여) — N잡러 수입 분리
@@ -152,7 +155,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _yellowUmbrellaController.addListener(_calculateTax);
     _savingGoalController.addListener(_onExpenseTargetChanged);
     _loadDataFromDB();
+    _loadRemoteNotices();
     _startBannerRotation();
+  }
+
+  /// 원격 소식을 조용히 받아 온다. 못 받으면 카드가 안 생길 뿐이다 —
+  /// 기다리지 않고, 실패를 사용자에게 말하지도 않는다.
+  Future<void> _loadRemoteNotices() async {
+    final list = await RemoteNotices.load();
+    if (!mounted || list.isEmpty) return;
+    setState(() => _notices = list);
   }
 
   @override
@@ -1221,6 +1233,20 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   /// C: 완료 + 소득 미설정 → [연봉 설정 촉구] + 유형별 도구 + 시즌
   /// D: 완료 + 소득 설정됨 → [개인화 데이터 카드] + 유형별 도구 + 시즌
   /// 이달의 절세 팁 → 회전 배너 카드(맨 위 광고/배너 카드에 합침).
+  /// 원격 소식 카드. 목록에는 제목과 한 줄 요약만 나가고, 눌러야 기사가 열린다.
+  /// 배너 헤드라인은 두 줄까지라 긴 제목은 여기서 잘린다 — 그래서 `summary`가
+  /// 아니라 `title`을 헤드라인으로 쓴다. 요약은 보조 줄이다.
+  List<BannerCardData> _noticeBannerCards() => _notices
+      .map((n) => BannerCardData(
+            label: n.label,
+            headline: n.title,
+            action: '자세히 보기',
+            glyph: '새',
+            sub: n.summary.isNotEmpty ? n.summary : null,
+            onTap: () => _go(NoticeDetailScreen(notice: n)),
+          ))
+      .toList();
+
   List<BannerCardData> _tipBannerCards() => _currentTips()
       .map((t) => BannerCardData(
             label: t.label,
@@ -1248,6 +1274,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           glyph: '유',
           onTap: _openOnboarding,
         ),
+        ..._noticeBannerCards(),
         ..._tipBannerCards(),
       ];
     }
@@ -1275,6 +1302,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           glyph: typeGlyph,
           onTap: () => _go(TaxSimulatorScreen(userType: _userType)),
         ),
+        ..._noticeBannerCards(),
         ..._tipBannerCards(),
       ];
     }
@@ -1421,6 +1449,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     ));
 
     // 이달의 절세 팁을 상단 회전 배너에 합친다(별도 카드 제거).
+    cards.addAll(_noticeBannerCards());
     cards.addAll(_tipBannerCards());
     return cards;
   }
