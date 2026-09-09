@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/remote_notices.dart';
 import 'package:secul/ui/screens/notice_detail_screen.dart';
+import 'package:secul/ui/theme/app_theme.dart';
 import 'package:secul/ui/theme/text_wrap.dart';
 
 /// 원격 소식은 **우리가 손으로 쓰는 파일**이고, 앱은 그걸 그대로 믿고 그린다.
@@ -149,6 +151,53 @@ void main() {
 
     final ids = parsed.map((n) => n!.id).toList();
     expect(ids.toSet().length, ids.length, reason: 'id가 중복이다 — 닫기 기록이 섞인다');
+  });
+
+  testWidgets('소식 제목이 홈 카드 두 줄 안에 들어간다', (t) async {
+    // 카드 헤드라인은 maxLines 2에 ellipsis인데, 한글은 줄임표가 붙기 전에
+    // 뒷줄이 통째로 사라진다 — 잘린 줄 자체를 모르게 된다. 실제로 한 번
+    // "K-패스가 「모두의카드」로 / 바뀌었어요"의 뒷줄을 잃었다.
+    //
+    // 그래서 글자 수 어림이 아니라 **실제 폭으로 잰다.** 폰트나 타입 스케일을
+    // 건드리면 이 검사가 같이 움직인다.
+    // 테스트 기본 글꼴은 모든 글자를 같은 네모로 그린다 — 그걸로 재면
+    // keepWords가 넣는 폭 0의 조이너까지 한 글자를 먹어 폭이 두 배가 된다.
+    // 앱이 실제로 쓰는 글꼴을 실어서 잰다.
+    for (final f in const {
+      'IBM Plex Mono': 'assets/fonts/IBMPlexMono-Bold.ttf',
+      'Nanum Gothic Coding': 'assets/fonts/NanumGothicCoding-Bold.ttf',
+    }.entries) {
+      // 파일을 **동기로** 읽는다. testWidgets 안에서 진짜 비동기 I/O를
+      // 기다리면 가짜 시계가 돌지 않아 그대로 멈춘다.
+      await (FontLoader(f.key)
+            ..addFont(
+                Future.value(ByteData.sublistView(File(f.value).readAsBytesSync()))))
+          .load();
+    }
+
+    const screen = 375.0; // 흔한 폰 너비. 이보다 좁으면 더 잘린다.
+    const cardPad = 20.0 * 2; // 홈 좌우 여백
+    const textShare = 0.60; // 사진이 있는 카드가 글자에 주는 몫
+    final maxWidth = (screen - cardPad) * textShare;
+
+    final raw = jsonDecode(File('docs/notices.json').readAsStringSync()) as Map;
+    final tooLong = <String>[];
+    for (final e in (raw['notices'] as List).cast<Map>()) {
+      final n = Notice.tryFrom(e)!;
+      final painter = TextPainter(
+        text: TextSpan(
+          text: (n.title.contains('\n') ? n.title : '${n.title}\n').keepWords,
+          style: AppTheme.display(AppTheme.serifSM, const Color(0xFF000000),
+              height: 1.3),
+        ),
+        maxLines: 2,
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: maxWidth);
+      if (painter.didExceedMaxLines) tooLong.add('${n.id} → ${n.title}');
+      painter.dispose();
+    }
+    expect(tooLong, isEmpty,
+        reason: '카드에서 뒷줄이 잘린다. 제목을 줄이거나 줄바꿈 위치를 옮겨라');
   });
 
   group('기사 화면', () {

@@ -133,14 +133,24 @@ class HomeBannerCarousel extends StatelessWidget {
               // 그래서 오른쪽에 두고, 글자 쪽 가장자리를 투명하게 녹여
               // 종이 바탕에 스며들게 한다. 겹치는 구간이 아예 없다.
               if (c.imageUrl != null)
-                Positioned(top: 0, bottom: 0, right: 0, child: _FadedPhoto(url: c.imageUrl!)),
+                Positioned(
+                  top: 0,
+                  bottom: 0,
+                  right: 0,
+                  // 너비를 여기서 못 박는다. Positioned가 left 없이 right만
+                  // 잡으면 폭이 무한이 되고, 그 안에서는 Image가 자기 크기를
+                  // 정하지 못해 아예 안 그려진다.
+                  width: MediaQuery.of(context).size.width * 0.40,
+                  child: _FadedPhoto(url: c.imageUrl!),
+                ),
               Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                // 사진이 있으면 글자는 왼쪽 절반 남짓만 쓴다 — 사진의 짙은
-                // 부분까지 글자가 밀고 들어가지 않게.
-                flex: c.imageUrl != null ? 58 : 100,
+                // 사진이 있으면 글자는 왼쪽 60%만 쓴다. 사진(40%)과 겹치는
+                // 구간은 없다 — 사진 쪽 왼쪽 40%가 거의 투명해서
+                // 실제로 짙어지는 지점은 카드의 오른쪽 24%부터다.
+                flex: c.imageUrl != null ? 60 : 100,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +213,7 @@ class HomeBannerCarousel extends StatelessWidget {
                   ],
                 ),
               ),
-              if (c.imageUrl != null) const Spacer(flex: 42),
+              if (c.imageUrl != null) const Spacer(flex: 40),
             ],
               ),
             ],
@@ -226,37 +236,26 @@ class _FadedPhoto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, box) {
-        // 부모(Stack)가 준 높이만큼 채우고, 너비는 카드의 46%.
-        // 글자가 쓰는 58%와 12%p 겹치는데, 그 구간은 그라데이션이
-        // 거의 투명한 쪽이라 글자를 가리지 않는다.
-        final w = MediaQuery.of(context).size.width * 0.46;
-        return IgnorePointer(
-          child: ShaderMask(
-            blendMode: BlendMode.dstIn,
-            shaderCallback: (r) => const LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              // 왼쪽 40%를 페이드에 쓴다. 더 짧게 하면 경계가 선처럼 보이고,
-              // 더 길게 하면 사진이 뭘 찍은 건지 알아볼 수 없어진다.
-              colors: [Color(0x00000000), Color(0xFF000000)],
-              stops: [0.0, 0.4],
-            ).createShader(r),
-            child: SizedBox(
-              width: w,
-              child: Image.network(
-                url,
-                fit: BoxFit.cover,
-                alignment: Alignment.centerRight,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                loadingBuilder: (_, child, p) =>
-                    p == null ? child : const SizedBox.shrink(),
-              ),
-            ),
-          ),
-        );
-      },
+    return IgnorePointer(
+      child: ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (r) => const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          // 왼쪽 40%를 페이드에 쓴다. 더 짧게 하면 경계가 선처럼 보이고,
+          // 더 길게 하면 사진이 뭘 찍은 건지 알아볼 수 없어진다.
+          colors: [Color(0x00000000), Color(0xFF000000)],
+          stops: [0.0, 0.4],
+        ).createShader(r),
+        child: Image.network(
+          url,
+          fit: BoxFit.cover,
+          alignment: Alignment.centerRight,
+          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          loadingBuilder: (_, child, p) =>
+              p == null ? child : const SizedBox.shrink(),
+        ),
+      ),
     );
   }
 }
