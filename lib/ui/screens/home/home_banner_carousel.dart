@@ -15,6 +15,9 @@ class BannerCardData {
   /// 보조 문구 — 헤드라인 아래 한 줄(팁=본문, 그 외=액션 안내). 없으면 action 사용.
   final String? sub;
 
+  /// 오른쪽에 깔 사진. 없으면 카드는 지금까지와 똑같이 글자만으로 그려진다.
+  final String? imageUrl;
+
   /// 닫을 수 있는가. 기본은 닫힌다 — 광고·팁은 안 보고 싶을 수 있다.
   ///
   /// **닫으면 길이 사라지는 카드는 false로 둔다.** 1~지난달 채우기가 그렇다.
@@ -29,6 +32,7 @@ class BannerCardData {
     required this.glyph,
     required this.onTap,
     this.sub,
+    this.imageUrl,
     this.dismissible = true,
   });
 
@@ -119,10 +123,24 @@ class HomeBannerCarousel extends StatelessWidget {
         onTap: c.onTap,
         child: SizedBox(
           width: double.infinity,
-          child: Row(
+          child: Stack(
+            children: [
+              // **사진은 글자 뒤가 아니라 글자 옆이다.**
+              //
+              // 사진 위에 흰 글씨를 얹는 흔한 방식은 사진이 무엇이냐에 따라
+              // 글자가 읽히기도 하고 안 읽히기도 한다. 우리가 고르는 사진이
+              // 아니라 그때그때 올리는 사진이라 그 도박을 할 수 없다.
+              // 그래서 오른쪽에 두고, 글자 쪽 가장자리를 투명하게 녹여
+              // 종이 바탕에 스며들게 한다. 겹치는 구간이 아예 없다.
+              if (c.imageUrl != null)
+                Positioned(top: 0, bottom: 0, right: 0, child: _FadedPhoto(url: c.imageUrl!)),
+              Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
+                // 사진이 있으면 글자는 왼쪽 절반 남짓만 쓴다 — 사진의 짙은
+                // 부분까지 글자가 밀고 들어가지 않게.
+                flex: c.imageUrl != null ? 58 : 100,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,11 +203,60 @@ class HomeBannerCarousel extends StatelessWidget {
                   ],
                 ),
               ),
+              if (c.imageUrl != null) const Spacer(flex: 42),
+            ],
+              ),
             ],
           ),
         ),
       ),
     );
   }
+}
 
+/// 오른쪽 사진 — 왼쪽 가장자리를 투명하게 녹인다.
+///
+/// 못 받아 오면 **아무것도 그리지 않는다.** 자리를 비워 두지도 않는다 —
+/// 글자는 이미 왼쪽에 다 있으므로 사진이 없어도 카드가 성립한다.
+/// 로딩 중에도 빈 자리다. 6초마다 도는 카드에서 회색 판이 번쩍이면
+/// 그게 사진보다 더 눈에 띈다.
+class _FadedPhoto extends StatelessWidget {
+  final String url;
+  const _FadedPhoto({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, box) {
+        // 부모(Stack)가 준 높이만큼 채우고, 너비는 카드의 46%.
+        // 글자가 쓰는 58%와 12%p 겹치는데, 그 구간은 그라데이션이
+        // 거의 투명한 쪽이라 글자를 가리지 않는다.
+        final w = MediaQuery.of(context).size.width * 0.46;
+        return IgnorePointer(
+          child: ShaderMask(
+            blendMode: BlendMode.dstIn,
+            shaderCallback: (r) => const LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              // 왼쪽 40%를 페이드에 쓴다. 더 짧게 하면 경계가 선처럼 보이고,
+              // 더 길게 하면 사진이 뭘 찍은 건지 알아볼 수 없어진다.
+              colors: [Color(0x00000000), Color(0xFF000000)],
+              stops: [0.0, 0.4],
+            ).createShader(r),
+            child: SizedBox(
+              width: w,
+              child: Image.network(
+                url,
+                fit: BoxFit.cover,
+                alignment: Alignment.centerRight,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                loadingBuilder: (_, child, p) =>
+                    p == null ? child : const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

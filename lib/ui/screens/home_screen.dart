@@ -1243,6 +1243,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             action: '자세히 보기',
             glyph: '새',
             sub: n.summary.isNotEmpty ? n.summary : null,
+            imageUrl: n.imageUrl,
             onTap: () => _go(NoticeDetailScreen(notice: n)),
           ))
       .toList();

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:path_provider/path_provider.dart';
 
 /// **앱을 새로 받지 않아도 바뀌는 소식.**
@@ -51,8 +52,21 @@ class RemoteNotices {
     if (!force && cached != null && cached.fresh) return cached.notices;
 
     final fetched = await _fetch();
-    if (fetched == null) return cached?.notices ?? const [];
-    return fetched;
+    if (fetched != null) return fetched;
+    if (cached != null) return cached.notices;
+
+    // 한 번도 받아 본 적 없고 지금도 못 받는 상태 — 앱에 같이 실어 둔
+    // 그날의 소식을 쓴다. 지하철에서 앱을 처음 연 사람에게 빈 자리를
+    // 보이지 않으려는 것이고, `until`이 지난 건은 여기서도 걸러진다.
+    return _bundled();
+  }
+
+  static Future<List<Notice>> _bundled() async {
+    try {
+      return _parse(await rootBundle.loadString('docs/notices.json'));
+    } catch (_) {
+      return const [];
+    }
   }
 
   static Future<_Cached?> _readCache() async {
