@@ -80,7 +80,8 @@ class HomeBannerCarousel extends StatelessWidget {
           duration: Duration(milliseconds: reduce ? 0 : 500),
           switchInCurve: Curves.easeOut,
           switchOutCurve: Curves.easeIn,
-          transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+          transitionBuilder: (child, anim) =>
+              FadeTransition(opacity: anim, child: child),
           layoutBuilder: (current, previous) => Stack(
             alignment: Alignment.topLeft,
             children: [...previous, if (current != null) current],
@@ -144,78 +145,81 @@ class HomeBannerCarousel extends StatelessWidget {
                   child: _FadedPhoto(url: c.imageUrl!),
                 ),
               Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                // 사진이 있으면 글자는 왼쪽 60%만 쓴다. 사진(40%)과 겹치는
-                // 구간은 없다 — 사진 쪽 왼쪽 40%가 거의 투명해서
-                // 실제로 짙어지는 지점은 카드의 오른쪽 24%부터다.
-                flex: c.imageUrl != null ? 60 : 100,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    // 사진이 있으면 글자는 왼쪽 60%만 쓴다. 사진(40%)과 겹치는
+                    // 구간은 없다 — 사진 쪽 왼쪽 40%가 거의 투명해서
+                    // 실제로 짙어지는 지점은 카드의 오른쪽 24%부터다.
+                    flex: c.imageUrl != null ? 60 : 100,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(child: AppTheme.sectionHead(context, null, c.label)),
-                        if (c.dismissible)
-                          Semantics(
-                            button: true,
-                            label: '이 카드 닫기',
-                            child: GestureDetector(
-                              onTap: () => onDismiss(c),
-                              behavior: HitTestBehavior.opaque,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 8),
-                                child: Icon(Icons.close_rounded, size: 16, color: sub),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 7),
-                    // **늘 두 줄이다.** 한 줄도, 세 줄도 아니다.
-                    //
-                    // 빽빽하다는 의견에 한 줄로 조였더니 "공제 문턱까지 /
-                    // 912만원 남았어요"처럼 원래 두 줄로 쓴 문장이 앞줄만 남고
-                    // **금액이 통째로 사라졌다**. 줄임표도 안 붙어서 잘린 줄도
-                    // 몰랐다. 짧아진 화면보다 사라진 숫자가 훨씬 비싸다.
-                    //
-                    // 한 줄짜리 문장에는 빈 줄을 붙여 자리를 채운다 — 카드마다
-                    // 줄 수가 갈리면 6초마다 아래가 들썩인다.
-                    Text(_twoLines(c.headline).keepWords,
-                        maxLines: 2,
-                        textAlign: TextAlign.left,
-                        overflow: TextOverflow.ellipsis,
-                        // 홈의 표제는 절 머리(01 INCOME…)다. 배너가 그보다 크면
-                        // 광고가 문서를 이긴다 — 한 급 낮춰 본문 위계에 넣는다.
-                        style: AppTheme.display(AppTheme.serifSM, ink, height: 1.3)),
-                    const SizedBox(height: 6),
-                    // **보조 문구가 없어도 자리는 비운다.**
-                    //
-                    // 카드마다 이 줄이 있고 없고가 갈리면 카드 높이가 달라지고,
-                    // 6초마다 돌 때마다 아래 절취선부터 화면 전체가 들썩인다.
-                    // 빈 줄 하나를 두는 편이 낫다 — 흔들리는 화면은 읽히지 않는다.
-                    Row(children: [
-                      Flexible(
-                        // 한 줄로 줄였으니 문장 경계 줄바꿈도 뺀다 —
-                        // 어차피 첫 줄만 보인다.
-                        child: Text(subText ?? '',
+                        AppTheme.sectionHead(context, null, c.label),
+                        const SizedBox(height: 7),
+                        // **늘 두 줄이다.** 한 줄도, 세 줄도 아니다.
+                        //
+                        // 빽빽하다는 의견에 한 줄로 조였더니 "공제 문턱까지 /
+                        // 912만원 남았어요"처럼 원래 두 줄로 쓴 문장이 앞줄만 남고
+                        // **금액이 통째로 사라졌다**. 줄임표도 안 붙어서 잘린 줄도
+                        // 몰랐다. 짧아진 화면보다 사라진 숫자가 훨씬 비싸다.
+                        //
+                        // 한 줄짜리 문장에는 빈 줄을 붙여 자리를 채운다 — 카드마다
+                        // 줄 수가 갈리면 6초마다 아래가 들썩인다.
+                        Text(_twoLines(c.headline).keepWords,
+                            maxLines: 2,
+                            textAlign: TextAlign.left,
+                            overflow: TextOverflow.ellipsis,
+                            // 홈의 표제는 절 머리(01 INCOME…)다. 배너가 그보다 크면
+                            // 광고가 문서를 이긴다 — 한 급 낮춰 본문 위계에 넣는다.
+                            style: AppTheme.display(AppTheme.serifSM, ink,
+                                height: 1.3)),
+                        const SizedBox(height: 6),
+                        // **보조 문구가 없어도 자리는 비운다.**
+                        //
+                        // 카드마다 이 줄이 있고 없고가 갈리면 카드 높이가 달라지고,
+                        // 6초마다 돌 때마다 아래 절취선부터 화면 전체가 들썩인다.
+                        // 빈 줄 하나를 두는 편이 낫다 — 흔들리는 화면은 읽히지 않는다.
+                        // 화살표는 없앴다. 카드 전체가 이미 탭 영역이고,
+                        // 누르면 기사 화면이 뜬다 — 화살표는 그걸 한 번 더
+                        // 말할 뿐이면서, 닫기(×)와 헷갈리는 두 번째 버튼처럼 보였다.
+                        Text(subText ?? '',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.45)),
-                      ),
-                      if (subText != null) ...[
-                        const SizedBox(width: 5),
-                        Icon(Icons.arrow_forward, size: 13, color: sub),
+                            style: AppTheme.sans(AppTheme.tsSM, sub,
+                                height: 1.45)),
                       ],
-                    ]),
-                  ],
+                    ),
+                  ),
+                  if (c.imageUrl != null) const Spacer(flex: 40),
+                ],
+              ),
+              // 닫기는 **카드의 오른쪽 위 모서리**다. 글자 폭이 60%로 줄었다고
+              // 같이 안으로 따라 들어오면 카드마다 ×가 다른 자리에 있게 된다.
+              // 사진 위에 얹히므로 종이색 원을 깔아 어떤 사진에서도 보이게 한다.
+              if (c.dismissible)
+                Positioned(
+                  top: -6,
+                  right: -6,
+                  child: Semantics(
+                    button: true,
+                    label: '이 카드 닫기',
+                    child: GestureDetector(
+                      onTap: () => onDismiss(c),
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color:
+                              AppTheme.surface(context).withValues(alpha: 0.82),
+                        ),
+                        child: Icon(Icons.close_rounded, size: 16, color: sub),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              if (c.imageUrl != null) const Spacer(flex: 40),
-            ],
-              ),
             ],
           ),
         ),
@@ -247,13 +251,23 @@ class _FadedPhoto extends StatelessWidget {
           colors: [Color(0x00000000), Color(0xFF000000)],
           stops: [0.0, 0.4],
         ).createShader(r),
-        child: Image.network(
-          url,
-          fit: BoxFit.cover,
-          alignment: Alignment.centerRight,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-          loadingBuilder: (_, child, p) =>
-              p == null ? child : const SizedBox.shrink(),
+        child: ColorFiltered(
+          // 총천연색은 잉크 컨셉을 깨고, 완전한 흑백은 사진이 죽는다.
+          // 채도를 35%만 남긴다 — 색은 알아볼 정도, 종이 위에 얹힌 인쇄물 같게.
+          colorFilter: const ColorFilter.matrix(<double>[
+            0.4882, 0.4649, 0.0469, 0, 0, //
+            0.1382, 0.8149, 0.0469, 0, 0, //
+            0.1382, 0.4649, 0.3969, 0, 0, //
+            0, 0, 0, 1, 0, //
+          ]),
+          child: Image.network(
+            url,
+            fit: BoxFit.cover,
+            alignment: Alignment.centerRight,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            loadingBuilder: (_, child, p) =>
+                p == null ? child : const SizedBox.shrink(),
+          ),
         ),
       ),
     );
