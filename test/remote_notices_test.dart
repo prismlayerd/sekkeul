@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/remote_notices.dart';
+import 'package:secul/ui/screens/notice_detail_screen.dart';
+import 'package:secul/ui/theme/text_wrap.dart';
 
 /// 원격 소식은 **우리가 손으로 쓰는 파일**이고, 앱은 그걸 그대로 믿고 그린다.
 /// 오타 하나로 홈 화면이 죽으면 안 된다 — 그래서 파서는 절대 던지지 않고,
@@ -144,6 +147,55 @@ void main() {
 
     final ids = parsed.map((n) => n!.id).toList();
     expect(ids.toSet().length, ids.length, reason: 'id가 중복이다 — 닫기 기록이 섞인다');
+  });
+
+  group('기사 화면', () {
+    // 배포 파일의 진짜 한 건을 파서에 통과시켜 그대로 그린다 —
+    // JSON → 모델 → 화면이 한 줄로 이어지는지 여기서 걸린다.
+    Notice fromFeed(String id) {
+      final raw = jsonDecode(File('docs/notices.json').readAsStringSync()) as Map;
+      final hit = (raw['notices'] as List).cast<Map>().where((e) => e['id'] == id);
+      expect(hit, isNotEmpty, reason: '$id 소식이 docs/notices.json에 없다');
+      return Notice.tryFrom(hit.first)!;
+    }
+
+    testWidgets('전후 표가 「무엇이 얼마에서 얼마로」를 다 보여준다', (t) async {
+      final n = fromFeed('2026-09-09-mudeuui-card');
+      expect(n.changes, isNotEmpty);
+      await t.pumpWidget(MaterialApp(home: NoticeDetailScreen(notice: n)));
+      await t.pumpAndSettle();
+
+      expect(find.text('무엇이 바뀌었나'), findsOneWidget);
+      for (final c in n.changes) {
+        // 화면은 .keepWords로 줄바꿈 힌트를 섞어 그린다 — 기대값도 같은 변환을 거친다.
+        expect(find.text(c.what.keepWords), findsOneWidget, reason: '항목이 안 보인다');
+        expect(find.text(c.before.keepWords), findsOneWidget, reason: '이전 값이 안 보인다');
+        expect(find.text(c.after.keepWords), findsOneWidget, reason: '바뀐 값이 안 보인다');
+      }
+      // 출처는 기사 맨 아래다 — ListView가 화면 밖은 안 그리므로 끝까지 밀어 본다.
+      await t.drag(find.byType(ListView), const Offset(0, -3000));
+      await t.pumpAndSettle();
+      expect(find.textContaining('출처'), findsOneWidget);
+      expect(find.text('원문 보기'), findsOneWidget);
+    });
+
+    testWidgets('전후가 없는 소식은 표를 그리지 않는다', (t) async {
+      final n = fromFeed('2026-09-09-catalog-recheck');
+      expect(n.changes, isEmpty);
+      await t.pumpWidget(MaterialApp(home: NoticeDetailScreen(notice: n)));
+      await t.pumpAndSettle();
+      expect(find.text('무엇이 바뀌었나'), findsNothing);
+      expect(find.text(n.body.first.keepWords), findsOneWidget);
+    });
+
+    testWidgets('사진이 없어도 화면이 선다', (t) async {
+      final n = fromFeed('2026-09-09-kmove-settlement');
+      expect(n.imageUrl, isNull, reason: '이 소식에 사진이 없어야 이 검사가 뜻이 있다');
+      await t.pumpWidget(MaterialApp(home: NoticeDetailScreen(notice: n)));
+      await t.pumpAndSettle();
+      expect(find.byType(Image), findsNothing);
+      expect(find.text(n.summary.keepWords), findsOneWidget);
+    });
   });
 }
 
