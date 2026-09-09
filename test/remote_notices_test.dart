@@ -119,10 +119,12 @@ void main() {
       expect(list.map((n) => n.id), ['live']);
     });
 
-    test('망가진 JSON이면 예외 대신 빈 목록', () async {
+    test('망가진 캐시는 쓰지 않고 앱에 실어 둔 것으로 떨어진다', () async {
+      // 예외를 던지지 않는 게 첫째고, 깨진 걸 억지로 읽지 않는 게 둘째다.
       final f = await _tmp('{이건 JSON이 아니다');
       RemoteNotices.debugOverride(cacheFile: f, client: _deadClient);
-      expect(await RemoteNotices.load(), isEmpty);
+      final list = await RemoteNotices.load();
+      expect(list.map((n) => n.id), contains('2026-09-09-catalog-recheck'));
     });
 
     test('인터넷이 안 되면 마지막으로 받아 둔 것을 쓴다', () async {
@@ -162,6 +164,10 @@ void main() {
     testWidgets('전후 표가 「무엇이 얼마에서 얼마로」를 다 보여준다', (t) async {
       final n = fromFeed('2026-09-09-mudeuui-card');
       expect(n.changes, isNotEmpty);
+      // 기사는 한 화면보다 길다. ListView는 화면 밖을 안 그리므로
+      // 판을 길게 잡아 전부 세워 놓고 본다.
+      await t.binding.setSurfaceSize(const Size(400, 2400));
+      addTearDown(() => t.binding.setSurfaceSize(null));
       await t.pumpWidget(MaterialApp(home: NoticeDetailScreen(notice: n)));
       await t.pumpAndSettle();
 
@@ -172,9 +178,6 @@ void main() {
         expect(find.text(c.before.keepWords), findsOneWidget, reason: '이전 값이 안 보인다');
         expect(find.text(c.after.keepWords), findsOneWidget, reason: '바뀐 값이 안 보인다');
       }
-      // 출처는 기사 맨 아래다 — ListView가 화면 밖은 안 그리므로 끝까지 밀어 본다.
-      await t.drag(find.byType(ListView), const Offset(0, -3000));
-      await t.pumpAndSettle();
       expect(find.textContaining('출처'), findsOneWidget);
       expect(find.text('원문 보기'), findsOneWidget);
     });
