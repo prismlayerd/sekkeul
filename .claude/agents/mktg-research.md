@@ -1,6 +1,6 @@
 ---
 name: mktg-research
-description: Sources the facts for one Sekkeul marketing asset — the seasonal angle, the phrase people actually search, and every tax figure with a primary-source URL and 기준일. Use at the START of weekly routine step 3 (마케팅 초안), before any copy exists. Writes a brief file and returns its path, never raw findings.
+description: Sources the facts for one Sekkeul marketing asset — the seasonal angle, the phrase people actually search, and every tax figure with a primary-source URL and 기준일. Use at the START of daily routine 4-3, before any copy exists. Writes a brief file and returns its path, never raw findings.
 tools: Read, Grep, Glob, WebSearch, WebFetch, Write
 model: sonnet
 color: blue

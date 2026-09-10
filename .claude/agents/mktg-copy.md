@@ -1,6 +1,6 @@
 ---
 name: mktg-copy
-description: Writes the Korean marketing draft for Sekkeul from a research brief — one blog post, then derives the card-news script and store note from it. Use in weekly routine step 3 after mktg-research. Has no web access by design; stops and asks for research when the brief is missing a number.
+description: Writes the Korean marketing draft for Sekkeul from a research brief — one blog post, then derives the card-news script and store note from it. Use in daily routine 4-3, after mktg-research. Has no web access by design; stops and asks for research when the brief is missing a number.
 tools: Read, Grep, Glob, Write, Edit
 model: sonnet
 color: green

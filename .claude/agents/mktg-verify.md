@@ -1,6 +1,6 @@
 ---
 name: mktg-verify
-description: Independent gate for a finished Sekkeul marketing draft. Re-verifies every factual claim from primary sources without following the draft's own citations, greps the app repo to decide whether the draft needs an 앱 미반영 header, and checks the 문구 규칙 by name. Use in weekly routine step 3 after mktg-copy, before the draft is reported. Reports PASS or FAIL and never edits.
+description: Independent gate for a finished Sekkeul marketing draft. Re-verifies every factual claim from primary sources without following the draft's own citations, greps the app repo to decide whether the draft needs an 앱 미반영 header, and checks the 문구 규칙 by name. Use in daily routine 4-3, after mktg-copy, before the draft is reported. Reports PASS or FAIL and never edits.
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: opus
 color: red
