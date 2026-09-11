@@ -363,8 +363,8 @@ EmployeeRefundEstimate estimateYearRefund({
     // 학원비는 교육비고, 종교단체 기부금은 기부금이다 — 세법이 따로 두는 공제가
     // 아니라 그 공제 안에서 사람들이 빠뜨리는 조각이다.
     //
-    // 한도는 조각마다 따로 있다: 안경 1인 50만(시행령 §118의5①1), 산후조리원
-    // 출산 1회 200만(§118의5①9), 교복 1인 50만(§118의6②).
+    // 한도는 조각마다 따로 있다: 안경 1인 50만(시행령 §118의5①4), 산후조리원
+    // 출산 1회 200만(§118의5①7), 교복 1인 50만(§118의6①4호).
     medicalCredit: EmployeeTaxCalculator.calculateMedicalTaxCredit(
       grossIncome: grossIncome,
       infertilityExpense: 0,
@@ -376,9 +376,9 @@ EmployeeRefundEstimate estimateYearRefund({
     educationCredit: EmployeeTaxCalculator.calculateEducationTaxCredit(
       preschoolExpense: a('preschoolAcademy'),
       preschoolCount: childrenCount < 1 ? 1 : childrenCount,
-      // 교복은 시행령 한도(1인 50만)를 먼저 적용하고, 초1~2 예체능 학원비는
-      // 항목별 한도를 못 찾아 그대로 더한다 — 어차피 아래 childLimit(1인 300만)이
-      // 두 항목을 합쳐서 한 번 더 막는다.
+      // 교복은 시행령 한도(1인 50만)를 먼저 적용한다. 초1~2 예체능 학원비는
+      // 시행령 §118의6⑧⑨⑩이 대상만 정하고 별도 금액 한도를 안 두므로 그대로
+      // 더한다 — 아래 childLimit(1인 300만)이 유일한 한도다(확인됨, 2026-09-11).
       childrenExpense: _cap(a('uniform'), 500000.0 * (childrenCount < 1 ? 1 : childrenCount)) +
           a('earlyElemArtsAcademy'),
       childrenCount: childrenCount < 1 ? 1 : childrenCount,

@@ -250,7 +250,7 @@ class EmployeeTaxCalculator {
     return TaxRates.truncateWon(general + disabled);
   }
 
-  /// 표준세액공제 (소법 §59의5, 2025~2026 귀속 13만원)
+  /// 표준세액공제 (소법 §59의4⑨1호, 2025~2026 귀속 13만원) — §59의5는 별개(외국인 세액감면)
   /// 특별소득공제·특별세액공제·월세세액공제를 신청하지 않는 경우 일괄 공제
   /// 사용자가 공제항목이 적을 때 자동으로 표준공제(13만)가 더 유리하면 적용
   static double getStandardTaxCredit() {
