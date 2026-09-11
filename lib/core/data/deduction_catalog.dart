@@ -185,6 +185,19 @@ const List<DeductionCategory> kDeductionCatalog = [
       '교육비 납입증명서 (학원·체육시설 발급)',
     ],
   ),
+  // 소법 §59의4③1마 (2025-12-23 개정, 2026-01-01 시행) — 취학전 아동뿐 아니라
+  // 초1~2학년(9세 미만)의 예체능 학원·체육시설비도 교육비 공제에 새로 들어왔다.
+  DeductionCategory(
+    id: 'earlyElemArtsAcademy',
+    name: '초1~2학년 예체능 학원비',
+    summary: '9세 미만이거나 초등 1~2학년인 아이의 예체능 학원비·체육시설비도 교육비로 15% 공제돼요.',
+    findHint: '간소화에 안 나와요. 학원에서 교육비납입증명서를 받으세요.',
+    fileHint: '세액공제 → 교육비 칸에 더해서 적어요.',
+    missable: true,
+    documents: [
+      '교육비 납입증명서 (학원·체육시설 발급)',
+    ],
+  ),
   DeductionCategory(
     id: 'religiousDonation',
     name: '종교단체 기부금',
@@ -267,9 +280,11 @@ List<DeductionCategory> missableFor({
           isHouseholdHead: isHouseholdHead,
           grossIncome: grossIncome))
         if (c.missable)
-          // 자녀가 없으면 교복·취학전 학원비를 물어볼 이유가 없다.
+          // 자녀가 없으면 교복·취학전·초1~2 학원비를 물어볼 이유가 없다.
           if (childrenCount > 0 ||
-              (c.id != 'uniform' && c.id != 'preschoolAcademy'))
+              (c.id != 'uniform' &&
+                  c.id != 'preschoolAcademy' &&
+                  c.id != 'earlyElemArtsAcademy'))
             c,
     ];
 
@@ -361,7 +376,11 @@ EmployeeRefundEstimate estimateYearRefund({
     educationCredit: EmployeeTaxCalculator.calculateEducationTaxCredit(
       preschoolExpense: a('preschoolAcademy'),
       preschoolCount: childrenCount < 1 ? 1 : childrenCount,
-      childrenExpense: _cap(a('uniform'), 500000.0 * (childrenCount < 1 ? 1 : childrenCount)),
+      // 교복은 시행령 한도(1인 50만)를 먼저 적용하고, 초1~2 예체능 학원비는
+      // 항목별 한도를 못 찾아 그대로 더한다 — 어차피 아래 childLimit(1인 300만)이
+      // 두 항목을 합쳐서 한 번 더 막는다.
+      childrenExpense: _cap(a('uniform'), 500000.0 * (childrenCount < 1 ? 1 : childrenCount)) +
+          a('earlyElemArtsAcademy'),
       childrenCount: childrenCount < 1 ? 1 : childrenCount,
       collegeExpense: 0, collegeCount: 0,
       selfExpense: a('education'),

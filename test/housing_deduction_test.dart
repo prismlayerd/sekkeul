@@ -179,10 +179,12 @@ void main() {
             'postpartum', 'religiousDonation']));
     });
 
-    test('자녀가 없으면 교복·취학전 학원비를 안 묻는다', () {
+    test('자녀가 없으면 교복·취학전·초1~2 학원비를 안 묻는다', () {
       expect(ids(residence: '자가', kids: 0), isNot(contains('uniform')));
       expect(ids(residence: '자가', kids: 0), isNot(contains('preschoolAcademy')));
-      expect(ids(residence: '자가', kids: 2), containsAll(['uniform', 'preschoolAcademy']));
+      expect(ids(residence: '자가', kids: 0), isNot(contains('earlyElemArtsAcademy')));
+      expect(ids(residence: '자가', kids: 2),
+          containsAll(['uniform', 'preschoolAcademy', 'earlyElemArtsAcademy']));
     });
 
     test('경정청구는 여전히 전부 본다', () {
@@ -208,6 +210,24 @@ void main() {
         childrenCount: 1,
       );
       expect(r.refund, 75000, reason: '한도를 안 걸면 받을 수 없는 돈을 약속한다');
+    });
+
+    test('초1~2 예체능 학원비도 교육비 15%', () {
+      final r = estimateYearRefund(
+        amounts: const {'earlyElemArtsAcademy': 1000000},
+        grossIncome: 50000000,
+        childrenCount: 1,
+      );
+      expect(r.refund, 150000);
+    });
+
+    test('교복 + 초1~2 학원비는 합쳐서 1인 300만 한도', () {
+      final r = estimateYearRefund(
+        amounts: const {'uniform': 500000, 'earlyElemArtsAcademy': 3000000},
+        grossIncome: 50000000,
+        childrenCount: 1,
+      );
+      expect(r.refund, 450000, reason: '300만 한도를 안 걸면 받을 수 없는 돈을 약속한다');
     });
 
     test('종교단체 기부금도 기부금 15%', () {
