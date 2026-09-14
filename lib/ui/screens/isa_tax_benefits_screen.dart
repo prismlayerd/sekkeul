@@ -1,3 +1,4 @@
+import 'dart:math' show pow;
 import 'package:flutter/material.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
@@ -55,7 +56,7 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
     final d = _deposit.toDouble();
 
     // 연간 납입 복리 (매년 초 납입 기준 연금형)
-    final totalValue = d * ((1 - _pow(1 + r, n)) / (-r)) * (1 + r);
+    final totalValue = d * ((1 - pow(1 + r, n)) / (-r)) * (1 + r);
     final totalDeposit = _deposit * n;
     final totalInterest = totalValue - totalDeposit;
 
@@ -81,14 +82,6 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
     );
   }
 
-  double _pow(double base, int exp) {
-    double result = 1;
-    for (int i = 0; i < exp; i++) {
-      result *= base;
-    }
-    return result;
-  }
-
   @override
   Widget build(BuildContext context) {
     final ink = AppTheme.ink(context);
@@ -112,7 +105,8 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
               onPressed: _reset),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,6 +225,7 @@ class _IsaTaxBenefitsScreenState extends State<IsaTaxBenefitsScreen> {
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }

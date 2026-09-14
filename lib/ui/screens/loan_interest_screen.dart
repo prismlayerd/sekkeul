@@ -1,3 +1,4 @@
+import 'dart:math' show pow;
 import 'package:flutter/material.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
@@ -49,7 +50,7 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
     switch (_method) {
       case 0: // 원리금균등
         final payment =
-            r == 0 ? p / n : p * r * _pow(1 + r, n) / (_pow(1 + r, n) - 1);
+            r == 0 ? p / n : p * r * pow(1 + r, n) / (pow(1 + r, n) - 1);
         monthly = payment.round();
         total = monthly * n;
         interest = total - _principal;
@@ -71,14 +72,6 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
         total = interest + _principal;
     }
     return (monthlyPayment: monthly, totalPayment: total, totalInterest: interest);
-  }
-
-  double _pow(double base, int exp) {
-    double result = 1;
-    for (int i = 0; i < exp; i++) {
-      result *= base;
-    }
-    return result;
   }
 
   @override
@@ -104,7 +97,8 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
               onPressed: _reset),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,6 +208,7 @@ class _LoanInterestScreenState extends State<LoanInterestScreen> {
             ]),
           ],
         ),
+      ),
       ),
     );
   }
