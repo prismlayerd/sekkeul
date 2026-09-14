@@ -236,6 +236,13 @@ class AppTheme {
   static const Color colorDanger  = Color(0xFFA34434);
   static const Color colorInfo    = Color(0xFF1F1F1F); // 안내는 색이 아니라 잉크다
 
+  // 가계부 달력 마크(결제수단·수익) 전용 — 이 넷만 잉크 원칙의 예외다(2026-09-14).
+  // 채도를 낮춘 톤이라 종이 위에서도 서로 구분되면서 튀지 않는다.
+  static const Color colorMarkIncome = Color(0xFF2F9E52); // 수익 (+)
+  static const Color colorMarkCredit = Color(0xFF2E7DD1); // 신용카드 (공제 15%)
+  static const Color colorMarkDebit  = Color(0xFFB93B8F); // 체크·현금 (공제 30%)
+  static const Color colorMarkOther  = Color(0xFFD9791E); // 기타
+
   // ──────────────────────────────────────────────
   // 컨텍스트 헬퍼
   // ──────────────────────────────────────────────

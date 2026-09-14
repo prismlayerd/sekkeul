@@ -25,102 +25,53 @@ import 'month_list_screen.dart';
 import '../theme/text_wrap.dart';
 
 
-// ── 항목 색상 (파스텔 톤) ──
-/// 수익·결제수단을 흑백에서 가르는 **표식**. 색 점 → 약어(카/현/기)를 거쳐
-/// 속이 찬 도형으로 왔다.
+// ── 항목 색상 ──
+/// 수익·결제수단을 가르는 **표식**. 도형(■●▲+)으로 갈리던 걸 색으로 바꿨다
+/// (2026-09-14) — 종이 질감 테마의 잉크 원칙에서 이 넷만 예외를 둔다.
 ///
-/// 신용카드 15% / 체크·현금 30%로 공제율이 갈리는 구분이라 뭉개지면 안 되는데,
-/// 영수증 테마에는 색이 없다. 도형은 모양으로 갈리니 색맹인 사람에게도 읽히고,
-/// 달력 칸처럼 좁은 자리에서 글자보다 작게 찍을 수 있다.
+/// 신용카드 15% / 체크·현금 30%로 공제율이 갈리는 구분이라 뭉개지면 안 된다.
 enum _Mark { income, credit, debit, other }
 
-/// 표식 하나 — 잉크로 채운 도형. 수익만 부호(+)다: 결제수단과 축이 다르다.
-class _MarkShape extends StatelessWidget {
-  const _MarkShape(this.kind, {this.size = 8, this.color});
+Color _markColor(BuildContext context, _Mark kind) {
+  switch (kind) {
+    case _Mark.income: return AppTheme.colorMarkIncome;
+    case _Mark.credit: return AppTheme.colorMarkCredit;
+    case _Mark.debit:  return AppTheme.colorMarkDebit;
+    case _Mark.other:  return AppTheme.colorMarkOther;
+  }
+}
+
+/// 표식 하나 — 색이 찬 작은 막대(2026-09-14, 원 → 막대). 뜻은 늘 옆에
+/// 글자로 같이 있다(범례의 '신용카드' 같은 라벨, 달력 칸의 칸 전체 시맨틱
+/// 라벨) — 그래서 스크린리더에서 뺀다.
+class _MarkChip extends StatelessWidget {
+  const _MarkChip(this.kind, {this.size = 8});
   final _Mark kind;
 
-  /// 표식이 차지하는 **정사각 상자**의 한 변. 도형은 그 안에 들어간다.
+  /// 막대 높이 — 너비는 이 값의 1.6배.
   final double size;
-  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? AppTheme.ink(context);
-    // 네 표식이 **같은 크기 상자**를 쓴다. 예전엔 +가 size+2, 세모가 size+1,
-    // 네모·원이 size라 범례에서 글자 높이가 제각각이었고, 달력 칸에 세로로
-    // 쌓으면 오른쪽 끝이 들쭉날쭉했다. 상자를 맞추면 어디 놓아도 줄이 선다.
-    // 도형은 **장식**이다. 뜻은 늘 옆에 글자로 같이 있다 — 범례에는 '신용카드'
-    // 같은 라벨이, 달력 칸에는 칸 전체를 읽어 주는 라벨이 붙는다.
-    // 여기까지 읽히면 스크린리더가 빈 상자를 세 번 읽고 지나간다.
     return ExcludeSemantics(
       child: SizedBox(
-        width: size,
+        width: size * 1.6,
         height: size,
-        child: Center(child: _shape(c)),
+        child: Container(
+          decoration: BoxDecoration(
+            color: _markColor(context, kind),
+            borderRadius: BorderRadius.circular(size * 0.25),
+          ),
+        ),
       ),
     );
   }
-
-  Widget _shape(Color c) {
-    switch (kind) {
-      case _Mark.income: // 부호 — 결제수단과 축이 다르다
-        return SizedBox(
-          width: size,
-          height: size,
-          child: CustomPaint(painter: _PlusPainter(c)),
-        );
-      case _Mark.credit: // 네모
-        return Container(width: size * 0.82, height: size * 0.82, color: c);
-      case _Mark.debit: // 원 — 같은 변이면 네모보다 작아 보여 살짝 키운다
-        return Container(
-          width: size * 0.92,
-          height: size * 0.92,
-          decoration: BoxDecoration(color: c, shape: BoxShape.circle),
-        );
-      case _Mark.other: // 세모 — 밑변을 맞추면 무게중심이 처져 위로 조금 올린다
-        return CustomPaint(
-          size: Size(size, size * 0.86),
-          painter: _TrianglePainter(c),
-        );
-    }
-  }
 }
 
-/// 수익 부호. 글자 '+'는 글꼴마다 굵기·위치가 달라 상자 안에서 흔들린다.
-class _PlusPainter extends CustomPainter {
-  const _PlusPainter(this.color);
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final t = size.width * 0.22; // 획 두께
-    final c = size.width / 2;
-    final paint = Paint()..color = color;
-    canvas.drawRect(Rect.fromLTWH(0, c - t / 2, size.width, t), paint);
-    canvas.drawRect(Rect.fromLTWH(c - t / 2, 0, t, size.height), paint);
-  }
-
-  @override
-  bool shouldRepaint(_PlusPainter old) => old.color != color;
-}
-
-class _TrianglePainter extends CustomPainter {
-  const _TrianglePainter(this.color);
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(size.width / 2, 0)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(path, Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(_TrianglePainter old) => old.color != color;
-}
+/// laneBar의 막대 채움색 — 원색 그대로 배경에 깔면 위에 얹는 숫자가 묻힌다는
+/// 제보를 받아 알파를 낮췄다(2026-09-14).
+Color _markFill(BuildContext context, _Mark kind) =>
+    _markColor(context, kind).withValues(alpha: 0.18);
 
 const _catCredit = '신용카드';
 const _catDebit  = '체크+현금';
@@ -223,6 +174,12 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   int _paydayDay = 25;
   List<Map<String, dynamic>> _cardDates = [];
 
+  // 핀치 확대를 처음 써 보기 전까지 한 번 보여주는 안내(2026-09-14) —
+  // 실기기 사용자가 이 기능이 있는지 몰랐다는 제보를 받았다. 안내 문구를
+  // 보여주는 것과, 실제로 써 봤다는 걸 확인하는 걸 둘 다 한다.
+  bool _zoomHintVisible = false;
+  static const _zoomHintKey = 'calendar_zoom_hint_shown';
+
   // 핀치 줌 — 1단계(기본 7열) · 2단계(가로 2배 폭, 세로 동일).
   int _activePointers = 0;
   Offset? _downPos;                      // 탭/패닝 구분용
@@ -263,6 +220,20 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         if (clamped == _minPanX || clamped == 0.0) _panFlingCtrl.stop();
       });
     _load();
+    _checkZoomHint();
+  }
+
+  Future<void> _checkZoomHint() async {
+    final seen = await dbService.getAppState(_zoomHintKey);
+    if (seen == null && mounted) setState(() => _zoomHintVisible = true);
+  }
+
+  /// 탭으로 직접 닫거나(둘 다 dismiss), 핀치를 실제로 써서(1836행 근처) 닫는다 —
+  /// 안내를 봤다는 것과 실제로 써 봤다는 것 둘 다 "안다"로 친다.
+  void _dismissZoomHint() {
+    if (!_zoomHintVisible) return;
+    setState(() => _zoomHintVisible = false);
+    dbService.setAppState(_zoomHintKey, 'true');
   }
 
   @override
@@ -471,6 +442,13 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     return maxLanes;
   }
 
+  /// 1단계 칸의 최소 높이 — 날짜 숫자(21) + 위아래 여백(8) + 표식 칸(있으면
+  /// 가장 빽빽한 날 기준, 한 줄당 칩(7)+간격(3)=10). 표식을 숫자 아래로
+  /// 내리면서(2026-09-14) 옆으로 있을 때보다 숫자 높이만큼 더 든다 —
+  /// 화면 높이만 나누면 이 여유를 안 챙겨 칸이 넘친다.
+  double get _l1MinHeight =>
+      29 + (_maxLanesInMonth > 0 ? _maxLanesInMonth * 10 : 0);
+
   int _paymentOf(String key, String pm) => (_expensesByDay[key] ?? const [])
       .toSet()
       .where((e) => e.paymentMethod == pm)
@@ -605,6 +583,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                   // 0: 달력
                   Column(
                     children: [
+                      if (_zoomHintVisible) _buildZoomHint(),
                       if (_reserveEstimate != null && !_reserveEstimate!.hasOccupationCode)
                         _buildProfileGateBanner(),
                       if (_recurringPendingCount > 0) _buildRecurringBanner(),
@@ -1184,6 +1163,36 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     if (mounted) setState(() => _cardDates = updated);
   }
 
+  /// 핀치 확대 안내 — 탭하면 닫히고, 실제로 핀치하면(1859행 근처) 자동으로도 닫힌다.
+  Widget _buildZoomHint() {
+    final accent = AppTheme.accentColor(context);
+    return GestureDetector(
+      onTap: _dismissZoomHint,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: accent.withAlpha(15),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: accent.withAlpha(60), width: 1),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.pinch_outlined, size: 18, color: accent),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                '두 손가락으로 벌리면 확대돼요 · 금액이 크게 보여요'.keepWords,
+                style: AppTheme.sans(AppTheme.tsSM, accent, weight: FontWeight.w600),
+              ),
+            ),
+            Icon(Icons.close_rounded, size: 16, color: accent),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// 고정 지출 미확인 배너
   /// 프로필 소프트 게이트 — 업종코드 등 미작성 시 상단 배너(하드 블록 아님, 정보 안내).
   Widget _buildProfileGateBanner() {
@@ -1271,15 +1280,14 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     );
   }
 
-  /// 약어 범례 — 달력 칸에 찍히는 글자가 무슨 뜻인지 한 줄로
+  /// 약어 범례 — 달력 칸에 찍히는 색이 무슨 뜻인지 한 줄로
   Widget _buildLegend() {
-    final ink = AppTheme.ink(context);
     final sub = AppTheme.inkSecondary(context);
     Widget item(_Mark kind, String label) => Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _MarkShape(kind, size: 9, color: ink),
+            _MarkChip(kind, size: 9),
             const SizedBox(width: 6),
             Text(label, style: AppTheme.sans(AppTheme.tsSM, sub)),
           ],
@@ -1762,10 +1770,13 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       final cw = w / 7 * _colSpan;
       // 확대하면 칸에 금액 줄이 들어간다. 화면 높이만 나누면 줄이 칸을 넘으므로
       // **가장 빽빽한 날이 들어갈 만큼**은 확보한다(세로 스크롤 안이라 커져도 된다).
+      // 3단계는 합계 줄이 하나 더 붙으니 레인 하나 몫을 더 얹는다.
       final ch = _zoomLevel == 1
-          ? (constraints.maxHeight / weekCount).clamp(0.0, 74.0)
+          ? math.max(constraints.maxHeight / weekCount, _l1MinHeight)
+              .clamp(0.0, 74.0)
           : math.max(constraints.maxHeight / weekCount,
-              _cellChrome + _maxLanesInMonth * _laneH);
+              _cellChrome +
+                  (_maxLanesInMonth + (_zoomLevel >= 3 ? 1 : 0)) * _laneH);
       final totalW = cw * 7;
       final minPanX = (w - totalW).clamp(double.negativeInfinity, 0.0);
       _minPanX = minPanX;
@@ -1889,6 +1900,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
                     .clamp(_zoomSpans.first, _zoomSpans.last);
                 _panX = _panX.clamp(_minPanXFor(_scale), 0.0);
               });
+              if (_scale > _zoomSpans.first) _dismissZoomHint();
             }
             return;
           }
@@ -2097,44 +2109,42 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
         child: isBarStart
             ? Padding(
                 padding: const EdgeInsets.only(left: 1, bottom: 2),
-                child: _MarkShape(mark, size: 6),
+                child: _MarkChip(mark, size: 6),
               )
             : null,
       );
     }
 
-    // ── 2단계 레인: 점(단일) → 막대(범위)로 같은 줄에서 바로 연결 ──
-    /// 한 줄 = 인쇄된 항목. `카 218,400` 꼴로 찍고, 이어지는 범위는 밑줄로 잇는다.
+    // ── 2단계 레인: 색이 찬 가로 막대 위에 부호+금액을 얹는다(2026-09-14,
+    // 점+회색글자 → 막대+부호숫자). 폭은 금액 크기와 무관하게 칸 너비 그대로
+    // — 고정 폭. 이어지는 범위는 밑줄로 잇는다(막대 자체는 계속 이어진다).
     Widget laneBar(_Mark mark, bool range, bool start, bool end, int amt, bool isIncome) {
-      final inkC = AppTheme.ink(context);
-      final subC = AppTheme.inkSecondary(context);
+      final textC = isIncome ? AppTheme.ink(context) : AppTheme.inkSecondary(context);
       final showText = (!range || start) && amt > 0;
       return Container(
         height: _laneBoxH,
         margin: EdgeInsets.only(bottom: _laneH - _laneBoxH),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         alignment: Alignment.centerLeft,
-        decoration: range
-            ? BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppTheme.line(context), width: 1)))
-            : null,
+        decoration: BoxDecoration(
+          color: _markFill(context, mark),
+          borderRadius: BorderRadius.circular(3),
+          border: range
+              ? Border(bottom: BorderSide(color: AppTheme.line(context), width: 1))
+              : null,
+        ),
         child: showText
-            ? Row(children: [
-                _MarkShape(mark, size: 6, color: inkC),
-                const SizedBox(width: 3),
-                Expanded(
-                  // 칸을 넘으면 **잘리지 않고 줄어든다.** 예전에는 clip이라
-                  // 금액이 자릿수 중간에서 뭉텅 잘려 나갔다 — 850,000이
-                  // 850,0으로 보이면 틀린 숫자를 읽게 된다.
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(comma(amt),
-                        style: AppTheme.sans(_laneFont, isIncome ? inkC : subC,
-                            weight: isIncome ? FontWeight.w700 : FontWeight.w500),
-                        softWrap: false),
-                  ),
-                ),
-              ])
+            // 칸을 넘으면 **잘리지 않고 줄어든다.** 예전에는 clip이라
+            // 금액이 자릿수 중간에서 뭉텅 잘려 나갔다 — 850,000이
+            // 850,0으로 보이면 틀린 숫자를 읽게 된다.
+            ? FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text('${isIncome ? '+' : '-'}${comma(amt)}',
+                    style: AppTheme.sans(_laneFont, textC,
+                        weight: isIncome ? FontWeight.w700 : FontWeight.w500),
+                    softWrap: false),
+              )
             : null,
       );
     }
@@ -2176,6 +2186,31 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final otLane = laneExp(_catOther);
     final incLane = laneInc();
 
+    // 3단계에서만 보이는 하루 합계 줄 — 수익/지출을 한 줄씩 훑지 않아도
+    // 얼마 벌고 얼마 썼는지 바로 보이게(2026-09-14).
+    final totalExpense = _paymentOf(key, _catCredit) +
+        _paymentOf(key, _catDebit) +
+        _paymentOf(key, _catOther);
+    final totalsLane = (_zoomLevel >= 3 && (income > 0 || totalExpense > 0))
+        ? Container(
+            height: _laneBoxH,
+            margin: EdgeInsets.only(bottom: _laneH - _laneBoxH),
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: AppTheme.line(context), width: 1)),
+            ),
+            alignment: Alignment.centerLeft,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text('수익:${comma(income)}  지출:${comma(totalExpense)}',
+                  style: AppTheme.sans(_laneFont, AppTheme.ink(context),
+                      weight: FontWeight.w700),
+                  softWrap: false),
+            ),
+          )
+        : null;
+
     // 확대하면 칸이 넓어지니 도형과 금액이 **한 줄씩** 들어간다.
     // 날짜는 머리로 올리고, 그 아래로 줄이 쌓인다 — 전표의 항목 나열과 같다.
     // 좌우 여백을 같게 둬야 금액의 오른쪽 끝이 옆 칸과 세로로 맞는다.
@@ -2190,44 +2225,52 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
           if (crLane != null) crLane,
           if (dbLane != null) dbLane,
           if (otLane != null) otLane,
+          if (totalsLane != null) totalsLane,
         ],
       ),
     );
 
+    // 표식 종류별 자리를 고정한다(수익-신용카드-체크현금-기타 순). 있는 것만
+    // 골라 쌓으면 날마다 자리가 밀려 옆 칸과 비교할 때 같은 색이 날마다 다른
+    // 높이에 찍힌다 — 없는 종류는 투명 자리로 비워 위치를 맞춘다(2026-09-14).
+    const markKinds = [_Mark.income, _Mark.credit, _Mark.debit, _Mark.other];
+    final markPresence = [income > 0, hasCr, hasDeb, hasOth];
+    final l1MarkColumn = bars.isEmpty
+        ? [
+            for (var i = 0; i < markKinds.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: markPresence[i]
+                    ? _catMark(markKinds[i])
+                    : Opacity(opacity: 0, child: _catMark(markKinds[i])),
+              ),
+          ]
+        // 범위 지출 막대가 이미 칸 아래를 차지하면 표식은 수익만 —
+        // 둘 다 그리면 좁은 칸에서 겹친다.
+        : [if (income > 0) _catMark(_Mark.income)];
+
     final l1Content = Stack(
       children: [
-        // 날짜는 왼쪽 위, 표식은 **오른쪽에 세로로** 쌓는다.
-        // 가운데 정렬로 흩어 두면 날짜와 표식이 서로 자리를 밀어 어느 날에
-        // 무엇이 있는지 세로로 훑을 수가 없다. 오른쪽 한 줄로 세우면
-        // 칸을 가로질러 같은 위치에 찍혀 한눈에 비교된다.
+        // 날짜는 위, 표식은 그 **아래 오른쪽 정렬**로 — 한 줄에 나란히 두면
+        // 칸이 좁을 때 날짜 숫자와 겹친다(2026-09-14, 가로 나열 → 세로 배치).
         Positioned.fill(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(3, 4, 4, 4),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 dayNumber,
-                const Spacer(),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // 범위 지출 막대가 이미 칸 아래를 차지하면 표식은 수익만 —
-                    // 둘 다 그리면 좁은 칸에서 겹친다.
-                    for (final m in bars.isEmpty
-                        ? [
-                            if (income > 0) _Mark.income,
-                            if (hasCr) _Mark.credit,
-                            if (hasDeb) _Mark.debit,
-                            if (hasOth) _Mark.other,
-                          ]
-                        : [if (income > 0) _Mark.income])
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 3),
-                        child: _catMark(m),
+                if (l1MarkColumn.isNotEmpty)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: l1MarkColumn,
                       ),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -2317,7 +2360,7 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
   }
 
   /// 무슨 항목이 있는지 도형 하나로 — 금액은 확대(2단계)에서 보여준다.
-  Widget _catMark(_Mark kind) => _MarkShape(kind, size: 7);
+  Widget _catMark(_Mark kind) => _MarkChip(kind, size: 7);
 
   // ── 분석 뷰 ──────────────────────────────────────────────────────
 
