@@ -421,7 +421,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
           child: AppTheme.hairline(context),
         ),
       ),
-      body: Stack(
+      body: SafeArea(child: Stack(
         children: [
           _templates.isEmpty
               ? _buildEmptyState()
@@ -466,7 +466,7 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
               ),
             ),
         ],
-      ),
+      )),
     );
   }
 

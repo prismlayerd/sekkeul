@@ -226,7 +226,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: SafeArea(
+        child: Column(
         children: [
           AnimatedSize(
             duration: const Duration(milliseconds: 180),
@@ -243,6 +244,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           ),
           Expanded(child: _buildList(ink, sub, tert, line)),
         ],
+      ),
       ),
     );
   }

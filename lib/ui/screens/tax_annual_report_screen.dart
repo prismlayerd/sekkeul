@@ -256,7 +256,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
         ),
         title: Text('종합소득세 신고 가이드'.keepWords, style: AppTheme.serif(AppTheme.serifMD, textColor)),
       ),
-      body: _isLoading
+      body: SafeArea(child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
@@ -273,7 +273,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
                       : _buildBody(primary, textColor, subColor, cardColor, bgColor),
                 ),
               ],
-            ),
+            )),
     );
   }
 

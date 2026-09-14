@@ -369,8 +369,10 @@ class FormsScreen extends StatelessWidget {
             style: AppTheme.serif(AppTheme.tsLG, AppTheme.ink(context),
                 weight: FontWeight.w400, spacing: -0.5)),
       ),
-      body: SingleChildScrollView(
-        child: TaxFormsBody(userType: userType),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: TaxFormsBody(userType: userType),
+        ),
       ),
     );
   }

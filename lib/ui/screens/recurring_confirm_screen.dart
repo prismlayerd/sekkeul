@@ -199,7 +199,7 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
           child: AppTheme.hairline(context),
         ),
       ),
-      body: !_loaded
+      body: SafeArea(child: !_loaded
           ? const Center(child: CircularProgressIndicator())
           : _allItems.isEmpty
               ? _buildEmptyState()
@@ -246,7 +246,7 @@ class _RecurringConfirmScreenState extends State<RecurringConfirmScreen> {
                       ),
                     ),
                   ],
-                ),
+                )),
       // 직접 만든 바라 시스템 내비게이션 바 자리를 스스로 비워야 한다.
       bottomNavigationBar: _loaded && _allItems.isNotEmpty
           ? SafeArea(top: false, child: _buildBottomBar())

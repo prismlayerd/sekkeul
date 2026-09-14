@@ -61,7 +61,7 @@ class _WithholdingCalcScreenState extends State<WithholdingCalcScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,7 +149,7 @@ class _WithholdingCalcScreenState extends State<WithholdingCalcScreen> {
             const CalcDisclaimer(),
           ],
         ),
-      ),
+      )),
     );
   }
 

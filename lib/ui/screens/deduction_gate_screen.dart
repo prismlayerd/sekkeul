@@ -76,7 +76,7 @@ class _DeductionGateScreenState extends State<DeductionGateScreen> {
 
     if (!_loaded) {
       return const Scaffold(
-        body: SizedBox.shrink(),
+        body: SafeArea(child: SizedBox.shrink()),
       );
     }
 

@@ -85,7 +85,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,7 +294,7 @@ class _WeeklyHolidayPayScreenState extends State<WeeklyHolidayPayScreen> {
             const CalcDisclaimer(),
           ],
         ),
-      ),
+      )),
     );
   }
 

@@ -199,7 +199,8 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
         title: Text('장부 만들기',
             style: AppTheme.serif(AppTheme.tsLG, ink, weight: FontWeight.w400, spacing: -0.5)),
       ),
-      body: _loading
+      body: SafeArea(
+        child: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
@@ -367,6 +368,7 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                 ),
               ],
             ),
+      ),
     );
   }
 

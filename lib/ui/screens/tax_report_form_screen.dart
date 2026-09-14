@@ -435,7 +435,7 @@ class _ReportFormLoaderState extends State<ReportFormLoader> {
   Widget build(BuildContext context) {
     if (_loading) {
       return const Scaffold(
-        body: SizedBox.shrink(),
+        body: SafeArea(child: SizedBox.shrink()),
       );
     }
     final d = _draft;

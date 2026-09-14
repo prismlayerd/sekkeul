@@ -124,7 +124,8 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -314,6 +315,7 @@ class _InheritanceGiftTaxScreenState extends State<InheritanceGiftTaxScreen> {
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }

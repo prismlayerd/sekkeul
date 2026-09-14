@@ -26,74 +26,76 @@ class NoticeDetailScreen extends StatelessWidget {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-        children: [
-          Text(notice.label,
-              style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          Text(notice.title.keepWords,
-              style: AppTheme.display(AppTheme.serifSM, ink, height: 1.35)),
-          const SizedBox(height: 8),
-          Text(_ymd(notice.date), style: AppTheme.sans(AppTheme.tsSM, sub)),
-          if (notice.imageUrl != null) ...[
-            const SizedBox(height: 16),
-            _Photo(url: notice.imageUrl!, line: line),
-          ],
-          if (notice.summary.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                  border: Border(left: BorderSide(color: line, width: 3))),
-              child: Text(notice.summary.keepWords,
-                  style: AppTheme.sans(AppTheme.tsBase, ink, height: 1.6)),
-            ),
-          ],
-          if (notice.changes.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            Text('무엇이 바뀌었나',
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+          children: [
+            Text(notice.label,
                 style:
                     AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-            const SizedBox(height: 10),
-            for (final c in notice.changes) ...[
-              _ChangeRow(change: c, ink: ink, sub: sub, line: line),
-              const SizedBox(height: 8),
+            const SizedBox(height: 8),
+            Text(notice.title.keepWords,
+                style: AppTheme.display(AppTheme.serifSM, ink, height: 1.35)),
+            const SizedBox(height: 8),
+            Text(_ymd(notice.date), style: AppTheme.sans(AppTheme.tsSM, sub)),
+            if (notice.imageUrl != null) ...[
+              const SizedBox(height: 16),
+              _Photo(url: notice.imageUrl!, line: line),
             ],
-          ],
-          for (final p in notice.body) ...[
-            const SizedBox(height: 16),
-            Text(p.keepWords,
-                style: AppTheme.sans(AppTheme.tsBase, ink, height: 1.7)),
-          ],
-          if (notice.source != null) ...[
-            const SizedBox(height: 28),
-            Divider(height: 1, color: line),
-            const SizedBox(height: 12),
-            Text('출처 · ${notice.source}',
-                style: AppTheme.sans(AppTheme.tsSM, sub)),
-            if (notice.sourceUrl != null) ...[
-              const SizedBox(height: 10),
-              GestureDetector(
-                onTap: () => _open(notice.sourceUrl!),
-                behavior: HitTestBehavior.opaque,
-                child: Row(children: [
-                  Text('원문 보기',
-                      style: AppTheme.sans(AppTheme.tsSM, ink,
-                          weight: FontWeight.w600)),
-                  const SizedBox(width: 5),
-                  Icon(Icons.arrow_forward, size: 13, color: ink),
-                ]),
+            if (notice.summary.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                    border: Border(left: BorderSide(color: line, width: 3))),
+                child: Text(notice.summary.keepWords,
+                    style: AppTheme.sans(AppTheme.tsBase, ink, height: 1.6)),
               ),
             ],
+            if (notice.changes.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              Text('무엇이 바뀌었나',
+                  style: AppTheme.sans(AppTheme.tsXS, sub,
+                      weight: FontWeight.w600)),
+              const SizedBox(height: 10),
+              for (final c in notice.changes) ...[
+                _ChangeRow(change: c, ink: ink, sub: sub, line: line),
+                const SizedBox(height: 8),
+              ],
+            ],
+            for (final p in notice.body) ...[
+              const SizedBox(height: 16),
+              Text(p.keepWords,
+                  style: AppTheme.sans(AppTheme.tsBase, ink, height: 1.7)),
+            ],
+            if (notice.source != null) ...[
+              const SizedBox(height: 28),
+              Divider(height: 1, color: line),
+              const SizedBox(height: 12),
+              Text('출처 · ${notice.source}',
+                  style: AppTheme.sans(AppTheme.tsSM, sub)),
+              if (notice.sourceUrl != null) ...[
+                const SizedBox(height: 10),
+                GestureDetector(
+                  onTap: () => _open(notice.sourceUrl!),
+                  behavior: HitTestBehavior.opaque,
+                  child: Row(children: [
+                    Text('원문 보기',
+                        style: AppTheme.sans(AppTheme.tsSM, ink,
+                            weight: FontWeight.w600)),
+                    const SizedBox(width: 5),
+                    Icon(Icons.arrow_forward, size: 13, color: ink),
+                  ]),
+                ),
+              ],
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 
-  static String _ymd(DateTime d) =>
-      '${d.year}년 ${d.month}월 ${d.day}일';
+  static String _ymd(DateTime d) => '${d.year}년 ${d.month}월 ${d.day}일';
 
   static Future<void> _open(String url) async {
     final uri = Uri.tryParse(url);
@@ -119,8 +121,9 @@ class _Photo extends StatelessWidget {
           url,
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-          loadingBuilder: (_, child, progress) =>
-              progress == null ? child : Container(color: line.withValues(alpha: 0.3)),
+          loadingBuilder: (_, child, progress) => progress == null
+              ? child
+              : Container(color: line.withValues(alpha: 0.3)),
         ),
       ),
     );
@@ -148,7 +151,8 @@ class _ChangeRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(change.what.keepWords,
-              style: AppTheme.sans(AppTheme.tsSM, sub, weight: FontWeight.w600)),
+              style:
+                  AppTheme.sans(AppTheme.tsSM, sub, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,8 +160,7 @@ class _ChangeRow extends StatelessWidget {
               Expanded(
                 child: Text(change.before.keepWords,
                     style: AppTheme.sans(AppTheme.tsBase, sub,
-                        height: 1.5,
-                        decoration: TextDecoration.lineThrough)),
+                        height: 1.5, decoration: TextDecoration.lineThrough)),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),

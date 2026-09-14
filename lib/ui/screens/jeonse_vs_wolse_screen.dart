@@ -97,7 +97,8 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,6 +351,7 @@ class _JeonseVsWolseScreenState extends State<JeonseVsWolseScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -1648,7 +1648,8 @@ class _BenefitScreenState extends State<BenefitScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: SafeArea(
+        child: Column(
         children: [
           AnimatedSize(
             duration: const Duration(milliseconds: 180),
@@ -1665,6 +1666,7 @@ class _BenefitScreenState extends State<BenefitScreen> {
           ),
           Expanded(child: _buildList(ink, sub, line, accent)),
         ],
+      ),
       ),
     );
   }

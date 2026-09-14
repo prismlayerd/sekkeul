@@ -768,7 +768,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
+      body: SafeArea(
+        child: IndexedStack(
         index: _currentIndex,
         children: [
           _buildHomeTab(),
@@ -781,6 +782,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             onOpenSettings: _openSettings,
           ),
         ],
+        ),
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );

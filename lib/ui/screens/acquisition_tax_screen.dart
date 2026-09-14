@@ -93,7 +93,8 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,6 +260,7 @@ class _AcquisitionTaxScreenState extends State<AcquisitionTaxScreen> {
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }

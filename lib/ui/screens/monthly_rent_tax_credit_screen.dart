@@ -70,7 +70,8 @@ class _MonthlyRentTaxCreditScreenState
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,6 +173,7 @@ class _MonthlyRentTaxCreditScreenState
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }

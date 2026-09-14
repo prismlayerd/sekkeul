@@ -119,7 +119,7 @@ class _NotificationSettingsScreenState
         title: Text('알림 설정',
             style: AppTheme.sans(AppTheme.tsLG, ink, weight: FontWeight.w700)),
       ),
-      body: _loading
+      body: SafeArea(child: _loading
           ? const SizedBox.shrink()
           : ListView(
               padding: const EdgeInsets.fromLTRB(0, 8, 0, 40),
@@ -139,7 +139,7 @@ class _NotificationSettingsScreenState
                 ],
 
               ],
-            ),
+            )),
     );
   }
 

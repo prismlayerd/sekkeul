@@ -168,7 +168,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,7 +459,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
             const CalcDisclaimer(),
           ],
         ),
-      ),
+      )),
     );
   }
 

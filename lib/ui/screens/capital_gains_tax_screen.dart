@@ -130,7 +130,8 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,6 +344,7 @@ class _CapitalGainsTaxScreenState extends State<CapitalGainsTaxScreen> {
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }

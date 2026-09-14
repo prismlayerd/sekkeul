@@ -104,7 +104,7 @@ class _YearDeductionScreenState extends State<YearDeductionScreen> {
     final tert = AppTheme.inkTertiary(context);
 
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: SafeArea(child: Center(child: CircularProgressIndicator())));
     }
 
     final residence = residenceOf(_profile);

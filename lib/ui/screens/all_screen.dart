@@ -29,7 +29,8 @@ class AllScreen extends StatelessWidget {
             style: AppTheme.serif(AppTheme.tsLG, AppTheme.ink(context),
                 weight: FontWeight.w400, spacing: -0.5)),
       ),
-      body: ListView(
+      body: SafeArea(
+        child: ListView(
         children: [
           _sectionHeader(context, '기록'),
           _menuItem(
@@ -99,6 +100,7 @@ class AllScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const UpdateNotesScreen())),
           ),
         ],
+      ),
       ),
     );
   }

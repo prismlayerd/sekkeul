@@ -122,7 +122,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,7 +287,7 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
             const CalcDisclaimer(),
           ],
         ),
-      ),
+      )),
     );
   }
 

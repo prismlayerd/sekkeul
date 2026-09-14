@@ -111,7 +111,8 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
               onPressed: _reset),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,6 +314,7 @@ class _LoanScheduleScreenState extends State<LoanScheduleScreen> {
             ]),
           ],
         ),
+      ),
       ),
     );
   }

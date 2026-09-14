@@ -108,7 +108,7 @@ class _UnemploymentBenefitScreenState
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,7 +277,7 @@ class _UnemploymentBenefitScreenState
             const CalcDisclaimer(),
           ],
         ),
-      ),
+      )),
     );
   }
 
