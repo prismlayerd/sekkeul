@@ -213,19 +213,23 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
     }
   }
 
-  /// 연/월/일 휠 시트를 열어 날짜를 고른다. 도면 측정 게이트 스타일.
+  /// 연/월/일을 고르는 다이얼로그. 도면 측정 게이트 스타일.
+  /// 앱 하드 제약(바텀시트 금지)에 따라 Dialog로 띄운다.
   Future<DateTime?> _pickWheelDate({required String title, DateTime? initial}) {
     final now = DateTime.now();
-    return showModalBottomSheet<DateTime>(
+    return showDialog<DateTime>(
       context: context,
-      backgroundColor: AppTheme.backgroundColor(context),
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(4))),
-      builder: (ctx) => _DateWheelSheet(
-        title: title,
-        initial: initial ?? DateTime(now.year, now.month, now.day),
-        minYear: 1980,
-        maxYear: now.year,
+      builder: (ctx) => Dialog(
+        backgroundColor: AppTheme.backgroundColor(context),
+        shape: RoundedRectangleBorder(
+            side: BorderSide(color: AppTheme.line(context)),
+            borderRadius: BorderRadius.zero),
+        child: _DateWheelSheet(
+          title: title,
+          initial: initial ?? DateTime(now.year, now.month, now.day),
+          minYear: 1980,
+          maxYear: now.year,
+        ),
       ),
     );
   }
@@ -904,8 +908,6 @@ class _DateWheelSheetState extends State<_DateWheelSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: AppTheme.line(context), borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 16),
             Text(widget.title, style: AppTheme.serif(AppTheme.serifMD, ink)),
             const SizedBox(height: 18),
             // 열 캡션
