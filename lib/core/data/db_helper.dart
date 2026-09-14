@@ -193,7 +193,6 @@ class SqfliteDatabaseHelper implements DatabaseService {
       day_of_month INTEGER NOT NULL DEFAULT 1,
       sort_order INTEGER DEFAULT 0,
       is_business INTEGER DEFAULT 0,
-      deduction_type TEXT,
       deduction_type TEXT
     )
   ''';
@@ -421,7 +420,6 @@ class SqfliteDatabaseHelper implements DatabaseService {
             payment_method TEXT,
             is_business INTEGER DEFAULT 0,
             deduction_type TEXT,
-      deduction_type TEXT,
             user_type TEXT
           )
         ''');
