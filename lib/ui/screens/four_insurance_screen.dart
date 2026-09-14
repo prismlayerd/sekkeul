@@ -56,7 +56,8 @@ class _FourInsuranceScreenState extends State<FourInsuranceScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,14 +123,17 @@ class _FourInsuranceScreenState extends State<FourInsuranceScreen> {
                         subColor,
                         textColor),
                     const SizedBox(height: 8),
-                    _row('건강보험 (3.595%)', _won(r.healthInsurance), subColor,
-                        textColor),
+                    _row(
+                        '건강보험 (${(InsuranceEngine.empHealthInsuranceRate * 100).toStringAsFixed(3)}%)',
+                        _won(r.healthInsurance), subColor, textColor),
                     const SizedBox(height: 8),
-                    _row('장기요양 (건보 × 13.14%)', _won(r.longTermCare),
-                        subColor, textColor),
+                    _row(
+                        '장기요양 (건보 × ${(InsuranceEngine.longTermCareRate * 100).toStringAsFixed(2)}%)',
+                        _won(r.longTermCare), subColor, textColor),
                     const SizedBox(height: 8),
-                    _row('고용보험 (0.9%)', _won(r.employmentInsurance),
-                        subColor, textColor),
+                    _row(
+                        '고용보험 (${(InsuranceEngine.empEmploymentInsuranceRate * 100).toStringAsFixed(1)}%)',
+                        _won(r.employmentInsurance), subColor, textColor),
                     const SizedBox(height: 12),
                     Divider(
                         color: Theme.of(context).dividerColor,
@@ -160,6 +164,7 @@ class _FourInsuranceScreenState extends State<FourInsuranceScreen> {
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }

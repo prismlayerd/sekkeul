@@ -55,13 +55,16 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
     final general = _parse(_generalController);
     final disabled = _parse(_disabledController);
 
+    final breakdown = EmployeeTaxCalculator.insurancePremiumTaxCreditBreakdown(
+      generalInsurancePremium: general,
+      disabledInsurancePremium: disabled,
+    );
+    final generalCredit = breakdown.general;
+    final disabledCredit = breakdown.disabled;
     final credit = EmployeeTaxCalculator.calculateInsurancePremiumTaxCredit(
       generalInsurancePremium: general,
       disabledInsurancePremium: disabled,
     );
-
-    final generalCredit = (general > 1000000.0 ? 1000000.0 : general) * 0.12;
-    final disabledCredit = (disabled > 1000000.0 ? 1000000.0 : disabled) * 0.15;
     final hasInput = general > 0 || disabled > 0;
 
     return Scaffold(
@@ -76,7 +79,8 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,6 +175,7 @@ class _InsurancePremiumScreenState extends State<InsurancePremiumScreen> {
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }

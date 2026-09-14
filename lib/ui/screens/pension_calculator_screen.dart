@@ -79,25 +79,21 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
     final savings = _parse(_savingsController);
     final irp = _parse(_irpController);
 
-    // 공제대상 산정 (엔진과 동일 규칙)
-    final eligibleSavings = savings > 6000000.0 ? 6000000.0 : savings;
-    double eligibleTotal = eligibleSavings + irp;
-    if (eligibleTotal > 9000000.0) eligibleTotal = 9000000.0;
-    final threshold = _isSalary ? 55000000.0 : 45000000.0;
-    final rate = grossIncome <= threshold ? 0.165 : 0.132;
-
+    final breakdown = EmployeeTaxCalculator.pensionAccountTaxCreditBreakdown(
+      pensionSavingsPayment: savings,
+      retirementPensionPayment: irp,
+      grossIncome: grossIncome,
+      isSalariedIncome: _isSalary,
+    );
+    final eligibleTotal = breakdown.eligibleTotal;
     // 엔진은 국세 전용(15%/12%)을 반환 — 이 화면은 지방세 포함 총 절감액을 보여주므로 ×1.1.
-    final credit = EmployeeTaxCalculator.calculatePensionAccountTaxCredit(
-          pensionSavingsPayment: savings,
-          retirementPensionPayment: irp,
-          grossIncome: grossIncome,
-          isSalariedIncome: _isSalary,
-        ) *
-        1.1;
+    final rate = breakdown.rate * 1.1;
+    final credit = breakdown.credit * 1.1;
 
     final hasInput = savings > 0 || irp > 0;
     // 추가 납입 여력 (합산 900만 한도까지)
-    final remainingRoom = (9000000.0 - eligibleTotal).clamp(0.0, 9000000.0);
+    final remainingRoom = (EmployeeTaxCalculator.pensionAccountLimit - eligibleTotal)
+        .clamp(0.0, EmployeeTaxCalculator.pensionAccountLimit);
 
     return Scaffold(
       appBar: AppBar(
@@ -111,7 +107,7 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,7 +198,7 @@ class _PensionCalculatorScreenState extends State<PensionCalculatorScreen> {
             const CalcDisclaimer(),
           ],
         ),
-      ),
+      )),
     );
   }
 

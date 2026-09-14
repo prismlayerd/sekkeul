@@ -117,7 +117,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
     final totalDisabled = _disabledDependentCount +
         (_hasSelfDisability ? 1 : 0) +
         (_hasSpouseDisability ? 1 : 0);
-    final disabledDeduction = totalDisabled * 2000000.0;
+    final disabledDeduction = totalDisabled * TaxRates.additionalDeductionDisabled;
 
     final additionalDeduction = EmployeeTaxCalculator.calculateAdditionalPersonalDeduction(
       hasElderly70Plus: _hasElderly70Plus,
@@ -139,7 +139,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
 
     if (!_loaded) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: SafeArea(child: Center(child: CircularProgressIndicator())),
       );
     }
 
@@ -155,7 +155,8 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,6 +277,7 @@ class _DependentDeductionScreenState extends State<DependentDeductionScreen> {
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }

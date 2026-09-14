@@ -3,6 +3,7 @@ import '../components/calc_note.dart';
 import '../components/amount_field.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
+import '../../core/tax_engine/tax_rates.dart';
 
 enum _SavingsType { deposit, installment }
 
@@ -23,7 +24,7 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
       TextEditingController(text: '12');
   bool _taxExempt = false;
 
-  static const double _taxRate = 0.154;
+  static const double _taxRate = TaxRates.financialIncomeSeparateTaxWithLocal;
 
   void _reset() {
     setState(() {
@@ -103,7 +104,7 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,7 +274,7 @@ class _SavingsCalculatorScreenState extends State<SavingsCalculatorScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 

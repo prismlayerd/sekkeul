@@ -214,32 +214,58 @@ class EmployeeTaxCalculator {
     return TaxRates.truncateWon(credit);
   }
 
-  /// 연금계좌 세액공제 (연금저축 + 퇴직연금/IRP, 소법 §59의3, 2025~2026 귀속 동일)
+  /// 연금계좌 공제대상 한도 (경정청구용 — 2022 귀속 이하는 연금저축 400만·합산 700만이라
+  /// calculatePensionAccountTaxCredit는 이 기본값을 파라미터로도 받는다)
+  static const double pensionSavingsLimit = 6000000.0;
+  static const double pensionAccountLimit = 9000000.0;
+
+  /// 연금계좌 세액공제 항목별 내역 (연금저축 + 퇴직연금/IRP, 소법 §59의3, 2025~2026 귀속 동일)
   /// - 연금저축 공제대상 한도 600만, (연금저축+퇴직연금) 합산 900만
   /// - 공제율 12% (총급여 5,500만 이하 또는 종합소득금액 4,500만 이하는 15%)
-  static double calculatePensionAccountTaxCredit({
+  static ({double eligibleTotal, double rate, double credit})
+      pensionAccountTaxCreditBreakdown({
     required double pensionSavingsPayment,    // 연금저축 납입액
     required double retirementPensionPayment, // 퇴직연금(DC/IRP) 납입액
     required double grossIncome,              // 총급여(직장인) 또는 종합소득금액
     bool isSalariedIncome = true,             // true=근로(5,500만 기준), false=종합(4,500만 기준)
-    // 경정청구용 — 2022 귀속 이하는 연금저축 400만·합산 700만
     double savingsLimit = 6000000.0,
     double accountLimit = 9000000.0,
   }) {
-    if (pensionSavingsPayment <= 0 && retirementPensionPayment <= 0) return 0.0;
     final double eligibleSavings =
         pensionSavingsPayment > savingsLimit ? savingsLimit : pensionSavingsPayment;
     double eligibleTotal = eligibleSavings + retirementPensionPayment;
     if (eligibleTotal > accountLimit) eligibleTotal = accountLimit;
     final double threshold = isSalariedIncome ? 55000000.0 : 45000000.0;
     final double rate = grossIncome <= threshold ? 0.15 : 0.12;
-    return TaxRates.truncateWon(eligibleTotal * rate);
+    final double credit =
+        (pensionSavingsPayment <= 0 && retirementPensionPayment <= 0)
+            ? 0.0
+            : TaxRates.truncateWon(eligibleTotal * rate);
+    return (eligibleTotal: eligibleTotal, rate: rate, credit: credit);
   }
 
-  /// 보장성보험료 세액공제 (소법 §59의4, 2025~2026 귀속 동일)
+  static double calculatePensionAccountTaxCredit({
+    required double pensionSavingsPayment,
+    required double retirementPensionPayment,
+    required double grossIncome,
+    bool isSalariedIncome = true,
+    double savingsLimit = 6000000.0,
+    double accountLimit = 9000000.0,
+  }) {
+    return pensionAccountTaxCreditBreakdown(
+      pensionSavingsPayment: pensionSavingsPayment,
+      retirementPensionPayment: retirementPensionPayment,
+      grossIncome: grossIncome,
+      isSalariedIncome: isSalariedIncome,
+      savingsLimit: savingsLimit,
+      accountLimit: accountLimit,
+    ).credit;
+  }
+
+  /// 보장성보험료 세액공제 항목별 내역 (소법 §59의4, 2025~2026 귀속 동일)
   /// - 보장성보험: 연 100만 한도 12%
   /// - 장애인전용보장성보험: 연 100만 한도 15%
-  static double calculateInsurancePremiumTaxCredit({
+  static ({double general, double disabled}) insurancePremiumTaxCreditBreakdown({
     required double generalInsurancePremium,
     required double disabledInsurancePremium,
   }) {
@@ -247,7 +273,18 @@ class EmployeeTaxCalculator {
         (generalInsurancePremium > 1000000.0 ? 1000000.0 : generalInsurancePremium) * 0.12;
     final double disabled =
         (disabledInsurancePremium > 1000000.0 ? 1000000.0 : disabledInsurancePremium) * 0.15;
-    return TaxRates.truncateWon(general + disabled);
+    return (general: general, disabled: disabled);
+  }
+
+  static double calculateInsurancePremiumTaxCredit({
+    required double generalInsurancePremium,
+    required double disabledInsurancePremium,
+  }) {
+    final b = insurancePremiumTaxCreditBreakdown(
+      generalInsurancePremium: generalInsurancePremium,
+      disabledInsurancePremium: disabledInsurancePremium,
+    );
+    return TaxRates.truncateWon(b.general + b.disabled);
   }
 
   /// 표준세액공제 (소법 §59의4⑨1호, 2025~2026 귀속 13만원) — §59의5는 별개(외국인 세액감면)
