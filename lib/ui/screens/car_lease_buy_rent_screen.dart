@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
+import '../components/calc_widgets.dart';
 
 class CarLeaseBuyRentScreen extends StatefulWidget {
   const CarLeaseBuyRentScreen({super.key});
@@ -74,7 +75,8 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
         title: Text('리스 · 구매 · 렌트 비교'.keepWords,
             style: AppTheme.serif(AppTheme.tsBase, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,7 +144,7 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox('참고', const [
+            calcInfoBox('참고', const [
               '리스: 소유권 없이 사용, 보험·세금 리스사 대납 상품도 있음',
               '장기렌트: 보험·정비 포함 상품 다수, 사업자는 부가세 매입공제 가능',
               '구매(대출): 소유권 확보, 잔존가치는 실제 중고차 시세와 다를 수 있음',
@@ -150,6 +152,7 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
             ], line, sub, ink),
           ],
         ),
+      ),
       ),
     );
   }
@@ -247,29 +250,4 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
     );
   }
 
-  Widget _infoBox(String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration:
-          BoxDecoration(border: Border.all(color: line), borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(child: Text(item, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

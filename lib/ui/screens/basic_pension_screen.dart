@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
+import '../components/calc_widgets.dart';
 
 class BasicPensionScreen extends StatefulWidget {
   const BasicPensionScreen({super.key});
@@ -56,7 +57,8 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,7 +148,7 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox(
+            calcInfoBox(
               '대상 요건',
               [
                 '만 65세 이상 대한민국 국민, 국내 거주자',
@@ -158,7 +160,7 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '감액 규정',
               [
                 '부부 모두 수급 시 각각 20% 감액',
@@ -170,7 +172,7 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '신청 방법',
               [
                 '읍·면·동 주민센터 방문, 국민연금공단 지사 방문',
@@ -185,6 +187,7 @@ class _BasicPensionScreenState extends State<BasicPensionScreen> {
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }
@@ -252,33 +255,4 @@ inputFormatters: [
     );
   }
 
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

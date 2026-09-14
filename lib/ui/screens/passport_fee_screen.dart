@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
+import '../components/calc_widgets.dart';
 
 class PassportFeeScreen extends StatefulWidget {
   const PassportFeeScreen({super.key});
@@ -43,7 +44,7 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +95,7 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
                   const SizedBox(height: 12),
                   Divider(height: 1, color: line),
                   const SizedBox(height: 12),
-                  _row('유효기간', selected.$2, ink, sub),
+                  calcRow('유효기간', selected.$2, ink, sub),
                   const SizedBox(height: 8),
                   Text('* 재외공관에서 신청하면 같은 숫자를 달러로 냅니다(성인 10년 58면 52달러).'.keepWords,
                       style: AppTheme.sans(AppTheme.tsXS, sub)),
@@ -102,7 +103,7 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            _infoBox(
+            calcInfoBox(
               '발급 절차',
               [
                 '외교부 여권안내·정부24에서 사진·서류 사전 준비',
@@ -115,7 +116,7 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '필요 서류',
               [
                 '6개월 이내 촬영 여권사진 1매(35×45mm, 흰색 배경)',
@@ -129,47 +130,8 @@ class _PassportFeeScreenState extends State<PassportFeeScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

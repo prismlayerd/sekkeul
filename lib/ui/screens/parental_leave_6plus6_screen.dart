@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
+import '../components/calc_widgets.dart';
 
 /// 6+6 부모육아휴직제 월별 상한(원) — 고용보험법 시행령 §95의3①1 바목.
 ///
@@ -78,7 +79,7 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,9 +103,9 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
                         style:
                             AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
-                    _row('부모 A 6개월 합계', _manwon(_p1Total), ink, sub),
+                    calcRow('부모 A 6개월 합계', _manwon(_p1Total), ink, sub),
                     const SizedBox(height: 8),
-                    _row('부모 B 6개월 합계', _manwon(_p2Total), ink, sub),
+                    calcRow('부모 B 6개월 합계', _manwon(_p2Total), ink, sub),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
@@ -127,7 +128,7 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox(
+            calcInfoBox(
               '제도 요건',
               [
                 '생후 18개월 이내 자녀에 대해 부모가 모두 육아휴직 사용',
@@ -139,7 +140,7 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '월별 상한액',
               [
                 for (var i = 0; i < parentalLeave6Plus6Caps.length; i++)
@@ -154,7 +155,7 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
             const CalcDisclaimer(),
           ],
         ),
-      ),
+      )),
     );
   }
 
@@ -199,43 +200,4 @@ class _ParentalLeave6Plus6ScreenState extends State<ParentalLeave6Plus6Screen> {
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

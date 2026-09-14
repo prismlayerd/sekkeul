@@ -3,6 +3,7 @@ import '../../core/tax_engine/tax_rates.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
+import '../components/calc_widgets.dart';
 
 class HourlyRateConverterScreen extends StatefulWidget {
   const HourlyRateConverterScreen({super.key});
@@ -54,7 +55,8 @@ class _HourlyRateConverterScreenState
         title: Text('시급 환산기',
             style: AppTheme.serif(AppTheme.tsBase, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,13 +93,13 @@ class _HourlyRateConverterScreenState
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('기본 금액 (마진 전)', won(_base), ink, sub),
+                    calcRow('기본 금액 (마진 전)', won(_base), ink, sub),
                     const SizedBox(height: 8),
-                    _row('3.3% 원천징수 후 실수령', won(_afterTax), ink, sub),
+                    calcRow('3.3% 원천징수 후 실수령', won(_afterTax), ink, sub),
                     const SizedBox(height: 8),
-                    _row('일급 환산 (8시간)', won(_rate * 8), ink, sub),
+                    calcRow('일급 환산 (8시간)', won(_rate * 8), ink, sub),
                     const SizedBox(height: 8),
-                    _row('월급 환산 (월 160시간)', won(_rate * 160), ink, sub),
+                    calcRow('월급 환산 (월 160시간)', won(_rate * 160), ink, sub),
                     const SizedBox(height: 12),
                     Text(
                         _rate >= _minWage2026
@@ -109,13 +111,14 @@ class _HourlyRateConverterScreenState
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox('참고', const [
+            calcInfoBox('참고', const [
               '프리랜서 실제 청구 가능 시간은 전체 근무시간의 60~70% 수준인 경우가 많습니다.',
               '3.3% 원천징수는 프리랜서·사업소득자 기준이며, 5월 종합소득세 신고로 정산됩니다.',
               '월급 환산은 하루 8시간 × 20일(월 160시간) 기준 참고치입니다.',
             ], line, sub, ink),
           ],
         ),
+      ),
       ),
     );
   }
@@ -155,39 +158,4 @@ class _HourlyRateConverterScreenState
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration:
-          BoxDecoration(border: Border.all(color: line), borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(child: Text(item, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

@@ -4,6 +4,7 @@ import '../../core/tax_engine/tax_rates.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_widgets.dart';
 import '../theme/text_wrap.dart';
 
 /// 2025→2026 최저임금 인상(10,030원→10,320원, +290원/+2.9%)이
@@ -58,7 +59,8 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,11 +121,11 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('연 추가 수입', '+${won(_yearlyExtra)}', ink, sub),
+                    calcRow('연 추가 수입', '+${won(_yearlyExtra)}', ink, sub),
                     const SizedBox(height: 8),
-                    _row('인상률', '+${_raiseRate.toStringAsFixed(1)}%', ink, sub),
+                    calcRow('인상률', '+${_raiseRate.toStringAsFixed(1)}%', ink, sub),
                     const SizedBox(height: 8),
-                    _row('유급 월 근무시간', '${_monthlyPaidHours.toStringAsFixed(1)}시간',
+                    calcRow('유급 월 근무시간', '${_monthlyPaidHours.toStringAsFixed(1)}시간',
                         ink, sub),
                     const SizedBox(height: 12),
                     Text(
@@ -136,7 +138,7 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox(
+            calcInfoBox(
               '${TaxRates.minimumWageYear}년 최저임금',
               [
                 '시급 ${won(_wage2026)} (${TaxRates.minimumWageYear - 1}년 ${won(_wage2025)} 대비 '
@@ -153,7 +155,7 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '예외 규정',
               [
                 '수습 3개월: 최저임금 90% 감액 가능(1년 이상 계약만 해당)',
@@ -169,46 +171,8 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
       ),
     );
   }
+
 }

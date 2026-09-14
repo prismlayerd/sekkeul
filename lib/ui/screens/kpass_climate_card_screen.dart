@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
+import '../components/calc_widgets.dart';
 import '../theme/text_wrap.dart';
 
 /// 모두의카드(옛 K-패스) — 기본형(비율 환급)과 정액형 중 어느 쪽이 싼지 본다.
@@ -110,7 +111,8 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,13 +194,13 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('월 교통비 지출', won(_spend), ink, sub),
+                    calcRow('월 교통비 지출', won(_spend), ink, sub),
                     const SizedBox(height: 8),
-                    _row('기본형 환급액 (${_pct(_rates[_type])})',
+                    calcRow('기본형 환급액 (${_pct(_rates[_type])})',
                         won(_basicRefund), ink, sub),
                     const SizedBox(height: 8),
                     for (final e in costs.entries) ...[
-                      _row('${e.key} 실부담', won(e.value), ink, sub),
+                      calcRow('${e.key} 실부담', won(e.value), ink, sub),
                       const SizedBox(height: 8),
                     ],
                     Text(
@@ -217,7 +219,7 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox('두 가지 방식', const [
+            calcInfoBox('두 가지 방식', const [
               '기본형(정률제): 쓴 금액의 일정 비율을 돌려준다',
               '정액형(정액제): 기준금액을 넘게 쓰면 초과분을 전액 돌려준다',
               '둘 중 어느 쪽을 고를 필요는 없다 — 시스템이 매달 더 큰 쪽으로 준다',
@@ -227,20 +229,20 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
                   ' (1회 총이용금액 3,000원 미만이 일반형)',
             ], line, sub, ink),
             const SizedBox(height: 12),
-            _infoBox('환급률', const [
+            calcInfoBox('환급률', const [
               '일반 20% · 청년(19~34세)·2자녀·어르신(65세 이상) 30%',
               '3자녀 이상 50% · 저소득(수급자·차상위) 53.3%',
               '다자녀·저소득은 앱이나 누리집에서 따로 신청해야 적용된다',
             ], line, sub, ink),
             const SizedBox(height: 12),
-            _infoBox('2026.4.1~9.30 한시', const [
+            calcInfoBox('2026.4.1~9.30 한시', const [
               '시차 시간대(5:30~6:30, 9~10, 16~17, 19~20시 승차)에 타면'
                   ' 기본형 환급률이 30%p 올라간다',
               '일반 50% · 청년·2자녀·어르신 60% · 3자녀 80% · 저소득 83.3%',
               '정액형 기준금액도 같은 기간 절반 수준으로 내려간다',
             ], line, sub, ink),
             const SizedBox(height: 12),
-            _infoBox('기후동행카드는 끝났다', const [
+            calcInfoBox('기후동행카드는 끝났다', const [
               '2026.9.1부터 서울 기후동행패스로 바뀌었다',
               '선불 30일권은 8.31까지만 충전, 최대 9.29까지 사용',
               '후불카드는 9.30까지, 10.1부터 일반 교통카드가 된다',
@@ -249,13 +251,14 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
                   ' 이용 범위도 서울에서 전국으로 확대됐다',
             ], line, sub, ink),
             const SizedBox(height: 12),
-            _infoBox('지급', const [
+            calcInfoBox('지급', const [
               '적립월의 익월 7영업일에 카드사로 지급 요청된다',
               '카드사마다 계좌 입금·결제대금 차감·포인트로 방식이 다르다',
               '전용 카드를 발급받고 korea-pass.kr에 회원가입·카드등록까지 해야 적립된다',
             ], line, sub, ink),
           ],
         ),
+      ),
       ),
     );
   }
@@ -311,39 +314,4 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration:
-          BoxDecoration(border: Border.all(color: line), borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(child: Text(item, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

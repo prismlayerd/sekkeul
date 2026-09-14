@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_widgets.dart';
 import '../theme/text_wrap.dart';
 
 class EnergyVoucherScreen extends StatefulWidget {
@@ -39,7 +40,8 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
         title: Text('에너지바우처 예상액',
             style: AppTheme.serif(AppTheme.tsBase, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,7 +66,7 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
                 return Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(right: i == _sizeLabels.length - 1 ? 0 : 6),
-                    child: _segButton(_sizeLabels[i], i, _householdSize,
+                    child: calcSegButton(_sizeLabels[i], i, _householdSize,
                         (v) => setState(() => _householdSize = v), ink, line, accent),
                   ),
                 );
@@ -96,9 +98,9 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('사용기간', '26.7.1 ~ 27.5.31', ink, sub),
+                    calcRow('사용기간', '26.7.1 ~ 27.5.31', ink, sub),
                     const SizedBox(height: 8),
-                    _row('계절 구분', '없음 (기간 내 자유 사용)', ink, sub),
+                    calcRow('계절 구분', '없음 (기간 내 자유 사용)', ink, sub),
                   ],
                 ),
               ),
@@ -114,20 +116,20 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox('대상 요건 (모두 충족)', const [
+            calcInfoBox('대상 요건 (모두 충족)', const [
               '소득: 생계·의료·주거·교육급여 수급자 또는 차상위계층(차상위 자활·장애수당 포함)',
               '가구원: 65세 이상 노인, 영유아(만 6세 미만), 임산부, 등록장애인, 한부모가족, 소년소녀가정, 중증·희귀질환자 중 1인 이상 포함',
               '자동으로 지급되지 않으며 반드시 별도 신청이 필요합니다.',
             ], line, sub, ink),
             const SizedBox(height: 12),
-            _infoBox('신청 방법 · 기간', const [
+            calcInfoBox('신청 방법 · 기간', const [
               '읍·면·동 주민센터 방문(신분증, 가족관계증명서 지참)',
               '복지로(bokjiro.go.kr)에서 온라인 신청 가능',
               '거동이 불편한 경우 주민센터에 방문 신청 요청 가능',
               '2026년 신청기간: 5.27~12.31',
             ], line, sub, ink),
             const SizedBox(height: 12),
-            _infoBox('사용 방법 · 유의사항', const [
+            calcInfoBox('사용 방법 · 유의사항', const [
               '여름(7.1~9.30): 전기요금에서 자동 차감',
               '겨울(10.15~4.30): 전기요금 차감 또는 국민행복카드로 가스·등유·LPG·연탄 등 구입',
               '겨울 바우처는 한국에너지재단 등유 지원과 중복 수급이 불가합니다.',
@@ -137,59 +139,8 @@ class _EnergyVoucherScreenState extends State<EnergyVoucherScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _segButton(String label, int value, int groupValue,
-      ValueChanged<int> onChanged, Color ink, Color line, Color accent) {
-    final selected = value == groupValue;
-    return GestureDetector(
-      onTap: () => onChanged(value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-            border: Border.all(color: selected ? accent : line),
-            borderRadius: BorderRadius.circular(4)),
-        child: Text(label,
-            style: AppTheme.sans(AppTheme.tsXS, selected ? accent : ink, weight: FontWeight.w600)),
       ),
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration:
-          BoxDecoration(border: Border.all(color: line), borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(child: Text(item, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

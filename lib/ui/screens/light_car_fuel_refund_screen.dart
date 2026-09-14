@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
+import '../components/calc_widgets.dart';
 import '../theme/text_wrap.dart';
 
 class LightCarFuelRefundScreen extends StatefulWidget {
@@ -60,7 +61,8 @@ class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
         title: Text('경차 유류세 환급',
             style: AppTheme.serif(AppTheme.tsBase, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,7 +74,7 @@ class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
                 return Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(right: i == _fuelLabels.length - 1 ? 0 : 6),
-                    child: _segButton(_fuelLabels[i], i, _fuelType,
+                    child: calcSegButton(_fuelLabels[i], i, _fuelType,
                         (v) => setState(() => _fuelType = v), ink, line, accent),
                   ),
                 );
@@ -106,7 +108,7 @@ class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('월 환급액(리터당 ${_rate.toStringAsFixed(0)}원)', won(_monthlyRefund), ink, sub),
+                    calcRow('월 환급액(리터당 ${_rate.toStringAsFixed(0)}원)', won(_monthlyRefund), ink, sub),
                     if (_capped) ...[
                       const SizedBox(height: 8),
                       Text('* 연간 상한 30만원 초과분은 지급되지 않습니다.'.keepWords,
@@ -117,17 +119,17 @@ class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox('적격 차량', const [
+            calcInfoBox('적격 차량', const [
               '배기량 1,000cc 미만 경형자동차(승용·승합·화물·특수)',
               '1인 1대 원칙이 적용됩니다.',
             ], line, sub, ink),
             const SizedBox(height: 12),
-            _infoBox('환급 단가 · 상한', const [
+            calcInfoBox('환급 단가 · 상한', const [
               '휘발유·경유 리터당 250원, LPG(부탄)는 부과된 개별소비세 전액(환산 197원)',
               '연간 상한 30만원(1대 기준)',
             ], line, sub, ink),
             const SizedBox(height: 12),
-            _infoBox('신청 방법', const [
+            calcInfoBox('신청 방법', const [
               '국세청 등록 카드사(신한·현대·우리·KB국민·삼성·비씨·롯데·NH농협·하나·씨티)에 경차 유류구매전용카드 발급 신청',
               '차량등록증 사본 제출',
               '발급받은 카드로 주유 시 결제 → 카드사가 매월 청구 후 소유자 계좌로 자동 환급',
@@ -137,6 +139,7 @@ class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }
@@ -176,56 +179,4 @@ class _LightCarFuelRefundScreenState extends State<LightCarFuelRefundScreen> {
     );
   }
 
-  Widget _segButton(String label, int value, int groupValue,
-      ValueChanged<int> onChanged, Color ink, Color line, Color accent) {
-    final selected = value == groupValue;
-    return GestureDetector(
-      onTap: () => onChanged(value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-            border: Border.all(color: selected ? accent : line),
-            borderRadius: BorderRadius.circular(4)),
-        child: Text(label,
-            style: AppTheme.sans(AppTheme.tsXS, selected ? accent : ink, weight: FontWeight.w600)),
-      ),
-    );
-  }
-
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration:
-          BoxDecoration(border: Border.all(color: line), borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(child: Text(item, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

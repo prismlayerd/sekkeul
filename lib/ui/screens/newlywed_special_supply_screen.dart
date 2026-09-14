@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
+import '../components/calc_widgets.dart';
 
 /// 신혼부부 특별공급(공공분양) 자격 참고 진단.
 ///
@@ -115,7 +116,7 @@ class _NewlywedSpecialSupplyScreenState
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,21 +207,21 @@ class _NewlywedSpecialSupplyScreenState
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('소득 수준',
+                    calcRow('소득 수준',
                         '도시근로자 월평균 대비 ${_incomeRatio.toStringAsFixed(0)}%',
                         ink, sub),
                     const SizedBox(height: 8),
-                    _row('우선공급 기준', '${_priorityThreshold.toStringAsFixed(0)}% 이하',
+                    calcRow('우선공급 기준', '${_priorityThreshold.toStringAsFixed(0)}% 이하',
                         ink, sub),
                     const SizedBox(height: 8),
-                    _row('일반공급 기준', '${_generalThreshold.toStringAsFixed(0)}% 이하',
+                    calcRow('일반공급 기준', '${_generalThreshold.toStringAsFixed(0)}% 이하',
                         ink, sub),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox(
+            calcInfoBox(
               '대상 요건',
               [
                 '혼인 7년 이내 또는 6세 이하 자녀 (예비신혼부부·한부모가족 포함)',
@@ -232,7 +233,7 @@ class _NewlywedSpecialSupplyScreenState
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '순위·공급 비중',
               [
                 '1순위: 혼인기간 중 출산(임신·입양 포함)한 자녀가 있거나 한부모가족',
@@ -245,7 +246,7 @@ class _NewlywedSpecialSupplyScreenState
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '신청 방법',
               [
                 '입주자모집공고 확인(청약홈·LH·SH) → 자격요건 확인 → 인증서 로그인 신청',
@@ -258,7 +259,7 @@ class _NewlywedSpecialSupplyScreenState
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 
@@ -322,43 +323,4 @@ class _NewlywedSpecialSupplyScreenState
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

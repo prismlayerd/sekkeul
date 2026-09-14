@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
+import '../components/calc_widgets.dart';
 
 class CarTaxAnnualScreen extends StatefulWidget {
   const CarTaxAnnualScreen({super.key});
@@ -56,7 +57,8 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
         title: Text('자동차세 연납 할인',
             style: AppTheme.serif(AppTheme.tsBase, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,7 +72,7 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
                   .map((m) => Expanded(
                         child: Padding(
                           padding: const EdgeInsets.only(right: 6),
-                          child: _segButton('$m월', m, _month,
+                          child: calcSegButton('$m월', m, _month,
                               (v) => setState(() => _month = v), ink, line, accent),
                         ),
                       ))
@@ -101,21 +103,21 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('공제율', '${_rate.toStringAsFixed(2)}%', ink, sub),
+                    calcRow('공제율', '${_rate.toStringAsFixed(2)}%', ink, sub),
                     const SizedBox(height: 8),
-                    _row('실제 납부액', won(_payAmount), ink, sub),
+                    calcRow('실제 납부액', won(_payAmount), ink, sub),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox('2026년 신청 일정', [
+            calcInfoBox('2026년 신청 일정', [
               for (final e in _rates.entries)
                 '${e.key}월: ${e.value.$1} (공제율 ${e.value.$2.toStringAsFixed(2)}%)',
               '이자율 연 5%로 남은 기간을 일할 계산합니다(지방세법 시행령 §125⑥).',
             ], line, sub, ink),
             const SizedBox(height: 12),
-            _infoBox('신청 방법', const [
+            calcInfoBox('신청 방법', const [
               '위택스(wetax.go.kr) - 신고/납부 → 자동차세 연세액',
               '서울은 이택스(etax.seoul.go.kr) 이용',
               '차량등록지 관할 구청·시청 세무과 방문 신청 가능',
@@ -125,6 +127,7 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }
@@ -165,56 +168,4 @@ class _CarTaxAnnualScreenState extends State<CarTaxAnnualScreen> {
     );
   }
 
-  Widget _segButton(String label, int value, int groupValue,
-      ValueChanged<int> onChanged, Color ink, Color line, Color accent) {
-    final selected = value == groupValue;
-    return GestureDetector(
-      onTap: () => onChanged(value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-            border: Border.all(color: selected ? accent : line),
-            borderRadius: BorderRadius.circular(4)),
-        child: Text(label,
-            style: AppTheme.sans(AppTheme.tsXS, selected ? accent : ink, weight: FontWeight.w600)),
-      ),
-    );
-  }
-
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration:
-          BoxDecoration(border: Border.all(color: line), borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(child: Text(item, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

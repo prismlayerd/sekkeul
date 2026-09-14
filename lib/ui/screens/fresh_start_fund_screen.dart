@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
+import '../components/calc_widgets.dart';
 import '../theme/text_wrap.dart';
 
 class FreshStartFundScreen extends StatefulWidget {
@@ -61,7 +62,8 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,9 +210,9 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('원금 감면액', won(_reduction), ink, sub),
+                    calcRow('원금 감면액', won(_reduction), ink, sub),
                     const SizedBox(height: 8),
-                    _row('감면 후 원금', won(_afterDebt), ink, sub),
+                    calcRow('감면 후 원금', won(_afterDebt), ink, sub),
                     const SizedBox(height: 12),
                     Text(
                         '* 무이자 분할 가정 단순 추정치. 부실우려차주는 원금이 아니라 금리가'
@@ -222,7 +224,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox(
+            calcInfoBox(
               '대상 요건',
               [
                 '2020년 4월~2025년 6월 중 사업을 영위한 개인사업자 또는 법인 소상공인',
@@ -238,7 +240,7 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '차주 분류에 따라 창구가 다릅니다',
               [
                 '부실차주 — 새출발기금.kr 또는 캠코. 전체 채무를 매입해 조정하며 채무를 골라낼 수 없습니다',
@@ -256,46 +258,8 @@ class _FreshStartFundScreenState extends State<FreshStartFundScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
       ),
     );
   }
+
 }

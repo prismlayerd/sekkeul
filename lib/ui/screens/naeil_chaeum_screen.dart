@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_wrap.dart';
+import '../components/calc_widgets.dart';
 
 class NaeilChaeumScreen extends StatelessWidget {
   const NaeilChaeumScreen({super.key});
@@ -18,7 +19,8 @@ class NaeilChaeumScreen extends StatelessWidget {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +46,7 @@ class NaeilChaeumScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            _infoBox(
+            calcInfoBox(
               '납입 구조',
               [
                 '최소 3년 공동납입 · 1년 단위 연장 · 최대 10년',
@@ -56,7 +58,7 @@ class NaeilChaeumScreen extends StatelessWidget {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '세금 (조특법 §29의6)',
               [
                 '사업주 기여금은 근로소득 — 소득세를 감면한다',
@@ -70,7 +72,7 @@ class NaeilChaeumScreen extends StatelessWidget {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '끝난 청년내일채움공제(2년형)',
               [
                 '2024년 사업 일몰로 신규가입 불가',
@@ -84,36 +86,8 @@ class NaeilChaeumScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
       ),
     );
   }
+
 }

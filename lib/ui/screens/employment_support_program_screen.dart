@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
+import '../components/calc_widgets.dart';
 import '../theme/text_wrap.dart';
 
 class EmploymentSupportProgramScreen extends StatefulWidget {
@@ -53,7 +54,8 @@ class _EmploymentSupportProgramScreenState
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,21 +135,21 @@ class _EmploymentSupportProgramScreenState
                             weight: FontWeight.w700))
                   else
                     for (final (label, amount) in _typeIIItems) ...[
-                      _row(label, amount, ink, sub),
+                      calcRow(label, amount, ink, sub),
                       const SizedBox(height: 8),
                     ],
                   const SizedBox(height: 12),
                   if (_typeIdx == 0) ...[
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('기본 월수당 (6개월)',
+                    calcRow('기본 월수당 (6개월)',
                         won(_monthlyAllowance * _months), ink, sub),
                     const SizedBox(height: 8),
-                    _row('부양가족 가산',
+                    calcRow('부양가족 가산',
                         won(_dependentBonusPerPerson * _dependents * _months),
                         ink, sub),
                     const SizedBox(height: 8),
-                    _row('취업성공수당',
+                    calcRow('취업성공수당',
                         won(_includeSuccessBonus ? _successBonus : 0), ink,
                         sub),
                   ],
@@ -160,7 +162,7 @@ class _EmploymentSupportProgramScreenState
               ),
             ),
             const SizedBox(height: 24),
-            _infoBox(
+            calcInfoBox(
               '대상 요건 비교',
               [
                 'I형: 15~64세(취업취약계층 69세까지), 청년은 15~34세, 중위소득 60%(청년 120%) 이하, 재산 4억(청년 5억) 이하, 최근 2년 내 취업경험 100일·800시간 이상',
@@ -171,7 +173,7 @@ class _EmploymentSupportProgramScreenState
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '신청 절차',
               [
                 '고용24(work24.go.kr)·워크넷에서 공동인증서 로그인 후 신청',
@@ -187,6 +189,7 @@ class _EmploymentSupportProgramScreenState
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }
@@ -231,43 +234,4 @@ class _EmploymentSupportProgramScreenState
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

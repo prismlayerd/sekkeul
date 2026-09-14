@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
+import '../components/calc_widgets.dart';
 import '../theme/text_wrap.dart';
 
 class NewbornSpecialLoanScreen extends StatefulWidget {
@@ -72,7 +73,8 @@ class _NewbornSpecialLoanScreenState extends State<NewbornSpecialLoanScreen> {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,9 +114,9 @@ class _NewbornSpecialLoanScreenState extends State<NewbornSpecialLoanScreen> {
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('총 상환액', _manwon(_totalPayment), ink, sub),
+                    calcRow('총 상환액', _manwon(_totalPayment), ink, sub),
                     const SizedBox(height: 8),
-                    _row('총 이자', _manwon(_totalInterest), ink, sub),
+                    calcRow('총 이자', _manwon(_totalInterest), ink, sub),
                     const SizedBox(height: 8),
                     Text('* 원리금균등 기준. 특례금리는 소득·자녀 수에 따라 차등 적용됩니다.'.keepWords,
                         style: AppTheme.sans(AppTheme.tsXS, sub)),
@@ -123,7 +125,7 @@ class _NewbornSpecialLoanScreenState extends State<NewbornSpecialLoanScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox(
+            calcInfoBox(
               '지원 대상',
               [
                 '대출접수일 기준 2년 내 출산·입양한 무주택 세대주 (2023.1.1 이후 출생아)',
@@ -135,7 +137,7 @@ class _NewbornSpecialLoanScreenState extends State<NewbornSpecialLoanScreen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '특례 혜택',
               [
                 '구입자금(디딤돌): 연 1.8~4.5%, 최대 4억원 (주택 9억·전용 85㎡ 이하)',
@@ -148,6 +150,7 @@ class _NewbornSpecialLoanScreenState extends State<NewbornSpecialLoanScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -196,43 +199,4 @@ inputFormatters: [
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

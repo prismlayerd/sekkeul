@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
+import '../components/calc_widgets.dart';
 
 class YouthHousingDreamScreen extends StatefulWidget {
   const YouthHousingDreamScreen({super.key});
@@ -77,7 +78,7 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,10 +102,10 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
                         style:
                             AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
-                    _row('드림 통장 (연 ${_dreamRate * 100}%)',
+                    calcRow('드림 통장 (연 ${_dreamRate * 100}%)',
                         _manwon(_dreamTotal), ink, sub),
                     const SizedBox(height: 8),
-                    _row('종합저축 (연 ${(_normalRate * 100).toStringAsFixed(1)}%)',
+                    calcRow('종합저축 (연 ${(_normalRate * 100).toStringAsFixed(1)}%)',
                         _manwon(_normalTotal), ink, sub),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
@@ -123,9 +124,9 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
                     const SizedBox(height: 16),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('연간 납입액', _manwon(_annualDeposit), ink, sub),
+                    calcRow('연간 납입액', _manwon(_annualDeposit), ink, sub),
                     const SizedBox(height: 8),
-                    _row('소득공제 금액 (40%)', _manwon(_deductionBase), ink, sub),
+                    calcRow('소득공제 금액 (40%)', _manwon(_deductionBase), ink, sub),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -147,7 +148,7 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox(
+            calcInfoBox(
               '자격 및 혜택',
               [
                 '만 19~34세 무주택자 (병역 이행기간 최대 6년 인정)',
@@ -161,7 +162,7 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '소득공제 & 대출 연계',
               [
                 '연 납입액 300만원 한도의 40% 소득공제 (총급여 7천만원 이하 무주택)',
@@ -175,7 +176,7 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
             const CalcDisclaimer(),
           ],
         ),
-      ),
+      )),
     );
   }
 
@@ -220,43 +221,4 @@ class _YouthHousingDreamScreenState extends State<YouthHousingDreamScreen> {
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

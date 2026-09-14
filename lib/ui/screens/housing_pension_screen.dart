@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
+import '../components/calc_widgets.dart';
 
 /// 주택연금(역모기지) 예상 월지급금 참고 추정기.
 /// HF 공시 종신·정액형 참고 데이터포인트(3억/60세=63만, 3억/70세=90만,
@@ -96,7 +97,8 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +190,7 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox(
+            calcInfoBox(
               '대상 요건',
               [
                 '만 55세 이상 (부부 중 연소자 기준), 대한민국 국적',
@@ -200,7 +202,7 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '지급 방식',
               [
                 '종신지급 — 평생 매월 동일 금액 수령(가장 일반적)',
@@ -213,7 +215,7 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '비용 구조',
               [
                 '초기보증료: 주택가격의 1.0% (최초 연금지급일에 납부)',
@@ -228,6 +230,7 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }
@@ -273,33 +276,4 @@ class _HousingPensionScreenState extends State<HousingPensionScreen> {
     );
   }
 
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

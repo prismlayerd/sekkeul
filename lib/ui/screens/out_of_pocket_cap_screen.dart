@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
+import '../components/calc_widgets.dart';
 import '../theme/text_wrap.dart';
 
 /// (소득분위 라벨, 일반 상한액, 요양병원 120일 초과 입원 상한액) — 원 단위.
@@ -70,7 +71,7 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,7 +194,7 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
                   const SizedBox(height: 12),
                   Divider(height: 1, color: line),
                   const SizedBox(height: 12),
-                  _row('적용 상한액', won(_cap.toDouble()), ink, sub),
+                  calcRow('적용 상한액', won(_cap.toDouble()), ink, sub),
                   const SizedBox(height: 8),
                   if (_hasInput && _refund <= 0)
                     Text('* 본인부담금이 상한액을 초과하지 않아 환급 대상이 아닙니다.'.keepWords,
@@ -207,7 +208,7 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            _infoBox(
+            calcInfoBox(
               '포함/제외 항목',
               [
                 '포함: 건강보험 급여 진료의 본인부담금(입원·외래·약국) 합산',
@@ -219,7 +220,7 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '환급 절차',
               [
                 '전년도 본인부담금 집계 후 다음해 6~7월 정산',
@@ -234,47 +235,8 @@ class _OutOfPocketCapScreenState extends State<OutOfPocketCapScreen> {
             const CalcDisclaimer(),
           ],
         ),
-      ),
+      )),
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

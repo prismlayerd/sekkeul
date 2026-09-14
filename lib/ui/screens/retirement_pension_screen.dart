@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
+import '../components/calc_widgets.dart';
 
 class RetirementPensionScreen extends StatefulWidget {
   const RetirementPensionScreen({super.key});
@@ -59,7 +60,7 @@ class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,11 +84,11 @@ class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
                         style:
                             AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
-                    _row('DB형 (확정급여)', _manwon(_db), ink, sub),
+                    calcRow('DB형 (확정급여)', _manwon(_db), ink, sub),
                     const SizedBox(height: 8),
-                    _row('DC형 원금', _manwon(_dcPrincipal), ink, sub),
+                    calcRow('DC형 원금', _manwon(_dcPrincipal), ink, sub),
                     const SizedBox(height: 8),
-                    _row('DC형 운용수익 (연 3% 추정)', _manwon(_dcReturn), ink, sub),
+                    calcRow('DC형 운용수익 (연 3% 추정)', _manwon(_dcReturn), ink, sub),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
@@ -110,7 +111,7 @@ class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox(
+            calcInfoBox(
               '유형별 특징',
               [
                 'DB형 — 회사가 운용, 퇴직 시 확정급여 지급 (임금상승률↑ 유리)',
@@ -122,7 +123,7 @@ class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '세금',
               [
                 '퇴직소득세: 근속연수공제 후 연분연승법으로 저율 과세',
@@ -136,7 +137,7 @@ class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
             const CalcDisclaimer(),
           ],
         ),
-      ),
+      )),
     );
   }
 
@@ -181,43 +182,4 @@ class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

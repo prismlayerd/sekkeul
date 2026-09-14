@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
+import '../components/calc_widgets.dart';
 
 class SevereDiseaseCopaymentScreen extends StatefulWidget {
   const SevereDiseaseCopaymentScreen({super.key});
@@ -64,7 +65,7 @@ class _SevereDiseaseCopaymentScreenState
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,10 +190,10 @@ class _SevereDiseaseCopaymentScreenState
                   const SizedBox(height: 12),
                   Divider(height: 1, color: line),
                   const SizedBox(height: 12),
-                  _row('일반 본인부담 (${(_generalRate * 100).round()}%)',
+                  calcRow('일반 본인부담 (${(_generalRate * 100).round()}%)',
                       won(_generalCopay), ink, sub),
                   const SizedBox(height: 8),
-                  _row('산정특례 본인부담 (${(_specialRate * 100).round()}%)',
+                  calcRow('산정특례 본인부담 (${(_specialRate * 100).round()}%)',
                       won(_specialCopay), ink, sub),
                   const SizedBox(height: 12),
                   Text('* 질환군마다 다릅니다 — 암·중증화상 5%, 희귀·중증난치·중증치매 10%, 결핵은 0%(면제)입니다.'.keepWords,
@@ -201,7 +202,7 @@ class _SevereDiseaseCopaymentScreenState
               ),
             ),
             const SizedBox(height: 24),
-            _infoBox(
+            calcInfoBox(
               '대상 질환',
               [
                 '암 (C00~C97 / D00~D09): 악성신생물, 상피내암, 제자리암',
@@ -214,7 +215,7 @@ class _SevereDiseaseCopaymentScreenState
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '적용 기간 및 신청',
               [
                 '암·희귀·중증난치: 5년(재등록 가능) / 중증화상: 1년(재등록 가능)',
@@ -229,47 +230,8 @@ class _SevereDiseaseCopaymentScreenState
             const CalcDisclaimer(),
           ],
         ),
-      ),
+      )),
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

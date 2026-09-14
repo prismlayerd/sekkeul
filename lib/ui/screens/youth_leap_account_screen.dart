@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
 import '../theme/text_wrap.dart';
+import '../components/calc_widgets.dart';
 
 class YouthLeapAccountScreen extends StatefulWidget {
   const YouthLeapAccountScreen({super.key});
@@ -62,7 +63,7 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,14 +139,14 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
                         style:
                             AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
-                    _row('본인 납입 합계', _manwon(_totalSelf), ink, sub),
+                    calcRow('본인 납입 합계', _manwon(_totalSelf), ink, sub),
                     const SizedBox(height: 8),
                     if (_monthlyGov > 0) ...[
-                      _row('정부기여금 합계 (월 ${comma(_monthlyGov)}원)',
+                      calcRow('정부기여금 합계 (월 ${comma(_monthlyGov)}원)',
                           _manwon(_totalGov), ink, sub),
                       const SizedBox(height: 8),
                     ],
-                    _row('예상 이자 (연 6% 단리 추정)', _manwon(_interest), ink, sub),
+                    calcRow('예상 이자 (연 6% 단리 추정)', _manwon(_interest), ink, sub),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
@@ -173,7 +174,7 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox(
+            calcInfoBox(
               '자격 요건',
               [
                 '만 19~34세 (병역 이행 기간 최대 6년 추가 인정)',
@@ -186,7 +187,7 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '구간별 정부기여금',
               [
                 '2,400만원 이하: 기여율 6.0% / 월 최대 33,000원',
@@ -202,48 +203,8 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
             const CalcDisclaimer(),
           ],
         ),
-      ),
+      )),
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }
