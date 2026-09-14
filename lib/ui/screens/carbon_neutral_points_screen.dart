@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/amount_field.dart';
+import '../components/calc_widgets.dart';
 import '../theme/text_wrap.dart';
 
 class CarbonNeutralPointsScreen extends StatefulWidget {
@@ -76,7 +77,8 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
         title: Text('탄소중립포인트',
             style: AppTheme.serif(AppTheme.tsBase, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,19 +141,19 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('전자영수증(연 상한 70,000원)', won(_receiptPoints), ink, sub),
+                    calcRow('전자영수증(연 상한 70,000원)', won(_receiptPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('텀블러·다회용컵', won(_tumblerPoints), ink, sub),
+                    calcRow('텀블러·다회용컵', won(_tumblerPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('일회용컵 보증금 반환', won(_cupReturnPoints), ink, sub),
+                    calcRow('일회용컵 보증금 반환', won(_cupReturnPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('리필스테이션', won(_refillPoints), ink, sub),
+                    calcRow('리필스테이션', won(_refillPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('다회용기 배달주문', won(_deliveryPoints), ink, sub),
+                    calcRow('다회용기 배달주문', won(_deliveryPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('가정용 베란다 태양광', won(_solarPoints), ink, sub),
+                    calcRow('가정용 베란다 태양광', won(_solarPoints), ink, sub),
                     const SizedBox(height: 8),
-                    _row('친환경제품 구매', won(_greenBuyPoints), ink, sub),
+                    calcRow('친환경제품 구매', won(_greenBuyPoints), ink, sub),
                     if (_isCapped) ...[
                       const SizedBox(height: 12),
                       Text('* 1인당 연간 지급 한도 7만원을 초과하여 상한으로 산정되었습니다.'.keepWords,
@@ -162,7 +164,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox('참여 방법', const [
+            calcInfoBox('참여 방법', const [
               '탄소중립포인트 녹색생활 실천 포털(cpoint.or.kr)에서 회원가입',
               '실천항목마다 참여 방법이 다릅니다 — 포털 매뉴얼을 보고 설정해야 적립됩니다',
               '전자영수증은 참여기업 앱에서 전자영수증 발급을 켜 두어야 합니다',
@@ -171,7 +173,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
               '지급은 한국환경산업기술원이 하고, 실천한 달의 다음 달 말일부터 들어옵니다',
             ], line, sub, ink),
             const SizedBox(height: 12),
-            _infoBox('주요 유의사항', const [
+            calcInfoBox('주요 유의사항', const [
               '1인당 연간 지급 한도는 7만원입니다.',
               '여기 없는 실천항목도 있습니다 — 고품질 재활용품 300원/kg, 폐휴대폰 1,000원/개,'
                   ' 공유자전거 100원/km, 잔반제로 100원/회, 무공해차 대여 100원/km,'
@@ -182,6 +184,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }
@@ -197,12 +200,7 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
           controller: ctrl,
           keyboardType: TextInputType.number,
           textAlign: TextAlign.right,
-          inputFormatters: [
-            if (suffix == '원' || suffix == '만원')
-              const ThousandsFormatter()
-            else
-              FilteringTextInputFormatter.digitsOnly,
-          ],
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           style: AppTheme.sans(AppTheme.tsMD, ink),
           decoration: InputDecoration(
             suffixText: suffix,
@@ -221,39 +219,4 @@ class _CarbonNeutralPointsScreenState extends State<CarbonNeutralPointsScreen> {
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration:
-          BoxDecoration(border: Border.all(color: line), borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(child: Text(item, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

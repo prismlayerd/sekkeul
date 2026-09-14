@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
-import '../components/amount_field.dart';
+import '../components/calc_widgets.dart';
 import '../theme/text_wrap.dart';
 
 class DriverLicenseRenewalScreen extends StatefulWidget {
@@ -67,7 +67,8 @@ class _DriverLicenseRenewalScreenState
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,7 +139,7 @@ class _DriverLicenseRenewalScreenState
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
-                    _row('적용 갱신주기', '$_cycleYears년', ink, sub),
+                    calcRow('적용 갱신주기', '$_cycleYears년', ink, sub),
                     const SizedBox(height: 8),
                     Text('* 갱신 기간은 생일 전후 각각 6개월(총 1년)이며, 만료일 기준 안내입니다.'.keepWords,
                         style: AppTheme.sans(AppTheme.tsXS, sub)),
@@ -147,7 +148,7 @@ class _DriverLicenseRenewalScreenState
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox(
+            calcInfoBox(
               '연령별 갱신 주기',
               [
                 '일반(2011.12.9 이후 취득): 10년',
@@ -160,7 +161,7 @@ class _DriverLicenseRenewalScreenState
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '2026년 수수료',
               [
                 '2종 면허 갱신: 일반 10,000원 / 모바일IC 15,000원',
@@ -174,7 +175,7 @@ class _DriverLicenseRenewalScreenState
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '미갱신 시 불이익',
               [
                 '갱신 미이행: 과태료 2만원',
@@ -188,6 +189,7 @@ class _DriverLicenseRenewalScreenState
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -197,12 +199,7 @@ class _DriverLicenseRenewalScreenState
       controller: ctrl,
       keyboardType: TextInputType.number,
       textAlign: TextAlign.right,
-      inputFormatters: [
-            if (suffix == '원' || suffix == '만원')
-              const ThousandsFormatter()
-            else
-              FilteringTextInputFormatter.digitsOnly,
-          ],
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       style: AppTheme.sans(AppTheme.tsMD, ink),
       decoration: InputDecoration(
         hintText: hint,
@@ -224,43 +221,4 @@ class _DriverLicenseRenewalScreenState
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

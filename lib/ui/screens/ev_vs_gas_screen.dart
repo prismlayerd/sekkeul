@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../components/amount_field.dart';
+import '../components/calc_widgets.dart';
 
 class EvVsGasScreen extends StatefulWidget {
   const EvVsGasScreen({super.key});
@@ -28,12 +29,17 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
   double get _gasEff => saneInput(_num(_gasEfficiencyCtrl), InputMax.efficiency);
   double get _evEff => saneInput(_num(_evEfficiencyCtrl), InputMax.efficiency);
 
+  double get _gasAnnualLiters => _dailyKm * 365 / (_gasEff == 0 ? 1 : _gasEff);
   double get _gasAnnualFuel =>
-      (_dailyKm * 365 / (_gasEff == 0 ? 1 : _gasEff)) *
-      saneInput(_num(_gasPriceCtrl), InputMax.unitPrice);
+      _gasAnnualLiters * saneInput(_num(_gasPriceCtrl), InputMax.unitPrice);
   double get _evAnnualFuel =>
       (_dailyKm * 365 / (_evEff == 0 ? 1 : _evEff)) *
       saneInput(_num(_elecPriceCtrl), InputMax.unitPrice);
+
+  // 휘발유 연소 이산화탄소 배출계수 — IPCC/미국 EPA가 쓰는 표준값(약 2.31kg/L).
+  // 전기 생산 과정의 간접배출(발전 부문)은 포함하지 않은 참고용 추정치다.
+  static const double _gasolineCo2PerLiter = 2.31;
+  double get _co2AnnualReductionKg => _gasAnnualLiters * _gasolineCo2PerLiter;
 
   // 차량가격 칸은 **만원 단위**라 원 단위 상한을 그대로 쓰면 1만 배로 부푼다.
   double get _carPriceMax => InputMax.money / 10000;
@@ -89,7 +95,8 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
         title: Text('전기차 vs 휘발유차',
             style: AppTheme.serif(AppTheme.tsBase, ink, weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +126,7 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
                   .map((y) => Expanded(
                         child: Padding(
                           padding: const EdgeInsets.only(right: 6),
-                          child: _segButton('$y년', y, _years,
+                          child: calcSegButton('$y년', y, _years,
                               (v) => setState(() => _years = v), ink, line, accent),
                         ),
                       ))
@@ -140,9 +147,9 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
                     Text('$_years년 총소유비용(TCO) 비교',
                         style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
                     const SizedBox(height: 12),
-                    _row('휘발유차 TCO', won(_gasTco), ink, sub),
+                    calcRow('휘발유차 TCO', won(_gasTco), ink, sub),
                     const SizedBox(height: 8),
-                    _row('전기차 TCO', won(_evTco), ink, sub),
+                    calcRow('전기차 TCO', won(_evTco), ink, sub),
                     const SizedBox(height: 12),
                     Divider(height: 1, color: line),
                     const SizedBox(height: 12),
@@ -156,21 +163,24 @@ class _EvVsGasScreenState extends State<EvVsGasScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    _row('연간 연료비 절감액', won(_yearlyGap), ink, sub),
+                    calcRow('연간 연료비 절감액', won(_yearlyGap), ink, sub),
                     const SizedBox(height: 8),
-                    _row('연간 CO2 절감량 (참고)', '약 2.3톤', ink, sub),
+                    calcRow('연간 CO2 절감량 (참고)',
+                        '약 ${(_co2AnnualReductionKg / 1000).toStringAsFixed(1)}톤', ink, sub),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
             ],
-            _infoBox('참고', const [
+            calcInfoBox('참고', const [
               '전기차 연료비는 휘발유차 대비 약 1/3 수준으로 추정됩니다.',
               '실제 비용은 주행 습관·충전 방식(완속/급속)·지역별 보조금에 따라 달라집니다.',
               '전기차 보조금은 차량가격·지자체에 따라 크게 차이 납니다.',
+              'CO2 절감량은 휘발유 연소분만 계산한 추정치이며, 전기 생산 과정의 간접배출은 포함하지 않습니다.',
             ], line, sub, ink),
           ],
         ),
+      ),
       ),
     );
   }
@@ -210,56 +220,4 @@ inputFormatters: [
     );
   }
 
-  Widget _segButton(String label, int value, int groupValue,
-      ValueChanged<int> onChanged, Color ink, Color line, Color accent) {
-    final selected = value == groupValue;
-    return GestureDetector(
-      onTap: () => onChanged(value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-            border: Border.all(color: selected ? accent : line),
-            borderRadius: BorderRadius.circular(4)),
-        child: Text(label,
-            style: AppTheme.sans(AppTheme.tsXS, selected ? accent : ink, weight: FontWeight.w600)),
-      ),
-    );
-  }
-
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration:
-          BoxDecoration(border: Border.all(color: line), borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(child: Text(item, style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }

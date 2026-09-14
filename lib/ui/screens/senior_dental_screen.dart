@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../theme/text_wrap.dart';
+import '../components/calc_widgets.dart';
 
 class SeniorDentalScreen extends StatefulWidget {
   const SeniorDentalScreen({super.key});
@@ -14,6 +15,8 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
   int _procIdx = 0; // 0=임플란트 1개, 1=완전틀니, 2=부분틀니
   int _insIdx = 0; // 0=건강보험, 1=의료급여 1종, 2=의료급여 2종
 
+  // 표준금액은 2024년 자료 기준 — 치과 요양급여비용은 매년 수가협상으로 바뀐다(2025년
+  // 평균 3.2% 인상 확인됨, 보건복지부 고시). 2025~2026년 개정 표준금액은 1차 미확인.
   static const _procs = [
     ('임플란트 1개', 1300000),
     ('완전틀니', 1400000),
@@ -46,7 +49,7 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,17 +94,17 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
                   const SizedBox(height: 12),
                   Divider(height: 1, color: line),
                   const SizedBox(height: 12),
-                  _row('표준 보험가', won(_standardPrice.toDouble()), ink, sub),
+                  calcRow('표준 보험가', won(_standardPrice.toDouble()), ink, sub),
                   const SizedBox(height: 8),
-                  _row('건강보험·의료급여 부담', won(_covered), ink, sub),
+                  calcRow('건강보험·의료급여 부담', won(_covered), ink, sub),
                   const SizedBox(height: 12),
-                  Text('* 2024년 표준 보험가 참고치 기반 단순 추정이며, 실제 진료비는 치과·지역별로 다를 수 있습니다.'.keepWords,
+                  Text('* 2024년 표준 보험가 참고치 기반 단순 추정이에요. 치과 수가는 매년 바뀌고 실제 진료비도 치과·지역별로 다를 수 있으니, 정확한 금액은 치과에서 확인하세요.'.keepWords,
                       style: AppTheme.sans(AppTheme.tsXS, sub)),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            _infoBox(
+            calcInfoBox(
               '대상 요건',
               [
                 '만 65세 이상 건강보험·의료급여 가입자 (생일 기준)',
@@ -113,7 +116,7 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
               ink,
             ),
             const SizedBox(height: 12),
-            _infoBox(
+            calcInfoBox(
               '유의사항',
               [
                 '지르코니아·세라믹·금 등 고급 재료는 비급여로 전액 본인부담',
@@ -128,7 +131,7 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
             const CalcDisclaimer(),
           ],
         ),
-      ),
+      )),
     );
   }
 
@@ -157,43 +160,4 @@ class _SeniorDentalScreenState extends State<SeniorDentalScreen> {
     );
   }
 
-  Widget _row(String label, String value, Color ink, Color sub) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: Text(label, style: AppTheme.sans(AppTheme.tsSM, sub))),
-        Text(value, style: AppTheme.sans(AppTheme.tsSM, ink, weight: FontWeight.w600)),
-      ],
-    );
-  }
-
-  Widget _infoBox(
-      String title, List<String> items, Color line, Color sub, Color ink) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          border: Border.all(color: line),
-          borderRadius: BorderRadius.circular(4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTheme.sans(AppTheme.tsXS, sub, weight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          for (final item in items) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('· ', style: AppTheme.sans(AppTheme.tsSM, sub)),
-                Expanded(
-                    child: Text(item,
-                        style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5))),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-        ],
-      ),
-    );
-  }
 }
