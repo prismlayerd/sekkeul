@@ -146,6 +146,8 @@ class _OtherIncomeSectionState extends State<OtherIncomeSection> {
     final accent = AppTheme.accentColor(context);
     final s = widget.snapshot;
     final hasBusiness = (s?.businessIncome ?? 0) > 0;
+    // 프리랜서·N잡러는 사업소득이 "다른 소득"이 아니라 주 소득이다 — 표시 문구를 다르게 한다.
+    final isMainIncome = s?.hasBusiness ?? false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -154,7 +156,9 @@ class _OtherIncomeSectionState extends State<OtherIncomeSection> {
         if (s != null && (s.businessIncome > 0 || s.otherIncome > 0)) ...[
           Text('가계부에 적은 것'.toUpperCase(), style: AppTheme.label(context)),
           const SizedBox(height: 8),
-          if (s.businessIncome > 0) _row('사업소득', s.businessIncome, ink, sub),
+          if (s.businessIncome > 0)
+            _row(isMainIncome ? '사업소득 (올해 누계)' : '사업소득', s.businessIncome, ink,
+                sub),
           if (s.otherIncome > 0) _row('기타소득', s.otherIncome, ink, sub),
           const SizedBox(height: 14),
         ],
@@ -255,7 +259,14 @@ class _OtherIncomeSectionState extends State<OtherIncomeSection> {
           const SizedBox(height: 14),
           Text('신고해야 하나요?'.toUpperCase(), style: AppTheme.label(context)),
           const SizedBox(height: 10),
-          for (final t in list) ...[
+          if (isMainIncome && list.any((t) => t.label == '사업소득')) ...[
+            Text('사업소득은 유형상 항상 신고 대상이에요. 아래는 그 밖에 확인할 것들이에요.'
+                    .keepWords,
+                style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.45)),
+            const SizedBox(height: 10),
+          ],
+          for (final t in list.where(
+              (t) => !(isMainIncome && t.label == '사업소득'))) ...[
             Row(children: [
               Expanded(
                 child: Text(t.label.keepWords,

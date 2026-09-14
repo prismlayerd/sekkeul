@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../components/calc_disclaimer.dart';
 import '../components/calc_note.dart';
 import '../../core/data/db_helper.dart';
+import '../../core/data/other_income.dart';
 import '../../core/tax_engine/combined_tax.dart';
 import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/tax_rates.dart';
@@ -26,11 +27,13 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
   final TextEditingController _interestController = TextEditingController();
   final TextEditingController _dividendController = TextEditingController();
   final TextEditingController _otherIncomeController = TextEditingController();
+  bool _financialPrefilled = false;
 
   @override
   void initState() {
     super.initState();
     _loadProfile();
+    _loadFinancial();
   }
 
   Future<void> _loadProfile() async {
@@ -52,11 +55,24 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
     }
   }
 
+  // 홈 "02 다른 소득"에 이미 적어둔 금융소득을 여기서 다시 입력하지 않도록 프리필한다.
+  // 이자·배당을 나눠 저장하지 않으므로 합계를 이자소득 칸에 채운다 — 프리필일 뿐이라
+  // 여기서 값을 바꿔도 홈 쪽 저장값(OtherIncomeStore)에는 다시 쓰지 않는다.
+  Future<void> _loadFinancial() async {
+    final other = await OtherIncomeStore.load(DateTime.now().year);
+    if (!mounted || other.financial <= 0) return;
+    setState(() {
+      _interestController.text = comma(other.financial.round());
+      _financialPrefilled = true;
+    });
+  }
+
   void _reset() {
     setState(() {
       _interestController.clear();
       _dividendController.clear();
       _otherIncomeController.clear();
+      _financialPrefilled = false;
     });
   }
 
@@ -113,7 +129,8 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,6 +151,13 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
                 children: [
                   Text('연간 금융소득',
                       style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
+                  if (_financialPrefilled) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                        '홈 「다른 소득」에 적어둔 금액을 이자소득 칸에 채워 놨어요. 배당이 섞여 있으면 나눠 주세요.'
+                            .keepWords,
+                        style: TextStyle(color: subColor, fontSize: 12, height: 1.4)),
+                  ],
                   const SizedBox(height: 16),
                   _buildInputField('이자소득', _interestController,
                       hint: '은행 이자, 채권이자 등'),
@@ -234,6 +258,7 @@ class _FinancialIncomeScreenState extends State<FinancialIncomeScreen> {
             const CalcDisclaimer(),
           ],
         ),
+      ),
       ),
     );
   }
