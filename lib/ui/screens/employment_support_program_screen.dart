@@ -18,10 +18,16 @@ class _EmploymentSupportProgramScreenState
   int _dependents = 0; // 0~4
   bool _includeSuccessBonus = true;
 
+  /// I형(구직촉진수당) 금액. 구직자 취업촉진 및 생활안정지원에 관한 법률
+  /// 제19조(지급수준 결정)가 액수를 고용정책심의회 심의로 넘겨 두어
+  /// 법령·시행령·시행규칙 어디에도 표가 없다. 2025년 월 50만원에서
+  /// 2026년 월 60만원으로 인상(6개월), 부양가족 1인당 10만원(최대 4인),
+  /// 취업성공수당은 6개월 50만원+12개월 100만원(최대 150만원).
+  /// 출처: 고용24(work24.go.kr) 국민취업지원제도 안내 — 확인일 2026-09-15.
   static const int _monthlyAllowance = 600000;
   static const int _months = 6;
-  static const int _dependentBonusPerPerson = 100000;
-  static const int _successBonus = 1500000;
+  static const int _dependentBonusPerPerson = 100000; // 1인당, 최대 4인(드롭다운 0~4명)
+  static const int _successBonus = 1500000; // 6개월 50만원 + 12개월 100만원
   /// II형은 총액이 없다. 시행규칙 §12②가 금액을 고용노동부장관에게 넘겨 두었고
   /// 법령·고시 어디에도 표가 없다. 종전에 1,954,000원 한 줄로 적어 두었으나
   /// 그 숫자가 어디서 왔는지 찾지 못해 고용24가 밝힌 항목으로 바꿨다.

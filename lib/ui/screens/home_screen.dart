@@ -1269,110 +1269,27 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
     // ── 상태 A: 유형 미파악 (완전 신규) ──
     if (!_isTypeIdentified) {
-      return [
-        BannerCardData(
-          label: '시작',
-          headline: '내가 어떤 납세자인지\n먼저 확인해봐요',
-          action: '유형 파악하기',
-          glyph: '유',
-          onTap: _openOnboarding,
-        ),
-        ..._noticeBannerCards(),
-        ..._tipBannerCards(),
-      ];
+      return _typeUnidentifiedCards();
     }
 
     // ── 상태 B: 유형 파악 완료, 프로필 미완성 ──
     if (!_isProfileCompleted) {
-      final typeIntro = _userType == '직장인'
-          ? '연말정산에서\n놓친 공제가 있을 수 있어요'
-          : _userType == 'N잡러'
-              ? '합산 소득세율이\n예상보다 높을 수 있어요'
-              : '3.3% 원천징수 후에도\n5월 신고가 따로 필요해요';
-      final typeGlyph = _userType == '직장인' ? '결' : _userType == 'N잡러' ? '합' : '신';
-      return [
-        BannerCardData(
-          label: '내 정보',
-          headline: '$_userType 절세 기준을\n잡으려면 내 정보가 필요해요',
-          action: '내 정보 설정',
-          glyph: '1',
-          onTap: _openProfile,
-        ),
-        BannerCardData(
-          label: _userType,
-          headline: typeIntro,
-          action: '자세히 보기',
-          glyph: typeGlyph,
-          onTap: () => _go(TaxSimulatorScreen(userType: _userType)),
-        ),
-        ..._noticeBannerCards(),
-        ..._tipBannerCards(),
-      ];
+      return _profileIncompleteCards();
     }
 
     final cards = <BannerCardData>[];
 
     // ── 상태 C: 완료 + 소득 미설정 — 직장인·N잡러만(프리랜서는 고정급여 개념이 없음) ──
     if (_isEmployee && _grossIncome == 0) {
-      cards.add(BannerCardData(
-        label: '다음 단계',
-        headline: '예상 연봉을 입력하면\n공제 기준이 잡혀요',
-        action: '연봉 설정하기',
-        glyph: '₩',
-        onTap: _openProfile,
-      ));
+      cards.add(_incomeSetupPromptCard());
     } else if (_grossIncome > 0) {
       // ── 상태 D: 완료 + 소득 설정됨 — 개인화 카드 ──
       if (_userType == '직장인') {
-        final remaining = _grossIncome * 0.25 - _creditCardYtdTotal;
-        cards.add(remaining > 0
-            ? BannerCardData(
-                label: '신카 공제',
-                headline: '공제 문턱까지\n${_toWanWon(remaining)} 남았어요',
-                action: '가계부에 기록하기',
-                glyph: '카',
-                onTap: _goToLedger,
-              )
-            : BannerCardData(
-                label: '신카 공제',
-                headline: '공제 문턱 돌파!\n체크카드로 2배 공제예요',
-                action: '가계부에 기록하기',
-                glyph: '↑',
-                onTap: _goToLedger,
-              ));
+        cards.add(_employeeIncomeCard());
       } else if (_userType == 'N잡러') {
-        final rate = _marginalRate(_grossIncome);
-        cards.add(BannerCardData(
-          label: 'N잡 세율',
-          headline: '직장 소득 기준\n한계세율 $rate% 구간이에요',
-          action: '합산소득세 확인',
-          glyph: '율',
-          onTap: () => _go(TaxSimulatorScreen(userType: _userType)),
-        ));
-        final remaining = _grossIncome * 0.25 - _creditCardYtdTotal;
-        cards.add(remaining > 0
-            ? BannerCardData(
-                label: '신카 공제',
-                headline: '공제 문턱까지\n${_toWanWon(remaining)} 남았어요',
-                action: '가계부에 기록하기',
-                glyph: '카',
-                onTap: _goToLedger,
-              )
-            : BannerCardData(
-                label: '신카 공제',
-                headline: '공제 문턱 돌파!\n체크카드로 2배 공제예요',
-                action: '가계부에 기록하기',
-                glyph: '↑',
-                onTap: _goToLedger,
-              ));
+        cards.addAll(_sideJobIncomeCards());
       } else {
-        cards.add(BannerCardData(
-          label: '5월 신고',
-          headline: '연 ${_toWanWon(_grossIncome)} 기준\n종합소득세 신고 대상이에요',
-          action: '종합소득세 계산',
-          glyph: '신',
-          onTap: () => _go(TaxSimulatorScreen(userType: _userType)),
-        ));
+        cards.add(_freelancerIncomeCard());
       }
     }
 
@@ -1382,79 +1299,223 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     // 환급도 계산이 안 나오는데, 그 사실을 02 블록 안에서만 말하면 스크롤을
     // 내려야 보인다. 배너는 앱을 켜자마자 눈에 닿는 유일한 자리다.
     if (!_yearCovered && DateTime.now().month > 1) {
-      final last = DateTime.now().month - 1;
-      cards.insert(
-        0,
-        BannerCardData(
-          label: '이전 달',
-          headline: '1~$last월을 채우면\n올해 환급이 보여요',
-          action: '2분이면 끝나요',
-          glyph: '채',
-          onTap: _openBackfill,
-          // 닫으면 연간 계산으로 가는 길이 사라진다.
-          dismissible: false,
-        ),
-      );
+      cards.insert(0, _backfillReminderCard());
     }
 
     // 유형별 도구 카드
     if (_userType == '직장인') {
-      cards.addAll([
-        // 경정청구가 아니라 **5월 종합소득세**다. 연말정산에서 빠뜨린 공제는
-        // 그 해 5월 확정신고에 얹으면 되고, 경정청구는 그 시기를 놓쳤을 때
-        // 5년 안에 아무 때나 하는 별개의 길이다. 둘을 붙여 「5월 경정청구」로
-        // 쓰면 5월이 지나면 못 받는 것처럼 읽힌다.
-        BannerCardData(label: '환급', headline: '회사가 놓친 공제,\n5월 종합소득세로 돌려받아요', action: '환급액 계산하기', glyph: '환', onTap: () => _go(TaxSimulatorScreen(userType: _userType))),
-      ]);
+      cards.addAll(_employeeToolCards());
     } else if (_userType == 'N잡러') {
-      cards.addAll([
-        BannerCardData(label: '건강보험', headline: '부업 소득금액 2,000만 넘으면\n건보료가 따라와요', action: '가계부에서 확인', glyph: '보', onTap: _goToLedger),
-      ]);
+      cards.addAll(_sideJobToolCards());
     } else {
-      cards.addAll([
-        BannerCardData(label: '경비율', headline: '장부를 쓰면 경비\n인정 폭이 넓어져요', action: '가계부 열기', glyph: '장', onTap: _goToLedger),
-      ]);
-      // ①진단에 저장된 직전연도 수입·신규 여부로 판정 가능할 때만 — 단순경비율
-      // 대상에서 벗어났으면(기준경비율 강제) 장부 작성 동기를 구체적으로 짚어준다.
-      final occ = OccupationData.occupations[_occupationCode];
-      if (occ != null && (_isNewBusiness || _priorYearIncome > 0)) {
-        final eligible = isSimpleExpenseRateEligible(
-          occupation: occ,
-          priorYearIncome: _priorYearIncome,
-          isNewBusiness: _isNewBusiness,
-        );
-        if (!eligible) {
-          cards.add(BannerCardData(
-            label: '경비율 변경',
-            headline: '올해부터 기준경비율\n대상이 됐어요',
-            action: '가계부로 경비 인정받기',
-            glyph: '기',
-            onTap: _goToLedger,
-          ));
-        }
-      }
+      cards.addAll(_freelancerToolCards());
     }
 
     // 연말정산 시즌(1~2월, 회사 처리 전)에만 — 회사에 알리고 싶지 않은 공제를
     // 미리 골라 5월 종소세로 직접 신고할 수 있다는 안내.
     if (_isEmployee && DateTime.now().month <= 2) {
-      cards.add(BannerCardData(
-        label: '연말정산',
-        headline: '연말정산에서\n뺄 항목이 있나요?',
-        action: '빠진 공제 찾기',
-        glyph: '뺌',
-        onTap: () => _go(MissedDeductionDiagnosisScreen(userType: _userType)),
-      ));
+      cards.add(_yearEndAdjustmentOptOutCard());
     }
 
-    cards.add(BannerCardData(
-      label: s.label, headline: s.headline, action: s.action, glyph: s.glyph, onTap: _openOnboarding,
-    ));
+    cards.add(_seasonalToolCard(s));
 
     // 이달의 절세 팁을 상단 회전 배너에 합친다(별도 카드 제거).
     cards.addAll(_noticeBannerCards());
     cards.addAll(_tipBannerCards());
     return cards;
+  }
+
+  /// 상태 A 카드 — 유형 미파악 신규 사용자에게 유형 파악 유도 1장 + 공지·팁.
+  List<BannerCardData> _typeUnidentifiedCards() {
+    return [
+      BannerCardData(
+        label: '시작',
+        headline: '내가 어떤 납세자인지\n먼저 확인해봐요',
+        action: '유형 파악하기',
+        glyph: '유',
+        onTap: _openOnboarding,
+      ),
+      ..._noticeBannerCards(),
+      ..._tipBannerCards(),
+    ];
+  }
+
+  /// 상태 B 카드 — 유형은 파악됐지만 프로필 미완성인 사용자에게 정보 입력 유도 + 유형 소개.
+  List<BannerCardData> _profileIncompleteCards() {
+    final typeIntro = _userType == '직장인'
+        ? '연말정산에서\n놓친 공제가 있을 수 있어요'
+        : _userType == 'N잡러'
+            ? '합산 소득세율이\n예상보다 높을 수 있어요'
+            : '3.3% 원천징수 후에도\n5월 신고가 따로 필요해요';
+    final typeGlyph = _userType == '직장인' ? '결' : _userType == 'N잡러' ? '합' : '신';
+    return [
+      BannerCardData(
+        label: '내 정보',
+        headline: '$_userType 절세 기준을\n잡으려면 내 정보가 필요해요',
+        action: '내 정보 설정',
+        glyph: '1',
+        onTap: _openProfile,
+      ),
+      BannerCardData(
+        label: _userType,
+        headline: typeIntro,
+        action: '자세히 보기',
+        glyph: typeGlyph,
+        onTap: () => _go(TaxSimulatorScreen(userType: _userType)),
+      ),
+      ..._noticeBannerCards(),
+      ..._tipBannerCards(),
+    ];
+  }
+
+  /// 상태 C 카드 — 직장인·N잡러가 아직 연봉을 설정하지 않았을 때 설정 촉구.
+  BannerCardData _incomeSetupPromptCard() {
+    return BannerCardData(
+      label: '다음 단계',
+      headline: '예상 연봉을 입력하면\n공제 기준이 잡혀요',
+      action: '연봉 설정하기',
+      glyph: '₩',
+      onTap: _openProfile,
+    );
+  }
+
+  /// 상태 D 카드 — 직장인의 신용카드 공제 문턱 진행 카드.
+  BannerCardData _employeeIncomeCard() {
+    final remaining = _grossIncome * 0.25 - _creditCardYtdTotal;
+    return remaining > 0
+        ? BannerCardData(
+            label: '신카 공제',
+            headline: '공제 문턱까지\n${_toWanWon(remaining)} 남았어요',
+            action: '가계부에 기록하기',
+            glyph: '카',
+            onTap: _goToLedger,
+          )
+        : BannerCardData(
+            label: '신카 공제',
+            headline: '공제 문턱 돌파!\n체크카드로 2배 공제예요',
+            action: '가계부에 기록하기',
+            glyph: '↑',
+            onTap: _goToLedger,
+          );
+  }
+
+  /// 상태 D 카드 — N잡러의 한계세율 카드 + 신용카드 공제 문턱 진행 카드.
+  List<BannerCardData> _sideJobIncomeCards() {
+    final cards = <BannerCardData>[];
+    final rate = _marginalRate(_grossIncome);
+    cards.add(BannerCardData(
+      label: 'N잡 세율',
+      headline: '직장 소득 기준\n한계세율 $rate% 구간이에요',
+      action: '합산소득세 확인',
+      glyph: '율',
+      onTap: () => _go(TaxSimulatorScreen(userType: _userType)),
+    ));
+    final remaining = _grossIncome * 0.25 - _creditCardYtdTotal;
+    cards.add(remaining > 0
+        ? BannerCardData(
+            label: '신카 공제',
+            headline: '공제 문턱까지\n${_toWanWon(remaining)} 남았어요',
+            action: '가계부에 기록하기',
+            glyph: '카',
+            onTap: _goToLedger,
+          )
+        : BannerCardData(
+            label: '신카 공제',
+            headline: '공제 문턱 돌파!\n체크카드로 2배 공제예요',
+            action: '가계부에 기록하기',
+            glyph: '↑',
+            onTap: _goToLedger,
+          ));
+    return cards;
+  }
+
+  /// 상태 D 카드 — 프리랜서의 5월 종합소득세 신고 대상 안내 카드.
+  BannerCardData _freelancerIncomeCard() {
+    return BannerCardData(
+      label: '5월 신고',
+      headline: '연 ${_toWanWon(_grossIncome)} 기준\n종합소득세 신고 대상이에요',
+      action: '종합소득세 계산',
+      glyph: '신',
+      onTap: () => _go(TaxSimulatorScreen(userType: _userType)),
+    );
+  }
+
+  /// 1월~지난달 가계부가 비어 있을 때 맨 앞에 꽂는 백필 유도 카드(닫기 불가).
+  BannerCardData _backfillReminderCard() {
+    final last = DateTime.now().month - 1;
+    return BannerCardData(
+      label: '이전 달',
+      headline: '1~$last월을 채우면\n올해 환급이 보여요',
+      action: '2분이면 끝나요',
+      glyph: '채',
+      onTap: _openBackfill,
+      // 닫으면 연간 계산으로 가는 길이 사라진다.
+      dismissible: false,
+    );
+  }
+
+  /// 유형별 도구 카드 — 직장인: 5월 종합소득세로 놓친 공제 환급 안내.
+  List<BannerCardData> _employeeToolCards() {
+    return [
+      // 경정청구가 아니라 **5월 종합소득세**다. 연말정산에서 빠뜨린 공제는
+      // 그 해 5월 확정신고에 얹으면 되고, 경정청구는 그 시기를 놓쳤을 때
+      // 5년 안에 아무 때나 하는 별개의 길이다. 둘을 붙여 「5월 경정청구」로
+      // 쓰면 5월이 지나면 못 받는 것처럼 읽힌다.
+      BannerCardData(label: '환급', headline: '회사가 놓친 공제,\n5월 종합소득세로 돌려받아요', action: '환급액 계산하기', glyph: '환', onTap: () => _go(TaxSimulatorScreen(userType: _userType))),
+    ];
+  }
+
+  /// 유형별 도구 카드 — N잡러: 부업 소득금액 기준 건강보험료 안내.
+  List<BannerCardData> _sideJobToolCards() {
+    return [
+      BannerCardData(label: '건강보험', headline: '부업 소득금액 2,000만 넘으면\n건보료가 따라와요', action: '가계부에서 확인', glyph: '보', onTap: _goToLedger),
+    ];
+  }
+
+  /// 유형별 도구 카드 — 프리랜서: 경비율 안내 + (해당 시) 기준경비율 전환 경고.
+  List<BannerCardData> _freelancerToolCards() {
+    final cards = <BannerCardData>[];
+    cards.addAll([
+      BannerCardData(label: '경비율', headline: '장부를 쓰면 경비\n인정 폭이 넓어져요', action: '가계부 열기', glyph: '장', onTap: _goToLedger),
+    ]);
+    // ①진단에 저장된 직전연도 수입·신규 여부로 판정 가능할 때만 — 단순경비율
+    // 대상에서 벗어났으면(기준경비율 강제) 장부 작성 동기를 구체적으로 짚어준다.
+    final occ = OccupationData.occupations[_occupationCode];
+    if (occ != null && (_isNewBusiness || _priorYearIncome > 0)) {
+      final eligible = isSimpleExpenseRateEligible(
+        occupation: occ,
+        priorYearIncome: _priorYearIncome,
+        isNewBusiness: _isNewBusiness,
+      );
+      if (!eligible) {
+        cards.add(BannerCardData(
+          label: '경비율 변경',
+          headline: '올해부터 기준경비율\n대상이 됐어요',
+          action: '가계부로 경비 인정받기',
+          glyph: '기',
+          onTap: _goToLedger,
+        ));
+      }
+    }
+    return cards;
+  }
+
+  /// 연말정산 시즌(1~2월)에 회사에 알리고 싶지 않은 공제를 직접 신고하도록 안내.
+  BannerCardData _yearEndAdjustmentOptOutCard() {
+    return BannerCardData(
+      label: '연말정산',
+      headline: '연말정산에서\n뺄 항목이 있나요?',
+      action: '빠진 공제 찾기',
+      glyph: '뺌',
+      onTap: () => _go(MissedDeductionDiagnosisScreen(userType: _userType)),
+    );
+  }
+
+  /// 계절별(연말정산/종소세/평시) 절세 준비 카드.
+  BannerCardData _seasonalToolCard(({String label, String headline, String action, String glyph}) s) {
+    return BannerCardData(
+      label: s.label, headline: s.headline, action: s.action, glyph: s.glyph, onTap: _openOnboarding,
+    );
   }
 
   /// 유형 선택 — 전표의 체크칸. 가계부 뷰 전환과 같은 위젯을 쓴다.

@@ -25,6 +25,10 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
   static int get _hourlyDiff => _wage2026 - _wage2025;
   static double get _raiseRate => (_hourlyDiff / _wage2025) * 100;
 
+  // 실질 시급(주휴 포함 환산) = 월급(209시간 기준) ÷ 월 소정근로시간(40시간×4.345주=173.8시간).
+  // 주휴수당(근로기준법 §55① 유급휴일)이 실근로시간에 얹혀 지급되는 걸 반영한 값.
+  static double get _realHourlyWage => _wage2026 * 209 / (40 * 4.345);
+
   double get _weeklyHours => saneInput(
       double.tryParse(_hoursCtrl.text.replaceAll(',', '')) ?? 0, 168);
   bool get _hasWeeklyHoliday => _weeklyHours >= 15;
@@ -146,9 +150,7 @@ class _MinimumWageImpactScreenState extends State<MinimumWageImpactScreen> {
                     '+${((_wage2026 - _wage2025) / _wage2025 * 100).toStringAsFixed(1)}%)',
                 '월급(주 40시간, 월 209시간 기준): ${won(_wage2026 * 209)}',
                 '연환산: 약 ${won(_wage2026 * 209 * 12)}',
-                // ponytail: 실질 시급만 리터럴로 남겼다 — 주휴 포함 환산식을 확인 못 했다.
-                // 최저임금 갱신 때 이 줄은 손으로 고쳐야 한다.
-                '실질 시급(주휴 포함 환산): 약 12,414원',
+                '실질 시급(주휴 포함 환산): 약 ${won(_realHourlyWage)}',
               ],
               line,
               sub,

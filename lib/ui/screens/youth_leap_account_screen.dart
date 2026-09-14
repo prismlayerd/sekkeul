@@ -18,6 +18,11 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
   int _incomeIdx = 0;
 
   // 소득 구간, 월 정부기여금
+  // 출처: 금융위원회 보도자료 "'25년 1월부터 청년도약계좌 기여금이 확대됩니다"
+  // (2025-01-02, fsc.go.kr/no010101/83729) — 월 지급액 33,000/29,000/25,000원은
+  // 동 보도자료 및 언론보도(EBN·파이낸셜뉴스, 2024-12-27)와 일치 확인(확인일 2026-09-15).
+  // 4,800~6,000만원 21,000원은 확대 이전부터 매칭한도가 이미 70만원이라 보도자료에
+  // 별도 언급 없음 — 3.0%×70만원 계산과 일치하여 그대로 둠.
   static const _brackets = [
     ('2,400만원 이하', 33000),
     ('2,400~3,600만원', 29000),
@@ -32,7 +37,9 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
 
   double get _totalSelf => _monthly * 60;
   double get _totalGov => _monthlyGov * 60.0;
-  // 단리 추정: 원금 × 연 6% × 5년 / 2 (평균 잔액 기준)
+  // 가정치(법정 고시값 아님): 연 6%는 서민금융진흥원·금융위원회가 고시한 금리가 아니라
+  // 이 화면이 임의로 가정한 계산용 수치. 실제 상품 금리는 취급 은행별로 다르게 공시됨.
+  // 단리 추정: 원금 × 연 6%(가정) × 5년 / 2 (평균 잔액 기준)
   double get _interest => _totalSelf * 0.06 * 2.5;
   double get _total => _totalSelf + _totalGov + _interest;
 
@@ -187,6 +194,9 @@ class _YouthLeapAccountScreenState extends State<YouthLeapAccountScreen> {
               ink,
             ),
             const SizedBox(height: 12),
+            // 출처: 금융위원회 보도자료(2025-01-02, fsc.go.kr/no010101/83729) +
+            // 서민금융진흥원 상품안내 매칭비율 교차검증(확인일 2026-09-15).
+            // 매칭비율(6.0/4.6/3.7/3.0%)·월 지급액 모두 위 출처와 일치.
             calcInfoBox(
               '구간별 정부기여금',
               [

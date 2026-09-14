@@ -86,221 +86,27 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
     final totalInterest = hasResult ? finalBalance - finalInvested : 0.0;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('복리 계산기',
-            style: TextStyle(
-                color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
-            tooltip: '초기화',
-            onPressed: _reset,
-          ),
-        ],
-      ),
+      appBar: _buildAppBar(textColor, subColor),
       body: SafeArea(
         child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('복리의 마법으로\n자산 성장을 확인해요'.keepWords,
-                style: TextStyle(
-                    color: textColor,
-                    fontSize: 21,
-                    fontWeight: FontWeight.bold,
-                    height: 1.4)),
-            const SizedBox(height: 8),
-            Text('월 복리 기준으로 계산됩니다.'.keepWords,
-                style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
+            ..._buildHeader(textColor, subColor),
             const SizedBox(height: 24),
 
             // 입력 카드
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: AppTheme.getCardDecoration(context, borderRadius: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('초기 투자금',
-                      style: TextStyle(color: subColor, fontSize: 14)),
-                  const SizedBox(height: 4),
-                  AmountField(
-                    controller: _principalController,
-                    expand: true,
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 16),
-                  Text('월 추가 납입',
-                      style: TextStyle(color: subColor, fontSize: 14)),
-                  const SizedBox(height: 4),
-                  AmountField(
-                    controller: _monthlyController,
-                    expand: true,
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('연 수익률 (%)',
-                              style:
-                                  TextStyle(color: subColor, fontSize: 14)),
-                          const SizedBox(height: 4),
-                          _numField(_rateController, '%'),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('투자 기간 (년)',
-                              style:
-                                  TextStyle(color: subColor, fontSize: 14)),
-                          const SizedBox(height: 4),
-                          _numField(_yearsController, '년'),
-                        ],
-                      ),
-                    ),
-                  ]),
-                ],
-              ),
-            ),
+            _buildInputCard(subColor),
             const SizedBox(height: 24),
 
             // 결과
-            if (hasResult) ...[
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: AppTheme.getAccentCardDecoration(context,
-                    borderRadius: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Icon(Icons.trending_up_rounded,
-                          color: primary, size: 20),
-                      const SizedBox(width: 8),
-                      Text('$_years년 후 예상 자산',
-                          style: TextStyle(
-                              color: textColor,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold)),
-                    ]),
-                    const SizedBox(height: 12),
-                    Text(_manwon(finalBalance),
-                        style: TextStyle(
-                            color: primary,
-                            fontSize: 30,
-                            fontWeight: FontWeight.w900)),
-                    const SizedBox(height: 16),
-                    _row('총 투자원금', _manwon(finalInvested), subColor, textColor),
-                    const SizedBox(height: 8),
-                    _row('수익(이자+복리)', _manwon(totalInterest), subColor, primary),
-                    const SizedBox(height: 8),
-                    _row('수익률',
-                        '${(totalInterest / finalInvested * 100).toStringAsFixed(1)}%',
-                        subColor, textColor),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // 연도별 표
-              Container(
-                decoration:
-                    AppTheme.getCardDecoration(context, borderRadius: 16),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                      child: Row(children: [
-                        SizedBox(
-                            width: 40,
-                            child: Text('년차',
-                                style: TextStyle(
-                                    color: subColor,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600))),
-                        Expanded(
-                            child: Text('납입원금',
-                                textAlign: TextAlign.right,
-                                style: TextStyle(
-                                    color: subColor,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600))),
-                        Expanded(
-                            child: Text('평가금액',
-                                textAlign: TextAlign.right,
-                                style: TextStyle(
-                                    color: subColor,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600))),
-                        Expanded(
-                            child: Text('수익',
-                                textAlign: TextAlign.right,
-                                style: TextStyle(
-                                    color: subColor,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600))),
-                      ]),
-                    ),
-                    Divider(
-                        height: 1, color: Theme.of(context).dividerColor),
-                    ...data.map((rec) {
-                      final (yr, bal, inv) = rec;
-                      final gain = bal - inv;
-                      return Column(children: [
-                        Padding(
-                          padding:
-                              const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                          child: Row(children: [
-                            SizedBox(
-                                width: 40,
-                                child: Text('$yr년',
-                                    style: TextStyle(
-                                        color: subColor, fontSize: 12))),
-                            Expanded(
-                                child: Text(_manwon(inv),
-                                    textAlign: TextAlign.right,
-                                    style: TextStyle(
-                                        color: textColor, fontSize: 12))),
-                            Expanded(
-                                child: Text(_manwon(bal),
-                                    textAlign: TextAlign.right,
-                                    style: TextStyle(
-                                        color: primary,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600))),
-                            Expanded(
-                                child: Text(_manwon(gain),
-                                    textAlign: TextAlign.right,
-                                    style: TextStyle(
-                                        color: primary.withValues(alpha: 0.7),
-                                        fontSize: 12))),
-                          ]),
-                        ),
-                        Divider(
-                            height: 1,
-                            color: Theme.of(context).dividerColor,
-                            indent: 12),
-                      ]);
-                    }),
-                  ],
-                ),
-              ),
-            ] else
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: AppTheme.getAccentCardDecoration(context,
-                    borderRadius: 20),
-                child: Text('투자금·수익률·기간을 입력해보세요.'.keepWords,
-                    style: TextStyle(color: subColor, fontSize: 13)),
-              ),
+            if (hasResult)
+              ..._buildResultSection(
+                  data, finalBalance, finalInvested, totalInterest,
+                  textColor, subColor, primary)
+            else
+              _buildEmptyState(subColor),
 
             const SizedBox(height: 20),
             CalcNote(
@@ -313,6 +119,253 @@ class _CompoundInterestScreenState extends State<CompoundInterestScreen> {
         ),
       ),
       ),
+    );
+  }
+
+  AppBar _buildAppBar(Color textColor, Color subColor) {
+    return AppBar(
+      title: Text('복리 계산기',
+          style: TextStyle(
+              color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.refresh_rounded, size: 20, color: subColor),
+          tooltip: '초기화',
+          onPressed: _reset,
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildHeader(Color textColor, Color subColor) {
+    return [
+      Text('복리의 마법으로\n자산 성장을 확인해요'.keepWords,
+          style: TextStyle(
+              color: textColor,
+              fontSize: 21,
+              fontWeight: FontWeight.bold,
+              height: 1.4)),
+      const SizedBox(height: 8),
+      Text('월 복리 기준으로 계산됩니다.'.keepWords,
+          style: TextStyle(color: subColor, fontSize: 13, height: 1.5)),
+    ];
+  }
+
+  Widget _buildInputCard(Color subColor) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: AppTheme.getCardDecoration(context, borderRadius: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('초기 투자금',
+              style: TextStyle(color: subColor, fontSize: 14)),
+          const SizedBox(height: 4),
+          AmountField(
+            controller: _principalController,
+            expand: true,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 16),
+          Text('월 추가 납입',
+              style: TextStyle(color: subColor, fontSize: 14)),
+          const SizedBox(height: 4),
+          AmountField(
+            controller: _monthlyController,
+            expand: true,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 16),
+          Row(children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('연 수익률 (%)',
+                      style:
+                          TextStyle(color: subColor, fontSize: 14)),
+                  const SizedBox(height: 4),
+                  _numField(_rateController, '%'),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('투자 기간 (년)',
+                      style:
+                          TextStyle(color: subColor, fontSize: 14)),
+                  const SizedBox(height: 4),
+                  _numField(_yearsController, '년'),
+                ],
+              ),
+            ),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildResultSection(
+    List<(int year, double balance, double invested)> data,
+    double finalBalance,
+    double finalInvested,
+    double totalInterest,
+    Color textColor,
+    Color subColor,
+    Color primary,
+  ) {
+    return [
+      _buildResultCard(finalBalance, finalInvested, totalInterest, textColor,
+          subColor, primary),
+      const SizedBox(height: 16),
+      _buildYearlyTable(data, textColor, subColor, primary),
+    ];
+  }
+
+  Widget _buildResultCard(
+    double finalBalance,
+    double finalInvested,
+    double totalInterest,
+    Color textColor,
+    Color subColor,
+    Color primary,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: AppTheme.getAccentCardDecoration(context,
+          borderRadius: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.trending_up_rounded,
+                color: primary, size: 20),
+            const SizedBox(width: 8),
+            Text('$_years년 후 예상 자산',
+                style: TextStyle(
+                    color: textColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold)),
+          ]),
+          const SizedBox(height: 12),
+          Text(_manwon(finalBalance),
+              style: TextStyle(
+                  color: primary,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900)),
+          const SizedBox(height: 16),
+          _row('총 투자원금', _manwon(finalInvested), subColor, textColor),
+          const SizedBox(height: 8),
+          _row('수익(이자+복리)', _manwon(totalInterest), subColor, primary),
+          const SizedBox(height: 8),
+          _row('수익률',
+              '${(totalInterest / finalInvested * 100).toStringAsFixed(1)}%',
+              subColor, textColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildYearlyTable(
+    List<(int year, double balance, double invested)> data,
+    Color textColor,
+    Color subColor,
+    Color primary,
+  ) {
+    return Container(
+      decoration:
+          AppTheme.getCardDecoration(context, borderRadius: 16),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: Row(children: [
+              SizedBox(
+                  width: 40,
+                  child: Text('년차',
+                      style: TextStyle(
+                          color: subColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600))),
+              Expanded(
+                  child: Text('납입원금',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                          color: subColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600))),
+              Expanded(
+                  child: Text('평가금액',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                          color: subColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600))),
+              Expanded(
+                  child: Text('수익',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                          color: subColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600))),
+            ]),
+          ),
+          Divider(
+              height: 1, color: Theme.of(context).dividerColor),
+          ...data.map((rec) {
+            final (yr, bal, inv) = rec;
+            final gain = bal - inv;
+            return Column(children: [
+              Padding(
+                padding:
+                    const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                child: Row(children: [
+                  SizedBox(
+                      width: 40,
+                      child: Text('$yr년',
+                          style: TextStyle(
+                              color: subColor, fontSize: 12))),
+                  Expanded(
+                      child: Text(_manwon(inv),
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                              color: textColor, fontSize: 12))),
+                  Expanded(
+                      child: Text(_manwon(bal),
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                              color: primary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600))),
+                  Expanded(
+                      child: Text(_manwon(gain),
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                              color: primary.withValues(alpha: 0.7),
+                              fontSize: 12))),
+                ]),
+              ),
+              Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor,
+                  indent: 12),
+            ]);
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(Color subColor) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: AppTheme.getAccentCardDecoration(context,
+          borderRadius: 20),
+      child: Text('투자금·수익률·기간을 입력해보세요.'.keepWords,
+          style: TextStyle(color: subColor, fontSize: 13)),
     );
   }
 

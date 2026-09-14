@@ -28,7 +28,11 @@ class _NationalPensionTimingScreenState
   double get _base =>
       double.tryParse(_baseController.text.replaceAll(',', '')) ?? 0.0;
 
+  // 국민연금법 제63조②: 55~59세 조기노령연금액은 노령연금액의 1천분의
+  // 700~940(연령별) → 60세 대비 1년당 6% 감액. 확인일 2026-09-15.
   double _earlyAmount(int yrs) => _base * (1 - 0.06 * yrs);
+  // 국민연금법 제62조②·④: 연기 1개월당 노령연금액의 1천분의 6(0.6%) 가산
+  // → 1년당 7.2%, 최대 5년(60개월) 36%. 확인일 2026-09-15.
   double _deferAmount(int yrs) => _base * (1 + 0.072 * yrs);
 
   int _breakEvenMonths(int earlyYrs) {

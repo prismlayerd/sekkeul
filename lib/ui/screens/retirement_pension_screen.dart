@@ -27,6 +27,11 @@ class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
   double get _db => _wage * _years;
 
   // DC형(확정기여): 매년 임금총액의 1/12(≈월평균임금) 적립 + 연 3% 운용 추정
+  // ※ 연 3%는 법정 보장수익률이 아닌 이 화면의 계산 가정치.
+  //   DC는 가입자가 운용방법을 직접 선택하며 법정 최소·보장 수익률
+  //   규정이 없음(근로자퇴직급여법 제21조). 실제 수익률은 상품별로
+  //   크게 상이(금감원 통합연금포털 비교공시: 원리금보장형 약 3%대,
+  //   실적배당형은 이와 크게 다를 수 있음. 확인일 2026-09-15)
   // 적립 원금은 DB와 동일, 운용수익은 평균 잔존기간(근속/2) 기준 단리 추정
   double get _dcPrincipal => _wage * _years;
   double get _dcReturn => _dcPrincipal * 0.03 * (_years / 2);
@@ -116,6 +121,8 @@ class _RetirementPensionScreenState extends State<RetirementPensionScreen> {
               [
                 'DB형 — 회사가 운용, 퇴직 시 확정급여 지급 (임금상승률↑ 유리)',
                 'DC형 — 근로자가 직접 운용, 매년 임금총액 1/12 이상 적립',
+                // 연금저축+퇴직연금(IRP) 합산 세액공제 한도 연 900만원:
+                // 소득세법 제59조의3① 단서 (2026-01-01 시행, 확인일 2026-09-15)
                 'IRP — 퇴직급여 수령 계좌, 추가납입 시 연 900만 세액공제',
               ],
               line,

@@ -240,9 +240,9 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
     );
   }
 
-  /// 리마인더 목록에서 시간만 바로 수정 — 전체 폼(제목·주기 등) 안 열고 시각만.
-  Future<void> _editReminderTime(Reminder r) async {
-    int hour = r.notifyHour, minute = r.notifyMinute;
+  /// 알릴 시각 편집 다이얼로그 — 시·분 CupertinoPicker. 취소 시 null, 저장 시 (시, 분).
+  Future<(int, int)?> _pickTime(int initialHour, int initialMinute) async {
+    int hour = initialHour, minute = initialMinute;
     final saved = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -288,7 +288,14 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         ],
       ),
     );
-    if (saved == true) {
+    return saved == true ? (hour, minute) : null;
+  }
+
+  /// 리마인더 목록에서 시간만 바로 수정 — 전체 폼(제목·주기 등) 안 열고 시각만.
+  Future<void> _editReminderTime(Reminder r) async {
+    final picked = await _pickTime(r.notifyHour, r.notifyMinute);
+    if (picked != null) {
+      final (hour, minute) = picked;
       await customReminderService.update(r.copyWith(notifyHour: hour, notifyMinute: minute));
       await _load();
     }
@@ -348,53 +355,9 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
   }
 
   Future<void> _editEventTime(String key, ResolvedEventPref pref) async {
-    int hour = pref.hour, minute = pref.minute;
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(ctx).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        title: Text('알릴 시각', style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx), weight: FontWeight.w700)),
-        content: SizedBox(
-          height: 140,
-          width: 200,
-          child: Row(
-            children: [
-              Expanded(
-                child: CupertinoPicker(
-                  itemExtent: 36,
-                  scrollController: FixedExtentScrollController(initialItem: hour),
-                  onSelectedItemChanged: (i) => hour = i,
-                  children: [
-                    for (int i = 0; i < 24; i++)
-                      Center(child: Text(i.toString().padLeft(2, '0'), style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx))))
-                  ],
-                ),
-              ),
-              Text(':', style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx))),
-              Expanded(
-                child: CupertinoPicker(
-                  itemExtent: 36,
-                  scrollController: FixedExtentScrollController(initialItem: minute),
-                  onSelectedItemChanged: (i) => minute = i,
-                  children: [
-                    for (int i = 0; i < 60; i++)
-                      Center(child: Text(i.toString().padLeft(2, '0'), style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(ctx))))
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false),
-              child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, AppTheme.inkSecondary(ctx)))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true),
-              child: Text('저장', style: AppTheme.sans(AppTheme.tsMD, AppTheme.accentColor(ctx), weight: FontWeight.w700))),
-        ],
-      ),
-    );
-    if (saved == true) {
+    final picked = await _pickTime(pref.hour, pref.minute);
+    if (picked != null) {
+      final (hour, minute) = picked;
       await dbService.setEventReminderPref(key, enabled: pref.enabled, hour: hour, minute: minute);
       if (key == 'recurring_expense_alert' && !kIsWeb) {
         await ReminderScheduler.scheduleRecurringExpenses(

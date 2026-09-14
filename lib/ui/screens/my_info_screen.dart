@@ -369,7 +369,30 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     final hasResidence = _hasResidence(p);
     final residence = residenceOf(p) ?? '전세';
     final payDay = (p['pay_day'] as int?) ?? 0;
-    // 항목엔 세전 연봉을 적었으니, 바로 아래에 4대보험·소득세 반영한 세후 추정치를 덧붙인다.
+    final netAnnual = _netAnnualIncome(gross, dependents);
+
+    // 프리랜서는 예상 연봉·나이·급여일이 세금 계산에 안 쓰여 노출하지 않는다.
+    final rows = <Widget>[
+      if (!_isFreelancer) _grossIncomeRow(ink, sub, accent, gross, netAnnual),
+      if (!_isFreelancer) _ageRow(ink, sub, accent, age),
+      _dependentsRow(ink, sub, accent, dependents),
+      // 자녀는 부양가족과 별도로 받는다 — 카드공제 한도가 자녀 수에만 반응하고
+      // (조특법 §126의2⑩), 자녀세액공제는 그중 일정 연령 이상만 대상이라 수가 따로 필요하다.
+      // 카드공제는 근로소득자 전용이라 프리랜서에겐 자녀세액공제(소법 §59의2)만 걸린다.
+      _childrenRow(ink, sub, accent),
+      _residenceRow(ink, sub, accent, hasResidence, residence),
+      // 세대주 — 거주 형태 바로 밑에 둔다. 주택 공제는 전부 세대주 요건이 걸려
+      // 있어(소법 §52④·⑤, 조특법 §87②·§95의2) 둘이 한 쌍으로 읽혀야 한다.
+      // 자가면 그 공제들이 통째로 없으니 묻지 않는다.
+      if (!ownsHome(p)) _householdHeadRow(ink, sub, accent, p),
+      if (!_isFreelancer) _payDayRow(ink, sub, accent, payDay),
+    ];
+
+    return _rowsWithHairlines(rows);
+  }
+
+  // 항목엔 세전 연봉을 적었으니, 바로 아래에 4대보험·소득세 반영한 세후 추정치를 덧붙인다.
+  double _netAnnualIncome(double gross, int? dependents) {
     double netAnnual = 0.0;
     if (gross > 0) {
       final insurance = EmployeeTaxCalculator.calculateMonthlyInsurance(gross / 12);
@@ -379,120 +402,130 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       );
       netAnnual = gross - (insurance.total + monthlyTax) * 12;
     }
+    return netAnnual;
+  }
 
-    // 프리랜서는 예상 연봉·나이·급여일이 세금 계산에 안 쓰여 노출하지 않는다.
-    final rows = <Widget>[
-      if (!_isFreelancer)
-        _infoRow(
-          icon: Icons.payments_outlined,
-          label: '예상 연봉',
-          value: gross > 0 ? '${comma(gross.toInt())}원 (세전)' : null,
-          valueExtra: gross > 0 ? '세후 약 ${comma(netAnnual.toInt())}원' : null,
-          placeholder: '미설정 — 카드공제·환급 계산 기준이 돼요',
-          isSet: gross > 0,
-          editKey: 'gross_income',
-          ink: ink,
-          sub: sub,
-          accent: accent,
-          editor: _grossIncomeEditor(),
-        ),
-      if (!_isFreelancer)
-        _infoRow(
-          icon: Icons.cake_outlined,
-          label: '만 나이',
-          value: age > 0 ? '만 $age세' : null,
-          placeholder: '미설정 — 청년 감면 확인에 필요해요',
-          isSet: age > 0,
-          editKey: 'age',
-          ink: ink,
-          sub: sub,
-          accent: accent,
-          editor: _ageEditor(sub, accent),
-        ),
-      _infoRow(
-        icon: Icons.groups_outlined,
-        label: '부양가족',
-        value: dependents != null ? '$dependents명' : null,
-        placeholder: '미설정 — 1명당 150만 원 공제돼요',
-        isSet: dependents != null,
-        editKey: 'dependents',
-        ink: ink,
-        sub: sub,
-        accent: accent,
-        editor: _dependentsEditor(ink),
-      ),
-      // 자녀는 부양가족과 별도로 받는다 — 카드공제 한도가 자녀 수에만 반응하고
-      // (조특법 §126의2⑩), 자녀세액공제는 그중 일정 연령 이상만 대상이라 수가 따로 필요하다.
-      // 카드공제는 근로소득자 전용이라 프리랜서에겐 자녀세액공제(소법 §59의2)만 걸린다.
-      _infoRow(
-        icon: Icons.child_care_outlined,
-        label: '자녀',
-        value: _profile?['children_count_total'] != null
-            ? '$_childrenTotal명${_childrenForCredit > 0 ? ' (공제대상 $_childrenForCredit명)' : ''}'
-            : null,
-        valueExtra: _isFreelancer
-            ? (_childrenForCredit > 0
-                ? '자녀세액공제 ${comma(TaxRates.calculateChildTaxCredit(_childrenForCredit).toInt())}원'
-                : null)
-            : (_childrenTotal > 0
-                ? '카드공제 한도 +${comma((_childrenTotal > 2 ? 2 : _childrenTotal) * 500000)}원'
-                : null),
-        placeholder: _isFreelancer
-            ? '미설정 — 공제대상 자녀는 세금에서 바로 빠져요'
-            : '미설정 — 카드공제 한도가 올라가요',
-        isSet: _profile?['children_count_total'] != null,
-        editKey: 'children',
-        ink: ink,
-        sub: sub,
-        accent: accent,
-        editor: _childrenEditor(ink, sub),
-      ),
-      _infoRow(
-        icon: Icons.home_outlined,
-        label: '거주 형태',
-        value: hasResidence ? residence : null,
-        placeholder: '미설정 — 월세·전세 공제 기준이 달라요',
-        isSet: hasResidence,
-        editKey: 'residence',
-        ink: ink,
-        sub: sub,
-        accent: accent,
-        editor: _residenceEditor(ink),
-      ),
-      // 세대주 — 거주 형태 바로 밑에 둔다. 주택 공제는 전부 세대주 요건이 걸려
-      // 있어(소법 §52④·⑤, 조특법 §87②·§95의2) 둘이 한 쌍으로 읽혀야 한다.
-      // 자가면 그 공제들이 통째로 없으니 묻지 않는다.
-      if (!ownsHome(p))
-        _infoRow(
-          icon: Icons.badge_outlined,
-          label: '세대주',
-          value: p['is_household_head'] == null
-              ? null
-              : (isHouseholdHead(p) ? '맞아요' : '아니에요'),
-          placeholder: '미설정 — 청약·전세·월세 공제 요건이에요',
-          isSet: p['is_household_head'] != null,
-          editKey: 'household_head',
-          ink: ink,
-          sub: sub,
-          accent: accent,
-          editor: _householdHeadEditor(ink),
-        ),
-      if (!_isFreelancer)
-        _infoRow(
-          icon: Icons.calendar_today_outlined,
-          label: '급여일',
-          value: payDay > 0 ? '매월 $payDay일' : null,
-          placeholder: '미설정 — 급여일 알림에 쓰여요',
-          isSet: payDay > 0,
-          editKey: 'pay_day',
-          ink: ink,
-          sub: sub,
-          accent: accent,
-          editor: _payDayEditor(ink, accent),
-        ),
-    ];
+  Widget _grossIncomeRow(Color ink, Color sub, Color accent, double gross, double netAnnual) {
+    return _infoRow(
+      icon: Icons.payments_outlined,
+      label: '예상 연봉',
+      value: gross > 0 ? '${comma(gross.toInt())}원 (세전)' : null,
+      valueExtra: gross > 0 ? '세후 약 ${comma(netAnnual.toInt())}원' : null,
+      placeholder: '미설정 — 카드공제·환급 계산 기준이 돼요',
+      isSet: gross > 0,
+      editKey: 'gross_income',
+      ink: ink,
+      sub: sub,
+      accent: accent,
+      editor: _grossIncomeEditor(),
+    );
+  }
 
-    // 행 사이에만 헤어라인을 끼운다.
+  Widget _ageRow(Color ink, Color sub, Color accent, int age) {
+    return _infoRow(
+      icon: Icons.cake_outlined,
+      label: '만 나이',
+      value: age > 0 ? '만 $age세' : null,
+      placeholder: '미설정 — 청년 감면 확인에 필요해요',
+      isSet: age > 0,
+      editKey: 'age',
+      ink: ink,
+      sub: sub,
+      accent: accent,
+      editor: _ageEditor(sub, accent),
+    );
+  }
+
+  Widget _dependentsRow(Color ink, Color sub, Color accent, int? dependents) {
+    return _infoRow(
+      icon: Icons.groups_outlined,
+      label: '부양가족',
+      value: dependents != null ? '$dependents명' : null,
+      placeholder: '미설정 — 1명당 150만 원 공제돼요',
+      isSet: dependents != null,
+      editKey: 'dependents',
+      ink: ink,
+      sub: sub,
+      accent: accent,
+      editor: _dependentsEditor(ink),
+    );
+  }
+
+  Widget _childrenRow(Color ink, Color sub, Color accent) {
+    return _infoRow(
+      icon: Icons.child_care_outlined,
+      label: '자녀',
+      value: _profile?['children_count_total'] != null
+          ? '$_childrenTotal명${_childrenForCredit > 0 ? ' (공제대상 $_childrenForCredit명)' : ''}'
+          : null,
+      valueExtra: _isFreelancer
+          ? (_childrenForCredit > 0
+              ? '자녀세액공제 ${comma(TaxRates.calculateChildTaxCredit(_childrenForCredit).toInt())}원'
+              : null)
+          : (_childrenTotal > 0
+              ? '카드공제 한도 +${comma((_childrenTotal > 2 ? 2 : _childrenTotal) * 500000)}원'
+              : null),
+      placeholder: _isFreelancer
+          ? '미설정 — 공제대상 자녀는 세금에서 바로 빠져요'
+          : '미설정 — 카드공제 한도가 올라가요',
+      isSet: _profile?['children_count_total'] != null,
+      editKey: 'children',
+      ink: ink,
+      sub: sub,
+      accent: accent,
+      editor: _childrenEditor(ink, sub),
+    );
+  }
+
+  Widget _residenceRow(Color ink, Color sub, Color accent, bool hasResidence, String residence) {
+    return _infoRow(
+      icon: Icons.home_outlined,
+      label: '거주 형태',
+      value: hasResidence ? residence : null,
+      placeholder: '미설정 — 월세·전세 공제 기준이 달라요',
+      isSet: hasResidence,
+      editKey: 'residence',
+      ink: ink,
+      sub: sub,
+      accent: accent,
+      editor: _residenceEditor(ink),
+    );
+  }
+
+  Widget _householdHeadRow(Color ink, Color sub, Color accent, Map<String, dynamic> p) {
+    return _infoRow(
+      icon: Icons.badge_outlined,
+      label: '세대주',
+      value: p['is_household_head'] == null
+          ? null
+          : (isHouseholdHead(p) ? '맞아요' : '아니에요'),
+      placeholder: '미설정 — 청약·전세·월세 공제 요건이에요',
+      isSet: p['is_household_head'] != null,
+      editKey: 'household_head',
+      ink: ink,
+      sub: sub,
+      accent: accent,
+      editor: _householdHeadEditor(ink),
+    );
+  }
+
+  Widget _payDayRow(Color ink, Color sub, Color accent, int payDay) {
+    return _infoRow(
+      icon: Icons.calendar_today_outlined,
+      label: '급여일',
+      value: payDay > 0 ? '매월 $payDay일' : null,
+      placeholder: '미설정 — 급여일 알림에 쓰여요',
+      isSet: payDay > 0,
+      editKey: 'pay_day',
+      ink: ink,
+      sub: sub,
+      accent: accent,
+      editor: _payDayEditor(ink, accent),
+    );
+  }
+
+  // 행 사이에만 헤어라인을 끼운다.
+  Widget _rowsWithHairlines(List<Widget> rows) {
     final children = <Widget>[];
     for (var i = 0; i < rows.length; i++) {
       if (i > 0) children.add(AppTheme.hairline(context));

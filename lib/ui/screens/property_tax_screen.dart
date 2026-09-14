@@ -67,7 +67,11 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
 
   bool get _creditEligible => _houses == 1 && !_jointOwnership;
 
-  // ── 재산세 (주택분) — 물건별 개별 누진계산 후 합산, 공정시장가액비율 60% 고정 ──
+  // ── 재산세 (주택분) — 물건별 개별 누진계산 후 합산 ──
+  // 공정시장가액비율 60%: 지방세법 시행령 제109조제1항제2호 본문 (다주택자/일반주택 기준).
+  //   ※ 2026년도 1세대1주택 특례비율(43%/44%/45%, 같은 호 단서)은 미반영 — 아래 CalcNote 고지.
+  // 세율 4단계: 지방세법 제111조제1항제3호나목("그 밖의 주택") — 값 대조 완료(2026-09-15).
+  //   1세대1주택 특례세율(지방세법 제111조의2)은 미반영.
   double _propertyTaxForPrice(double price) {
     final base = price * 0.60;
     if (base <= 60000000) return base * 0.001;
@@ -79,22 +83,35 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
   double get _propertyTax =>
       _prices.fold(0.0, (sum, p) => sum + _propertyTaxForPrice(p));
 
+  // 지방교육세 20%: 지방세법 제151조제1항제6호(도시지역분인 제112조제1항제2호분은 과세표준에서
+  // 제외 — 아래에서 _propertyTax만 곱해 이미 그 요건을 충족함).
   double get _localEduTax => _propertyTax * 0.2;
+  // 도시지역분 0.14%(1,000분의 1.4): 지방세법 제112조제1항제2호.
   double get _urbanAreaTax =>
       _urbanArea ? _totalPrice * 0.60 * 0.0014 : 0.0;
   double get _propertyTaxTotal => _propertyTax + _localEduTax + _urbanAreaTax;
 
   // ── 종합부동산세 (주택분) — 물건 합산가격 기준 ──
+  // 공제금액: 종합부동산세법 제8조제1항제1호(1세대1주택자 12억)·제3호(그 외 9억).
+  // 부부 공동명의 18억(9억×2)은 제3호를 각자 적용한 결과 — 공동명의자가 제10조의2에 따라
+  // "1세대1주택자"로 신청(12억+세액공제)하는 경우는 미반영, 앱은 항상 "별도소유(9억×2,
+  // 세액공제 없음)" 경로만 계산함. ※ 제10조의2 세부 계산방식(시행령 위임)은 미확인.
   double get _cdeduction {
     if (_houses == 1) return _jointOwnership ? 1800000000 : 1200000000;
     return 900000000;
   }
 
+  // 공정시장가액비율 60%: 종합부동산세법 시행령 제2조의4제1항 본문.
   double get _comprehensiveBase {
     final excess = _totalPrice - _cdeduction;
     if (excess <= 0) return 0.0;
     return excess * 0.6;
   }
+
+  // 세율 7단계: 종합부동산세법 제9조제1항 — 2주택 이하(1호)·3주택 이상(2호) 두 표
+  // 모두 값 대조 완료(2026-09-15). 12억원까지는 두 표가 같고, 그 초과 구간부터 갈라진다
+  // (12억~25억 1.3%↔2.0%, 25억~50억 1.5%↔3.0%, 50억~94억 2.0%↔4.0%, 94억초과 2.7%↔5.0%).
+  bool get _isThreeOrMoreHouses => _houses >= 3;
 
   double get _comprehensiveTaxBeforeCredit {
     final base = _comprehensiveBase;
@@ -102,12 +119,19 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
     if (base <= 300000000) return base * 0.005;
     if (base <= 600000000) return 1500000 + (base - 300000000) * 0.007;
     if (base <= 1200000000) return 3600000 + (base - 600000000) * 0.010;
+    if (_isThreeOrMoreHouses) {
+      if (base <= 2500000000) return 9600000 + (base - 1200000000) * 0.020;
+      if (base <= 5000000000) return 35600000 + (base - 2500000000) * 0.030;
+      if (base <= 9400000000) return 110600000 + (base - 5000000000) * 0.040;
+      return 286600000 + (base - 9400000000) * 0.050;
+    }
     if (base <= 2500000000) return 9600000 + (base - 1200000000) * 0.013;
     if (base <= 5000000000) return 26500000 + (base - 2500000000) * 0.015;
     if (base <= 9400000000) return 64000000 + (base - 5000000000) * 0.020;
     return 152000000 + (base - 9400000000) * 0.027;
   }
 
+  // 고령자 세액공제 3단계: 종합부동산세법 제9조제6항(60세이상20%/65세이상30%/70세이상40%).
   double get _seniorCreditRate {
     if (!_creditEligible) return 0.0;
     if (_age >= 70) return 0.40;
@@ -116,6 +140,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
     return 0.0;
   }
 
+  // 장기보유 세액공제 3단계: 종합부동산세법 제9조제8항(5년이상20%/10년이상40%/15년이상50%).
   double get _longTermCreditRate {
     if (!_creditEligible) return 0.0;
     if (_years >= 15) return 0.50;
@@ -124,6 +149,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
     return 0.0;
   }
 
+  // 합산 한도 80%: 종합부동산세법 제9조제5항 후단("공제율 합계 100분의 80의 범위에서 중복 적용").
   double get _combinedCreditRate =>
       (_seniorCreditRate + _longTermCreditRate).clamp(0.0, 0.80);
 
@@ -132,6 +158,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
   double get _comprehensiveTax =>
       _comprehensiveTaxBeforeCredit - _creditAmount;
 
+  // 농어촌특별세 20%: 농어촌특별세법 제5조제1항 8호("종합부동산세액의 100분의 20").
   double get _ruralSpecialTax => _comprehensiveTax * 0.2;
   double get _comprehensiveTaxTotal => _comprehensiveTax + _ruralSpecialTax;
 
@@ -443,7 +470,12 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
                   _rateRow('부부 공동명의 공제', '공시가격 18억원 (9억×2)', subColor, textColor),
                   _rateRow('2주택 이상 공제', '공시가격 합계 9억원', subColor, textColor),
                   _rateRow('공정시장가액비율', '60%', subColor, textColor),
-                  _rateRow('세율 (주택수 무관 단일표)', '0.5%~2.7% (7단계)', subColor,
+                  _rateRow(
+                      _isThreeOrMoreHouses ? '세율 (3주택 이상)' : '세율 (2주택 이하)',
+                      _isThreeOrMoreHouses
+                          ? '0.5%~5.0% (7단계)'
+                          : '0.5%~2.7% (7단계)',
+                      subColor,
                       textColor),
                 ],
               ),
@@ -452,7 +484,7 @@ class _PropertyTaxScreenState extends State<PropertyTaxScreen> {
 
             CalcNote(
               '• 재산세는 주택마다 개별 공시가격으로 누진계산 후 합산합니다(1주택 특례 미반영, 2026년 기준 60% 단일 적용).\n'
-              '• 종부세는 모든 주택의 공시가격 합계에서 공제액을 뺀 뒤 계산하며, 세율은 2023년 개정 이후 주택수와 무관한 단일표입니다.\n'
+              '• 종부세는 모든 주택의 공시가격 합계에서 공제액을 뺀 뒤 계산하며, 과세표준 12억원 초과 구간부터 2주택 이하와 3주택 이상의 세율이 다릅니다.\n'
               '• 고령자·장기보유 세액공제는 1세대1주택 단독명의(공제 12억)만 해당하며, 부부 공동명의 선택 시 적용되지 않습니다.\n'
               '• 세부담 상한제 등은 미반영이며, 공정시장가액비율·세율은 매년 바뀔 수 있어 고지서와 차이가 날 수 있습니다.'.keepWords,
             ),

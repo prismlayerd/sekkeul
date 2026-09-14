@@ -135,182 +135,299 @@ class _RecurringTemplatesScreenState extends State<RecurringTemplatesScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // 항목명
-                      sectionLabel('항목명'),
-                      TextFormField(
-                        controller: nameCtrl,
-                        style: AppTheme.sans(AppTheme.tsBase, ink),
-                        decoration: fieldDeco(hint: '예: 월세, 넷플릭스'),
-                        validator: (v) =>
-                            (v == null || v.trim().isEmpty) ? '항목명을 입력하세요' : null,
+                      ..._buildNameFieldSection(nameCtrl, ink, fieldDeco, sectionLabel),
+                      ..._buildCategorySection(
+                        category: category,
+                        onCategoryChanged: (v) => category = v,
+                        setLocal: setLocal,
+                        ink: ink,
+                        sub: sub,
+                        bg: bg,
+                        line: line,
+                        sectionLabel: sectionLabel,
                       ),
-                      const SizedBox(height: 14),
-
-                      // 카테고리 — 탭하면 그리드 선택 (달력 에디터와 동일 패턴)
-                      sectionLabel('카테고리'),
-                      Builder(builder: (fieldCtx) {
-                        final c = expenseCategoryById(category);
-                        return GestureDetector(
-                          onTap: () async {
-                            final picked = await _pickCategory(fieldCtx, category);
-                            if (picked != null) setLocal(() => category = picked);
-                          },
-                          behavior: HitTestBehavior.opaque,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 11),
-                            decoration: BoxDecoration(
-                              color: bg,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: line),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 8, height: 8,
-                                  decoration: BoxDecoration(
-                                      color: c.color, shape: BoxShape.circle),
-                                ),
-                                const SizedBox(width: 9),
-                                Text(c.label, style: AppTheme.sans(AppTheme.tsMD, ink)),
-                                const Spacer(),
-                                Icon(Icons.expand_more_rounded,
-                                    size: 18, color: sub),
-                              ],
-                            ),
-                          ),
-                        );
-                      }),
-                      const SizedBox(height: 14),
-
-                      // 결제수단
-                      sectionLabel('결제수단'),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final pm in ['신용카드', '체크+현금', '기타'])
-                            GestureDetector(
-                              onTap: () => setLocal(() => paymentMethod = pm),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 9),
-                                decoration: BoxDecoration(
-                                  color: paymentMethod == pm
-                                      ? accent.withAlpha(26)
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                    color: paymentMethod == pm ? accent : line,
-                                  ),
-                                ),
-                                child: Text(
-                                  pm,
-                                  style: AppTheme.sans(
-                                      AppTheme.tsSM, paymentMethod == pm ? accent : sub),
-                                ),
-                              ),
-                            ),
-                        ],
+                      ..._buildPaymentMethodSection(
+                        paymentMethod: paymentMethod,
+                        onPaymentMethodChanged: (v) => paymentMethod = v,
+                        setLocal: setLocal,
+                        accent: accent,
+                        sub: sub,
+                        line: line,
+                        sectionLabel: sectionLabel,
                       ),
-                      const SizedBox(height: 14),
-
-                      // 빠져나가는 날 (별도 행)
-                      sectionLabel('빠져나가는 날'),
-                      TextFormField(
-                        controller: dayCtrl,
-                        style: AppTheme.sans(AppTheme.tsBase, ink),
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.right,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        decoration: fieldDeco(hint: '1~31', suffix: '일 (매월)'),
-                        validator: (v) {
-                          final n = int.tryParse(v ?? '');
-                          if (n == null || n < 1 || n > 31) {
-                            return '1~31 사이로 입력하세요';
-                          }
-                          return null;
-                        },
+                      ..._buildDayFieldSection(dayCtrl, ink, fieldDeco, sectionLabel),
+                      ..._buildAmountFieldSection(amountCtrl, ink, fieldDeco, sectionLabel),
+                      ..._buildBusinessCheckboxSection(
+                        isBusiness: isBusiness,
+                        onBusinessChanged: (v) => isBusiness = v,
+                        setLocal: setLocal,
+                        ink: ink,
+                        sub: sub,
+                        accent: accent,
                       ),
-                      const SizedBox(height: 14),
-
-                      // 예상 금액 (별도 행)
-                      sectionLabel('예상 금액'),
-                      TextFormField(
-                        controller: amountCtrl,
-                        style: AppTheme.sans(AppTheme.tsBase, ink),
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.right,
-                        inputFormatters: const [ThousandsFormatter()],
-                        decoration: fieldDeco(hint: '미정이면 비워두기', suffix: '원'),
-                      ),
-                      if (_isBusinessUser) ...[
-                        const SizedBox(height: 14),
-                        GestureDetector(
-                          onTap: () => setLocal(() => isBusiness = !isBusiness),
-                          behavior: HitTestBehavior.opaque,
-                          child: Row(
-                            children: [
-                              Icon(
-                                isBusiness
-                                    ? Icons.check_box_rounded
-                                    : Icons.check_box_outline_blank_rounded,
-                                size: 18,
-                                color: isBusiness ? accent : sub,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text('사업경비로 인정 (기본값)'.keepWords,
-                                    style: AppTheme.sans(AppTheme.tsMD,
-                                        isBusiness ? ink : sub,
-                                        weight: FontWeight.w600)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
                       const SizedBox(height: 8),
                     ],
                   ),
                 ),
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, sub)),
-              ),
-              TextButton(
-                onPressed: () async {
-                  if (!formKey.currentState!.validate()) return;
-                  final t = RecurringTemplate(
-                    id: existing?.id ?? 0,
-                    name: nameCtrl.text.trim(),
-                    amountHint: int.tryParse(amountCtrl.text.replaceAll(',', '')) ?? 0,
-                    category: category,
-                    paymentMethod: paymentMethod,
-                    dayOfMonth: int.parse(dayCtrl.text.replaceAll(',', '')),
-                    sortOrder: existing?.sortOrder ?? _templates.length,
-                    isBusiness: isBusiness,
-                  );
-                  if (existing == null) {
-                    await dbService.insertRecurringTemplate(t);
-                  } else {
-                    await dbService.updateRecurringTemplate(t);
-                  }
-                  if (ctx.mounted) Navigator.of(ctx).pop();
-                  await _load();
-                },
-                child: Text(
-                  existing == null ? '추가' : '저장',
-                  style: AppTheme.sans(AppTheme.tsMD, accent, weight: FontWeight.w600),
-                ),
-              ),
-            ],
+            actions: _buildDialogActions(
+              ctx, sub, accent, existing, formKey,
+              nameCtrl, amountCtrl, dayCtrl,
+              category, paymentMethod, isBusiness,
+            ),
           );
         },
       ),
     );
+  }
+
+  // ── 편집 다이얼로그 — 필드 섹션 (모두 순수 추출, 로직 변경 없음) ─────────
+
+  List<Widget> _buildNameFieldSection(
+    TextEditingController nameCtrl,
+    Color ink,
+    InputDecoration Function({required String hint, String? suffix}) fieldDeco,
+    Widget Function(String) sectionLabel,
+  ) {
+    return [
+      // 항목명
+      sectionLabel('항목명'),
+      TextFormField(
+        controller: nameCtrl,
+        style: AppTheme.sans(AppTheme.tsBase, ink),
+        decoration: fieldDeco(hint: '예: 월세, 넷플릭스'),
+        validator: (v) =>
+            (v == null || v.trim().isEmpty) ? '항목명을 입력하세요' : null,
+      ),
+      const SizedBox(height: 14),
+    ];
+  }
+
+  List<Widget> _buildCategorySection({
+    required String category,
+    required void Function(String) onCategoryChanged,
+    required StateSetter setLocal,
+    required Color ink,
+    required Color sub,
+    required Color bg,
+    required Color line,
+    required Widget Function(String) sectionLabel,
+  }) {
+    return [
+      // 카테고리 — 탭하면 그리드 선택 (달력 에디터와 동일 패턴)
+      sectionLabel('카테고리'),
+      Builder(builder: (fieldCtx) {
+        final c = expenseCategoryById(category);
+        return GestureDetector(
+          onTap: () async {
+            final picked = await _pickCategory(fieldCtx, category);
+            if (picked != null) setLocal(() => onCategoryChanged(picked));
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: line),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 8, height: 8,
+                  decoration: BoxDecoration(
+                      color: c.color, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 9),
+                Text(c.label, style: AppTheme.sans(AppTheme.tsMD, ink)),
+                const Spacer(),
+                Icon(Icons.expand_more_rounded,
+                    size: 18, color: sub),
+              ],
+            ),
+          ),
+        );
+      }),
+      const SizedBox(height: 14),
+    ];
+  }
+
+  List<Widget> _buildPaymentMethodSection({
+    required String paymentMethod,
+    required void Function(String) onPaymentMethodChanged,
+    required StateSetter setLocal,
+    required Color accent,
+    required Color sub,
+    required Color line,
+    required Widget Function(String) sectionLabel,
+  }) {
+    return [
+      // 결제수단
+      sectionLabel('결제수단'),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final pm in ['신용카드', '체크+현금', '기타'])
+            GestureDetector(
+              onTap: () => setLocal(() => onPaymentMethodChanged(pm)),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 9),
+                decoration: BoxDecoration(
+                  color: paymentMethod == pm
+                      ? accent.withAlpha(26)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: paymentMethod == pm ? accent : line,
+                  ),
+                ),
+                child: Text(
+                  pm,
+                  style: AppTheme.sans(
+                      AppTheme.tsSM, paymentMethod == pm ? accent : sub),
+                ),
+              ),
+            ),
+        ],
+      ),
+      const SizedBox(height: 14),
+    ];
+  }
+
+  List<Widget> _buildDayFieldSection(
+    TextEditingController dayCtrl,
+    Color ink,
+    InputDecoration Function({required String hint, String? suffix}) fieldDeco,
+    Widget Function(String) sectionLabel,
+  ) {
+    return [
+      // 빠져나가는 날 (별도 행)
+      sectionLabel('빠져나가는 날'),
+      TextFormField(
+        controller: dayCtrl,
+        style: AppTheme.sans(AppTheme.tsBase, ink),
+        keyboardType: TextInputType.number,
+        textAlign: TextAlign.right,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        decoration: fieldDeco(hint: '1~31', suffix: '일 (매월)'),
+        validator: (v) {
+          final n = int.tryParse(v ?? '');
+          if (n == null || n < 1 || n > 31) {
+            return '1~31 사이로 입력하세요';
+          }
+          return null;
+        },
+      ),
+      const SizedBox(height: 14),
+    ];
+  }
+
+  List<Widget> _buildAmountFieldSection(
+    TextEditingController amountCtrl,
+    Color ink,
+    InputDecoration Function({required String hint, String? suffix}) fieldDeco,
+    Widget Function(String) sectionLabel,
+  ) {
+    return [
+      // 예상 금액 (별도 행)
+      sectionLabel('예상 금액'),
+      TextFormField(
+        controller: amountCtrl,
+        style: AppTheme.sans(AppTheme.tsBase, ink),
+        keyboardType: TextInputType.number,
+        textAlign: TextAlign.right,
+        inputFormatters: const [ThousandsFormatter()],
+        decoration: fieldDeco(hint: '미정이면 비워두기', suffix: '원'),
+      ),
+    ];
+  }
+
+  List<Widget> _buildBusinessCheckboxSection({
+    required bool isBusiness,
+    required void Function(bool) onBusinessChanged,
+    required StateSetter setLocal,
+    required Color ink,
+    required Color sub,
+    required Color accent,
+  }) {
+    return [
+      if (_isBusinessUser) ...[
+        const SizedBox(height: 14),
+        GestureDetector(
+          onTap: () => setLocal(() => onBusinessChanged(!isBusiness)),
+          behavior: HitTestBehavior.opaque,
+          child: Row(
+            children: [
+              Icon(
+                isBusiness
+                    ? Icons.check_box_rounded
+                    : Icons.check_box_outline_blank_rounded,
+                size: 18,
+                color: isBusiness ? accent : sub,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('사업경비로 인정 (기본값)'.keepWords,
+                    style: AppTheme.sans(AppTheme.tsMD,
+                        isBusiness ? ink : sub,
+                        weight: FontWeight.w600)),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ];
+  }
+
+  List<Widget> _buildDialogActions(
+    BuildContext ctx,
+    Color sub,
+    Color accent,
+    RecurringTemplate? existing,
+    GlobalKey<FormState> formKey,
+    TextEditingController nameCtrl,
+    TextEditingController amountCtrl,
+    TextEditingController dayCtrl,
+    String category,
+    String paymentMethod,
+    bool isBusiness,
+  ) {
+    return [
+      TextButton(
+        onPressed: () => Navigator.of(ctx).pop(),
+        child: Text('취소', style: AppTheme.sans(AppTheme.tsMD, sub)),
+      ),
+      TextButton(
+        onPressed: () async {
+          if (!formKey.currentState!.validate()) return;
+          final t = RecurringTemplate(
+            id: existing?.id ?? 0,
+            name: nameCtrl.text.trim(),
+            amountHint: int.tryParse(amountCtrl.text.replaceAll(',', '')) ?? 0,
+            category: category,
+            paymentMethod: paymentMethod,
+            dayOfMonth: int.parse(dayCtrl.text.replaceAll(',', '')),
+            sortOrder: existing?.sortOrder ?? _templates.length,
+            isBusiness: isBusiness,
+          );
+          if (existing == null) {
+            await dbService.insertRecurringTemplate(t);
+          } else {
+            await dbService.updateRecurringTemplate(t);
+          }
+          if (ctx.mounted) Navigator.of(ctx).pop();
+          await _load();
+        },
+        child: Text(
+          existing == null ? '추가' : '저장',
+          style: AppTheme.sans(AppTheme.tsMD, accent, weight: FontWeight.w600),
+        ),
+      ),
+    ];
   }
 
   // ── 카테고리 선택 그리드 (달력 에디터와 동일 패턴) ──────────────────

@@ -18,6 +18,12 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
   final _leaseDepositCtrl = TextEditingController();
   final _rentMonthlyCtrl = TextEditingController();
   final _rentDepositCtrl = TextEditingController();
+  // 아래 세 기본값(대출 이자율 5.5%, 대출 비율 70%, 잔존가치율 50%)은 법정 수치가 아니라
+  // 사용자가 직접 조정하는 입력란의 시작값이다. 여신전문금융업법(제38~40조 등 할부금융·
+  // 시설대여 관련 조문)을 직접 조회했으나 금리·담보인정비율·잔존가치율을 정한 규정은 없음
+  // (2026-09-15 확인). 2026년 신차 할부금리는 카드사 3.4~7%, 캐피탈사 3.9~7% 수준으로
+  // 보도되나(회사·신용도별 상이) 여신금융협회 등 특정 기관의 대표 공시값은 특정하지 못해
+  // 정확한 1차 출처는 미확인 — 업계 관행 참고치로만 취급할 것.
   final _loanRateCtrl = TextEditingController(text: '5.5');
   final _loanRatioCtrl = TextEditingController(text: '70');
   final _residualRateCtrl = TextEditingController(text: '50');
@@ -148,6 +154,8 @@ class _CarLeaseBuyRentScreenState extends State<CarLeaseBuyRentScreen> {
               '리스: 소유권 없이 사용, 보험·세금 리스사 대납 상품도 있음',
               '장기렌트: 보험·정비 포함 상품 다수, 사업자는 부가세 매입공제 가능',
               '구매(대출): 소유권 확보, 잔존가치는 실제 중고차 시세와 다를 수 있음',
+              // '50~80%'는 법정 기준이나 한국소비자원 등 특정 기관의 공식 통계로 확인되지
+              // 않음(웹 검색으로 1차 출처를 찾지 못함, 2026-09-15). 출처 미확인 상태.
               '중형 세단 5년 유지비는 차량가의 50~80% 수준이 일반적 기준입니다.',
             ], line, sub, ink),
           ],

@@ -8,7 +8,7 @@ import '../theme/text_wrap.dart';
 
 /// 퇴직금 계산기
 /// 공식: 평균임금 × 30 × (재직일수 ÷ 365)
-/// 평균임금 = (최근 3개월 총임금 + 연간상여×3/12 + 연차수당×3/12) ÷ 91일
+/// 평균임금 = (최근 3개월 총임금 + 연간상여×3/12 + 연차수당×3/12) ÷ 퇴직일 기준 역산한 3개월 실제 달력일수(89~92일)
 class SeverancePayScreen extends StatefulWidget {
   const SeverancePayScreen({super.key});
 
@@ -93,12 +93,22 @@ class _SeverancePayScreenState extends State<SeverancePayScreen> {
         _leaveDate != null &&
         _leaveDate!.isAfter(_joinDate!)) {
       workDays = _leaveDate!.difference(_joinDate!).inDays;
-      const threeMoDays = 91;
+      // 근로기준법 제2조 제1항 6호: 평균임금 = 산정사유 발생일(퇴직일) 이전
+      // 3개월간 지급된 임금총액 ÷ 그 기간의 총일수. 총일수는 91일 고정이 아니라
+      // 퇴직일 기준 역산한 실제 달력일수(월 구성에 따라 89~92일)를 쓴다.
+      final threeMonthsAgo = DateTime(
+          _leaveDate!.year, _leaveDate!.month - 3, _leaveDate!.day);
+      final threeMoDays = _leaveDate!.difference(threeMonthsAgo).inDays;
       final totalThreeMonth =
           threeMonthPay + bonus * 3 / 12 + leaveAllowance * 3 / 12;
       if (totalThreeMonth > 0) {
         avgDailyWage = totalThreeMonth / threeMoDays;
+        // 근로자퇴직급여 보장법 제4조 제1항 단서: 계속근로기간 1년 미만
+        // 근로자는 퇴직급여제도 적용 제외 대상 → workDays >= 365 조건과 일치.
         if (workDays >= 365) {
+          // 근로자퇴직급여 보장법 제8조 제1항: 계속근로기간 1년에 대하여
+          // 30일분 이상의 평균임금을 퇴직금으로 지급 — 재직일수 비례 산정
+          // (1일 평균임금 × 30 × 재직일수/365)은 이를 확장한 통상적 계산방식.
           severance = avgDailyWage * 30 * workDays / 365;
         }
       }

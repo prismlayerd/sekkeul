@@ -29,7 +29,8 @@ import '../theme/text_wrap.dart';
 /// 수익·결제수단을 가르는 **표식**. 도형(■●▲+)으로 갈리던 걸 색으로 바꿨다
 /// (2026-09-14) — 종이 질감 테마의 잉크 원칙에서 이 넷만 예외를 둔다.
 ///
-/// 신용카드 15% / 체크·현금 30%로 공제율이 갈리는 구분이라 뭉개지면 안 된다.
+/// 신용카드 15% / 체크·현금 30%로 공제율이 갈리는 구분이라 뭉개지면 안 된다
+/// (조특법 §126의2②4호·5호, 2026-09-15 확인).
 enum _Mark { income, credit, debit, other }
 
 Color _markColor(BuildContext context, _Mark kind) {
@@ -2084,228 +2085,42 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final hasDeb = singleExps.any((e) => e.paymentMethod == _catDebit);
     final hasOth = singleExps.any((e) => e.paymentMethod == _catOther);
 
-    // 범위 바 빌더
-    Widget rangeBar(ExpenseItem e) {
-      final isBarStart = e.date.year == date.year &&
-          e.date.month == date.month &&
-          e.date.day == date.day;
-      final isBarEnd = e.endDate != null &&
-          e.endDate!.year == date.year &&
-          e.endDate!.month == date.month &&
-          e.endDate!.day == date.day;
-      // 이어지는 지출은 색 띠가 아니라 **밑줄**로 잇는다. 시작 칸에 표식을 찍는다.
-      final mark = _pmMarkOf(e.paymentMethod);
-      return Container(
-        height: 12,
-        margin: EdgeInsets.only(
-          left:  isBarStart ? 3 : 0,
-          right: isBarEnd   ? 3 : 0,
-          bottom: 2,
-        ),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppTheme.ink(context), width: 1)),
-        ),
-        alignment: Alignment.centerLeft,
-        child: isBarStart
-            ? Padding(
-                padding: const EdgeInsets.only(left: 1, bottom: 2),
-                child: _MarkChip(mark, size: 6),
-              )
-            : null,
-      );
-    }
-
-    // ── 2단계 레인: 색이 찬 가로 막대 위에 부호+금액을 얹는다(2026-09-14,
-    // 점+회색글자 → 막대+부호숫자). 폭은 금액 크기와 무관하게 칸 너비 그대로
-    // — 고정 폭. 이어지는 범위는 밑줄로 잇는다(막대 자체는 계속 이어진다).
-    Widget laneBar(_Mark mark, bool range, bool start, bool end, int amt, bool isIncome) {
-      final textC = isIncome ? AppTheme.ink(context) : AppTheme.inkSecondary(context);
-      final showText = (!range || start) && amt > 0;
-      return Container(
-        height: _laneBoxH,
-        margin: EdgeInsets.only(bottom: _laneH - _laneBoxH),
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        alignment: Alignment.centerLeft,
-        decoration: BoxDecoration(
-          color: _markFill(context, mark),
-          borderRadius: BorderRadius.circular(3),
-          border: range
-              ? Border(bottom: BorderSide(color: AppTheme.line(context), width: 1))
-              : null,
-        ),
-        child: showText
-            // 칸을 넘으면 **잘리지 않고 줄어든다.** 예전에는 clip이라
-            // 금액이 자릿수 중간에서 뭉텅 잘려 나갔다 — 850,000이
-            // 850,0으로 보이면 틀린 숫자를 읽게 된다.
-            ? FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text('${isIncome ? '+' : '-'}${comma(amt)}',
-                    style: AppTheme.sans(_laneFont, textC,
-                        weight: isIncome ? FontWeight.w700 : FontWeight.w500),
-                    softWrap: false),
-              )
-            : null,
-      );
-    }
-
-    Widget? laneInc() {
-      if (income == 0) return null;
-      IncomeEntry? r;
-      for (final e in (_incomesByDay[key] ?? const <IncomeEntry>[])) {
-        if (e.endDate != null &&
-            !(e.endDate!.year == e.date.year &&
-              e.endDate!.month == e.date.month &&
-              e.endDate!.day == e.date.day)) { r = e; break; }
-      }
-      if (r == null) return laneBar(_Mark.income, false, true, true, income, true);
-      final st = r.date.month == date.month && r.date.day == date.day;
-      final en = r.endDate!.month == date.month && r.endDate!.day == date.day;
-      return laneBar(_Mark.income, true, st, en, income, true);
-    }
-
-    Widget? laneExp(String pm) {
-      final amt = _paymentOf(key, pm);
-      if (amt == 0) return null;
-      ExpenseItem? r;
-      for (final e in dayExps.where((e) => e.paymentMethod == pm)) {
-        if (e.endDate != null &&
-            !(e.endDate!.year == e.date.year &&
-              e.endDate!.month == e.date.month &&
-              e.endDate!.day == e.date.day)) { r = e; break; }
-      }
-      final mark = _pmMarkOf(pm);
-      if (r == null) return laneBar(mark, false, true, true, amt, false);
-      final st = r.date.month == date.month && r.date.day == date.day;
-      final en = r.endDate!.month == date.month && r.endDate!.day == date.day;
-      return laneBar(mark, true, st, en, amt, false);
-    }
-
-    final crLane = laneExp(_catCredit);
-    final dbLane = laneExp(_catDebit);
-    final otLane = laneExp(_catOther);
-    final incLane = laneInc();
+    final crLane = _buildCellLaneExp(date, key, dayExps, _catCredit);
+    final dbLane = _buildCellLaneExp(date, key, dayExps, _catDebit);
+    final otLane = _buildCellLaneExp(date, key, dayExps, _catOther);
+    final incLane = _buildCellLaneInc(date, key, income);
 
     // 3단계에서만 보이는 하루 합계 줄 — 수익/지출을 한 줄씩 훑지 않아도
     // 얼마 벌고 얼마 썼는지 바로 보이게(2026-09-14).
     final totalExpense = _paymentOf(key, _catCredit) +
         _paymentOf(key, _catDebit) +
         _paymentOf(key, _catOther);
-    final totalsLane = (_zoomLevel >= 3 && (income > 0 || totalExpense > 0))
-        ? Container(
-            height: _laneBoxH,
-            margin: EdgeInsets.only(bottom: _laneH - _laneBoxH),
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: AppTheme.line(context), width: 1)),
-            ),
-            alignment: Alignment.centerLeft,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text('수익:${comma(income)}  지출:${comma(totalExpense)}',
-                  style: AppTheme.sans(_laneFont, AppTheme.ink(context),
-                      weight: FontWeight.w700),
-                  softWrap: false),
-            ),
-          )
-        : null;
+    final totalsLane = _buildCellTotalsLane(income, totalExpense);
 
     // 확대하면 칸이 넓어지니 도형과 금액이 **한 줄씩** 들어간다.
     // 날짜는 머리로 올리고, 그 아래로 줄이 쌓인다 — 전표의 항목 나열과 같다.
     // 좌우 여백을 같게 둬야 금액의 오른쪽 끝이 옆 칸과 세로로 맞는다.
-    final l2Content = Padding(
-      padding: const EdgeInsets.fromLTRB(4, 4, 4, 3),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Align(alignment: Alignment.topLeft, child: dayNumber),
-          const SizedBox(height: 3),
-          if (incLane != null) incLane,
-          if (crLane != null) crLane,
-          if (dbLane != null) dbLane,
-          if (otLane != null) otLane,
-          if (totalsLane != null) totalsLane,
-        ],
-      ),
-    );
+    final l2Content = _buildCellDetailView(
+        dayNumber, incLane, crLane, dbLane, otLane, totalsLane);
 
     // 표식 종류별 자리를 고정한다(수익-신용카드-체크현금-기타 순). 있는 것만
     // 골라 쌓으면 날마다 자리가 밀려 옆 칸과 비교할 때 같은 색이 날마다 다른
     // 높이에 찍힌다 — 없는 종류는 투명 자리로 비워 위치를 맞춘다(2026-09-14).
-    const markKinds = [_Mark.income, _Mark.credit, _Mark.debit, _Mark.other];
-    final markPresence = [income > 0, hasCr, hasDeb, hasOth];
-    final l1MarkColumn = bars.isEmpty
-        ? [
-            for (var i = 0; i < markKinds.length; i++)
-              Padding(
-                padding: const EdgeInsets.only(top: 3),
-                child: markPresence[i]
-                    ? _catMark(markKinds[i])
-                    : Opacity(opacity: 0, child: _catMark(markKinds[i])),
-              ),
-          ]
-        // 범위 지출 막대가 이미 칸 아래를 차지하면 표식은 수익만 —
-        // 둘 다 그리면 좁은 칸에서 겹친다.
-        : [if (income > 0) _catMark(_Mark.income)];
+    final l1MarkColumn = _buildCellMarkColumn(bars, income, hasCr, hasDeb, hasOth);
 
-    final l1Content = Stack(
-      children: [
-        // 날짜는 위, 표식은 그 **아래 오른쪽 정렬**로 — 한 줄에 나란히 두면
-        // 칸이 좁을 때 날짜 숫자와 겹친다(2026-09-14, 가로 나열 → 세로 배치).
-        Positioned.fill(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(3, 4, 4, 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                dayNumber,
-                if (l1MarkColumn.isNotEmpty)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: l1MarkColumn,
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-        ),
-        if (bars.isNotEmpty)
-          Positioned(
-            left: 0, right: 0, bottom: 4,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: bars.map(rangeBar).toList(),
-            ),
-          ),
-      ],
-    );
+    final l1Content = _buildCellCompactView(date, dayNumber, l1MarkColumn, bars);
 
     // 이 칸에 무엇이 적혀 있는지 한 문장으로. 달력은 그리드 **전체**가 하나의
     // Listener라, 이걸 안 붙이면 스크린리더에는 날짜 숫자만 스물아홉 개
     // 흩어져 읽히고 어느 날에 무엇이 있는지 알 길이 없다. onTap을 같이 주면
     // 포인터를 안 쓰고도 날짜를 고를 수 있다.
-    final parts = <String>[
-      '${date.month}월 ${date.day}일',
-      if (isToday) '오늘',
-      if (income > 0) '수익 ${won(income)}',
-      for (final pm in const [_catCredit, _catDebit, _catOther])
-        if (_paymentOf(key, pm) > 0) '$pm ${won(_paymentOf(key, pm))}',
-      if (income == 0 && dayExps.isEmpty) '기록 없음',
-      if (isSelected) '선택됨',
-    ];
-
     // 세로 괘선은 없다 — 영수증에 세로줄이 없고, 열은 조판이 잡는다.
     // 주(週)를 가르는 가로선은 그리드 쪽에서 절취선으로 그린다.
     return Semantics(
       button: true,
       selected: isSelected,
-      label: parts.join(', '),
+      label: _buildCellSemanticLabel(date, isToday, income, key, dayExps, isSelected)
+          .join(', '),
       onTap: () => _toggleSingle(date),
       child: Container(
         key: gkey,
@@ -2351,6 +2166,225 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     );
   }
 
+  // ── _buildCell 보조 메서드 ──────────────────────────────────────
+
+  /// 범위 지출 막대 — 시작 칸에 표식을 찍고 밑줄로 이어간다.
+  Widget _buildCellRangeBar(DateTime date, ExpenseItem e) {
+    final isBarStart = e.date.year == date.year &&
+        e.date.month == date.month &&
+        e.date.day == date.day;
+    final isBarEnd = e.endDate != null &&
+        e.endDate!.year == date.year &&
+        e.endDate!.month == date.month &&
+        e.endDate!.day == date.day;
+    // 이어지는 지출은 색 띠가 아니라 **밑줄**로 잇는다. 시작 칸에 표식을 찍는다.
+    final mark = _pmMarkOf(e.paymentMethod);
+    return Container(
+      height: 12,
+      margin: EdgeInsets.only(
+        left:  isBarStart ? 3 : 0,
+        right: isBarEnd   ? 3 : 0,
+        bottom: 2,
+      ),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppTheme.ink(context), width: 1)),
+      ),
+      alignment: Alignment.centerLeft,
+      child: isBarStart
+          ? Padding(
+              padding: const EdgeInsets.only(left: 1, bottom: 2),
+              child: _MarkChip(mark, size: 6),
+            )
+          : null,
+    );
+  }
+
+  // ── 2단계 레인: 색이 찬 가로 막대 위에 부호+금액을 얹는다(2026-09-14,
+  // 점+회색글자 → 막대+부호숫자). 폭은 금액 크기와 무관하게 칸 너비 그대로
+  // — 고정 폭. 이어지는 범위는 밑줄로 잇는다(막대 자체는 계속 이어진다).
+  Widget _buildCellLaneBar(_Mark mark, bool range, bool start, bool end, int amt, bool isIncome) {
+    final textC = isIncome ? AppTheme.ink(context) : AppTheme.inkSecondary(context);
+    final showText = (!range || start) && amt > 0;
+    return Container(
+      height: _laneBoxH,
+      margin: EdgeInsets.only(bottom: _laneH - _laneBoxH),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      alignment: Alignment.centerLeft,
+      decoration: BoxDecoration(
+        color: _markFill(context, mark),
+        borderRadius: BorderRadius.circular(3),
+        border: range
+            ? Border(bottom: BorderSide(color: AppTheme.line(context), width: 1))
+            : null,
+      ),
+      child: showText
+          // 칸을 넘으면 **잘리지 않고 줄어든다.** 예전에는 clip이라
+          // 금액이 자릿수 중간에서 뭉텅 잘려 나갔다 — 850,000이
+          // 850,0으로 보이면 틀린 숫자를 읽게 된다.
+          ? FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text('${isIncome ? '+' : '-'}${comma(amt)}',
+                  style: AppTheme.sans(_laneFont, textC,
+                      weight: isIncome ? FontWeight.w700 : FontWeight.w500),
+                  softWrap: false),
+            )
+          : null,
+    );
+  }
+
+  /// 수익 레인 — 범위 수익이면 이어붙이고, 아니면 단일 막대.
+  Widget? _buildCellLaneInc(DateTime date, String key, int income) {
+    if (income == 0) return null;
+    IncomeEntry? r;
+    for (final e in (_incomesByDay[key] ?? const <IncomeEntry>[])) {
+      if (e.endDate != null &&
+          !(e.endDate!.year == e.date.year &&
+            e.endDate!.month == e.date.month &&
+            e.endDate!.day == e.date.day)) { r = e; break; }
+    }
+    if (r == null) return _buildCellLaneBar(_Mark.income, false, true, true, income, true);
+    final st = r.date.month == date.month && r.date.day == date.day;
+    final en = r.endDate!.month == date.month && r.endDate!.day == date.day;
+    return _buildCellLaneBar(_Mark.income, true, st, en, income, true);
+  }
+
+  /// 결제수단별 지출 레인 — 범위 지출이면 이어붙이고, 아니면 단일 막대.
+  Widget? _buildCellLaneExp(DateTime date, String key, List<ExpenseItem> dayExps, String pm) {
+    final amt = _paymentOf(key, pm);
+    if (amt == 0) return null;
+    ExpenseItem? r;
+    for (final e in dayExps.where((e) => e.paymentMethod == pm)) {
+      if (e.endDate != null &&
+          !(e.endDate!.year == e.date.year &&
+            e.endDate!.month == e.date.month &&
+            e.endDate!.day == e.date.day)) { r = e; break; }
+    }
+    final mark = _pmMarkOf(pm);
+    if (r == null) return _buildCellLaneBar(mark, false, true, true, amt, false);
+    final st = r.date.month == date.month && r.date.day == date.day;
+    final en = r.endDate!.month == date.month && r.endDate!.day == date.day;
+    return _buildCellLaneBar(mark, true, st, en, amt, false);
+  }
+
+  /// 3단계 하루 합계 줄 — 수익/지출을 한눈에.
+  Widget? _buildCellTotalsLane(int income, int totalExpense) {
+    return (_zoomLevel >= 3 && (income > 0 || totalExpense > 0))
+        ? Container(
+            height: _laneBoxH,
+            margin: EdgeInsets.only(bottom: _laneH - _laneBoxH),
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: AppTheme.line(context), width: 1)),
+            ),
+            alignment: Alignment.centerLeft,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text('수익:${comma(income)}  지출:${comma(totalExpense)}',
+                  style: AppTheme.sans(_laneFont, AppTheme.ink(context),
+                      weight: FontWeight.w700),
+                  softWrap: false),
+            ),
+          )
+        : null;
+  }
+
+  /// 2단계(확대) 콘텐츠 — 날짜 아래로 레인이 한 줄씩 쌓인다.
+  Widget _buildCellDetailView(Widget dayNumber, Widget? incLane, Widget? crLane,
+      Widget? dbLane, Widget? otLane, Widget? totalsLane) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Align(alignment: Alignment.topLeft, child: dayNumber),
+          const SizedBox(height: 3),
+          if (incLane != null) incLane,
+          if (crLane != null) crLane,
+          if (dbLane != null) dbLane,
+          if (otLane != null) otLane,
+          if (totalsLane != null) totalsLane,
+        ],
+      ),
+    );
+  }
+
+  /// 1단계(축소) 표식 칸 — 종류별 자리를 고정해 옆 칸과 높이를 맞춘다.
+  List<Widget> _buildCellMarkColumn(
+      List<ExpenseItem> bars, int income, bool hasCr, bool hasDeb, bool hasOth) {
+    const markKinds = [_Mark.income, _Mark.credit, _Mark.debit, _Mark.other];
+    final markPresence = [income > 0, hasCr, hasDeb, hasOth];
+    return bars.isEmpty
+        ? [
+            for (var i = 0; i < markKinds.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: markPresence[i]
+                    ? _catMark(markKinds[i])
+                    : Opacity(opacity: 0, child: _catMark(markKinds[i])),
+              ),
+          ]
+        // 범위 지출 막대가 이미 칸 아래를 차지하면 표식은 수익만 —
+        // 둘 다 그리면 좁은 칸에서 겹친다.
+        : [if (income > 0) _catMark(_Mark.income)];
+  }
+
+  /// 1단계(축소) 콘텐츠 — 날짜 위, 표식은 그 아래 오른쪽 정렬, 범위 막대는 하단.
+  Widget _buildCellCompactView(
+      DateTime date, Widget dayNumber, List<Widget> l1MarkColumn, List<ExpenseItem> bars) {
+    return Stack(
+      children: [
+        // 날짜는 위, 표식은 그 **아래 오른쪽 정렬**로 — 한 줄에 나란히 두면
+        // 칸이 좁을 때 날짜 숫자와 겹친다(2026-09-14, 가로 나열 → 세로 배치).
+        Positioned.fill(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(3, 4, 4, 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                dayNumber,
+                if (l1MarkColumn.isNotEmpty)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: l1MarkColumn,
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (bars.isNotEmpty)
+          Positioned(
+            left: 0, right: 0, bottom: 4,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: bars.map((e) => _buildCellRangeBar(date, e)).toList(),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// 이 칸의 접근성 라벨 문구 — 스크린리더용 한 줄 요약.
+  List<String> _buildCellSemanticLabel(DateTime date, bool isToday, int income,
+      String key, List<ExpenseItem> dayExps, bool isSelected) {
+    return <String>[
+      '${date.month}월 ${date.day}일',
+      if (isToday) '오늘',
+      if (income > 0) '수익 ${won(income)}',
+      for (final pm in const [_catCredit, _catDebit, _catOther])
+        if (_paymentOf(key, pm) > 0) '$pm ${won(_paymentOf(key, pm))}',
+      if (income == 0 && dayExps.isEmpty) '기록 없음',
+      if (isSelected) '선택됨',
+    ];
+  }
+
   _Mark _pmMarkOf(String pm) {
     switch (pm) {
       case _catCredit: return _Mark.credit;
@@ -2364,6 +2398,10 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
 
   // ── 분석 뷰 ──────────────────────────────────────────────────────
 
+  /// 세액공제율 — 소득세법 §59조의4(2026-09-15 확인), 일반(기본) 케이스만 표기.
+  /// 의료비 15%(②1호 — 미숙아 20%·난임시술 30%는 미반영) / 교육비 15%(③) /
+  /// 보험료 12%(①본문 — 장애인전용보장성보험 15%는 미반영) / 기부금 15%,
+  /// 1천만 초과분 30%(④, 특례·일반기부금 합산 기준).
   static const _taxDeductCats = {
     '의료/건강': '의료비 세액공제 (15%)',
     '교육':     '교육비 세액공제 (15%)',
@@ -2428,7 +2466,11 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final hasData = totalExp > 0;
     final totalBusinessExp = allExps.where((e) => e.isBusiness).fold(0, (s, e) => s + e.amount);
 
-    // 신용카드 공제 문턱 — 연 누적(1월~오늘) 기준. 문턱(최저사용금액, 조특법 §126의2)
+    // 신용카드 공제 문턱 — 연 누적(1월~오늘) 기준. 문턱(최저사용금액)은 총급여의 25%
+    // (조특법 §126의2①, 2026-09-15 확인). 같은 0.25 공식이 이 파일 안(연간 뷰,
+    // _buildAnnualView)과 lib/core/tax_engine/employee_tax.dart의
+    // calculateCreditCardDeduction·estimateCreditCardRefund에도 있다 — 중복 정의이나
+    // 이번 작업 범위는 출처 인용뿐이라 구조는 그대로 둔다.
     // 판정은 신용+체크·현금 "합계"라서 신용만 세면 진행률이 실제보다 낮게 나온다.
     // ('기타' 결제수단은 현금영수증 없는 지출로 보아 제외 — 홈과 같은 규칙.)
     final now = DateTime.now();
@@ -2447,207 +2489,277 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
       children: [
 
         // ── 이달 요약 ──────────────────────────────────────
-        AppTheme.sectionHead(context, null, '이달 요약'),
-        const SizedBox(height: 12),
-        // 들어온 돈과 나간 돈은 나란한 두 칸에 찍고, 남은 돈은 그 밑 소계 줄에 온다.
-        Row(children: [
-          _summaryCell('IN', '수입', totalInc, AppTheme.ink(context)),
-          const SizedBox(width: 8),
-          _summaryCell('OUT', '지출', totalExp, AppTheme.ink(context)),
-        ]),
-        const SizedBox(height: 12),
-        Row(children: [
-          Text('남은 돈', style: AppTheme.sans(AppTheme.tsBase, sub)),
-          const Spacer(),
-          // 적자면 '-950,000원'처럼 부호를 그대로 노출한다(흑백이라 부호가 유일한 신호다).
-          Text('${totalInc - totalExp >= 0 ? '+' : ''}${comma(totalInc - totalExp)}원',
-              style: AppTheme.display(AppTheme.serifSM,
-                  totalInc - totalExp >= 0 ? AppTheme.ink(context) : AppTheme.colorDanger)),
-        ]),
-        const SizedBox(height: 20),
-        AppTheme.dashRule(context),
+        ..._buildMonthSummarySection(totalInc, totalExp, sub),
 
         // ── D. 지출 목표 ──────────────────────────────────
-        const SizedBox(height: 20),
-        Row(children: [
-          AppTheme.sectionHead(context, null, '지출 목표'),
-          const Spacer(),
-          GestureDetector(
-            onTap: () => setState(() => _editingTarget = true),
-            behavior: HitTestBehavior.opaque,
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.tune_rounded, size: 13, color: accent),
-              const SizedBox(width: 4),
-              Text(_expenseTarget > 0 ? '수정' : '설정',
-                  style: AppTheme.sans(AppTheme.tsXS, accent, weight: FontWeight.w600)),
-            ]),
-          ),
-        ]),
-        const SizedBox(height: 10),
-        // 편집은 그 자리에서 펼친다 — 홈 02와 같은 입력칸이다.
-        if (_editingTarget)
-          ExpenseTargetField(
-            current: _expenseTarget,
-            onCancel: () => setState(() => _editingTarget = false),
-            onSubmit: _saveExpenseTarget,
-          )
-        else if (_expenseTarget > 0)
-          _analysisSimpleBar(
-            label: '목표 ${comma(_expenseTarget)}원',
-            amount: totalExp,
-            max: _expenseTarget,
-            color: totalExp > _expenseTarget
-                ? AppTheme.colorDanger
-                : accent,
-            trailText: totalExp > _expenseTarget
-                ? '목표 ${comma(totalExp - _expenseTarget)}원 초과'
-                : '${comma(_expenseTarget - totalExp)}원 남음',
-            ink: ink, sub: sub,
-          )
-        else
-          Text('이달 지출 목표를 설정하면 달성률을 여기서 확인할 수 있어요.'.keepWords,
-              style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5)),
-        const SizedBox(height: 20),
-        AppTheme.dashRule(context),
+        ..._buildExpenseTargetSection(totalExp, accent, tert, ink, sub),
 
         // ── A. 결제수단별 ─────────────────────────────────
-        if (hasData) ...[
-          const SizedBox(height: 20),
-          AppTheme.sectionHead(context, null, '결제수단별'),
-          const SizedBox(height: 10),
-          _analysisSimpleBar(
-            label: '신용카드',
-            amount: pmTotals['신용카드']!,
-            max: totalExp,
-            color: AppTheme.inkSecondary(context),
-            ink: ink, sub: sub,
-          ),
-          const SizedBox(height: 8),
-          _analysisSimpleBar(
-            label: '체크+현금',
-            amount: pmTotals['체크+현금']!,
-            max: totalExp,
-            color: AppTheme.inkTertiary(context),
-            ink: ink, sub: sub,
-          ),
-          const SizedBox(height: 8),
-          _analysisSimpleBar(
-            label: '기타',
-            amount: pmTotals['기타']!,
-            max: totalExp,
-            color: AppTheme.lineStrong(context),
-            ink: ink, sub: sub,
-          ),
-          const SizedBox(height: 20),
-          AppTheme.dashRule(context),
-        ],
+        if (hasData) ..._buildPaymentMethodSection(pmTotals, totalExp, ink, sub),
 
         // ── 인정 경비(사업경비) 합계 — 프리랜서·N잡러만 ──
-        if (_isBusinessUser) ...[
-          const SizedBox(height: 20),
-          Row(children: [
-            AppTheme.sectionHead(context, null, '인정 경비 합계'),
-            const SizedBox(width: 8),
-            if (totalBusinessExp > 0)
-              AppTheme.blueprintBadge(context, '${comma(totalBusinessExp)}원'),
-          ]),
-          const SizedBox(height: 10),
-          if (totalBusinessExp == 0)
-            Text('지출 입력 시 "사업경비로 인정"을 체크하면 여기에 합산돼요.'.keepWords,
-                style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5))
-          else
-            _analysisSimpleBar(
-              label: '사업경비 처리',
-              amount: totalBusinessExp,
-              max: totalExp,
-              color: accent,
-              ink: ink, sub: sub,
-            ),
-          const SizedBox(height: 20),
-          AppTheme.dashRule(context),
-        ],
+        if (_isBusinessUser)
+          ..._buildBusinessExpenseSection(totalBusinessExp, totalExp, accent, tert, ink, sub),
 
         // ── 신용카드 공제 문턱 (연봉 있는 직장인·N잡러) ──
-        if (hasThreshold) ...[
-          const SizedBox(height: 20),
-          AppTheme.sectionHead(context, null, '카드 공제 문턱'),
-          const SizedBox(height: 10),
-          _analysisSimpleBar(
-            label: '연봉의 25% (${comma(cardThreshold.toInt())}원)',
-            amount: cardEligibleYtd,
-            max: cardThreshold.toInt(),
-            color: cardEligibleYtd >= cardThreshold ? AppTheme.colorSuccess : accent,
-            trailText: cardEligibleYtd >= cardThreshold
-                ? '돌파 — 체크·현금이 공제율 2배예요'
-                : '${comma(cardThreshold.toInt() - cardEligibleYtd)}원 남음',
-            ink: ink, sub: sub,
-          ),
-          const SizedBox(height: 20),
-          AppTheme.dashRule(context),
-        ],
+        if (hasThreshold)
+          ..._buildCardThresholdSection(cardEligibleYtd, cardThreshold, accent, ink, sub),
 
         // ── E. 세금 공제 가능 지출 ───────────────────────
-        const SizedBox(height: 20),
-        Row(children: [
-          AppTheme.sectionHead(context, null, '세금 공제 가능 지출'),
-          const SizedBox(width: 8),
-          if (totalTaxDeduct > 0)
-            AppTheme.blueprintBadge(context, '${comma(totalTaxDeduct)}원'),
-        ]),
-        const SizedBox(height: 10),
-        if (totalTaxDeduct == 0)
-          Text('의료비·교육비·보험료·기부금을 입력하면 공제 예상액을 볼 수 있어요.'.keepWords,
-              style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5))
-        else
-          for (final entry in taxCatAmounts.entries) ...[
-            _taxDeductRow(entry.key, entry.value, ink, sub),
-            const SizedBox(height: 6),
-          ],
-        const SizedBox(height: 20),
-        AppTheme.dashRule(context),
+        ..._buildTaxDeductSection(totalTaxDeduct, taxCatAmounts, tert, ink, sub),
 
         // ── 카테고리별 ───────────────────────────────────
-        if (hasData) ...[
-          const SizedBox(height: 20),
-          AppTheme.sectionHead(context, null, '분류별'),
-          const SizedBox(height: 14),
-          for (final entry in sortedCats) ...[
-            _analysisCatBar(entry.key, entry.value, totalExp, ink, sub),
-            const SizedBox(height: 14),
-          ],
-          AppTheme.dashRule(context),
-        ],
+        if (hasData) ..._buildCategorySection(sortedCats, totalExp, ink, sub),
 
         // ── 일별 기록 (목업 1c) ────────────────────────────
-        if (hasData) ...[
-          const SizedBox(height: 20),
-          AppTheme.sectionHead(context, null, '일별 기록'),
-          const SizedBox(height: 12),
-          _dailyChart(),
-          const SizedBox(height: 20),
-          AppTheme.dashRule(context),
-        ],
+        if (hasData) ..._buildDailyRecordSection(),
 
         // ── 가장 많이 쓴 곳 (목업 1c) ──────────────────────
-        if (_topPlace() != null) ...[
-          const SizedBox(height: 20),
-          Row(children: [
-            Text('가장 많이 쓴 곳', style: AppTheme.sans(AppTheme.tsBase, sub)),
-            const Spacer(),
-            Text(_topPlace()!,
-                style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700)),
-          ]),
-          const SizedBox(height: 20),
-          AppTheme.dashRule(context),
-        ],
+        if (_topPlace() != null) ..._buildTopPlaceSection(ink, sub),
 
         // ── C. 전월 대비 ──────────────────────────────────
-        const SizedBox(height: 20),
-        AppTheme.sectionHead(context, null, '전월 대비'),
-        const SizedBox(height: 10),
-        _prevMonthSection(catTotals, prevCatTotals, totalExp, prevTotal, ink, sub, tert),
+        ..._buildPrevMonthCompareSection(catTotals, prevCatTotals, totalExp, prevTotal, ink, sub, tert),
       ],
     );
+  }
+
+  // ── _buildAnalysisView 보조 메서드 ──────────────────────────────
+
+  /// 이달 요약 — 수입·지출·남은 돈.
+  List<Widget> _buildMonthSummarySection(int totalInc, int totalExp, Color sub) {
+    return [
+      AppTheme.sectionHead(context, null, '이달 요약'),
+      const SizedBox(height: 12),
+      // 들어온 돈과 나간 돈은 나란한 두 칸에 찍고, 남은 돈은 그 밑 소계 줄에 온다.
+      Row(children: [
+        _summaryCell('IN', '수입', totalInc, AppTheme.ink(context)),
+        const SizedBox(width: 8),
+        _summaryCell('OUT', '지출', totalExp, AppTheme.ink(context)),
+      ]),
+      const SizedBox(height: 12),
+      Row(children: [
+        Text('남은 돈', style: AppTheme.sans(AppTheme.tsBase, sub)),
+        const Spacer(),
+        // 적자면 '-950,000원'처럼 부호를 그대로 노출한다(흑백이라 부호가 유일한 신호다).
+        Text('${totalInc - totalExp >= 0 ? '+' : ''}${comma(totalInc - totalExp)}원',
+            style: AppTheme.display(AppTheme.serifSM,
+                totalInc - totalExp >= 0 ? AppTheme.ink(context) : AppTheme.colorDanger)),
+      ]),
+      const SizedBox(height: 20),
+      AppTheme.dashRule(context),
+    ];
+  }
+
+  /// 지출 목표 — 미설정 안내 / 편집칸 / 달성률 바.
+  List<Widget> _buildExpenseTargetSection(
+      int totalExp, Color accent, Color tert, Color ink, Color sub) {
+    return [
+      const SizedBox(height: 20),
+      Row(children: [
+        AppTheme.sectionHead(context, null, '지출 목표'),
+        const Spacer(),
+        GestureDetector(
+          onTap: () => setState(() => _editingTarget = true),
+          behavior: HitTestBehavior.opaque,
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.tune_rounded, size: 13, color: accent),
+            const SizedBox(width: 4),
+            Text(_expenseTarget > 0 ? '수정' : '설정',
+                style: AppTheme.sans(AppTheme.tsXS, accent, weight: FontWeight.w600)),
+          ]),
+        ),
+      ]),
+      const SizedBox(height: 10),
+      // 편집은 그 자리에서 펼친다 — 홈 02와 같은 입력칸이다.
+      if (_editingTarget)
+        ExpenseTargetField(
+          current: _expenseTarget,
+          onCancel: () => setState(() => _editingTarget = false),
+          onSubmit: _saveExpenseTarget,
+        )
+      else if (_expenseTarget > 0)
+        _analysisSimpleBar(
+          label: '목표 ${comma(_expenseTarget)}원',
+          amount: totalExp,
+          max: _expenseTarget,
+          color: totalExp > _expenseTarget
+              ? AppTheme.colorDanger
+              : accent,
+          trailText: totalExp > _expenseTarget
+              ? '목표 ${comma(totalExp - _expenseTarget)}원 초과'
+              : '${comma(_expenseTarget - totalExp)}원 남음',
+          ink: ink, sub: sub,
+        )
+      else
+        Text('이달 지출 목표를 설정하면 달성률을 여기서 확인할 수 있어요.'.keepWords,
+            style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5)),
+      const SizedBox(height: 20),
+      AppTheme.dashRule(context),
+    ];
+  }
+
+  /// 결제수단별 지출 — 신용카드/체크+현금/기타.
+  List<Widget> _buildPaymentMethodSection(
+      Map<String, int> pmTotals, int totalExp, Color ink, Color sub) {
+    return [
+      const SizedBox(height: 20),
+      AppTheme.sectionHead(context, null, '결제수단별'),
+      const SizedBox(height: 10),
+      _analysisSimpleBar(
+        label: '신용카드',
+        amount: pmTotals['신용카드']!,
+        max: totalExp,
+        color: AppTheme.inkSecondary(context),
+        ink: ink, sub: sub,
+      ),
+      const SizedBox(height: 8),
+      _analysisSimpleBar(
+        label: '체크+현금',
+        amount: pmTotals['체크+현금']!,
+        max: totalExp,
+        color: AppTheme.inkTertiary(context),
+        ink: ink, sub: sub,
+      ),
+      const SizedBox(height: 8),
+      _analysisSimpleBar(
+        label: '기타',
+        amount: pmTotals['기타']!,
+        max: totalExp,
+        color: AppTheme.lineStrong(context),
+        ink: ink, sub: sub,
+      ),
+      const SizedBox(height: 20),
+      AppTheme.dashRule(context),
+    ];
+  }
+
+  /// 인정 경비(사업경비) 합계 — 프리랜서·N잡러만.
+  List<Widget> _buildBusinessExpenseSection(
+      int totalBusinessExp, int totalExp, Color accent, Color tert, Color ink, Color sub) {
+    return [
+      const SizedBox(height: 20),
+      Row(children: [
+        AppTheme.sectionHead(context, null, '인정 경비 합계'),
+        const SizedBox(width: 8),
+        if (totalBusinessExp > 0)
+          AppTheme.blueprintBadge(context, '${comma(totalBusinessExp)}원'),
+      ]),
+      const SizedBox(height: 10),
+      if (totalBusinessExp == 0)
+        Text('지출 입력 시 "사업경비로 인정"을 체크하면 여기에 합산돼요.'.keepWords,
+            style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5))
+      else
+        _analysisSimpleBar(
+          label: '사업경비 처리',
+          amount: totalBusinessExp,
+          max: totalExp,
+          color: accent,
+          ink: ink, sub: sub,
+        ),
+      const SizedBox(height: 20),
+      AppTheme.dashRule(context),
+    ];
+  }
+
+  /// 신용카드 공제 문턱 — 연봉 있는 직장인·N잡러만.
+  List<Widget> _buildCardThresholdSection(
+      int cardEligibleYtd, double cardThreshold, Color accent, Color ink, Color sub) {
+    return [
+      const SizedBox(height: 20),
+      AppTheme.sectionHead(context, null, '카드 공제 문턱'),
+      const SizedBox(height: 10),
+      _analysisSimpleBar(
+        label: '연봉의 25% (${comma(cardThreshold.toInt())}원)',
+        amount: cardEligibleYtd,
+        max: cardThreshold.toInt(),
+        color: cardEligibleYtd >= cardThreshold ? AppTheme.colorSuccess : accent,
+        trailText: cardEligibleYtd >= cardThreshold
+            ? '돌파 — 체크·현금이 공제율 2배예요'
+            : '${comma(cardThreshold.toInt() - cardEligibleYtd)}원 남음',
+        ink: ink, sub: sub,
+      ),
+      const SizedBox(height: 20),
+      AppTheme.dashRule(context),
+    ];
+  }
+
+  /// 세금 공제 가능 지출 — 의료/교육/보험/기부.
+  List<Widget> _buildTaxDeductSection(
+      int totalTaxDeduct, Map<String, int> taxCatAmounts, Color tert, Color ink, Color sub) {
+    return [
+      const SizedBox(height: 20),
+      Row(children: [
+        AppTheme.sectionHead(context, null, '세금 공제 가능 지출'),
+        const SizedBox(width: 8),
+        if (totalTaxDeduct > 0)
+          AppTheme.blueprintBadge(context, '${comma(totalTaxDeduct)}원'),
+      ]),
+      const SizedBox(height: 10),
+      if (totalTaxDeduct == 0)
+        Text('의료비·교육비·보험료·기부금을 입력하면 공제 예상액을 볼 수 있어요.'.keepWords,
+            style: AppTheme.sans(AppTheme.tsSM, tert, height: 1.5))
+      else
+        for (final entry in taxCatAmounts.entries) ...[
+          _taxDeductRow(entry.key, entry.value, ink, sub),
+          const SizedBox(height: 6),
+        ],
+      const SizedBox(height: 20),
+      AppTheme.dashRule(context),
+    ];
+  }
+
+  /// 카테고리(분류)별 지출 막대.
+  List<Widget> _buildCategorySection(
+      List<MapEntry<String, int>> sortedCats, int totalExp, Color ink, Color sub) {
+    return [
+      const SizedBox(height: 20),
+      AppTheme.sectionHead(context, null, '분류별'),
+      const SizedBox(height: 14),
+      for (final entry in sortedCats) ...[
+        _analysisCatBar(entry.key, entry.value, totalExp, ink, sub),
+        const SizedBox(height: 14),
+      ],
+      AppTheme.dashRule(context),
+    ];
+  }
+
+  /// 일별 지출 기록 차트.
+  List<Widget> _buildDailyRecordSection() {
+    return [
+      const SizedBox(height: 20),
+      AppTheme.sectionHead(context, null, '일별 기록'),
+      const SizedBox(height: 12),
+      _dailyChart(),
+      const SizedBox(height: 20),
+      AppTheme.dashRule(context),
+    ];
+  }
+
+  /// 가장 많이 쓴 곳 — 목업 1c.
+  List<Widget> _buildTopPlaceSection(Color ink, Color sub) {
+    return [
+      const SizedBox(height: 20),
+      Row(children: [
+        Text('가장 많이 쓴 곳', style: AppTheme.sans(AppTheme.tsBase, sub)),
+        const Spacer(),
+        Text(_topPlace()!,
+            style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700)),
+      ]),
+      const SizedBox(height: 20),
+      AppTheme.dashRule(context),
+    ];
+  }
+
+  /// 전월 대비 비교 섹션.
+  List<Widget> _buildPrevMonthCompareSection(
+      Map<String, int> catTotals, Map<String, int> prevCatTotals,
+      int totalExp, int prevTotal, Color ink, Color sub, Color tert) {
+    return [
+      const SizedBox(height: 20),
+      AppTheme.sectionHead(context, null, '전월 대비'),
+      const SizedBox(height: 10),
+      _prevMonthSection(catTotals, prevCatTotals, totalExp, prevTotal, ink, sub, tert),
+    ];
   }
 
   /// 이달에 제일 자주 나온 가맹점 — 없으면 제일 자주 나온 분류.
@@ -2905,7 +3017,11 @@ class _ExpenseCalendarScreenState extends State<ExpenseCalendarScreen>
     final yearTotalTaxDeduct = yearTaxCatAmounts.values.fold(0, (s, v) => s + v);
 
     // 연간 카드 문턱 — 조회 연도가 올해면 1/1~오늘, 지난 연도면 1년 전체.
-    // 문턱 판정은 신용+체크·현금 합계 기준(조특법 §126의2) — 분석 뷰·홈과 같은 규칙.
+    // 문턱 판정은 신용+체크·현금 합계 기준, 최저사용금액=총급여의 25%
+    // (조특법 §126의2①, 2026-09-15 확인) — 분석 뷰·홈과 같은 규칙.
+    // 같은 0.25 공식이 이 파일의 월간 분석 뷰(_buildAnalysisView)와
+    // lib/core/tax_engine/employee_tax.dart에도 있다 — 중복 정의이나 이번
+    // 작업 범위는 출처 인용뿐이라 구조는 그대로 둔다.
     final now = DateTime.now();
     final isCurrentYear = _year == now.year;
     final yearEnd = isCurrentYear ? now : DateTime(_year, 12, 31);

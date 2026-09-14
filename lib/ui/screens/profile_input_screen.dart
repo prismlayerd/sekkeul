@@ -577,54 +577,103 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
 
     if (!isFreelancerOnly) {
       if (_askMilitaryQuestion) {
-        pages.add(_buildSelectionPage(
-          label: '청년 감면',
-          title: '군대에\n다녀오셨나요?',
-          subtitle: '군 복무 기간만큼 청년 나이 제한이 연장돼요.',
-          value: _hasMilitaryService,
-          onChanged: (v) {
-            setState(() { _hasMilitaryService = v; if (!v) _militaryMonthsController.clear(); });
-            Future.delayed(const Duration(milliseconds: 250), _nextPage);
-          },
-        ));
+        pages.add(_pageMilitaryService());
         if (_hasMilitaryService) {
-          pages.add(_buildInputPage(
-            label: '청년 감면',
-            title: '군 복무 기간은\n몇 개월인가요?',
-            controller: _militaryMonthsController,
-            suffix: '개월',
-          ));
+          pages.add(_pageMilitaryMonths());
         }
       }
-      pages.add(_buildSelectionPage(
-        label: '중소기업 감면',
-        title: '현재 중소기업에\n재직 중이신가요?',
-        subtitle: _isYouthEligible
-            ? '청년(만 34세 이하)은 취업 후 5년간 소득세를 90%까지 감면받아요.'
-            : '청년 나이는 지났지만, 60세 이상·장애인·경력단절여성이면 3년간 70% 감면 대상이에요.',
-        value: _isSmeEmployee,
-        onChanged: (v) {
-          setState(() => _isSmeEmployee = v);
-          Future.delayed(const Duration(milliseconds: 250), _nextPage);
-        },
-      ));
+      pages.add(_pageSmeEmployment());
       if (_isSmeEmployee) {
         pages.add(_buildDatesPage());
       }
-      pages.add(_buildSelectionPage(
-        label: '거주 · 주택',
-        title: '주민등록상\n세대주이신가요?',
-        subtitle: '주택청약, 대출 공제를 받으려면 세대주여야 해요.',
-        value: _isHeadOfHousehold,
-        onChanged: (v) {
-          setState(() => _isHeadOfHousehold = v);
-          Future.delayed(const Duration(milliseconds: 250), _nextPage);
-        },
-      ));
+      pages.add(_pageHeadOfHousehold());
     }
 
     // Common
-    pages.add(_buildSelectionPage(
+    pages.add(_pageOwnsCar());
+    pages.add(_pageMarried());
+    if (_isMarried) {
+      pages.add(_pageNewlywed());
+      pages.add(_pageSpouseDependent());
+      if (_isSpouseDependent) {
+        pages.add(_pageSpouseDisability());
+      }
+    }
+
+    if (_dependentCount > 0) {
+      pages.add(_pageDisabledDependentCount());
+    }
+
+    pages.add(_pageSelfDisability());
+
+    // 추가 인적공제 — 경로우대
+    if (_dependentCount > 0) {
+      pages.add(_pageElderly70Plus());
+    }
+
+    // 추가 인적공제 — 부녀자
+    pages.add(_pageFemaleHead());
+
+    // 추가 인적공제 — 한부모
+    if (!_isMarried && _dependentCount > 0) {
+      pages.add(_pageSingleParent());
+    }
+
+    return pages;
+  }
+
+  Widget _pageMilitaryService() {
+    return _buildSelectionPage(
+      label: '청년 감면',
+      title: '군대에\n다녀오셨나요?',
+      subtitle: '군 복무 기간만큼 청년 나이 제한이 연장돼요.',
+      value: _hasMilitaryService,
+      onChanged: (v) {
+        setState(() { _hasMilitaryService = v; if (!v) _militaryMonthsController.clear(); });
+        Future.delayed(const Duration(milliseconds: 250), _nextPage);
+      },
+    );
+  }
+
+  Widget _pageMilitaryMonths() {
+    return _buildInputPage(
+      label: '청년 감면',
+      title: '군 복무 기간은\n몇 개월인가요?',
+      controller: _militaryMonthsController,
+      suffix: '개월',
+    );
+  }
+
+  Widget _pageSmeEmployment() {
+    return _buildSelectionPage(
+      label: '중소기업 감면',
+      title: '현재 중소기업에\n재직 중이신가요?',
+      subtitle: _isYouthEligible
+          ? '청년(만 34세 이하)은 취업 후 5년간 소득세를 90%까지 감면받아요.'
+          : '청년 나이는 지났지만, 60세 이상·장애인·경력단절여성이면 3년간 70% 감면 대상이에요.',
+      value: _isSmeEmployee,
+      onChanged: (v) {
+        setState(() => _isSmeEmployee = v);
+        Future.delayed(const Duration(milliseconds: 250), _nextPage);
+      },
+    );
+  }
+
+  Widget _pageHeadOfHousehold() {
+    return _buildSelectionPage(
+      label: '거주 · 주택',
+      title: '주민등록상\n세대주이신가요?',
+      subtitle: '주택청약, 대출 공제를 받으려면 세대주여야 해요.',
+      value: _isHeadOfHousehold,
+      onChanged: (v) {
+        setState(() => _isHeadOfHousehold = v);
+        Future.delayed(const Duration(milliseconds: 250), _nextPage);
+      },
+    );
+  }
+
+  Widget _pageOwnsCar() {
+    return _buildSelectionPage(
       label: '자산',
       title: '차량을\n보유하고 계신가요?',
       subtitle: '자동차세 연납 등 차량 관련 알림 대상 여부를 판단해요.',
@@ -633,8 +682,11 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
         setState(() => _ownsCar = v);
         Future.delayed(const Duration(milliseconds: 250), _nextPage);
       },
-    ));
-    pages.add(_buildSelectionPage(
+    );
+  }
+
+  Widget _pageMarried() {
+    return _buildSelectionPage(
       label: '배우자',
       title: '현재\n기혼이신가요?',
       subtitle: '혼인 세액공제 및 배우자 공제 확인에 필요해요.',
@@ -643,55 +695,62 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
         setState(() { _isMarried = v; if (!v) { _isNewlywed = false; _isSpouseDependent = false; _hasSpouseDisability = false; }});
         Future.delayed(const Duration(milliseconds: 250), _nextPage);
       },
-    ));
-    if (_isMarried) {
-      pages.add(_buildSelectionPage(
-        label: '배우자',
-        title: '2024년 이후에\n혼인신고를 하셨나요?',
-        subtitle: '2024~2026년 혼인신고는 혼인 세액공제(생애 1회 50만 원) 대상이에요.',
-        value: _isNewlywed,
-        onChanged: (v) {
-          setState(() => _isNewlywed = v);
-          Future.delayed(const Duration(milliseconds: 250), _nextPage);
-        },
-      ));
-      pages.add(_buildSelectionPage(
-        label: '배우자',
-        title: '배우자분이 기본공제\n대상인가요?',
-        subtitle: '배우자의 연 소득금액 100만 원\n(근로소득만 있다면 500만 원) 이하',
-        value: _isSpouseDependent,
-        onChanged: (v) {
-          setState(() => _isSpouseDependent = v);
-          Future.delayed(const Duration(milliseconds: 250), _nextPage);
-        },
-      ));
-      if (_isSpouseDependent) {
-        pages.add(_buildSelectionPage(
-          label: '배우자',
-          title: '배우자가 장애인 공제\n대상인가요?',
-          subtitle: '장애·중증질환 등으로 돌봄이 필요한 경우 — 추가공제 200만 원',
-          value: _hasSpouseDisability,
-          onChanged: (v) {
-            setState(() => _hasSpouseDisability = v);
-            Future.delayed(const Duration(milliseconds: 250), _nextPage);
-          },
-        ));
-      }
-    }
+    );
+  }
 
-    if (_dependentCount > 0) {
-      pages.add(_buildCounterPage(
-        label: '부양가족',
-        title: '그 중 장애인 공제\n대상은 몇 명인가요?',
-        subtitle: '장애·중증질환 등 해당 가족 1명당 200만 원 추가 공제',
-        count: _disabledDependentCount,
-        onChanged: (v) {
-          if (v <= _dependentCount) setState(() => _disabledDependentCount = v);
-        },
-      ));
-    }
+  Widget _pageNewlywed() {
+    return _buildSelectionPage(
+      label: '배우자',
+      title: '2024년 이후에\n혼인신고를 하셨나요?',
+      subtitle: '2024~2026년 혼인신고는 혼인 세액공제(생애 1회 50만 원) 대상이에요.',
+      value: _isNewlywed,
+      onChanged: (v) {
+        setState(() => _isNewlywed = v);
+        Future.delayed(const Duration(milliseconds: 250), _nextPage);
+      },
+    );
+  }
 
-    pages.add(_buildSelectionPage(
+  Widget _pageSpouseDependent() {
+    return _buildSelectionPage(
+      label: '배우자',
+      title: '배우자분이 기본공제\n대상인가요?',
+      subtitle: '배우자의 연 소득금액 100만 원\n(근로소득만 있다면 500만 원) 이하',
+      value: _isSpouseDependent,
+      onChanged: (v) {
+        setState(() => _isSpouseDependent = v);
+        Future.delayed(const Duration(milliseconds: 250), _nextPage);
+      },
+    );
+  }
+
+  Widget _pageSpouseDisability() {
+    return _buildSelectionPage(
+      label: '배우자',
+      title: '배우자가 장애인 공제\n대상인가요?',
+      subtitle: '장애·중증질환 등으로 돌봄이 필요한 경우 — 추가공제 200만 원',
+      value: _hasSpouseDisability,
+      onChanged: (v) {
+        setState(() => _hasSpouseDisability = v);
+        Future.delayed(const Duration(milliseconds: 250), _nextPage);
+      },
+    );
+  }
+
+  Widget _pageDisabledDependentCount() {
+    return _buildCounterPage(
+      label: '부양가족',
+      title: '그 중 장애인 공제\n대상은 몇 명인가요?',
+      subtitle: '장애·중증질환 등 해당 가족 1명당 200만 원 추가 공제',
+      count: _disabledDependentCount,
+      onChanged: (v) {
+        if (v <= _dependentCount) setState(() => _disabledDependentCount = v);
+      },
+    );
+  }
+
+  Widget _pageSelfDisability() {
+    return _buildSelectionPage(
       label: '본인',
       title: '장애인 공제 대상에\n해당하시나요?',
       subtitle: '장애인복지법상 장애인, 중증환자, 국가유공 상이자 등 — 추가공제 200만 원',
@@ -700,24 +759,24 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
         setState(() => _hasSelfDisability = v);
         Future.delayed(const Duration(milliseconds: 250), _nextPage);
       },
-    ));
+    );
+  }
 
-    // 추가 인적공제 — 경로우대
-    if (_dependentCount > 0) {
-      pages.add(_buildSelectionPage(
-        label: '추가 공제',
-        title: '부양가족 중\n만 70세 이상이 있나요?',
-        subtitle: '경로우대 추가공제 100만 원 적용',
-        value: _hasElderly70Plus,
-        onChanged: (v) {
-          setState(() => _hasElderly70Plus = v);
-          Future.delayed(const Duration(milliseconds: 250), _nextPage);
-        },
-      ));
-    }
+  Widget _pageElderly70Plus() {
+    return _buildSelectionPage(
+      label: '추가 공제',
+      title: '부양가족 중\n만 70세 이상이 있나요?',
+      subtitle: '경로우대 추가공제 100만 원 적용',
+      value: _hasElderly70Plus,
+      onChanged: (v) {
+        setState(() => _hasElderly70Plus = v);
+        Future.delayed(const Duration(milliseconds: 250), _nextPage);
+      },
+    );
+  }
 
-    // 추가 인적공제 — 부녀자
-    pages.add(_buildSelectionPage(
+  Widget _pageFemaleHead() {
+    return _buildSelectionPage(
       label: '추가 공제',
       title: '부녀자공제\n해당되시나요?',
       subtitle: '여성 근로자로 배우자가 있거나(소득 3천만원 이하),\n또는 배우자 없이 부양가족 있는 여성 세대주 → 50만 원',
@@ -726,23 +785,20 @@ class _ProfileInputScreenState extends State<ProfileInputScreen> {
         setState(() => _isFemaleHead = v);
         Future.delayed(const Duration(milliseconds: 250), _nextPage);
       },
-    ));
+    );
+  }
 
-    // 추가 인적공제 — 한부모
-    if (!_isMarried && _dependentCount > 0) {
-      pages.add(_buildSelectionPage(
-        label: '추가 공제',
-        title: '한부모공제\n해당되시나요?',
-        subtitle: '배우자가 없고 기본공제 대상 자녀·직계비속이 있는 경우 100만 원\n(부녀자공제와 중복 시 한부모공제 우선 적용)',
-        value: _isSingleParent,
-        onChanged: (v) {
-          setState(() => _isSingleParent = v);
-          Future.delayed(const Duration(milliseconds: 250), _nextPage);
-        },
-      ));
-    }
-
-    return pages;
+  Widget _pageSingleParent() {
+    return _buildSelectionPage(
+      label: '추가 공제',
+      title: '한부모공제\n해당되시나요?',
+      subtitle: '배우자가 없고 기본공제 대상 자녀·직계비속이 있는 경우 100만 원\n(부녀자공제와 중복 시 한부모공제 우선 적용)',
+      value: _isSingleParent,
+      onChanged: (v) {
+        setState(() => _isSingleParent = v);
+        Future.delayed(const Duration(milliseconds: 250), _nextPage);
+      },
+    );
   }
 
   @override

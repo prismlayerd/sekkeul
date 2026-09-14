@@ -398,6 +398,27 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
 
   void _calculateTax() {
     if (_isEmployee && !_isFreelancer) {
+      _calculateEmployeeTax();
+    } else if (_isFreelancer && !_isEmployee) {
+      _calculateFreelancerTax();
+    } else if (_isEmployee && _isFreelancer) {
+      _calculateCombinedTax();
+    }
+  }
+
+  // 추계 시 적용 경비율은 직전연도 수입 기준으로 강제된다(단순경비율 미대상이면
+  // 기준경비율) — 세금 낮은 쪽을 고르는 선택 사항이 아님. 프리랜서·N잡러 분기가 동일하게 쓴다.
+  bool _simpleRateEligible({required double freelancerIncome, required int months}) {
+    final priorIncome = int.tryParse(_priorYearIncomeController.text.replaceAll(',', '')) ?? 0;
+    return isSimpleExpenseRateEligible(
+      occupation: _selectedOccupation!,
+      priorYearIncome: priorIncome,
+      isNewBusiness: _isNewBusiness,
+      currentYearIncome: (freelancerIncome / months) * 12,
+    );
+  }
+
+  void _calculateEmployeeTax() {
       if (_salaryController.text.isEmpty) {
         setState(() {
           _employeeCardResult = null;
@@ -510,8 +531,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         _employeeCardResult = cResult;
         _employeeRefund = estimate;
       });
-    }
-    else if (_isFreelancer && !_isEmployee) {
+  }
+
+  void _calculateFreelancerTax() {
       if (_freelancerIncomeController.text.isEmpty || _selectedOccupation == null) {
         setState(() {
           _freelancerResult = null;
@@ -526,16 +548,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       final otherIncomeFree = double.tryParse(_otherIncomeController.text.replaceAll(',', '')) ?? 0.0;
       final yellowUmbrella = _hasYellowUmbrella ? (double.tryParse(_yellowUmbrellaController.text.replaceAll(',', '')) ?? 0.0) : 0.0;
       final judgment = _bookkeepingJudgment;
-
-      // 추계 시 적용 경비율은 직전연도 수입 기준으로 강제된다(단순경비율 미대상이면
-      // 기준경비율) — 세금 낮은 쪽을 고르는 선택 사항이 아님.
-      final priorIncome = int.tryParse(_priorYearIncomeController.text.replaceAll(',', '')) ?? 0;
-      final simpleRateEligible = isSimpleExpenseRateEligible(
-        occupation: _selectedOccupation!,
-        priorYearIncome: priorIncome,
-        isNewBusiness: _isNewBusiness,
-        currentYearIncome: (income / months) * 12,
-      );
+      final simpleRateEligible = _simpleRateEligible(freelancerIncome: income, months: months);
 
       if (judgment != null && judgment.isSimplified) {
         // 간편장부대상자 — 가계부 실제경비(기장) vs 경비율(추계) 중 유리한 쪽을 채택.
@@ -582,8 +595,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
           _freelancerResult = result;
         });
       }
-    }
-    else if (_isEmployee && _isFreelancer) {
+  }
+
+  void _calculateCombinedTax() {
       final judgment = _bookkeepingJudgment;
       final isDoubleEntry = judgment != null && !judgment.isSimplified;
       if (_salaryController.text.isEmpty || _selectedOccupation == null) {
@@ -621,14 +635,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
       final collegeEdu = double.tryParse(_collegeEduController.text.replaceAll(',', '')) ?? 0.0;
       final collegeEduCnt = int.tryParse(_collegeCountController.text.replaceAll(',', '')) ?? 0;
       final laborPaidTax = double.tryParse(_paidTaxController.text.replaceAll(',', '')) ?? 0.0;
-      // 부업 사업소득 추계 경비율도 직전연도 수입 기준으로 강제된다(프리랜서 분기와 동일).
-      final priorIncome = int.tryParse(_priorYearIncomeController.text.replaceAll(',', '')) ?? 0;
-      final simpleRateEligible = isSimpleExpenseRateEligible(
-        occupation: _selectedOccupation!,
-        priorYearIncome: priorIncome,
-        isNewBusiness: _isNewBusiness,
-        currentYearIncome: (fIncome / months) * 12,
-      );
+      final simpleRateEligible = _simpleRateEligible(freelancerIncome: fIncome, months: months);
       final result = CombinedTaxCalculator.calculateCombinedTax(
         grossIncome: salary,
         accumulatedFreelancerIncome: fIncome,
@@ -673,7 +680,6 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         isYouthSme: _isYouthSme,
       );
       setState(() => _combinedResult = result);
-    }
   }
 
   void _openOccupationSheet() async {
@@ -1065,7 +1071,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         content: Text(
           '새 계약서가 없어도 계좌이체 내역과 주민등록등본만 있으면 5월 종합소득세 때 최대 17%까지 똑같이 돌려받을 수 있어요!\n\n'
                   '집은 전용 85㎡ 이하이거나 시가 4억원 이하여야 해요. 2026년부터는 기본공제 대상 자녀가 3명 이상이면 100㎡까지 넓어졌어요.\n\n'
-                  '주소지가 서로 다른 시·군·구인 무주택 주말부부는 2026년부터 각자 받을 수 있어요(합쳐서 연 1,000만원까지).'.keepWords
+                  '주소지가 서로 다른 시·군·구인 무주택 주말부부는 2026년부터 각자 받을 수 있어요(합쳐서 연 1,000만원까지).'
               .keepWords,
           style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color!, fontSize: 15, height: 1.5),
         ),
@@ -1443,7 +1449,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
             const SizedBox(height: 4),
             Text(
               '월급 말고 다른 소득이 있으면 5월에 합쳐서 신고해야 해요. '
-                      '홈 위쪽에서 유형을 N잡러로 바꾸면 합산과 분리과세까지 계산해드려요.'.keepWords
+                      '홈 위쪽에서 유형을 N잡러로 바꾸면 합산과 분리과세까지 계산해드려요.'
                   .keepWords,
               style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context), height: 1.45),
             ),
@@ -1455,7 +1461,12 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
 
   Widget _buildResultBanner() {
     if (_isFreelancer && !_isEmployee) {
-      if (_freelancerResult == null) return const SizedBox.shrink();
+      if (_freelancerResult == null) {
+        final message = _selectedOccupation == null
+            ? '업종을 먼저 선택해주세요. 그래야 경비율을 적용해 예상액을 계산할 수 있어요.'
+            : '사업소득 금액을 넣어주세요. 그래야 5월 예상액이 여기 나와요.';
+        return _buildEmptyResultHint(message);
+      }
       final r = _freelancerResult!;
       final isRefund = r.expectedRefundOrPayment >= 0;
       final amount = r.expectedRefundOrPayment.abs().toInt();
@@ -1463,7 +1474,14 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     }
 
     if (_isEmployee && _isFreelancer) {
-      if (_combinedResult == null) return const SizedBox.shrink();
+      if (_combinedResult == null) {
+        final message = _salaryController.text.isEmpty
+            ? '급여를 먼저 넣어주세요. 그래야 근로소득과 사업소득을 합쳐 5월 예상액을 계산할 수 있어요.'
+            : _selectedOccupation == null
+                ? '업종을 먼저 선택해주세요. 그래야 사업소득 경비율을 적용할 수 있어요.'
+                : '사업소득 금액을 넣어주세요. 복식부기의무자라면 급여만으로도 계산돼요.';
+        return _buildEmptyResultHint(message);
+      }
       final r = _combinedResult!;
       final isRefund = r.expectedRefundOrPayment >= 0;
       final amount = r.expectedRefundOrPayment.abs().toInt();
@@ -1535,13 +1553,9 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     );
   }
 
-  /// 아직 아무 공제도 안 잡혔을 때 — 빈칸 대신 다음에 할 일을 보여준다.
-  Widget _buildEmptyRefundHint() {
-    final salary = double.tryParse(_salaryController.text.replaceAll(',', '')) ?? 0.0;
-    final String message = salary <= 0
-        ? '세전 총급여를 먼저 넣어주세요. 그래야 얼마까지 돌려받을 수 있는지 계산할 수 있어요.'
-        : '아직 잡힌 공제가 없어요. 월세·의료비·교육비·기부금·연금저축 중 해당하는 것을 넣으면 '
-            '여기에 돌려받을 금액이 나와요.';
+  /// 결과 영역이 통째로 사라지면 사용자는 앱이 고장난 줄 안다.
+  /// 아직 넣을 게 남았다는 것과, 무엇을 넣어야 하는지를 대신 보여준다.
+  Widget _buildEmptyResultHint(String message) {
     return Container(
       margin: const EdgeInsets.only(top: 24, bottom: 24),
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
@@ -1559,6 +1573,16 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
         ],
       ),
     );
+  }
+
+  /// 아직 아무 공제도 안 잡혔을 때 — 빈칸 대신 다음에 할 일을 보여준다.
+  Widget _buildEmptyRefundHint() {
+    final salary = double.tryParse(_salaryController.text.replaceAll(',', '')) ?? 0.0;
+    final String message = salary <= 0
+        ? '세전 총급여를 먼저 넣어주세요. 그래야 얼마까지 돌려받을 수 있는지 계산할 수 있어요.'
+        : '아직 잡힌 공제가 없어요. 월세·의료비·교육비·기부금·연금저축 중 해당하는 것을 넣으면 '
+            '여기에 돌려받을 금액이 나와요.';
+    return _buildEmptyResultHint(message);
   }
 
   Widget _buildEmployeeRefundBreakdown() {
@@ -1729,43 +1753,8 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: '뒤로',
-          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppTheme.inkSecondary(context)),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: TaxPipelineRail(
-                labels: taxRailLabels(widget.userType),
-                current: taxRailIndex(widget.userType, 'simulator'),
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('${widget.userType} 진단'.toUpperCase(), style: AppTheme.label(context)),
-              const SizedBox(height: 12),
-              Text('빠진 공제를 찾아\n돌려받을 세금 계산'.keepWords,
-                  style: AppTheme.serif(AppTheme.serifXL, AppTheme.ink(context), spacing: -0.5, height: 1.2)),
-              const SizedBox(height: 10),
-              Text('소득과 공제를 입력하면 5월 종합소득세로 돌려받을 금액을 계산해드려요.'.keepWords,
-                  style: AppTheme.sans(AppTheme.tsMD, AppTheme.inkSecondary(context), height: 1.55)),
-              const SizedBox(height: 34),
-
-              if (_isEmployee) ...[
+  List<Widget> _buildEmployeeInputSection() {
+    return [
                 _field(
                   label: '세전 총급여 (연봉)',
                   controller: _salaryController,
@@ -1971,9 +1960,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                   ),
                 ],
                 const SizedBox(height: 28),
-              ],
+    ];
+  }
 
-              if (_isFreelancer) ...[
+  List<Widget> _buildFreelancerInputSection() {
+    return [
                 Text('나의 프리랜서 업종코드'.keepWords, style: AppTheme.sans(AppTheme.tsMD, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
                 const SizedBox(height: 8),
                 InkWell(
@@ -2170,12 +2161,11 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                     ),
                   ),
                 ],
-              ],
+    ];
+  }
 
-              // 직장인 공통(N잡러 포함): 연말정산에서 흔히 쓰는 소득·세액공제 카드.
-              // 과거엔 이 두 카드가 if (_isFreelancer) 블록 안에 갇혀 있어 순수
-              // 직장인은 입력 자체가 불가능했다(①진단 예상환급액이 과소 계산됨).
-              if (_isEmployee) ...[
+  List<Widget> _buildEmployeeExtraDeductionsSection() {
+    return [
                 const SizedBox(height: 16),
                 Container(
                     padding: const EdgeInsets.all(20),
@@ -2265,7 +2255,76 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-              ],
+    ];
+  }
+
+  List<Widget> _buildFreelancerLedgerCta() {
+    return [
+                GestureDetector(
+                  onTap: _openLedgerForExpenses,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 17),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppTheme.lineStrong(context), width: 1.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text('가계부에 경비 기록하기'.keepWords,
+                        style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text('실제 사업경비를 기록하면 기장 vs 추계 비교가 더 정확해져요.'.keepWords,
+                    style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context), height: 1.4)),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          tooltip: '뒤로',
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppTheme.inkSecondary(context)),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: TaxPipelineRail(
+                labels: taxRailLabels(widget.userType),
+                current: taxRailIndex(widget.userType, 'simulator'),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('${widget.userType} 진단'.toUpperCase(), style: AppTheme.label(context)),
+              const SizedBox(height: 12),
+              Text('빠진 공제를 찾아\n돌려받을 세금 계산'.keepWords,
+                  style: AppTheme.serif(AppTheme.serifXL, AppTheme.ink(context), spacing: -0.5, height: 1.2)),
+              const SizedBox(height: 10),
+              Text('소득과 공제를 입력하면 5월 종합소득세로 돌려받을 금액을 계산해드려요.'.keepWords,
+                  style: AppTheme.sans(AppTheme.tsMD, AppTheme.inkSecondary(context), height: 1.55)),
+              const SizedBox(height: 34),
+
+              if (_isEmployee) ..._buildEmployeeInputSection(),
+
+              if (_isFreelancer) ..._buildFreelancerInputSection(),
+
+              // 직장인 공통(N잡러 포함): 연말정산에서 흔히 쓰는 소득·세액공제 카드.
+              // 과거엔 이 두 카드가 if (_isFreelancer) 블록 안에 갇혀 있어 순수
+              // 직장인은 입력 자체가 불가능했다(①진단 예상환급액이 과소 계산됨).
+              if (_isEmployee) ..._buildEmployeeExtraDeductionsSection(),
 
               _buildBookkeepingComparisonCard(),
               _buildOtherIncomeNudge(),
@@ -2286,26 +2345,7 @@ class _TaxSimulatorScreenState extends State<TaxSimulatorScreen> {
               const SizedBox(height: 12),
               // 보조 경로(프리랜서·N잡러) — 실제 경비를 가계부에 기록하면 기장 vs 추계 비교가
               // 정확해진다. 파이프라인 옆길이라 채움 버튼이 아닌 테두리 버튼으로 위계를 낮춤.
-              if (_isFreelancer) ...[
-                GestureDetector(
-                  onTap: _openLedgerForExpenses,
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 17),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppTheme.lineStrong(context), width: 1.2),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text('가계부에 경비 기록하기'.keepWords,
-                        style: AppTheme.sans(AppTheme.tsBase, AppTheme.ink(context), weight: FontWeight.w700, spacing: -0.2)),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text('실제 사업경비를 기록하면 기장 vs 추계 비교가 더 정확해져요.'.keepWords,
-                    style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context), height: 1.4)),
-              ],
+              if (_isFreelancer) ..._buildFreelancerLedgerCta(),
               const SizedBox(height: 40),
             ],
           ),

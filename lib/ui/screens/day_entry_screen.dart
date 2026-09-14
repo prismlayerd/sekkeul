@@ -265,11 +265,7 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const wd = ['월', '화', '수', '목', '금', '토', '일'];
-    final first = _dates.first, last = _dates.last;
-    final title = _isMulti
-        ? '${first.month}월 ${first.day}일 – ${last.month}월 ${last.day}일'
-        : '${first.month}월 ${first.day}일 (${wd[first.weekday - 1]})';
+    final title = _buildTitle();
 
     // **나가면 잃는 일은 없다.**
     //
@@ -300,85 +296,113 @@ class _DayEntryScreenState extends State<DayEntryScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
           children: [
-            if (_isMulti) ...[
-              Text('고른 ${widget.dates.length}일에 각각 기록됩니다.'.keepWords,
-                  style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
-              const SizedBox(height: 14),
-            ],
-            AppTheme.sectionHead(context, '01', '수익'),
-            const SizedBox(height: 10),
-            for (final e in _incomes)
-              if (_open == e.id)
-                _incomeForm(edit: e)
-              else
-                _row(
-                  title: e.memo.isNotEmpty ? e.memo : e.incomeType,
-                  sub: [
-                    if (_pendingInc.contains(e)) '저장 전',
-                    if (e.memo.isNotEmpty) e.incomeType,
-                    if (e.isWithheld) '원천징수',
-                    if (e.endDate != null) '기간',
-                    if (_isMulti) '${e.date.month}/${e.date.day}',
-                  ].join(' · '),
-                  amount: e.amount,
-                  onTap: () => _openEditor(e.id),
-                ),
-            if (_open == 'inc') _incomeForm() else _addRow('수익 추가하기', () => _openEditor('inc')),
-            const SizedBox(height: 18),
-            AppTheme.dashRule(context),
-            const SizedBox(height: 18),
-            AppTheme.sectionHead(context, '02', '지출'),
-            const SizedBox(height: 10),
-            for (final e in _expenses)
-              if (_open == e.id)
-                _expenseForm(edit: e)
-              else
-                _row(
-                  title: e.content.isNotEmpty ? e.content : expenseCategoryById(e.category).label,
-                  sub: [
-                    if (_pendingExp.contains(e)) '저장 전',
-                    if (e.content.isNotEmpty) expenseCategoryById(e.category).label,
-                    e.paymentMethod,
-                    if (e.isBusiness) '사업경비',
-                    if (e.endDate != null) '기간',
-                    if (_isMulti) '${e.date.month}/${e.date.day}',
-                  ].join(' · '),
-                  amount: e.amount,
-                  onTap: () => _openEditor(e.id),
-                ),
-            if (_open == 'exp') _expenseForm() else _addRow('지출 추가하기', () => _openEditor('exp')),
-            if (_presets.isNotEmpty) ...[
-              const SizedBox(height: 18),
-              AppTheme.dashRule(context),
-              const SizedBox(height: 18),
-              AppTheme.sectionHead(context, null, '즐겨찾기'),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final p in _presets)
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => _openEditor('exp', preset: p),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppTheme.line(context), width: 1),
-                        ),
-                        child: Text('${p.name} ${comma(p.amount)}',
-                            style: AppTheme.sans(AppTheme.tsSM, AppTheme.ink(context))),
-                      ),
-                    ),
-                ],
-              ),
-            ],
+            if (_isMulti) ..._buildMultiDayNotice(),
+            ..._buildIncomeSection(),
+            ..._buildSectionDivider(),
+            ..._buildExpenseSection(),
+            if (_presets.isNotEmpty) ..._buildPresetsSection(),
           ],
         ),
       ),
       ),
     );
   }
+
+  /// 앱바 제목 — 하루면 요일까지, 여러 날이면 범위로.
+  String _buildTitle() {
+    const wd = ['월', '화', '수', '목', '금', '토', '일'];
+    final first = _dates.first, last = _dates.last;
+    return _isMulti
+        ? '${first.month}월 ${first.day}일 – ${last.month}월 ${last.day}일'
+        : '${first.month}월 ${first.day}일 (${wd[first.weekday - 1]})';
+  }
+
+  /// 여러 날을 골랐을 때 맨 위에 뜨는 안내문.
+  List<Widget> _buildMultiDayNotice() => [
+        Text('고른 ${widget.dates.length}일에 각각 기록됩니다.'.keepWords,
+            style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context))),
+        const SizedBox(height: 14),
+      ];
+
+  /// 수익 목록 — 항목들 + 펼친 편집기 + 추가 칸.
+  List<Widget> _buildIncomeSection() => [
+        AppTheme.sectionHead(context, '01', '수익'),
+        const SizedBox(height: 10),
+        for (final e in _incomes)
+          if (_open == e.id)
+            _incomeForm(edit: e)
+          else
+            _row(
+              title: e.memo.isNotEmpty ? e.memo : e.incomeType,
+              sub: [
+                if (_pendingInc.contains(e)) '저장 전',
+                if (e.memo.isNotEmpty) e.incomeType,
+                if (e.isWithheld) '원천징수',
+                if (e.endDate != null) '기간',
+                if (_isMulti) '${e.date.month}/${e.date.day}',
+              ].join(' · '),
+              amount: e.amount,
+              onTap: () => _openEditor(e.id),
+            ),
+        if (_open == 'inc') _incomeForm() else _addRow('수익 추가하기', () => _openEditor('inc')),
+      ];
+
+  /// 지출 목록 — 항목들 + 펼친 편집기 + 추가 칸.
+  List<Widget> _buildExpenseSection() => [
+        AppTheme.sectionHead(context, '02', '지출'),
+        const SizedBox(height: 10),
+        for (final e in _expenses)
+          if (_open == e.id)
+            _expenseForm(edit: e)
+          else
+            _row(
+              title: e.content.isNotEmpty ? e.content : expenseCategoryById(e.category).label,
+              sub: [
+                if (_pendingExp.contains(e)) '저장 전',
+                if (e.content.isNotEmpty) expenseCategoryById(e.category).label,
+                e.paymentMethod,
+                if (e.isBusiness) '사업경비',
+                if (e.endDate != null) '기간',
+                if (_isMulti) '${e.date.month}/${e.date.day}',
+              ].join(' · '),
+              amount: e.amount,
+              onTap: () => _openEditor(e.id),
+            ),
+        if (_open == 'exp') _expenseForm() else _addRow('지출 추가하기', () => _openEditor('exp')),
+      ];
+
+  /// 점선 구분선 — 섹션 사이에 쓴다.
+  List<Widget> _buildSectionDivider() => [
+        const SizedBox(height: 18),
+        AppTheme.dashRule(context),
+        const SizedBox(height: 18),
+      ];
+
+  /// 즐겨찾기(빠른 입력) 칩 목록 — 있을 때만 붙는다.
+  List<Widget> _buildPresetsSection() => [
+        ..._buildSectionDivider(),
+        AppTheme.sectionHead(context, null, '즐겨찾기'),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final p in _presets)
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _openEditor('exp', preset: p),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppTheme.line(context), width: 1),
+                  ),
+                  child: Text('${p.name} ${comma(p.amount)}',
+                      style: AppTheme.sans(AppTheme.tsSM, AppTheme.ink(context))),
+                ),
+              ),
+          ],
+        ),
+      ];
 
   /// 목록 안에서 펼쳐지는 지출 편집기.
   Widget _expenseForm({ExpenseItem? edit}) {
