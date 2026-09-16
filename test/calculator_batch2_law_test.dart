@@ -196,4 +196,21 @@ void main() {
       expectToken(t, '0원', '소득상한 초과');
     });
   });
+
+  group('재산요건 (조특법 §100조의3①4·§100조의5④)', () {
+    testWidgets('재산 2억4천만원 이상이면 장려금이 0원이다', (t) async {
+      await open(t, const EarnedIncomeTaxCreditScreen(), ['15000000', '250000000']);
+      await t.tap(find.text('맞벌이'));
+      await t.pump(const Duration(milliseconds: 400));
+      expectToken(t, '0원', '재산 초과 → 지급 없음');
+    });
+
+    testWidgets('재산 1억7천만원 이상이면 근로장려금이 절반이다', (t) async {
+      const full = 600 / 800 * 330; // 맞벌이 점증 구간 — 조특법 §100의5①3가
+      await open(t, const EarnedIncomeTaxCreditScreen(), ['6000000', '180000000']);
+      await t.tap(find.text('맞벌이'));
+      await t.pump(const Duration(milliseconds: 400));
+      expectToken(t, '${(full / 2).round()}만원', '재산 1.7억 이상 → 절반 지급');
+    });
+  });
 }

@@ -19,12 +19,14 @@ class _EarnedIncomeTaxCreditScreenState
     extends State<EarnedIncomeTaxCreditScreen> {
   _HouseholdType _type = _HouseholdType.single;
   final TextEditingController _incomeController = TextEditingController();
+  final TextEditingController _propertyController = TextEditingController();
   int _children = 0;
 
   void _reset() {
     setState(() {
       _type = _HouseholdType.single;
       _incomeController.clear();
+      _propertyController.clear();
       _children = 0;
     });
   }
@@ -32,12 +34,24 @@ class _EarnedIncomeTaxCreditScreenState
   @override
   void dispose() {
     _incomeController.dispose();
+    _propertyController.dispose();
     super.dispose();
   }
 
   double get _income =>
       (double.tryParse(_incomeController.text.replaceAll(',', '')) ?? 0.0) /
       10000; // 원 → 만원
+
+  double get _property =>
+      (double.tryParse(_propertyController.text.replaceAll(',', '')) ?? 0.0) /
+      10000; // 원 → 만원
+
+  // 조특법 §100조의3①4·§100조의28①4 — 가구원 재산 합계 2억4천만원 미만이어야 신청 가능.
+  bool get _overPropertyLimit => _property >= 24000;
+
+  // 조특법 §100조의5④ — 재산 1억7천만원 이상이면 근로장려금은 산정액의 50%만 지급.
+  // 자녀장려금(§100조의29)에는 이 50% 감액 규정이 없다.
+  bool get _overPropertyHalfLine => _property >= 17000;
 
   // 근로장려금 (만원 단위)
   double _earnedCredit(double income) {
@@ -105,8 +119,11 @@ class _EarnedIncomeTaxCreditScreenState
 
     final income = _income;
     final hasInput = income > 0;
-    final earnedCredit = _earnedCredit(income);
-    final childCredit = _childCredit(income);
+    final ineligible = _overPropertyLimit;
+    final earnedCredit = ineligible
+        ? 0.0
+        : _earnedCredit(income) * (_overPropertyHalfLine ? 0.5 : 1.0);
+    final childCredit = ineligible ? 0.0 : _childCredit(income);
     final total = earnedCredit + childCredit;
 
     return Scaffold(
@@ -202,6 +219,51 @@ class _EarnedIncomeTaxCreditScreenState
                   if (hasInput) ...[
                     const SizedBox(height: 6),
                     Text('= ${comma(income.round())}만원',
+                        style: TextStyle(color: subColor, fontSize: 12)),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 가구원 재산 합계
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: AppTheme.getCardDecoration(context, borderRadius: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('가구원 재산 합계',
+                      style: TextStyle(
+                          color: textColor,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('토지·건물·자동차·예금 등 (2억 4,000만원 미만만 신청 가능)'.keepWords,
+                      style: TextStyle(
+                          color: subColor.withValues(alpha: 0.7),
+                          fontSize: 12)),
+                  const SizedBox(height: 8),
+                  AmountField(
+                    controller: _propertyController,
+                    expand: true,
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  if (_property > 0) ...[
+                    const SizedBox(height: 6),
+                    Text('= ${comma(_property.round())}만원',
+                        style: TextStyle(color: subColor, fontSize: 12)),
+                  ],
+                  if (ineligible) ...[
+                    const SizedBox(height: 8),
+                    Text('재산이 2억 4,000만원을 넘어 장려금을 신청할 수 없어요.'.keepWords,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600)),
+                  ] else if (_overPropertyHalfLine) ...[
+                    const SizedBox(height: 8),
+                    Text('재산이 1억 7,000만원 이상이라 근로장려금은 절반만 산정돼요.'.keepWords,
                         style: TextStyle(color: subColor, fontSize: 12)),
                   ],
                 ],
