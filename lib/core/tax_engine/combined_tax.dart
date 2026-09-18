@@ -315,6 +315,9 @@ class CombinedTaxCalculator {
       if (estimatedIncomeTax < 0) estimatedIncomeTax = 0;
 
       final double finalIncomeTax = TaxRates.truncateWon(estimatedIncomeTax);
+      // ponytail: 지방세법 §92③의 산출세액 산식은 국세의 정확히 1/10이지만
+      // 세액공제(§94)는 지방세특례제한법이 따로 정한다 — 결정세액 10%는 근사치.
+      // 실제 지방세 세액공제가 국세와 어긋나는 케이스가 확인되면 별도 계산으로.
       final double finalLocalTax = TaxRates.truncateWon(finalIncomeTax * 0.1);
 
       return (

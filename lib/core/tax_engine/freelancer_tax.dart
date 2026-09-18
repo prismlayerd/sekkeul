@@ -212,6 +212,8 @@ class FreelancerTaxCalculator {
     }
 
     // 8. 지방소득세 결정세액 (지방세 = 결정 소득세의 10%)
+    // ponytail: 지방세법 §92③의 산출세액 산식은 국세의 정확히 1/10이지만
+    // 세액공제(§94)는 지방세특례제한법이 따로 정한다 — 결정세액 10%는 근사치.
     final double estimatedLocalTax = estimatedIncomeTax * 0.1;
 
     // 결정세액 합산 (원화 절사 적용)
