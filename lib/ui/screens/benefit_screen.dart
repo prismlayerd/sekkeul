@@ -61,6 +61,9 @@ class _Benefit {
   /// 비워 두면 `benefit_freshness_test`가 미확인으로 세고, 오래되면 터진다.
   final ({String source, String on})? verified;
 
+  /// 이 유형에게만 보인다. null이면 전원 — 근로자 전용 제도를 프리랜서에게 보이지 않으려고.
+  final List<String>? only;
+
   const _Benefit({
     required this.name,
     required this.amount,
@@ -69,8 +72,12 @@ class _Benefit {
     this.links,
     this.eligibilityBuilder,
     this.verified,
+    this.only,
   });
 }
+
+/// 근로계약이 있어야 받는 제도 — 근로소득이 있는 두 유형.
+const _worker = ['직장인', 'N잡러'];
 
 class _BenefitCategory {
   final String label;
@@ -275,6 +282,7 @@ final _categories = <_BenefitCategory>[
   _BenefitCategory(label: '급여·근로', items: [
     _Benefit(
       name: '청년 중소기업 소득세 감면',
+      only: _worker,
       verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-09-08'),
       amount: '연 200만원 한도',
       desc: '만 15~34세 청년이 중소기업에 취업하면 5년간 소득세 90% 감면, 연 200만원 한도.\n'
@@ -492,6 +500,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '내일채움공제',
+      only: _worker,
       verified: (source: 'https://www.law.go.kr/법령/조세특례제한법', on: '2026-09-08'),
       amount: '사업주가 2배 이상 더 낸다',
       desc: '중소기업 재직자가 오래 다니도록 근로자와 사업주가 함께 적립해 만기에 근로자가 전액 받는 제도.\n\n'
@@ -558,6 +567,7 @@ final _categories = <_BenefitCategory>[
     ),
     _Benefit(
       name: '6+6 부모육아휴직급여',
+      only: _worker,
       verified: (source: 'https://www.law.go.kr/법령/고용보험법시행령', on: '2026-09-08'),
       amount: '부모 각각 첫 6개월 통상임금 100%',
       desc: '생후 18개월 이내 자녀에 대해 부모가 모두 육아휴직을 사용하면 첫 6개월간 각자 통상임금 100%를 지급.\n\n'
@@ -577,6 +587,7 @@ final _categories = <_BenefitCategory>[
     ),
     const _Benefit(
       name: '배우자 출산전후휴가',
+      only: _worker,
       verified: (source: 'https://www.law.go.kr/법령/남녀고용평등과일ㆍ가정양립지원에관한법률/제18조의2', on: '2026-09-24'),
       amount: '20일 유급',
       desc: '배우자의 임신·출산을 이유로 쓰는 유급휴가. 사업주는 근로자가 고지하면 20일을 줘야 하고, '
@@ -589,6 +600,7 @@ final _categories = <_BenefitCategory>[
     ),
     const _Benefit(
       name: '유산·조산 위험 배우자 돌봄 육아휴직',
+      only: _worker,
       verified: (source: 'https://www.law.go.kr/법령/남녀고용평등과일ㆍ가정양립지원에관한법률/제19조', on: '2026-09-24'),
       amount: '최대 1년',
       desc: '남성 근로자가 유산·조산 등 위험이 있는 임신 중인 배우자를 돌보려는 경우에도 육아휴직을 '
@@ -1644,6 +1656,8 @@ class _BenefitScreenState extends State<BenefitScreen> {
 
   /// 이름·금액·설명 어디에 걸려도 잡는다. 설명에 지급 요건이 다 들어있어서
   /// "무주택", "34세" 같은 조건으로 찾는 사람도 걸린다.
+  bool _shown(_Benefit b) => b.only == null || b.only!.contains(widget.userType);
+
   bool _matches(_Benefit b) {
     final q = _query.toLowerCase();
     return b.name.toLowerCase().contains(q) ||
@@ -1701,7 +1715,7 @@ class _BenefitScreenState extends State<BenefitScreen> {
       final hits = [
         for (final cat in _categories)
           for (final benefit in cat.items)
-            if (_matches(benefit)) (cat.label, benefit),
+            if (_shown(benefit) && _matches(benefit)) (cat.label, benefit),
       ];
       if (hits.isEmpty) {
         return ListView(children: [
@@ -1744,7 +1758,8 @@ class _BenefitScreenState extends State<BenefitScreen> {
                   style: AppTheme.label(context)),
               children: [
                 for (final benefit in cat.items)
-                  _buildItem(context, benefit, ink, sub, line, accent),
+                  if (_shown(benefit))
+                    _buildItem(context, benefit, ink, sub, line, accent),
               ],
             ),
           ),

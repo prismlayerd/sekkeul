@@ -92,6 +92,29 @@ void main() {
       })!;
       expect(n.body, ['첫 문단', '둘째 문단']);
     });
+
+    test('audience·regions — 비면 전원, 적혀 있으면 그 유형·시도만', () {
+      final all = one({'id': 'a', 'title': 't', 'date': '2026-09-09'})!;
+      expect(all.matches('프리랜서', null), isTrue);
+
+      final n = one({
+        'id': 'b',
+        'title': 't',
+        'date': '2026-09-09',
+        'audience': ['직장인', 7, ' '],
+        'regions': ['서울'],
+      })!;
+      expect(n.audience, ['직장인']);
+      expect(n.matches('직장인', '서울'), isTrue);
+      expect(n.matches('프리랜서', '서울'), isFalse);
+      expect(n.matches('직장인', '부산'), isFalse);
+      // 시/도를 안 고른 사람에게 지역 소식은 안 보인다.
+      expect(n.matches('직장인', null), isFalse);
+
+      // 타입이 틀리면(문자열) 조건 없음으로 읽는다 — 카드 하나 때문에 던지지 않는다.
+      expect(one({'id': 'c', 'title': 't', 'date': '2026-09-09', 'regions': '서울'})!
+          .regions, isEmpty);
+    });
   });
 
   group('목록 읽기', () {

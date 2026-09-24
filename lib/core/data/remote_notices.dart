@@ -143,6 +143,13 @@ class Notice {
   final DateTime date;
   final DateTime? until;
 
+  /// 누구에게 보이나. 비면 전원. `["직장인","N잡러"]`처럼 유형을 적는다.
+  final List<String> audience;
+
+  /// 어느 시/도에만 보이나. 비면 전국. 적혀 있는데 사용자가 시/도를 안 골랐으면
+  /// 안 보인다 — 다른 동네 소식은 소음이다.
+  final List<String> regions;
+
   const Notice({
     required this.id,
     required this.label,
@@ -155,9 +162,15 @@ class Notice {
     this.source,
     this.sourceUrl,
     this.until,
+    this.audience = const [],
+    this.regions = const [],
   });
 
   bool isExpired(DateTime now) => until != null && now.isAfter(until!);
+
+  bool matches(String userType, String? sido) =>
+      (audience.isEmpty || audience.contains(userType)) &&
+      (regions.isEmpty || regions.contains(sido));
 
   /// 필수 칸이 비었거나 형태가 다르면 `null`. 던지지 않는다.
   static Notice? tryFrom(Object? raw) {
@@ -166,6 +179,11 @@ class Notice {
       final v = raw[k];
       return v is String && v.trim().isNotEmpty ? v.trim() : null;
     }
+
+    List<String> strs(String k) => [
+          for (final v in (raw[k] is List ? raw[k] as List : const []))
+            if (v is String && v.trim().isNotEmpty) v.trim(),
+        ];
 
     final id = str('id');
     final title = str('title');
@@ -190,6 +208,8 @@ class Notice {
       sourceUrl: _safeUrl(str('sourceUrl')),
       date: date,
       until: _date(str('until')),
+      audience: strs('audience'),
+      regions: strs('regions'),
     );
   }
 

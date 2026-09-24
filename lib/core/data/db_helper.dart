@@ -281,7 +281,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     // 기존 평문 DB가 있고 아직 암호화 전이면: 먼저 평문 상태로 최신 스키마까지 정규화한 뒤
     // SQLCipher 암호화 DB로 1회 이전한다(S-2). 신규 설치는 곧장 암호화 DB로 생성된다.
     if (await File(path).exists() && !await _isAlreadyEncrypted(path, key)) {
-      final normalizeDb = await openDatabase(path, version: 45, onCreate: _onCreate, onUpgrade: _onUpgrade);
+      final normalizeDb = await openDatabase(path, version: 46, onCreate: _onCreate, onUpgrade: _onUpgrade);
       await normalizeDb.close();
       await _encryptExistingPlaintextDb(path, key);
     }
@@ -289,7 +289,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     _db = await openDatabase(
       path,
       password: key,
-      version: 45,
+      version: 46,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -332,7 +332,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     }
     await plainDb.close();
 
-    final encDb = await openDatabase(tempEncPath, password: key, version: 45, onCreate: _onCreate);
+    final encDb = await openDatabase(tempEncPath, password: key, version: 46, onCreate: _onCreate);
     var insertedRows = 0;
     await encDb.transaction((txn) async {
       for (final entry in dump.entries) {
@@ -405,7 +405,8 @@ class SqfliteDatabaseHelper implements DatabaseService {
             prior_year_income REAL,
             is_new_business INTEGER DEFAULT 0,
             has_multiple_businesses INTEGER DEFAULT 0,
-            freelancer_health_insurance REAL
+            freelancer_health_insurance REAL,
+            sido TEXT
           )
         ''');
         // 지출 내역 테이블 생성 (민감 정보는 텍스트 암호화 상태로 저장)
@@ -933,6 +934,12 @@ class SqfliteDatabaseHelper implements DatabaseService {
                 "     ELSE '전세' END");
           });
         }
+        // v46 — 사는 시/도. 지역 소식만 거르는 데 쓴다. 기존 사용자는 null(미설정).
+        if (oldVersion < 46) {
+          await _step('v46', () async {
+            await db.execute('ALTER TABLE user_profile ADD COLUMN sido TEXT');
+          });
+        }
   }
 
   @override
@@ -992,6 +999,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
         'freelancer_health_insurance': profile['freelancer_health_insurance'],
         'is_new_business': profile['is_new_business'] == true ? 1 : 0,
         'has_multiple_businesses': profile['has_multiple_businesses'] == true ? 1 : 0,
+        'sido': profile['sido'],
     });
 
     await db.transaction((txn) async {
@@ -1082,6 +1090,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
       'freelancer_health_insurance': map['freelancer_health_insurance'],
       'is_new_business': map['is_new_business'] == 1,
       'has_multiple_businesses': map['has_multiple_businesses'] == 1,
+      'sido': map['sido'] as String?,
     };
   }
 

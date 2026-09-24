@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/data/residence.dart';
+import '../../core/data/sido.dart';
 import '../theme/app_theme.dart';
 import '../../core/data/db_helper.dart';
 import '../../core/data/occupation_data.dart';
@@ -45,6 +46,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   final TextEditingController _ageEditCtrl = TextEditingController();
   int _dependentsEditValue = 0;
   String _residenceEditValue = '전세';
+  String? _sidoEditValue;
   bool _headEditValue = true;
   int _payDayEditValue = 0;
   int _childrenTotalEditValue = 0;
@@ -145,6 +147,8 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
           _dependentsEditValue = (p['dependents'] as int?) ?? 0;
         case 'residence':
           _residenceEditValue = residenceOf(p) ?? '전세';
+        case 'sido':
+          _sidoEditValue = p['sido'] as String?;
         case 'household_head':
           _headEditValue = p['is_household_head'] != false;
         case 'pay_day':
@@ -386,6 +390,8 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       // 자가면 그 공제들이 통째로 없으니 묻지 않는다.
       if (!ownsHome(p)) _householdHeadRow(ink, sub, accent, p),
       if (!_isFreelancer) _payDayRow(ink, sub, accent, payDay),
+      // 세금 계산엔 안 쓰여 완성도에 넣지 않는다 — 지역 소식을 거르는 데만 쓴다.
+      _sidoRow(ink, sub, accent, p['sido'] as String?),
     ];
 
     return _rowsWithHairlines(rows);
@@ -507,6 +513,52 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       accent: accent,
       editor: _householdHeadEditor(ink),
     );
+  }
+
+  Widget _sidoRow(Color ink, Color sub, Color accent, String? sido) {
+    return _infoRow(
+      icon: Icons.place_outlined,
+      label: '사는 지역',
+      value: sido,
+      placeholder: '미설정 — 우리 시·도 소식만 골라 보여줘요',
+      isSet: sido != null,
+      editKey: 'sido',
+      ink: ink,
+      sub: sub,
+      accent: accent,
+      editor: _sidoEditor(ink),
+    );
+  }
+
+  Widget _sidoEditor(Color ink) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Wrap(spacing: 6, runSpacing: 6, children: [
+        for (final s in kSidoList)
+          GestureDetector(
+            onTap: () => setState(() => _sidoEditValue = s),
+            child: Container(
+              width: 56,
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: _sidoEditValue == s ? ink : null,
+                border: Border.all(color: _sidoEditValue == s ? ink : AppTheme.line(context), width: 1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(s,
+                  style: AppTheme.sans(AppTheme.tsSM, _sidoEditValue == s ? Theme.of(context).cardColor : ink,
+                      weight: _sidoEditValue == s ? FontWeight.w700 : FontWeight.w500)),
+            ),
+          ),
+      ]),
+      const SizedBox(height: 10),
+      _editActions(
+          onCancel: () => setState(() => _editingKey = null),
+          onSave: () async {
+            await _updateProfileFields({'sido': _sidoEditValue});
+            if (mounted) setState(() => _editingKey = null);
+          }),
+    ]);
   }
 
   Widget _payDayRow(Color ink, Color sub, Color accent, int payDay) {

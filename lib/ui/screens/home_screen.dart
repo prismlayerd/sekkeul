@@ -108,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   bool _isProfileCompleted = false; // 프로필 완성 여부 (온보딩 2단계)
   Set<String> _hiddenBannerIds = {}; // X로 닫은 배너 카드(30일간 숨김)
   List<Notice> _notices = const []; // 원격 소식(앱 업데이트 없이 바뀐다)
+  String? _sido; // 사는 시/도 — 지역 소식만 거른다
   double _decidedTax = 0.0; // 결정세액 (연말정산 진단 데이터)
   double _grossIncome = 0.0; // 연소득(연봉) (연말정산 진단 데이터)
   double _laborIncome = 0.0; // 이번 달 근로소득(급여) — N잡러 수입 분리
@@ -228,6 +229,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           _decidedTax = profile['decided_tax'] as double? ?? 0.0;
           _payDay = (profile['pay_day'] as int? ?? 25).clamp(1, 31);
           _occupationCode = profile['occupation_code'] as String?;
+          _sido = profile['sido'] as String?;
           _priorYearIncome = (profile['prior_year_income'] as num?)?.toInt() ?? 0;
           _isNewBusiness = profile['is_new_business'] == true;
           _isTypeIdentified = profile['type_identified'] == true;
@@ -1239,6 +1241,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   /// 배너 헤드라인은 두 줄까지라 긴 제목은 여기서 잘린다 — 그래서 `summary`가
   /// 아니라 `title`을 헤드라인으로 쓴다. 요약은 보조 줄이다.
   List<BannerCardData> _noticeBannerCards() => _notices
+      .where((n) => n.matches(_userType, _sido))
       .map((n) => BannerCardData(
             label: n.label,
             headline: n.title,
