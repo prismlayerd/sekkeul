@@ -596,9 +596,16 @@ class EmployeeTaxCalculator {
   /// - 일반기부금/지정기부금: 1천만 이하 15%, 초과 30%
   /// - 정치자금기부금: 10만원까지 100% (환급), 초과 15% (3천만 초과시 25%)
   /// 고향사랑기부금은 공제율 구간이 달라 [calculateHometownDonationTaxCredit]로 분리.
+  ///
+  /// 소득한도(§59조의4④) — 일반기부금은 종합소득금액의 30%까지만 공제 대상이다.
+  /// ponytail: 앱은 종교단체·일반 기부금을 한 버킷으로 받아 종교단체분을 구분하지
+  /// 않으므로, 더 관대한 "종교단체 없음" 한도(30%)만 적용한다. 종교단체 기부가
+  /// 섞여 있으면 실제 한도(소득×10%+min(소득×20%, 종교외기부))가 더 낮을 수 있다 —
+  /// 종교단체 입력칸이 생기면 정확한 두 갈래 한도로 올릴 것.
   static double calculateDonationTaxCredit({
     required double generalDonation,      // 일반 지정기부금
     required double politicalDonation,    // 정치자금기부금
+    double globalIncomeAmount = double.infinity, // 종합소득금액 — 한도 계산용
     // 경정청구용 — 2021·2022 귀속은 한시 상향(20/35%), 2024 귀속은 3천만 초과 40%
     double rateLow = 0.15,
     double rateHigh = 0.30,
@@ -606,19 +613,23 @@ class EmployeeTaxCalculator {
   }) {
     double credit = 0.0;
 
+    final double incomeLimit = globalIncomeAmount * 0.30;
+    final double eligibleDonation =
+        generalDonation > incomeLimit ? incomeLimit : generalDonation;
+
     // 일반/지정 기부금: 1천만 이하 rateLow, 1천만~3천만 rateHigh, 3천만 초과 rateTop
-    if (generalDonation > 0) {
+    if (eligibleDonation > 0) {
       const double tier1 = 10000000.0;
       const double tier2 = 30000000.0;
-      final double low = generalDonation < tier1 ? generalDonation : tier1;
+      final double low = eligibleDonation < tier1 ? eligibleDonation : tier1;
       credit += low * rateLow;
-      if (generalDonation > tier1) {
+      if (eligibleDonation > tier1) {
         final double mid =
-            (generalDonation < tier2 ? generalDonation : tier2) - tier1;
+            (eligibleDonation < tier2 ? eligibleDonation : tier2) - tier1;
         credit += mid * rateHigh;
       }
-      if (generalDonation > tier2) {
-        credit += (generalDonation - tier2) * rateTop;
+      if (eligibleDonation > tier2) {
+        credit += (eligibleDonation - tier2) * rateTop;
       }
     }
 
@@ -814,6 +825,7 @@ class EmployeeTaxCalculator {
       donationTaxCredit: calculateDonationTaxCredit(
         generalDonation: generalDonation,
         politicalDonation: politicalDonation,
+        globalIncomeAmount: grossIncome - calculateLaborDeduction(grossIncome),
       ),
       mortgageIncomeDeduction: calculateMortgageIncomeDeduction(mortgageInterestExpense),
     );

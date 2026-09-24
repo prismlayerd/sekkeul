@@ -215,5 +215,27 @@ void main() {
       expect(eng,
           closeTo(refDonationTaxCredit(general: 15000000, political: 500000), 0.01));
     });
+
+    test('소득한도(§59의4④) — 종합소득금액 30% 넘는 기부액은 초과분이 공제 안 된다', () {
+      // 소득금액 3천만 · 기부 2천만 → 한도(900만)까지만 인정, 나머지 1,100만은 공제 없음
+      final over = EmployeeTaxCalculator.calculateDonationTaxCredit(
+        generalDonation: 20000000, politicalDonation: 0,
+        globalIncomeAmount: 30000000,
+      );
+      expect(over, closeTo(refDonationTaxCredit(general: 9000000), 0.01));
+
+      // 한도 안이면(소득 3천만 · 기부 500만) 그대로 전액 계산
+      final under = EmployeeTaxCalculator.calculateDonationTaxCredit(
+        generalDonation: 5000000, politicalDonation: 0,
+        globalIncomeAmount: 30000000,
+      );
+      expect(under, closeTo(refDonationTaxCredit(general: 5000000), 0.01));
+
+      // globalIncomeAmount를 안 넘기면(기존 호출부) 한도 없이 그대로 — 하위호환
+      final noLimit = EmployeeTaxCalculator.calculateDonationTaxCredit(
+        generalDonation: 20000000, politicalDonation: 0,
+      );
+      expect(noLimit, closeTo(refDonationTaxCredit(general: 20000000), 0.01));
+    });
   });
 }

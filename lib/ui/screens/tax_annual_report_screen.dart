@@ -210,6 +210,7 @@ class _TaxAnnualReportScreenState extends State<TaxAnnualReportScreen> {
     _donationCredit = EmployeeTaxCalculator.calculateDonationTaxCredit(
       generalDonation: double.tryParse(_donationCtrl.text.replaceAll(',', '')) ?? 0.0,
       politicalDonation: double.tryParse(_politicalDonationCtrl.text.replaceAll(',', '')) ?? 0.0,
+      globalIncomeAmount: gross - _laborDeduction,
     );
 
     _rentCredit = 0.0;

@@ -400,8 +400,10 @@ void main() {
     });
 
     test('donation_3: 기부 1,500만 → 1,000만×15% + 500만×30% = 300만', () {
+      // 총급여를 넉넉히 잡아 §59의4④ 소득한도(종합소득금액 30%)에 안 걸리게 한다 —
+      // 한도 자체는 special_credit_law_crosscheck_test.dart가 따로 검산한다.
       final r = EmployeeTaxCalculator.calculateSpecialDeductions(
-        grossIncome: 50000000,
+        grossIncome: 100000000,
         infertilityMedical: 0,
         selfAndSeniorAndDisabledMedical: 0,
         otherDependentMedical: 0,

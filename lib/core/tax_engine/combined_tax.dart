@@ -291,6 +291,7 @@ class CombinedTaxCalculator {
           : EmployeeTaxCalculator.calculateDonationTaxCredit(
               generalDonation: generalDonation,
               politicalDonation: 0,
+              globalIncomeAmount: totalGlobalIncome,
             );
       final double standardTaxCreditAmt = useStandardCredit ? TaxRates.standardTaxCredit : 0.0;
 

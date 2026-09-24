@@ -388,7 +388,10 @@ EmployeeRefundEstimate estimateYearRefund({
     ),
     donationCredit: EmployeeTaxCalculator.calculateDonationTaxCredit(
       generalDonation: a('donation') + a('religiousDonation'),
-      politicalDonation: 0),
+      politicalDonation: 0,
+      globalIncomeAmount:
+          grossIncome - EmployeeTaxCalculator.calculateLaborDeduction(grossIncome),
+    ),
     insurancePremiumCredit: EmployeeTaxCalculator.calculateInsurancePremiumTaxCredit(
       generalInsurancePremium: a('lifeInsurance'), disabledInsurancePremium: 0),
     pensionAccountCredit: EmployeeTaxCalculator.calculatePensionAccountTaxCredit(
