@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/benefit_section.dart';
+import '../../core/data/remote_notices.dart';
+import 'notice_detail_screen.dart';
 import '../../core/tax_engine/tax_rates.dart';
 import '../theme/app_theme.dart';
 import '../components/search_field.dart';
@@ -1624,7 +1626,21 @@ Future<void> _launchUrl(String url) async {
 
 class BenefitScreen extends StatefulWidget {
   final String userType;
-  const BenefitScreen({super.key, required this.userType});
+
+  /// 맞춤 혜택 — 홈이 받아 둔 원격 소식. 여기서 유형·시/도로 거른다.
+  final List<Notice> notices;
+  final String? sido;
+
+  /// 시/도를 안 골랐을 때 「사는 지역 고르기」가 여는 곳(내 정보).
+  final VoidCallback? onSetRegion;
+
+  const BenefitScreen({
+    super.key,
+    required this.userType,
+    this.notices = const [],
+    this.sido,
+    this.onSetRegion,
+  });
 
   @override
   State<BenefitScreen> createState() => _BenefitScreenState();
@@ -1742,6 +1758,7 @@ class _BenefitScreenState extends State<BenefitScreen> {
     return ListView(
       padding: const EdgeInsets.only(bottom: 32),
       children: [
+        _customSection(ink, sub, accent),
         for (final cat in _categories) ...[
           Divider(height: 1, thickness: 1, color: line),
           Theme(
@@ -1765,6 +1782,61 @@ class _BenefitScreenState extends State<BenefitScreen> {
           ),
         ],
       ],
+    );
+  }
+
+  /// 맞춤 혜택 — 내 유형·시/도에 맞는 원격 소식. 카탈로그보다 위에 둔다:
+  /// 카탈로그는 전국 공통이고, 이쪽은 앱 업데이트 없이 늘어나는 나만의 목록이다.
+  Widget _customSection(Color ink, Color sub, Color accent) {
+    final list = widget.notices.where((n) => n.matches(widget.userType, widget.sido)).toList();
+    String md(DateTime d) => '${d.month}/${d.day}';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('맞춤 혜택', style: AppTheme.label(context)),
+        const SizedBox(height: 4),
+        Row(children: [
+          Expanded(
+            child: Text('${widget.sido ?? '지역 미설정'} · ${widget.userType}',
+                style: AppTheme.sans(AppTheme.tsXS, sub)),
+          ),
+          if (widget.sido == null && widget.onSetRegion != null)
+            GestureDetector(
+              onTap: widget.onSetRegion,
+              child: Text('사는 지역 고르기',
+                  style: AppTheme.sans(AppTheme.tsXS, accent,
+                      weight: FontWeight.w700, decoration: TextDecoration.underline)),
+            ),
+        ]),
+        if (list.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Text('지금 올라온 맞춤 혜택이 없어요.', style: AppTheme.sans(AppTheme.tsSM, sub)),
+          ),
+        for (final n in list)
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.push(
+                context, MaterialPageRoute(builder: (_) => NoticeDetailScreen(notice: n))),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Row(children: [
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(
+                        '${n.label} · ${n.until != null ? '${md(n.until!)}까지' : md(n.date)}'
+                        '${n.regions.isNotEmpty ? ' · ${n.regions.join('·')}' : ''}',
+                        style: AppTheme.sans(AppTheme.tsXS, sub)),
+                    const SizedBox(height: 2),
+                    Text(n.title.replaceAll('\n', ' '),
+                        style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, spacing: -0.2)),
+                  ]),
+                ),
+                Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.inkTertiary(context)),
+              ]),
+            ),
+          ),
+      ]),
     );
   }
 

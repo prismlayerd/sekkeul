@@ -93,6 +93,16 @@ void main() {
       expect(n.body, ['첫 문단', '둘째 문단']);
     });
 
+    test('until은 그날까지 보이고, 배너엔 마감 14일 전부터만 오른다', () {
+      final n = one({'id': 'a', 'title': 't', 'date': '2026-09-01', 'until': '2026-10-16'})!;
+      expect(n.isExpired(DateTime(2026, 10, 16, 18)), isFalse, reason: '마감 당일에 사라졌다');
+      expect(n.isExpired(DateTime(2026, 10, 17, 1)), isTrue);
+      expect(n.inBanner(DateTime(2026, 9, 24)), isFalse, reason: '22일 남았는데 배너에 올랐다');
+      expect(n.inBanner(DateTime(2026, 10, 2)), isTrue);
+      // until이 없으면 배너엔 안 오르고 맞춤 혜택 목록에만 있다.
+      expect(one({'id': 'b', 'title': 't', 'date': '2026-09-01'})!.inBanner(DateTime(2026, 9, 2)), isFalse);
+    });
+
     test('audience·regions — 비면 전원, 적혀 있으면 그 유형·시도만', () {
       final all = one({'id': 'a', 'title': 't', 'date': '2026-09-09'})!;
       expect(all.matches('프리랜서', null), isTrue);

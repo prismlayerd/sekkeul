@@ -166,7 +166,15 @@ class Notice {
     this.regions = const [],
   });
 
-  bool isExpired(DateTime now) => until != null && now.isAfter(until!);
+  /// `until`은 그날까지 보인다(그날 자정이 아니라 다음 날 자정에 내린다) —
+  /// "10/16까지 신청"인 소식이 10/16 당일에 사라지면 안 된다.
+  bool isExpired(DateTime now) =>
+      until != null && now.isAfter(until!.add(const Duration(days: 1)));
+
+  /// 홈 배너에 올리는가 — 마감(`until`)이 14일 안으로 다가온 것만.
+  /// 나머지는 혜택 탭 「맞춤 혜택」에만 쌓인다. 배너가 10장씩 돌면 아무것도 안 읽혔다.
+  bool inBanner(DateTime now) =>
+      until != null && until!.difference(now).inDays <= 14;
 
   bool matches(String userType, String? sido) =>
       (audience.isEmpty || audience.contains(userType)) &&

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/core/data/db_helper.dart';
+import 'package:secul/core/data/remote_notices.dart';
 import 'package:secul/ui/screens/benefit_screen.dart';
 import 'package:secul/ui/screens/my_info_screen.dart';
 
@@ -32,6 +33,59 @@ void main() {
 
     expect((await dbService.getProfile())!['sido'], '부산');
     expect(find.text('부산'), findsOneWidget);
+  });
+
+  testWidgets('유형은 내 정보에서 바꾸고 프로필에 저장된다', (t) async {
+    t.view.physicalSize = const Size(390, 2400);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    dbService = InMemoryDatabaseHelper();
+    await dbService.initDatabase();
+    await dbService.saveProfile({'user_type': '직장인'});
+    var changed = 0;
+
+    await t.pumpWidget(MaterialApp(
+      home: MyInfoScreen(userType: '직장인', onProfileChanged: () => changed++),
+    ));
+    await t.pumpAndSettle();
+    expect(find.text('예상 연봉'), findsOneWidget);
+
+    await t.tap(find.text('프리랜서'));
+    await t.pumpAndSettle();
+
+    expect((await dbService.getProfile())!['user_type'], '프리랜서');
+    expect(changed, 1, reason: '홈이 다시 읽어야 가계부·알림이 새 유형으로 돈다');
+    // 프리랜서에겐 안 쓰이는 항목이 바로 빠진다.
+    expect(find.text('예상 연봉'), findsNothing);
+  });
+
+  testWidgets('혜택 탭 맨 위 맞춤 혜택 — 내 유형·시/도 소식만', (t) async {
+    t.view.physicalSize = const Size(390, 2400);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    Notice n(String id, String title, {List<String> a = const [], List<String> r = const []}) =>
+        Notice(id: id, label: '청년', title: title, summary: '', body: const [],
+            date: DateTime(2026, 9, 20), audience: a, regions: r);
+    final notices = [
+      n('a', '전국 공통 소식'),
+      n('b', '서울 청년 월세', r: ['서울']),
+      n('c', '부산 청년 교통비', r: ['부산']),
+      n('d', '근로자 전용', a: ['직장인', 'N잡러']),
+    ];
+    await t.pumpWidget(MaterialApp(
+      home: BenefitScreen(userType: '프리랜서', sido: '서울', notices: notices),
+    ));
+    await t.pumpAndSettle();
+
+    expect(find.text('서울 · 프리랜서'), findsOneWidget);
+    expect(find.text('전국 공통 소식'), findsOneWidget);
+    expect(find.text('서울 청년 월세'), findsOneWidget);
+    expect(find.text('부산 청년 교통비'), findsNothing);
+    expect(find.text('근로자 전용'), findsNothing);
   });
 
   Future<bool> finds(WidgetTester t, String userType, String q) async {

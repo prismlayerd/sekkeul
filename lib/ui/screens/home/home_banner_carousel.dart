@@ -97,7 +97,7 @@ class HomeBannerCarousel extends StatelessWidget {
             count: cards.length,
             active: idx,
             onTap: onTickTap,
-            labelFor: (i) => '${i + 1}번째 소식',
+            labelFor: (i) => '${i + 1}번째 카드',
           ),
         ],
       ],

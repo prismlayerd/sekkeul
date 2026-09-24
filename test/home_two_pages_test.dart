@@ -68,13 +68,15 @@ void main() {
         reason: '되돌아오지 못한다 — 한쪽으로만 흐르는 문이다');
   });
 
-  testWidgets('머리(유형 선택)는 두 장에서 계속 보인다', (t) async {
+  testWidgets('머리(지금 유형·지역)는 두 장에서 계속 보인다', (t) async {
+    // 유형 선택 버튼은 내 정보로 옮겼다(2026-09-24). 머리에는 지금 무엇으로
+    // 보고 있는지만 남는다 — 그게 장을 넘겨도 보여야 한다.
     await pumpHome(t);
-    expect(findKo('N잡러'), findsOneWidget);
+    expect(findKo('직장인 · 지역 미설정'), findsOneWidget);
 
     await swipe(t, toNext: true);
-    expect(findKo('N잡러'), findsOneWidget,
-        reason: '장을 넘겼더니 유형 선택이 사라졌다 — 머리는 고정이어야 한다');
+    expect(findKo('직장인 · 지역 미설정'), findsOneWidget,
+        reason: '장을 넘겼더니 머리가 사라졌다 — 머리는 고정이어야 한다');
   });
 
   testWidgets('2장의 세무 도구는 펼쳐진 채로 온다', (t) async {

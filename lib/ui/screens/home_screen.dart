@@ -109,6 +109,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Set<String> _hiddenBannerIds = {}; // X로 닫은 배너 카드(30일간 숨김)
   List<Notice> _notices = const []; // 원격 소식(앱 업데이트 없이 바뀐다)
   String? _sido; // 사는 시/도 — 지역 소식만 거른다
+  int? _customSeenAt; // 맞춤 혜택을 마지막으로 본 때(epoch ms) — 「새 N」 기준
+  bool _profileLoaded = false; // 첫 프로필 로드 이후에만 유형 변경을 전환으로 본다
   double _decidedTax = 0.0; // 결정세액 (연말정산 진단 데이터)
   double _grossIncome = 0.0; // 연소득(연봉) (연말정산 진단 데이터)
   double _laborIncome = 0.0; // 이번 달 근로소득(급여) — N잡러 수입 분리
@@ -178,6 +180,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   /// 산재해있던 "push 후 수동 리로드" 호출들을 대체하는 단일 진입점.
   @override
   void didPopNext() {
+    _loadDataFromDB(); // 내 정보에서 유형·지역을 바꿨을 수 있다
     _loadTypeValues(_userType);
     _loadCurrentMonthIncome();
     _loadMonthlyExpenses();
@@ -201,6 +204,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     try {
       final profile = await dbService.getProfile();
       if (profile != null && mounted) {
+        final prevType = _userType;
         setState(() {
           _userType = profile['user_type'] ?? '직장인';
           
@@ -238,6 +242,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           if (!_isTypeIdentified) _isTypeIdentified = true;
         });
         await _loadTypeValues(_userType);
+        // 첫 로드는 기본값('직장인')에서 오는 것이라 전환이 아니다.
+        if (_profileLoaded && prevType != _userType) _afterTypeChange(prevType);
+        _profileLoaded = true;
       }
     } catch (e) {
       // 핫 리로드 과도기 중 DB 필드 불일치 방어 — 운영 중 지속 실패면 로그로 드러나게.
@@ -395,6 +402,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final all = await dbService.getAllBannerHideTimes();
     final now = DateTime.now().millisecondsSinceEpoch;
     final ids = all.entries.where((e) => e.value > now).map((e) => e.key).toSet();
+    // 같은 표에 「맞춤 혜택 본 때」도 적어 둔다. 값이 과거라 숨김 목록엔 안 걸린다.
+    _customSeenAt = all[_customSeenKey];
     if (mounted) setState(() => _hiddenBannerIds = ids);
   }
 
@@ -737,23 +746,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final from = _userType;
     setState(() {
       _userType = type;
-      _bannerIndex = 0;
       _calculateTax();
     });
-    _carryTypeValues(from: from, to: type);
-    _loadTypeValues(type);
-    _startBannerRotation();
+    _afterTypeChange(from);
     _saveProfileToDB();
+  }
+
+  /// 유형이 바뀐 뒤 따라 바뀌어야 하는 것들. 유형은 내 정보에서 바꾸므로
+  /// 홈은 프로필을 다시 읽다가 바뀐 걸 알아채고 이걸 부른다(_loadDataFromDB).
+  void _afterTypeChange(String from) {
+    setState(() => _bannerIndex = 0);
+    _carryTypeValues(from: from, to: _userType);
+    _loadTypeValues(_userType);
+    _startBannerRotation();
     _refreshReminders(); // 유형별 시즌 알림 재예약
     _loadCurrentMonthIncome();
     _loadMonthlyExpenses();
-  }
-
-  /// 유형 탭 전환 — 가계부는 유형별로 분리되지만 어느 쪽 데이터도 사라지지 않으므로
-  /// 즉시 전환한다. 기록 이전이 필요하면 가계부의 '가져오기' 배너로 처리한다(전환 확인 팝업 제거).
-  void _switchUserType(String newType) {
-    if (newType == _userType) return;
-    _setUserType(newType);
   }
 
   void _calculateTax() {
@@ -775,7 +783,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         index: _currentIndex,
         children: [
           _buildHomeTab(),
-          BenefitScreen(userType: _userType),
+          BenefitScreen(
+            userType: _userType,
+            notices: _notices,
+            sido: _sido,
+            onSetRegion: _openProfile,
+          ),
           // 상품 탭은 V1에서 숨김(L-5) — 화면 코드는 보존, IndexedStack에서만 제외.
           const CalculatorScreen(),
           AllScreen(
@@ -965,8 +978,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               // 발행 정보는 그 선에 바짝 붙어야 '선 위에 찍힌 것'으로 읽힌다.
               _slipMeta(),
               AppTheme.hairline(context, color: AppTheme.ink(context)),
-              const SizedBox(height: 14),
-              _buildTypeSelector(),
             ],
           ),
         ),
@@ -1025,6 +1036,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             },
             onDismiss: _dismissBanner,
           ),
+          _customBenefitsRow(),
           _slipRule(),
           HomeStatusSection(
             specialsYtd: _specialsYtd,
@@ -1114,20 +1126,32 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context),
                     weight: FontWeight.w600, spacing: 1.0)),
           ),
-          Row(mainAxisSize: MainAxisSize.min, children: [
-            Semantics(
+          const SizedBox(width: 8),
+          Flexible(
+            flex: 3,
+            child: Semantics(
               button: true,
               label: _isProfileCompleted ? '내 정보 수정' : '내 정보 설정',
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: _openProfile,
-                child: Text(_isProfileCompleted ? '내 정보' : '내 정보 설정',
-                    style: AppTheme.sans(AppTheme.tsXS, AppTheme.ink(context),
-                        weight: FontWeight.w700, spacing: 1.0,
-                        decoration: TextDecoration.underline)),
+                // 유형 선택은 내 정보로 옮겼다 — 지금 무엇으로 보고 있는지만 여기 남긴다.
+                // 글자를 키우면 유형·지역이 먼저 줄어든다 — 「내 정보」 링크는 끝까지 남아야 한다.
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Flexible(
+                    child: Text('$_userType · ${_sido ?? '지역 미설정'}   ',
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context),
+                            weight: FontWeight.w600, spacing: 1.0)),
+                  ),
+                  Text(_isProfileCompleted ? '내 정보' : '내 정보 설정',
+                      style: AppTheme.sans(AppTheme.tsXS, AppTheme.ink(context),
+                          weight: FontWeight.w700, spacing: 1.0,
+                          decoration: TextDecoration.underline)),
+                ]),
               ),
             ),
-          ]),
+          ),
         ],
       ),
     );
@@ -1240,8 +1264,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   /// 원격 소식 카드. 목록에는 제목과 한 줄 요약만 나가고, 눌러야 기사가 열린다.
   /// 배너 헤드라인은 두 줄까지라 긴 제목은 여기서 잘린다 — 그래서 `summary`가
   /// 아니라 `title`을 헤드라인으로 쓴다. 요약은 보조 줄이다.
-  List<BannerCardData> _noticeBannerCards() => _notices
-      .where((n) => n.matches(_userType, _sido))
+  List<BannerCardData> _noticeBannerCards() => _customBenefits
+      .where((n) => n.inBanner(DateTime.now()))
       .map((n) => BannerCardData(
             label: n.label,
             headline: n.title,
@@ -1521,18 +1545,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  /// 유형 선택 — 전표의 체크칸. 가계부 뷰 전환과 같은 위젯을 쓴다.
-  Widget _buildTypeSelector() {
-    const types = ['직장인', 'N잡러', '프리랜서'];
-    return AppTheme.segmented(
-      context,
-      labels: types,
-      selected: types.indexOf(_userType).clamp(0, types.length - 1),
-      onTap: (i) => _switchUserType(types[i]),
-      semanticSuffix: '유형',
-    );
-  }
-
   /// FAQ 카드 (최하단) — 유형별 풀에서 5개씩 보여주고, '다른 질문 보기'로 다음 5개를 뽑는다.
   Widget _buildFaqCard() {
     _ensureFaqPool();
@@ -1683,6 +1695,61 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
     if (index == 0) _loadDataFromDB();
+    if (index == 1) _markCustomSeen(); // 혜택 탭 맨 위가 맞춤 혜택이다
+  }
+
+  static const _customSeenKey = 'custom_benefits_seen';
+
+  /// 맞춤 혜택 — 내 유형·시/도에 맞는 소식 전부. 배너는 마감이 다가온 것만 돌리고
+  /// 나머지는 혜택 탭 맨 위에 쌓인다.
+  List<Notice> get _customBenefits =>
+      _notices.where((n) => n.matches(_userType, _sido)).toList();
+
+  /// 마지막으로 본 뒤에 올라온 것. 한 번도 안 봤으면 최근 14일 치.
+  int get _newCustomCount {
+    final seen = _customSeenAt != null
+        ? DateTime.fromMillisecondsSinceEpoch(_customSeenAt!)
+        : DateTime.now().subtract(const Duration(days: 14));
+    return _customBenefits.where((n) => n.date.isAfter(seen)).length;
+  }
+
+  Future<void> _markCustomSeen() async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    setState(() => _customSeenAt = now);
+    await dbService.saveBannerHideTime(_customSeenKey, now);
+  }
+
+  /// 배너 바로 밑 한 줄 — 맞춤 혜택으로 가는 입구. 스크롤 안에 있어 고정 영역을 늘리지 않는다.
+  Widget _customBenefitsRow() {
+    final n = _customBenefits.length;
+    if (n == 0 && _sido != null) return const SizedBox.shrink();
+    final fresh = _newCustomCount;
+    final sub = AppTheme.inkSecondary(context);
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _onNavTap(1),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Row(children: [
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${_sido ?? ''}${_sido != null ? ' · ' : ''}$_userType 맞춤 혜택 $n',
+                    style: AppTheme.sans(AppTheme.tsSM, AppTheme.ink(context), weight: FontWeight.w700)),
+                if (_sido == null)
+                  Text('사는 지역을 고르면 지역 혜택도 보여요',
+                      style: AppTheme.sans(AppTheme.tsXS, sub)),
+              ]),
+            ),
+            if (fresh > 0)
+              Text('새 $fresh',
+                  style: AppTheme.sans(AppTheme.tsXS, AppTheme.accentColor(context), weight: FontWeight.w700)),
+            Icon(Icons.chevron_right_rounded, size: 20, color: sub),
+          ]),
+        ),
+      ),
+    );
   }
 
   Widget _buildBottomNavigationBar() {

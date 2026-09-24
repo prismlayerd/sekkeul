@@ -36,6 +36,9 @@ class MyInfoScreen extends StatefulWidget {
 }
 
 class _MyInfoScreenState extends State<MyInfoScreen> {
+  /// 유형은 여기서 바꾼다(홈 머리에 있던 선택 버튼을 옮겨 왔다). 저장하면 홈이
+  /// 프로필을 다시 읽다가 알아채고 가계부·알림을 새 유형으로 돌린다.
+  late String _userType = widget.userType;
 
   Map<String, dynamic>? _profile;
   bool _loading = true;
@@ -82,7 +85,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
 
   /// 프리랜서는 예상 연봉·나이·급여일이 세금 계산에 안 쓰인다 —
   /// 소득은 가계부 실적으로 잡고, 청년 감면·급여일 알림은 근로자 개념이라서다.
-  bool get _isFreelancer => widget.userType == '프리랜서';
+  bool get _isFreelancer => _userType == '프리랜서';
 
   // ── 프로필 완성도 ───────────────────────────────────────────────
   /// 절세 진단에 직접 쓰이는 핵심 입력값들이 채워졌는지로 완성도를 읽는다.
@@ -119,7 +122,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   Future<void> _openProfile() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ProfileInputScreen(userType: widget.userType)),
+      MaterialPageRoute(builder: (_) => ProfileInputScreen(userType: _userType)),
     );
     if (result == true) {
       await _load();
@@ -165,7 +168,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     final v = double.tryParse(_grossEditCtrl.text.replaceAll(',', '')) ?? 0.0;
     // 원본(유형별 값)을 먼저 적는다 — _updateProfileFields가 홈 리로드를 부르므로,
     // 순서가 반대면 홈이 아직 옛 값(0)을 읽는다.
-    await dbService.setProfileTypeValues(widget.userType, grossIncome: v);
+    await dbService.setProfileTypeValues(_userType, grossIncome: v);
     await _updateProfileFields({'gross_income': v});
     if (mounted) setState(() => _editingKey = null);
   }
@@ -214,17 +217,28 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     setState(() => _profile = updated);
     widget.onProfileChanged();
     if (!kIsWeb) {
-      await ReminderScheduler.scheduleAll(payDay: day, userType: widget.userType);
+      await ReminderScheduler.scheduleAll(payDay: day, userType: _userType);
     }
   }
 
   // ── 프리랜서·N잡러 전용: 업종코드·재산액·4대보험 가입여부 ──────────
   // 유형(직장인/N잡러/프리랜서) 전환과 무관하게 단일 값으로 저장한다 —
   // 실제로 어떤 일을 하는지는 앱이 그 사람을 어떻게 부르는지와 무관한 사실이라서다.
-  bool get _isBusinessUser => widget.userType == '프리랜서' || widget.userType == 'N잡러';
+  bool get _isBusinessUser => _userType == '프리랜서' || _userType == 'N잡러';
 
   String? get _occupationCode => _profile?['occupation_code'] as String?;
   OccupationInfo? get _occupationInfo => OccupationData.occupations[_occupationCode];
+
+  static const _types = ['직장인', 'N잡러', '프리랜서'];
+
+  Future<void> _changeType(String t) async {
+    if (t == _userType) return;
+    setState(() {
+      _userType = t;
+      _editingKey = null;
+    });
+    await _updateProfileFields({'user_type': t});
+  }
 
   Future<void> _updateProfileFields(Map<String, dynamic> changes) async {
     final updated = Map<String, dynamic>.from(_profile ?? {});
@@ -308,11 +322,22 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          AppTheme.segmented(
+            context,
+            labels: _types,
+            selected: _types.indexOf(_userType).clamp(0, _types.length - 1),
+            onTap: (i) => _changeType(_types[i]),
+            semanticSuffix: '유형',
+          ),
+          const SizedBox(height: 6),
+          Text('유형을 바꾸면 가계부·알림·혜택이 그 유형 기준으로 바뀌어요. 적은 기록은 지워지지 않아요.'.keepWords,
+              style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4)),
+          const SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(widget.userType, style: AppTheme.serif(AppTheme.serifMD, ink, spacing: -0.5)),
+                child: Text('입력 완성도', style: AppTheme.serif(AppTheme.serifMD, ink, spacing: -0.5)),
               ),
               Text('$pct%',
                   style: AppTheme.serif(AppTheme.serifXL, done ? AppTheme.colorSuccess : accent, spacing: -1, height: 1.0)),

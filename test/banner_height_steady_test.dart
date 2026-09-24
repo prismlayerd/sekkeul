@@ -41,7 +41,7 @@ void main() {
     // 배너 아래에 있는 첫 덩어리. 배너가 커지거나 작아지면 이게 따라 움직인다.
     double belowY() => t.getTopLeft(find.byType(HomeStatusSection)).dy;
 
-    final ticks = find.bySemanticsLabel(RegExp(r'^\d+번째 소식$'));
+    final ticks = find.bySemanticsLabel(RegExp(r'^\d+번째 카드$'));
     final count = ticks.evaluate().length;
     expect(count, greaterThan(1), reason: '돌아갈 카드가 없으면 이 테스트는 의미가 없다');
 
