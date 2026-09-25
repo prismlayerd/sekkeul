@@ -13,6 +13,7 @@ import '../../core/tax_engine/employee_tax.dart';
 import '../../core/tax_engine/tax_rates.dart';
 import 'occupation_search_screen.dart';
 import '../components/amount_field.dart';
+import 'onboarding_screen.dart';
 import 'profile_input_screen.dart';
 import '../theme/text_wrap.dart';
 
@@ -229,8 +230,6 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   String? get _occupationCode => _profile?['occupation_code'] as String?;
   OccupationInfo? get _occupationInfo => OccupationData.occupations[_occupationCode];
 
-  static const _types = ['직장인', 'N잡러', '프리랜서'];
-
   Future<void> _changeType(String t) async {
     if (t == _userType) return;
     setState(() {
@@ -238,6 +237,18 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       _editingKey = null;
     });
     await _updateProfileFields({'user_type': t});
+  }
+
+  /// 유형 버튼을 없애고 홈에 있던 자가 진단(소득 항목 체크)으로 유형을 정한다 —
+  /// 버튼 하나로 직장인/N잡러/프리랜서를 고르면 항목별 세법 차이를 모른 채
+  /// 잘못 고르기 쉽다.
+  Future<void> _openTypeCheck() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (_) => OnboardingScreen(returnResult: true, currentType: _userType)),
+    );
+    if (result is String) await _changeType(result);
   }
 
   Future<void> _updateProfileFields(Map<String, dynamic> changes) async {
@@ -322,15 +333,22 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppTheme.segmented(
-            context,
-            labels: _types,
-            selected: _types.indexOf(_userType).clamp(0, _types.length - 1),
-            onTap: (i) => _changeType(_types[i]),
-            semanticSuffix: '유형',
+          GestureDetector(
+            onTap: _openTypeCheck,
+            behavior: HitTestBehavior.opaque,
+            child: Row(children: [
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('유형'.toUpperCase(), style: AppTheme.label(context)),
+                  const SizedBox(height: 6),
+                  Text(_userType, style: AppTheme.serif(AppTheme.serifMD, ink, spacing: -0.5)),
+                ]),
+              ),
+              Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.inkTertiary(context)),
+            ]),
           ),
           const SizedBox(height: 6),
-          Text('유형을 바꾸면 가계부·알림·혜택이 그 유형 기준으로 바뀌어요. 적은 기록은 지워지지 않아요.'.keepWords,
+          Text('소득 항목을 다시 체크하면 유형이 바뀔 수 있어요. 바뀌면 가계부·알림·혜택이 그 유형 기준으로 돌아요. 적은 기록은 지워지지 않아요.'.keepWords,
               style: AppTheme.sans(AppTheme.tsXS, sub, height: 1.4)),
           const SizedBox(height: 16),
           Row(
@@ -457,7 +475,7 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
       icon: Icons.cake_outlined,
       label: '만 나이',
       value: age > 0 ? '만 $age세' : null,
-      placeholder: '미설정 — 청년 감면 확인에 필요해요',
+      placeholder: '미설정 — 중소기업 청년 감면 판정 기준이 돼요',
       isSet: age > 0,
       editKey: 'age',
       ink: ink,

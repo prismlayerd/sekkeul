@@ -52,7 +52,13 @@ void main() {
     await t.pumpAndSettle();
     expect(find.text('예상 연봉'), findsOneWidget);
 
-    await t.tap(find.text('프리랜서'));
+    // 버튼이 아니라 소득 항목 자가 진단으로 유형을 바꾼다.
+    await t.tap(find.text('직장인'));
+    await t.pumpAndSettle();
+    await t.tap(find.text('회사에서 받는 월급')); // 근로소득 체크 해제
+    await t.tap(find.text('3.3% 떼는 프리랜서 일')); // 사업소득 체크
+    await t.pumpAndSettle();
+    await t.tap(find.text('유형 확정하기'));
     await t.pumpAndSettle();
 
     expect((await dbService.getProfile())!['user_type'], '프리랜서');

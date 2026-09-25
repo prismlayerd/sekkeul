@@ -197,7 +197,9 @@ class HomeBannerCarousel extends StatelessWidget {
               ),
               // 닫기는 **카드의 오른쪽 위 모서리**다. 글자 폭이 60%로 줄었다고
               // 같이 안으로 따라 들어오면 카드마다 ×가 다른 자리에 있게 된다.
-              // 사진 위에 얹히므로 종이색 원을 깔아 어떤 사진에서도 보이게 한다.
+              // 사진 위에 얹힐 때만 종이색 원을 깐다 — 사진이 없으면 카드 배경이
+              // 이미 페이지 배경(lightBackground)이라, 원(lightSurface)이 더 밝아
+              // 흰 자국처럼 도드라진다.
               if (c.dismissible)
                 Positioned(
                   top: -6,
@@ -210,11 +212,13 @@ class HomeBannerCarousel extends StatelessWidget {
                       behavior: HitTestBehavior.opaque,
                       child: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color:
-                              AppTheme.surface(context).withValues(alpha: 0.82),
-                        ),
+                        decoration: c.imageUrl != null
+                            ? BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppTheme.surface(context)
+                                    .withValues(alpha: 0.82),
+                              )
+                            : null,
                         child: Icon(Icons.close_rounded, size: 16, color: sub),
                       ),
                     ),
