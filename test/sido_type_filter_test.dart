@@ -16,7 +16,7 @@ void main() {
 
     dbService = InMemoryDatabaseHelper();
     await dbService.initDatabase();
-    await dbService.saveProfile({'user_type': '프리랜서'});
+    await dbService.saveProfile({'user_type': '프리랜서', 'type_identified': true});
 
     await t.pumpWidget(MaterialApp(
       home: MyInfoScreen(userType: '프리랜서', onProfileChanged: () {}),
@@ -43,7 +43,7 @@ void main() {
 
     dbService = InMemoryDatabaseHelper();
     await dbService.initDatabase();
-    await dbService.saveProfile({'user_type': '직장인'});
+    await dbService.saveProfile({'user_type': '직장인', 'type_identified': true});
     var changed = 0;
 
     await t.pumpWidget(MaterialApp(

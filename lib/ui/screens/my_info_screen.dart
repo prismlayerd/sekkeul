@@ -41,6 +41,11 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   /// 프로필을 다시 읽다가 알아채고 가계부·알림을 새 유형으로 돌린다.
   late String _userType = widget.userType;
 
+  /// 유형을 실제로 정한 적이 있는지 — DB의 `type_identified`가 유일한 출처다.
+  /// widget.userType은 홈이 프로필을 읽기 전 기본값('직장인')일 수 있어,
+  /// 그 값만 보고 유형이 "이미 정해졌다"고 판단하면 안 된다.
+  bool _isTypeIdentified = false;
+
   Map<String, dynamic>? _profile;
   bool _loading = true;
 
@@ -80,6 +85,8 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
     if (!mounted) return;
     setState(() {
       _profile = p;
+      _isTypeIdentified = p?['type_identified'] == true;
+      if (p?['user_type'] is String) _userType = p!['user_type'] as String;
       _loading = false;
     });
   }
@@ -230,25 +237,26 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   String? get _occupationCode => _profile?['occupation_code'] as String?;
   OccupationInfo? get _occupationInfo => OccupationData.occupations[_occupationCode];
 
-  Future<void> _changeType(String t) async {
-    if (t == _userType) return;
-    setState(() {
-      _userType = t;
-      _editingKey = null;
-    });
-    await _updateProfileFields({'user_type': t});
-  }
-
   /// 유형 버튼을 없애고 홈에 있던 자가 진단(소득 항목 체크)으로 유형을 정한다 —
   /// 버튼 하나로 직장인/N잡러/프리랜서를 고르면 항목별 세법 차이를 모른 채
-  /// 잘못 고르기 쉽다.
+  /// 잘못 고르기 쉽다. 아직 유형을 정한 적 없으면 항목 체크 없이 빈 채로 연다.
   Future<void> _openTypeCheck() async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (_) => OnboardingScreen(returnResult: true, currentType: _userType)),
+          builder: (_) => OnboardingScreen(
+              returnResult: true,
+              currentType: _isTypeIdentified ? _userType : null)),
     );
-    if (result is String) await _changeType(result);
+    if (result is! String) return;
+    setState(() {
+      _userType = result;
+      _isTypeIdentified = true;
+      _editingKey = null;
+    });
+    // 유형이 그대로(예: 진단해도 직장인)여도 type_identified는 반드시 적는다 —
+    // 값이 안 바뀌었다고 건너뛰면 처음 진단한 사람이 계속 "미정" 상태로 남는다.
+    await _updateProfileFields({'user_type': result, 'type_identified': true});
   }
 
   Future<void> _updateProfileFields(Map<String, dynamic> changes) async {
@@ -319,7 +327,11 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
   }
 
   /// 프로필 완성도 블록 — 도면 시트 메타포(측정 스케일 + 항목 목록).
+  /// 유형을 정한 적 없으면 유형·체크리스트 대신 진단 유도 카드부터 보여준다 —
+  /// 그러지 않으면 widget.userType의 기본값('직장인')이 이미 고른 것처럼 보인다.
   Widget _profileBlock(Color ink, Color sub) {
+    if (!_isTypeIdentified) return _typeCheckPromptBlock(ink, sub);
+
     final accent = AppTheme.accentColor(context);
     final done = _filledCount == _checklist.length;
     final pct = (_completeness * 100).round();
@@ -399,6 +411,46 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                   ]),
                 ),
                 Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.inkTertiary(context)),
+              ]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 유형 미확정 상태 — 홈 배너의 "확인해봐요" 카드와 같은 문구로 진단을 유도한다.
+  /// 여기서 진단을 마쳐야 그 유형에 맞는 입력칸(_profileBlock 본문)이 열린다.
+  Widget _typeCheckPromptBlock(Color ink, Color sub) {
+    final bg = AppTheme.backgroundColor(context);
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.line(context), width: 1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('시작'.toUpperCase(), style: AppTheme.label(context)),
+          const SizedBox(height: 10),
+          Text('내가 어떤 납세자인지\n먼저 확인해봐요'.keepWords,
+              style: AppTheme.serif(AppTheme.serifLG, ink, spacing: -0.5, height: 1.3)),
+          const SizedBox(height: 10),
+          Text('소득 항목 몇 개만 고르면 직장인·N잡러·프리랜서 중 유형을 정하고, 그 유형에 맞는 입력칸이 열려요.'.keepWords,
+              style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5)),
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: _openTypeCheck,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              height: 54,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: ink, borderRadius: BorderRadius.circular(4)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('유형 파악하기', style: AppTheme.sans(AppTheme.tsBase, bg, weight: FontWeight.w700)),
+                const SizedBox(width: 8),
+                Icon(Icons.arrow_forward, size: 16, color: bg),
               ]),
             ),
           ),
