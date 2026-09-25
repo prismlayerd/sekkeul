@@ -319,7 +319,18 @@ class _MyInfoScreenState extends State<MyInfoScreen> {
                       style: AppTheme.sans(AppTheme.tsMD, sub, height: 1.55)),
                   const SizedBox(height: 24),
 
-                  _profileBlock(ink, sub),
+                  // 유형을 막 정했을 때(진단 카드 → 유형·체크리스트) · 다른
+                  // 유형으로 바꿨을 때(체크리스트·전문 섹션 구성이 바뀜) 모두
+                  // 그냥 확 바뀌지 않게 페이드로 넘긴다.
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, anim) =>
+                        FadeTransition(opacity: anim, child: child),
+                    child: KeyedSubtree(
+                      key: ValueKey('$_isTypeIdentified-$_userType'),
+                      child: _profileBlock(ink, sub),
+                    ),
+                  ),
                 ],
               ),
       ),

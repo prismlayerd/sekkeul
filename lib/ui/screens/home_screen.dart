@@ -838,12 +838,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         // 폭만 줄인다 — 파장이 고정이라 물결이 눌리지 않고 양 끝이 잘린다.
         title: AppTheme.waveMark(context, height: 23, width: 84),
         actions: [
-          // 발행 시각 — 원래 아래 _slipMeta 줄에 있었다. 여기로 올려 그 줄을
-          // 비우고, 스크롤 안 늘리면서 유형·지역을 그 자리로 한 줄 당긴다.
-          Text(_todayLabel(),
-              style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context),
-                  weight: FontWeight.w600, spacing: 1.0)),
-          const SizedBox(width: 10),
           Stack(
             clipBehavior: Clip.none,
             children: [
@@ -1114,42 +1108,53 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         duration: const Duration(milliseconds: 260), curve: Curves.easeOutCubic);
   }
 
-  /// 발행 시각 — AppBar로 옮겨 갔다. 귀속연도는 없이 오늘 날짜만.
+  /// 발행 시각 — 귀속연도는 없이 오늘 날짜만.
   String _todayLabel() {
     final now = DateTime.now();
     String two(int v) => v.toString().padLeft(2, '0');
     return '${now.year}-${two(now.month)}-${two(now.day)}';
   }
 
-  /// 명세서 머리줄 — 유형·지역과 내 정보 진입. 발행 시각은 AppBar로 옮겼다.
+  /// 명세서 머리줄 — 발행 날짜(왼쪽 정렬, 한 줄) 바로 아래에 유형·지역(왼쪽)과
+  /// 내 정보 진입(오른쪽)을 둔다.
   Widget _slipMeta() {
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 5),
       // 자간 2.0인 label 스타일을 그대로 쓰면 360px에서 두 칸이 부딪힌다.
       // 머리줄은 좁은 화면에서도 한 줄이어야 하므로 자간을 줄여 쓴다.
-      child: Semantics(
-        button: true,
-        label: _isProfileCompleted ? '내 정보 수정' : '내 정보 설정',
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: _openProfile,
-          // 유형 선택은 내 정보로 옮겼다 — 지금 무엇으로 보고 있는지만 여기 남긴다.
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Flexible(
-              // 유형을 정한 적 없으면 widget 기본값('직장인')을 이미 고른 것처럼
-              // 보이면 안 된다 — '지역 미설정'과 같은 모양으로 미정임을 말한다.
-              child: Text(
-                  '${_isTypeIdentified ? _userType : '유형 미설정'} · ${_sido ?? '지역 미설정'}   ',
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context),
-                      weight: FontWeight.w600, spacing: 1.0)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(_todayLabel(),
+              style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context),
+                  weight: FontWeight.w600, spacing: 1.0)),
+          const SizedBox(height: 4),
+          Semantics(
+            button: true,
+            label: _isProfileCompleted ? '내 정보 수정' : '내 정보 설정',
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _openProfile,
+              // 유형 선택은 내 정보로 옮겼다 — 지금 무엇으로 보고 있는지만 여기 남긴다.
+              child: Row(children: [
+                Expanded(
+                  // 유형을 정한 적 없으면 widget 기본값('직장인')을 이미 고른
+                  // 것처럼 보이면 안 된다 — '지역 미설정'과 같은 모양으로 미정임을 말한다.
+                  child: Text(
+                      '${_isTypeIdentified ? _userType : '유형 미설정'} · ${_sido ?? '지역 미설정'}',
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.sans(AppTheme.tsXS, AppTheme.inkSecondary(context),
+                          weight: FontWeight.w600, spacing: 1.0)),
+                ),
+                const SizedBox(width: 8),
+                Text(_isProfileCompleted ? '내 정보' : '내 정보 설정',
+                    style: AppTheme.sans(AppTheme.tsXS, AppTheme.ink(context),
+                        weight: FontWeight.w700, spacing: 1.0,
+                        decoration: TextDecoration.underline)),
+              ]),
             ),
-            Text(_isProfileCompleted ? '내 정보' : '내 정보 설정',
-                style: AppTheme.sans(AppTheme.tsXS, AppTheme.ink(context),
-                    weight: FontWeight.w700, spacing: 1.0,
-                    decoration: TextDecoration.underline)),
-          ]),
-        ),
+          ),
+        ],
       ),
     );
   }

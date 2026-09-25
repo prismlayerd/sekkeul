@@ -68,28 +68,35 @@ class HomeBannerCarousel extends StatelessWidget {
     // 카드 높이는 **재지 않되, 카드끼리는 같다.**
     //
     // 예전에는 글자 크기와 행간을 손으로 더해 높이를 냈다. 그 손셈이 타입
-    // 스케일을 옮길 때마다 뒤처져 두 번 넘쳤다(9.2px → 3.9px). 셈을 없앤 뒤엔
-    // 카드마다 높이가 달라져서, 6초마다 돌 때 아래 절취선부터 화면이 들썩였다.
+    // 스케일을 옮길 때마다 뒤처져 두 번 넘쳤다(9.2px → 3.9px).
     //
-    // 지금은 셈도 안 하고 들썩이지도 않는다 — 모든 줄이 한 줄로 고정이고
-    // 보조 문구가 없는 카드도 그 자리를 비워 두기 때문이다(아래 참조).
+    // 카드 하나만 그려 AnimatedSwitcher로 바꿔치기하던 방식은, 카드마다
+    // 실측 높이가 미세하게(소수점 이하) 달라 6초마다 전환될 때 아래
+    // 절취선부터 화면이 들썩였다. 지금은 **모든 카드를 겹쳐(Stack) 동시에
+    // 그린다** — 안 보이는 카드도 레이아웃 계산엔 들어가서, Stack 높이가
+    // 그중 가장 큰 카드 하나로 고정된다(그래서 진짜로 손 안 대고 같아진다).
+    // 페이드는 카드마다 독립된 AnimatedOpacity로 — 이전 카드가 사라지는
+    // 동시에 다음 카드가 나타나 교차 크로스페이드로 보인다.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AnimatedSwitcher(
-          duration: Duration(milliseconds: reduce ? 0 : 500),
-          switchInCurve: Curves.easeOut,
-          switchOutCurve: Curves.easeIn,
-          transitionBuilder: (child, anim) =>
-              FadeTransition(opacity: anim, child: child),
-          layoutBuilder: (current, previous) => Stack(
-            alignment: Alignment.topLeft,
-            children: [...previous, if (current != null) current],
-          ),
-          child: KeyedSubtree(
-            key: ValueKey(idx),
-            child: _bannerCardView(context, cards[idx]),
-          ),
+        Stack(
+          alignment: Alignment.topLeft,
+          children: [
+            for (var i = 0; i < cards.length; i++)
+              IgnorePointer(
+                ignoring: i != idx,
+                child: ExcludeSemantics(
+                  excluding: i != idx,
+                  child: AnimatedOpacity(
+                    duration: Duration(milliseconds: reduce ? 0 : 500),
+                    curve: i == idx ? Curves.easeOut : Curves.easeIn,
+                    opacity: i == idx ? 1 : 0,
+                    child: _bannerCardView(context, cards[i]),
+                  ),
+                ),
+              ),
+          ],
         ),
         if (cards.length > 1) ...[
           const SizedBox(height: 12),
