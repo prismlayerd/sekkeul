@@ -281,7 +281,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     // 기존 평문 DB가 있고 아직 암호화 전이면: 먼저 평문 상태로 최신 스키마까지 정규화한 뒤
     // SQLCipher 암호화 DB로 1회 이전한다(S-2). 신규 설치는 곧장 암호화 DB로 생성된다.
     if (await File(path).exists() && !await _isAlreadyEncrypted(path, key)) {
-      final normalizeDb = await openDatabase(path, version: 46, onCreate: _onCreate, onUpgrade: _onUpgrade);
+      final normalizeDb = await openDatabase(path, version: 47, onCreate: _onCreate, onUpgrade: _onUpgrade);
       await normalizeDb.close();
       await _encryptExistingPlaintextDb(path, key);
     }
@@ -289,7 +289,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     _db = await openDatabase(
       path,
       password: key,
-      version: 46,
+      version: 47,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -332,7 +332,7 @@ class SqfliteDatabaseHelper implements DatabaseService {
     }
     await plainDb.close();
 
-    final encDb = await openDatabase(tempEncPath, password: key, version: 46, onCreate: _onCreate);
+    final encDb = await openDatabase(tempEncPath, password: key, version: 47, onCreate: _onCreate);
     var insertedRows = 0;
     await encDb.transaction((txn) async {
       for (final entry in dump.entries) {
@@ -938,6 +938,13 @@ class SqfliteDatabaseHelper implements DatabaseService {
         if (oldVersion < 46) {
           await _step('v46', () async {
             await db.execute('ALTER TABLE user_profile ADD COLUMN sido TEXT');
+          });
+        }
+        // v47 — 광주·전남이 전남광주통합특별시로 합쳐짐(2026-09-26). 기존 선택은 새 이름으로 옮긴다.
+        if (oldVersion < 47) {
+          await _step('v47', () async {
+            await db.execute(
+                "UPDATE user_profile SET sido = '전남광주' WHERE sido IN ('광주', '전남')");
           });
         }
   }
