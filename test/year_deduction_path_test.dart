@@ -12,18 +12,30 @@ import 'package:timezone/timezone.dart' as tz;
 import 'support/ko_finder.dart';
 import 'support/screen_registry.dart';
 
+/// 04는 3장(세무 도구)에 있다 — 두 번 밀어야 나온다.
+Future<void> swipeToTaxToolsPage(WidgetTester t) async {
+  for (var i = 0; i < 2; i++) {
+    await t.drag(find.byType(PageView), const Offset(-300.0, 0));
+    await t.pumpAndSettle();
+  }
+}
+
 /// **02에서 가는 길이 실제로 있는가.**
 ///
 /// 「올해 쌓인 예상 환급」은 카드공제만 센 숫자다. 옆에 아무 말이 없으면 그게
 /// 올해 받을 전부로 읽힌다. 예전에 이 목록은 04 세무 도구 → 「빠진 공제 항목
 /// 찾기」 안에만 있었고 02에서 가는 길이 없었다.
+///
+/// 04(MissableDeductionSection)는 홈 3장 재구성(가계부 앱처럼 안 보이게) 이후
+/// 세무 도구 페이지(3장)로 옮겨졌다. PageView는 지금 보이는 장만 빌드하므로
+/// 옆으로 두 번 밀어야 04가 트리에 나타난다.
 void main() {
   setUpAll(() {
     tzdata.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Seoul'));
   });
 
-  testWidgets('04 절이 홈 1장에 있고, 02는 카드만 말한다', (t) async {
+  testWidgets('04 절이 세무 도구 페이지에 있고, 02는 카드만 말한다', (t) async {
     t.view.physicalSize = const Size(390, 1600);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.resetPhysicalSize);
@@ -34,6 +46,7 @@ void main() {
     for (var i = 0; i < 6; i++) {
       await t.pump(const Duration(milliseconds: 250));
     }
+    await swipeToTaxToolsPage(t);
 
     expect(find.byType(MissableDeductionSection), findsOneWidget);
     expect(findKo('공제'), findsWidgets);
@@ -52,6 +65,7 @@ void main() {
     for (var i = 0; i < 6; i++) {
       await t.pump(const Duration(milliseconds: 250));
     }
+    await swipeToTaxToolsPage(t);
 
     // 의료비·교육비·기부금·월세는 §59의4가 근로소득자 전용이라 남는 게 없다.
     expect(findKo('장부 만들기'), findsWidgets);

@@ -956,11 +956,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  /// 홈은 **두 장의 명세서**다.
+  /// 홈은 **세 장의 명세서**다.
   ///
   /// 한 장에 절이 다섯(01~05) 쌓여 있어 "너무 많이 보인다"는 의견이 모였다.
-  /// 매달 보는 것(돈·알림)과 필요할 때 찾는 것(도구·문답)은 성격이 다르니
-  /// 장을 가른다.
+  /// 돈 얘기(가계부)가 첫 장부터 나오면 가계부 앱처럼 읽힌다는 의견도 있었다.
+  /// 그래서 성격별로 셋을 가른다 — 혜택·알림 / 가계부 / 세무 도구.
   ///
   /// 머리(발행 정보·유형 선택)는 **페이지 밖에 고정**한다. 머리는 가만히
   /// 있는데 내용만 옆으로 미끄러져야 "두 장"이라는 게 읽히고, 덤으로 유형
@@ -988,6 +988,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             children: [
               _homePageOne(),
               _homePageTwo(),
+              _homePageThree(),
             ],
           ),
         ),
@@ -1005,10 +1006,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           padding: const EdgeInsets.only(top: 10, bottom: 6),
           child: Center(
             child: SlipTicks(
-              count: 2,
+              count: 3,
               active: _homePage,
               onTap: _goToHomePage,
-              labelFor: (i) => i == 0 ? '이번 달' : '도구와 문답',
+              labelFor: (i) =>
+                  i == 0 ? '혜택 · 알림' : i == 1 ? '가계부' : '세무 도구',
             ),
           ),
         ),
@@ -1016,7 +1018,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  /// 1장 — 이번 달 얼마 벌고 썼나. 홈이 답해야 할 질문이 이것이다.
+  /// 1장 — 혜택·알림. 돈 얘기(가계부)는 여기 없다.
   Widget _homePageOne() {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
@@ -1038,6 +1040,20 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
           _customBenefitsRow(),
           _slipRule(),
+          ReminderCard(userType: _userType),
+          _slipFooter(),
+        ],
+      ),
+    );
+  }
+
+  /// 2장 — 가계부. 이번 달 얼마 벌고 썼나, 홈이 답하던 질문이 여기로 옮겨왔다.
+  Widget _homePageTwo() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           HomeStatusSection(
             specialsYtd: _specialsYtd,
             yearCovered: _yearCovered,
@@ -1074,25 +1090,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               onSwitchType: _userType == '직장인' ? _openOnboarding : null,
             ),
           ),
-          _slipRule(),
-          // 04는 유형에 따라 갈린다 — 직장인·N잡러는 공제,
-          // 프리랜서는 장부 만들기. 2장의 세무 도구·FAQ는 06·07이다.
-          MissableDeductionSection(userType: _userType),
-          _slipRule(),
-          ReminderCard(userType: _userType),
           _slipFooter(),
         ],
       ),
     );
   }
 
-  /// 2장 — 필요할 때 찾는 것.
-  Widget _homePageTwo() {
+  /// 3장 — 필요할 때 찾는 것. 놓친 공제 → 세무 도구 → FAQ 순.
+  Widget _homePageThree() {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 유형에 따라 갈린다 — 직장인·N잡러는 공제, 프리랜서는 장부 만들기.
+          MissableDeductionSection(userType: _userType),
+          _slipRule(),
           TaxToolsAccordion(userType: _userType),
           _slipRule(),
           _buildFaqCard(),

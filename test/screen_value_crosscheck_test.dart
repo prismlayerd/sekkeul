@@ -46,6 +46,13 @@ Future<void> pump(WidgetTester t, Widget w) async {
   t.takeException();
 }
 
+/// 홈은 3장이다(혜택·알림 / 가계부 / 세무 도구) — 이번 달 현황은 2장(가계부)에
+/// 있다. `pump(t, const HomeScreen())` 직후에 한 번 불러 옆으로 민다.
+Future<void> swipeToLedgerPage(WidgetTester t) async {
+  await t.drag(find.byType(PageView), const Offset(-300.0, 0));
+  await t.pumpAndSettle();
+}
+
 void expectShown(WidgetTester t, num value, String what) {
   final want = comma(value);
   final shown = moneyTexts(t);
@@ -119,6 +126,7 @@ void main() {
       expensesThisMonth: [(1200000, '신용카드'), (800000, '체크+현금')],
     );
     await pump(t, const HomeScreen());
+    await swipeToLedgerPage(t);
 
     expectShown(t, 3500000, '홈 이번 달 수령액');
     expectShown(t, 2000000, '홈 이번 달 지출(120만+80만)');
@@ -132,6 +140,7 @@ void main() {
       expensesThisMonth: [(2000000, '신용카드')],
     );
     await pump(t, const HomeScreen());
+    await swipeToLedgerPage(t);
 
     // 조특법 §126의2 최저사용금액 = 총급여 25% = 1,500만.
     // 문턱 전이면 화면은 **남은 금액**을 말한다 — 1,500만 − 200만 = 1,300만.
@@ -164,6 +173,7 @@ void main() {
     expect(engine.taxSaving, closeTo(refSaving, 0.01), reason: '엔진 절세액 = 조문 검산');
 
     await pump(t, const HomeScreen());
+    await swipeToLedgerPage(t);
     expectShown(t, engine.taxSaving, '홈 환급 카운터');
   });
 

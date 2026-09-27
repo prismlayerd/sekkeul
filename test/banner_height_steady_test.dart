@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:secul/ui/components/reminder_card.dart';
 import 'package:secul/ui/screens/home/home_banner_carousel.dart';
-import 'package:secul/ui/screens/home/home_status_section.dart';
 import 'package:secul/ui/screens/home_screen.dart';
 import 'package:secul/ui/theme/app_theme.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
@@ -38,8 +38,8 @@ void main() {
       await t.pump(const Duration(milliseconds: 250));
     }
 
-    // 배너 아래에 있는 첫 덩어리. 배너가 커지거나 작아지면 이게 따라 움직인다.
-    double belowY() => t.getTopLeft(find.byType(HomeStatusSection)).dy;
+    // 배너 아래(1장)에 있는 덩어리. 배너가 커지거나 작아지면 이게 따라 움직인다.
+    double belowY() => t.getTopLeft(find.byType(ReminderCard)).dy;
 
     final ticks = find.bySemanticsLabel(RegExp(r'^\d+번째 카드$'));
     final count = ticks.evaluate().length;

@@ -170,6 +170,9 @@ void main() {
     for (int i = 0; i < 6; i++) {
       await t.pump(const Duration(milliseconds: 300));
     }
+    // 문턱 진행바는 가계부 페이지(2장)에 있다 — 옆으로 밀어야 트리에 나타난다.
+    await t.drag(find.byType(PageView), const Offset(-300.0, 0));
+    await t.pumpAndSettle();
     t.takeException();
     FlutterError.onError = old;
 
