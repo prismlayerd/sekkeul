@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:secul/ui/components/reminder_card.dart';
 import 'package:secul/ui/screens/home/home_banner_carousel.dart';
+import 'package:secul/ui/screens/home/info_alerts_section.dart';
 import 'package:secul/ui/screens/home_screen.dart';
 import 'package:secul/ui/theme/app_theme.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
@@ -39,7 +39,7 @@ void main() {
     }
 
     // 배너 아래(1장)에 있는 덩어리. 배너가 커지거나 작아지면 이게 따라 움직인다.
-    double belowY() => t.getTopLeft(find.byType(ReminderCard)).dy;
+    double belowY() => t.getTopLeft(find.byType(InfoAlertsSection)).dy;
 
     final ticks = find.bySemanticsLabel(RegExp(r'^\d+번째 카드$'));
     final count = ticks.evaluate().length;
@@ -73,7 +73,7 @@ void main() {
     addTearDown(t.view.resetPhysicalSize);
     addTearDown(t.view.resetDevicePixelRatio);
 
-    Future<void> pumpOne(String headline) => t.pumpWidget(MaterialApp(
+    Future<void> pumpOne(String headline, {String? sub}) => t.pumpWidget(MaterialApp(
           theme: AppTheme.lightTheme,
           home: Scaffold(
             body: HomeBannerCarousel(
@@ -83,6 +83,7 @@ void main() {
                   headline: headline,
                   action: '신용카드 공제 확인',
                   glyph: '카',
+                  sub: sub,
                   onTap: () {},
                 ),
               ],
@@ -104,5 +105,14 @@ void main() {
     await t.pumpAndSettle();
     expect(t.getSize(find.byType(HomeBannerCarousel)).height, two,
         reason: '한 줄 카드와 두 줄 카드의 높이가 다르다');
+
+    // 보조 문구도 늘 두 줄 자리다 — 길이가 달라도 높이가 같아야 한다.
+    await pumpOne('공제 문턱을 넘었어요',
+        sub: '이제부터 체크카드·현금이 두 배로 쳐줘요.\n연말까지는 체크카드를 쓰세요.');
+    await t.pumpAndSettle();
+    expect(findKo('연말까지는 체크카드를 쓰세요.'), findsOneWidget,
+        reason: '보조 문구 둘째 줄이 사라졌다');
+    expect(t.getSize(find.byType(HomeBannerCarousel)).height, two,
+        reason: '보조 문구가 두 줄인 카드만 높이가 다르다');
   });
 }

@@ -8,9 +8,19 @@ import 'reminder.dart';
 class CustomReminderService {
   static const int _notifBase = 2000;
 
+  /// 한 번만 울리는 리마인더는 울린 지 이만큼 지나면 지운다 — 「지남」으로 쌓이지 않게.
+  static const keepAfterFired = Duration(days: 7);
+
   Future<List<Reminder>> list() async {
-    final rows = await dbService.getReminders();
-    return rows.map((r) => Reminder.fromMap(r)).toList();
+    final all = (await dbService.getReminders()).map((r) => Reminder.fromMap(r)).toList();
+    final cutoff = DateTime.now().subtract(keepAfterFired);
+    final stale = all
+        .where((r) => r.frequency == ReminderFrequency.once && r.scheduledDateTime.isBefore(cutoff))
+        .toList();
+    for (final r in stale) {
+      await remove(r);
+    }
+    return all.where((r) => !stale.contains(r)).toList();
   }
 
   /// 생성 — DB 저장 후 notifId를 부여하고 활성 시 알림 예약.

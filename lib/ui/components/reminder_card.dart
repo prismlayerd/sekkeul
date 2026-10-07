@@ -7,6 +7,7 @@ import '../../core/notifications/reminder.dart';
 import '../../core/notifications/custom_reminder_service.dart';
 import '../../core/security/notification_helper.dart';
 import '../../core/navigation/app_route_observer.dart';
+import '../screens/notification_settings_screen.dart';
 import '../screens/reminder_list_screen.dart';
 import '../theme/text_wrap.dart';
 
@@ -136,6 +137,20 @@ class _ReminderCardState extends State<ReminderCard> with RouteAware {
                 const SizedBox(width: 14),
               ]),
             ),
+          ),
+        ),
+        // 세금 일정·공제 문턱 알림은 이 장(가계부) 몫이다 — 1장 설정과 따로 둔다.
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => NotificationSettingsScreen(
+                      userType: widget.userType, scope: NotifScope.ledger))),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text('가계부 알림 설정  ›',
+                style: AppTheme.sans(AppTheme.tsSM, accent, weight: FontWeight.w700)),
           ),
         ),
       ],

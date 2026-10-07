@@ -95,8 +95,15 @@ void main() {
 
     test('until은 그날까지 보이고, 배너엔 마감 14일 전부터만 오른다', () {
       final n = one({'id': 'a', 'title': 't', 'date': '2026-09-01', 'until': '2026-10-16'})!;
-      expect(n.isExpired(DateTime(2026, 10, 16, 18)), isFalse, reason: '마감 당일에 사라졌다');
-      expect(n.isExpired(DateTime(2026, 10, 17, 1)), isTrue);
+      expect(n.isEnded(DateTime(2026, 10, 16, 18)), isFalse, reason: '마감 당일에 끝난 것으로 읽혔다');
+      expect(n.isEnded(DateTime(2026, 10, 17, 1)), isTrue);
+      // 끝난 뒤 7일은 목록에 남고(마감 표시), 그 뒤엔 내려간다.
+      expect(n.isExpired(DateTime(2026, 10, 17, 1)), isFalse, reason: '마감 다음 날 바로 지워졌다');
+      expect(n.isExpired(DateTime(2026, 10, 23, 23)), isFalse);
+      expect(n.isExpired(DateTime(2026, 10, 24, 1)), isTrue, reason: '끝난 지 일주일이 넘었는데 남아 있다');
+      expect(n.inBanner(DateTime(2026, 10, 17, 1)), isFalse, reason: '끝난 소식이 배너에 돈다');
+      expect(n.dueLabel(DateTime(2026, 10, 10)), '10/16까지');
+      expect(n.dueLabel(DateTime(2026, 10, 18)), '10/16 마감');
       expect(n.inBanner(DateTime(2026, 9, 24)), isFalse, reason: '22일 남았는데 배너에 올랐다');
       expect(n.inBanner(DateTime(2026, 10, 2)), isTrue);
       // until이 없으면 배너엔 안 오르고 맞춤 혜택 목록에만 있다.
@@ -105,7 +112,8 @@ void main() {
 
     test('audience·regions — 비면 전원, 적혀 있으면 그 유형·시도만', () {
       final all = one({'id': 'a', 'title': 't', 'date': '2026-09-09'})!;
-      expect(all.matches('프리랜서', null), isTrue);
+      expect(all.matches(const UserFacts()), isTrue);
+      UserFacts u(String t, String? s) => UserFacts(type: t, sido: s);
 
       final n = one({
         'id': 'b',
@@ -115,11 +123,11 @@ void main() {
         'regions': ['서울'],
       })!;
       expect(n.audience, ['직장인']);
-      expect(n.matches('직장인', '서울'), isTrue);
-      expect(n.matches('프리랜서', '서울'), isFalse);
-      expect(n.matches('직장인', '부산'), isFalse);
+      expect(n.matches(u('직장인', '서울')), isTrue);
+      expect(n.matches(u('프리랜서', '서울')), isFalse);
+      expect(n.matches(u('직장인', '부산')), isFalse);
       // 시/도를 안 고른 사람에게 지역 소식은 안 보인다.
-      expect(n.matches('직장인', null), isFalse);
+      expect(n.matches(u('직장인', null)), isFalse);
 
       // 타입이 틀리면(문자열) 조건 없음으로 읽는다 — 카드 하나 때문에 던지지 않는다.
       expect(one({'id': 'c', 'title': 't', 'date': '2026-09-09', 'regions': '서울'})!
@@ -159,7 +167,7 @@ void main() {
       final f = await _tmp('{이건 JSON이 아니다');
       RemoteNotices.debugOverride(cacheFile: f, client: _deadClient);
       final list = await RemoteNotices.load();
-      expect(list.map((n) => n.id), contains('2026-09-09-catalog-recheck'));
+      expect(list.map((n) => n.id), contains('2026-09-09-mudeuui-card'));
     });
 
     test('인터넷이 안 되면 마지막으로 받아 둔 것을 쓴다', () async {
@@ -265,7 +273,7 @@ void main() {
     });
 
     testWidgets('전후가 없는 소식은 표를 그리지 않는다', (t) async {
-      final n = fromFeed('2026-09-09-catalog-recheck');
+      final n = fromFeed('2026-09-19-youth-future-2nd');
       expect(n.changes, isEmpty);
       await t.pumpWidget(MaterialApp(home: NoticeDetailScreen(notice: n)));
       await t.pumpAndSettle();

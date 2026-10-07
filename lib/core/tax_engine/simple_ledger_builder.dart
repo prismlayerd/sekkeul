@@ -1,9 +1,11 @@
 import '../data/expense_item.dart';
 import '../data/income_entry.dart';
 
-/// 간편장부 한 줄 — 국세청 간편장부 서식(소득세법 시행규칙 별지 제82호)의 열 구성.
+/// 간편장부 한 줄 — 국세청 간편장부 서식의 열 구성.
+/// 서식은 국세청장이 정하고(소득세법 시행령 §208⑨), 법령이 요구하는 기재사항은
+/// 수입·경비지출·사업용 유형/무형자산 증감·기타 참고사항이다.
 ///
-/// | 일자 | 계정과목 | 거래내용 | 거래처 | 수입(금액/부가세) | 비용(금액/부가세) | 비고 |
+/// | 일자 | 계정과목 | 거래내용 | 거래처 | 수입(금액/부가세) | 비용(금액/부가세) | 자산 증감 | 비고 |
 ///
 /// 이 앱은 가계부에 거래처·부가세를 받지 않으므로 그 칸은 비운다 — 지어내면
 /// 그대로 신고서에 실려 나가므로, 빈칸으로 두고 사용자가 채우게 한다.
@@ -45,12 +47,18 @@ class SimpleLedgerResult {
   /// 거래내용이 비어 있어 사용자가 채워야 하는 줄 수 — 신고 전 보완 안내용.
   final int blankDescriptionCount;
 
+  /// 장부에서 뺀 기타소득(원고료·강연료 등) 건수와 세전 합계 — 따로 신고한다고 알리기 위해.
+  final int otherIncomeCount;
+  final int otherIncomeGross;
+
   const SimpleLedgerResult({
     required this.year,
     required this.rows,
     required this.totalIncome,
     required this.totalExpense,
     required this.blankDescriptionCount,
+    this.otherIncomeCount = 0,
+    this.otherIncomeGross = 0,
   });
 
   bool get isEmpty => rows.isEmpty;
@@ -58,7 +66,7 @@ class SimpleLedgerResult {
 
 /// 가계부의 그 해 기록을 간편장부 형식으로 정리한다.
 ///
-/// - 수입: 사업소득·기타소득만(급여는 근로소득이라 사업 장부에 넣지 않는다).
+/// - 수입: 사업소득만. 급여(근로소득)와 기타소득은 사업 장부 대상이 아니다.
 ///   원천징수로 세후 입력된 건은 **세전으로 환산**해 적는다 — 장부의 수입금액은
 ///   총수입금액(매출)이지 실수령액이 아니다.
 /// - 비용: `isBusiness`로 표시한 사업경비만. 개인 지출은 장부에 들어가면 안 된다.
@@ -80,9 +88,17 @@ class SimpleLedgerBuilder {
     int totalExpense = 0;
     int blank = 0;
 
+    int otherCount = 0;
+    int otherGross = 0;
     for (final e in incomes) {
       if (e.date.year != year) continue;
       if (e.incomeType == '급여') continue; // 근로소득은 사업 장부 대상이 아님
+      if (e.incomeType == '기타소득') {
+        // 기타소득은 사업소득 외의 소득(소득세법 §21①)이라 사업 장부(§160)에 안 넣는다.
+        otherCount++;
+        otherGross += _grossOf(e.amount, e.incomeType, e.isWithheld);
+        continue;
+      }
       final gross = _grossOf(e.amount, e.incomeType, e.isWithheld);
       totalIncome += gross;
       if (e.memo.trim().isEmpty) blank++;
@@ -121,6 +137,8 @@ class SimpleLedgerBuilder {
       totalIncome: totalIncome,
       totalExpense: totalExpense,
       blankDescriptionCount: blank,
+      otherIncomeCount: otherCount,
+      otherIncomeGross: otherGross,
     );
   }
 
@@ -135,7 +153,7 @@ class SimpleLedgerBuilder {
     final b = StringBuffer();
     // 엑셀이 UTF-8 한글을 깨지 않도록 BOM을 붙인다.
     b.write('﻿');
-    b.writeln('일자,계정과목,거래내용,거래처,수입-금액,수입-부가세,비용-금액,비용-부가세,비고');
+    b.writeln('일자,계정과목,거래내용,거래처,수입-금액,수입-부가세,비용-금액,비용-부가세,사업용자산 증감,비고');
     for (final row in r.rows) {
       final d = '${row.date.year}-'
           '${row.date.month.toString().padLeft(2, '0')}-'
@@ -149,11 +167,12 @@ class SimpleLedgerBuilder {
         '', // 수입 부가세
         row.expense == 0 ? '' : '${row.expense}',
         '', // 비용 부가세
+        '', // 사업용 유형·무형자산 증감 — 앱이 받지 않음(장비 구입은 경비가 아니라 자산일 수 있다)
         esc(row.note),
       ].join(','));
     }
     b.writeln();
-    b.writeln('합계,,,,${r.totalIncome},,${r.totalExpense},,');
+    b.writeln('합계,,,,${r.totalIncome},,${r.totalExpense},,,');
     return b.toString();
   }
 }

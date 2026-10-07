@@ -4,6 +4,9 @@ import 'dart:io';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path_provider/path_provider.dart';
 
+import 'audience_target.dart';
+export 'audience_target.dart' show UserFacts, Target;
+
 /// **앱을 새로 받지 않아도 바뀌는 소식.**
 ///
 /// 세끌은 오프라인 앱이다. 사용자가 적은 것은 기기 밖으로 나가지 않는다.
@@ -143,12 +146,18 @@ class Notice {
   final DateTime date;
   final DateTime? until;
 
-  /// 누구에게 보이나. 비면 전원. `["직장인","N잡러"]`처럼 유형을 적는다.
-  final List<String> audience;
+  /// 누구에게 보이나 — 유형·시/도·나이·차/집 등. 비면 전원.
+  /// 적힌 칸을 사용자가 안 채웠으면 안 보인다 — 다른 동네 소식은 소음이다.
+  final Target target;
 
-  /// 어느 시/도에만 보이나. 비면 전국. 적혀 있는데 사용자가 시/도를 안 골랐으면
-  /// 안 보인다 — 다른 동네 소식은 소음이다.
-  final List<String> regions;
+  /// `app`이면 앱 공지(패치 내역·안내) — 홈 배너에만 올라가고 「맞춤 혜택」에는 안 쌓인다.
+  /// 그 밖(`benefit`)은 제도·혜택 소식이다.
+  final String kind;
+
+  bool get isApp => kind == 'app';
+
+  List<String> get audience => target.audience;
+  List<String> get regions => target.regions;
 
   const Notice({
     required this.id,
@@ -162,23 +171,47 @@ class Notice {
     this.source,
     this.sourceUrl,
     this.until,
-    this.audience = const [],
-    this.regions = const [],
+    this.target = const Target(),
+    this.kind = 'benefit',
   });
 
-  /// `until`은 그날까지 보인다(그날 자정이 아니라 다음 날 자정에 내린다) —
-  /// "10/16까지 신청"인 소식이 10/16 당일에 사라지면 안 된다.
-  bool isExpired(DateTime now) =>
+  /// 마감 뒤에도 이만큼은 목록에 남는다 — 놓친 사람이 "끝났구나" 하고 알 수 있게.
+  /// 그 뒤엔 사라진다. 끝난 지 오래된 소식이 쌓이지 않게.
+  static const keepAfterEnd = Duration(days: 7);
+
+  /// 마감이 지났나 — `until`은 그날까지 보이므로 다음 날 자정부터 끝난 것이다.
+  /// "10/16까지 신청"인 소식이 10/16 당일에 끝난 것으로 읽히면 안 된다.
+  bool isEnded(DateTime now) =>
       until != null && now.isAfter(until!.add(const Duration(days: 1)));
 
-  /// 홈 배너에 올리는가 — 마감(`until`)이 14일 안으로 다가온 것만.
+  /// 마감 뒤 [keepAfterEnd]가 지나 목록에서 내려갈 때.
+  bool isExpired(DateTime now) =>
+      until != null && now.isAfter(until!.add(const Duration(days: 1)).add(keepAfterEnd));
+
+  /// 올라온 지 [days]일이 안 됐나 — 홈은 이 안의 것만 보여주고 나머지는 맞춤 혜택으로 보낸다.
+  bool isFresh(DateTime now, {int days = 7}) => now.difference(date).inDays <= days;
+
+  /// 목록 줄 머리에 찍는 날짜 — 끝났으면 「마감」, 아니면 「까지」.
+  String dueLabel(DateTime now) {
+    String md(DateTime d) => '${d.month}/${d.day}';
+    if (until == null) return md(date);
+    return isEnded(now) ? '${md(until!)} 마감' : '${md(until!)}까지';
+  }
+
+  /// 홈 배너에 올리는가 — 아직 안 끝났고 마감(`until`)이 14일 안으로 다가온 것만.
   /// 나머지는 혜택 탭 「맞춤 혜택」에만 쌓인다. 배너가 10장씩 돌면 아무것도 안 읽혔다.
   bool inBanner(DateTime now) =>
-      until != null && until!.difference(now).inDays <= 14;
+      until != null && !isEnded(now) && until!.difference(now).inDays <= 14;
 
-  bool matches(String userType, String? sido) =>
-      (audience.isEmpty || audience.contains(userType)) &&
-      (regions.isEmpty || regions.contains(sido));
+  bool matches(UserFacts u) => target.matches(u);
+
+  /// 누구에게나 뜨는 공통 소식 — 홈 배너의 몫이다. 조건이 걸린 건 `01`로 간다.
+  bool get isCommon => target.isCommon;
+
+  /// 배너에 올리는가 — 마감이 14일 안이거나, 올라온 지 14일이 안 된 것.
+  /// 공통 소식이 배너를 채우되 묵은 것이 계속 돌지는 않게.
+  bool inBannerOrFresh(DateTime now) =>
+      !isEnded(now) && (inBanner(now) || now.difference(date).inDays <= 14);
 
   /// 필수 칸이 비었거나 형태가 다르면 `null`. 던지지 않는다.
   static Notice? tryFrom(Object? raw) {
@@ -187,11 +220,6 @@ class Notice {
       final v = raw[k];
       return v is String && v.trim().isNotEmpty ? v.trim() : null;
     }
-
-    List<String> strs(String k) => [
-          for (final v in (raw[k] is List ? raw[k] as List : const []))
-            if (v is String && v.trim().isNotEmpty) v.trim(),
-        ];
 
     final id = str('id');
     final title = str('title');
@@ -216,8 +244,8 @@ class Notice {
       sourceUrl: _safeUrl(str('sourceUrl')),
       date: date,
       until: _date(str('until')),
-      audience: strs('audience'),
-      regions: strs('regions'),
+      target: Target.fromJson(raw),
+      kind: str('kind') == 'app' ? 'app' : 'benefit',
     );
   }
 

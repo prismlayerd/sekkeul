@@ -264,15 +264,19 @@ void main() {
       print('              CSV 합계: ${csvLines.last}');
 
       // 장부 수입은 세전(총수입금액)이어야 한다 — 실수령액을 적으면 매출 과소신고가 된다.
-      expect(ledger.totalIncome, closeTo(ytdGross, 2 * usableIncomes.length),
+      // 기타소득은 사업 장부 대상이 아니라 빠진다(소득세법 §21①·§160).
+      final bizIncomes = usableIncomes.where((e) => e.$3 != '기타소득').toList();
+      final ledgerGross = bizIncomes.fold<double>(
+          0, (s, e) => s + e.$2 / (e.$4 ? 0.967 : 1.0));
+      expect(ledger.totalIncome, closeTo(ledgerGross, 2 * bizIncomes.length),
           reason: '${p.name}: 장부 수입계 = 세전 환산 누계');
       // 장부 비용은 사업경비만 — 개인 지출이 섞이면 필요경비 과대계상이 된다.
       expect(ledger.totalExpense, ytdBizExp,
           reason: '${p.name}: 장부 비용계 = isBusiness 지출만');
       expect(ledger.rows.length,
-          usableIncomes.length + usableExpenses.where((e) => e.$4).length,
+          bizIncomes.length + usableExpenses.where((e) => e.$4).length,
           reason: '${p.name}: 장부 줄 수 = 수입 건 + 사업경비 건');
-      expect(csvLines.last, '합계,,,,${ledger.totalIncome},,${ledger.totalExpense},,',
+      expect(csvLines.last, '합계,,,,${ledger.totalIncome},,${ledger.totalExpense},,,',
           reason: '${p.name}: CSV 합계 줄이 장부 합계와 같아야 한다');
       // 장부 총액은 적립·환급 계산이 쓰는 값과 같은 세계에 있어야 한다.
       final progressForLedger = r.refundProgress;

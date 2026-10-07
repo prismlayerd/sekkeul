@@ -1631,6 +1631,9 @@ class BenefitScreen extends StatefulWidget {
   final List<Notice> notices;
   final String? sido;
 
+  /// 소식 대상 판정용 내 정보. 없으면 유형·시/도만으로 판정한다.
+  final UserFacts? facts;
+
   /// 시/도를 안 골랐을 때 「사는 지역 고르기」가 여는 곳(내 정보).
   final VoidCallback? onSetRegion;
 
@@ -1639,6 +1642,7 @@ class BenefitScreen extends StatefulWidget {
     required this.userType,
     this.notices = const [],
     this.sido,
+    this.facts,
     this.onSetRegion,
   });
 
@@ -1788,8 +1792,8 @@ class _BenefitScreenState extends State<BenefitScreen> {
   /// 맞춤 혜택 — 내 유형·시/도에 맞는 원격 소식. 카탈로그보다 위에 둔다:
   /// 카탈로그는 전국 공통이고, 이쪽은 앱 업데이트 없이 늘어나는 나만의 목록이다.
   Widget _customSection(Color ink, Color sub, Color accent) {
-    final list = widget.notices.where((n) => n.matches(widget.userType, widget.sido)).toList();
-    String md(DateTime d) => '${d.month}/${d.day}';
+    final u = widget.facts ?? UserFacts(type: widget.userType, sido: widget.sido);
+    final list = widget.notices.where((n) => !n.isApp && n.matches(u)).toList();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1824,7 +1828,7 @@ class _BenefitScreenState extends State<BenefitScreen> {
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(
-                        '${n.label} · ${n.until != null ? '${md(n.until!)}까지' : md(n.date)}'
+                        '${n.label} · ${n.dueLabel(DateTime.now())}'
                         '${n.regions.isNotEmpty ? ' · ${n.regions.join('·')}' : ''}',
                         style: AppTheme.sans(AppTheme.tsXS, sub)),
                     const SizedBox(height: 2),

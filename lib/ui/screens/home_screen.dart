@@ -1,5 +1,4 @@
 import 'dart:async';
-import '../../core/tax_engine/tax_rates.dart';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -13,6 +12,7 @@ import '../components/slip_ticks.dart';
 import '../components/section_accordion.dart';
 import '../../core/data/year_coverage.dart';
 import '../../core/data/year_snapshot.dart';
+import 'home/info_alerts_section.dart';
 import 'home/missable_deduction_section.dart';
 import 'home/other_income_section.dart';
 import 'backfill_screen.dart';
@@ -39,6 +39,7 @@ import '../../core/tax_engine/bookkeeping_duty.dart';
 import '../../core/tax_engine/reserve_estimator.dart';
 import '../../core/security/notification_helper.dart';
 import '../../core/notifications/reminder_scheduler.dart';
+import '../../core/notifications/news_alerts.dart';
 import '../../core/navigation/app_route_observer.dart';
 import '../../core/data/remote_notices.dart';
 import 'notice_detail_screen.dart';
@@ -109,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Set<String> _hiddenBannerIds = {}; // X로 닫은 배너 카드(30일간 숨김)
   List<Notice> _notices = const []; // 원격 소식(앱 업데이트 없이 바뀐다)
   String? _sido; // 사는 시/도 — 지역 소식만 거른다
-  int? _customSeenAt; // 맞춤 혜택을 마지막으로 본 때(epoch ms) — 「새 N」 기준
+  UserFacts _facts = const UserFacts(); // 소식·알림 대상 판정용 내 정보(모르면 null)
   bool _profileLoaded = false; // 첫 프로필 로드 이후에만 유형 변경을 전환으로 본다
   double _decidedTax = 0.0; // 결정세액 (연말정산 진단 데이터)
   double _grossIncome = 0.0; // 연소득(연봉) (연말정산 진단 데이터)
@@ -168,6 +169,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final list = await RemoteNotices.load();
     if (!mounted || list.isEmpty) return;
     setState(() => _notices = list);
+    _syncNewsAlerts();
+  }
+
+  /// 내게 맞는 마감 소식의 알림을 다시 건다 — 소식을 받았을 때와 내 정보가 바뀌었을 때.
+  Future<void> _syncNewsAlerts() async {
+    if (kIsWeb || _notices.isEmpty) return;
+    NewsAlerts.sync(_notices, await UserFacts.load());
   }
 
   @override
@@ -181,15 +189,17 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void didPopNext() {
     _loadDataFromDB(); // 내 정보에서 유형·지역을 바꿨을 수 있다
+    _syncNewsAlerts();
     _loadTypeValues(_userType);
     _loadCurrentMonthIncome();
     _loadMonthlyExpenses();
   }
 
-  /// 상단 배너 + 이달의 절세 카드 6초 자동 회전(페이드). 각자 2장 이상일 때만 전환.
+  /// 상단 배너 + 이달의 절세 카드 자동 회전(페이드). 각자 2장 이상일 때만 전환.
+  /// 보조 문구가 두 줄이 되며 6초로는 다 못 읽어 9초로 늘렸다.
   void _startBannerRotation() {
     _bannerTimer?.cancel();
-    _bannerTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+    _bannerTimer = Timer.periodic(const Duration(seconds: 9), (_) {
       if (!mounted) return;
       final bn = _bannerCards().length;
       if (bn <= 1) return;
@@ -207,6 +217,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         final prevType = _userType;
         setState(() {
           _userType = profile['user_type'] ?? '직장인';
+          _facts = UserFacts.fromProfile(profile);
           
           // SQLite의 REAL 칸은 정수로 넣으면 int로 돌아온다 — double로 바로
           // 캐스팅하면 던진다. 예전에는 그 실패를 삼켜서 급여가 0으로 보였다.
@@ -402,8 +413,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final all = await dbService.getAllBannerHideTimes();
     final now = DateTime.now().millisecondsSinceEpoch;
     final ids = all.entries.where((e) => e.value > now).map((e) => e.key).toSet();
-    // 같은 표에 「맞춤 혜택 본 때」도 적어 둔다. 값이 과거라 숨김 목록엔 안 걸린다.
-    _customSeenAt = all[_customSeenKey];
     if (mounted) setState(() => _hiddenBannerIds = ids);
   }
 
@@ -787,6 +796,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             userType: _userType,
             notices: _notices,
             sido: _sido,
+            facts: _facts,
             onSetRegion: _openProfile,
           ),
           // 상품 탭은 V1에서 숨김(L-5) — 화면 코드는 보존, IndexedStack에서만 제외.
@@ -869,19 +879,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       ),
     );
   }
-
-  /// 만원 단위 표기 ("3,800만원")
-  String _toWanWon(double won) {
-    final man = (won / 10000).round();
-    return '${comma(man)}만원';
-  }
-
-  /// 한계세율 — 구간표는 엔진 하나만 본다(소법 §55①).
-  /// 여기에 표를 복사해 두었더니 2023년 개정을 놓쳐 4,600만~5,000만 구간의
-  /// N잡러에게 15%를 24%라고 말하고 있었다.
-  int _marginalRate(double annualIncome) =>
-      TaxRates.marginalRatePercent(annualIncome);
-
 
   /// 직장인/N잡러/프리랜서별 세무 도구 카드
   void _go(Widget screen) =>
@@ -1002,17 +999,24 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         // 링크를 뒀었는데, 가는 길만 있고 돌아오는 길이 없어 한쪽으로만 흐르는
         // 문이 됐다. 좌우로 미는 건 양방향이고, 이 표시는 어느 장에서든 눌러서
         // 건너뛸 수 있다.
+        // 막대만으로는 장이 셋인지, 지금 어느 장인지 모른다 — 영수증 끝의
+        // 쪽수 표기처럼 `1 / 3 · 혜택 · 알림`을 막대 밑에 찍는다.
         Padding(
           padding: const EdgeInsets.only(top: 10, bottom: 6),
-          child: Center(
-            child: SlipTicks(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            SlipTicks(
               count: 3,
               active: _homePage,
               onTap: _goToHomePage,
-              labelFor: (i) =>
-                  i == 0 ? '혜택 · 알림' : i == 1 ? '가계부' : '세무 도구',
+              labelFor: _homePageName,
             ),
-          ),
+            const SizedBox(height: 5),
+            ExcludeSemantics(
+              child: Text('${_homePage + 1} / 3 · ${_homePageName(_homePage)}',
+                  style: AppTheme.label(context, color: AppTheme.inkSecondary(context))
+                      .copyWith(letterSpacing: 1.0)),
+            ),
+          ]),
         ),
       ],
     );
@@ -1038,9 +1042,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             },
             onDismiss: _dismissBanner,
           ),
-          _customBenefitsRow(),
           _slipRule(),
-          ReminderCard(userType: _userType),
+          InfoAlertsSection(
+            userType: _userType,
+            facts: _facts,
+            onFillProfile: _openProfile,
+            notices: _personalNotices,
+            guides: _isTypeIdentified ? _typeGuideCards() : const [],
+            allCount: _customBenefits.length,
+            onOpenBenefits: () => _onNavTap(1),
+          ),
           _slipFooter(),
         ],
       ),
@@ -1090,6 +1101,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               onSwitchType: _userType == '직장인' ? _openOnboarding : null,
             ),
           ),
+          _slipRule(),
+          // 직접 만드는 알림은 돈 얘기와 같은 장에 둔다. 세금 일정 알림도 곧 여기로.
+          ReminderCard(userType: _userType),
           _slipFooter(),
         ],
       ),
@@ -1114,6 +1128,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       ),
     );
   }
+
+  String _homePageName(int i) =>
+      i == 0 ? '혜택 · 알림' : i == 1 ? '가계부' : '세무 도구';
 
   void _goToHomePage(int i) {
     if (!_homePageCtrl.hasClients) return;
@@ -1279,14 +1296,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   /// 원격 소식 카드. 목록에는 제목과 한 줄 요약만 나가고, 눌러야 기사가 열린다.
   /// 배너 헤드라인은 두 줄까지라 긴 제목은 여기서 잘린다 — 그래서 `summary`가
   /// 아니라 `title`을 헤드라인으로 쓴다. 요약은 보조 줄이다.
-  List<BannerCardData> _noticeBannerCards() => _customBenefits
-      .where((n) => n.inBanner(DateTime.now()))
+  List<BannerCardData> _noticeBannerCards() => [
+        // 앱 공지(패치 내역)는 배너에만 오른다 — 대상 조건이 없고 「맞춤 혜택」에는 안 쌓인다.
+        ..._notices.where((n) => n.isApp),
+        ..._customBenefits.where((n) => n.isCommon),
+      ]
+      .where((n) => n.inBannerOrFresh(DateTime.now()))
       .map((n) => BannerCardData(
             label: n.label,
             headline: n.title,
             action: '자세히 보기',
             glyph: '새',
             sub: n.summary.isNotEmpty ? n.summary : null,
+            meta: [
+              if (n.until != null) '${n.until!.month}월 ${n.until!.day}일까지',
+              if (n.source != null) n.source!,
+            ].join(' · '),
             imageUrl: n.imageUrl,
             onTap: () => _go(NoticeDetailScreen(notice: n)),
           ))
@@ -1319,53 +1344,43 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       return _profileIncompleteCards();
     }
 
-    final cards = <BannerCardData>[];
-
-    // ── 상태 C: 완료 + 소득 미설정 — 직장인·N잡러만(프리랜서는 고정급여 개념이 없음) ──
-    if (_isEmployee && _grossIncome == 0) {
-      cards.add(_incomeSetupPromptCard());
-    } else if (_grossIncome > 0) {
-      // ── 상태 D: 완료 + 소득 설정됨 — 개인화 카드 ──
-      if (_userType == '직장인') {
-        cards.add(_employeeIncomeCard());
-      } else if (_userType == 'N잡러') {
-        cards.addAll(_sideJobIncomeCards());
-      } else {
-        cards.add(_freelancerIncomeCard());
-      }
-    }
-
-    // **1월~지난달이 비어 있으면 그 얘기를 맨 앞에 둔다.**
+    // 배너는 **모든 유형이 같이 보는 것**이다 — 공통 소식·세금 정보·앱 공지와 안내.
+    // 유형에 따라 갈리는 것은 `01 소식 · 알림`이, 내 돈 얘기는 2장(가계부)이 맡는다.
     //
-    // 연중에 깐 사람에게는 이게 제일 급하다. 이걸 안 채우면 카드 공제도 예상
-    // 환급도 계산이 안 나오는데, 그 사실을 02 블록 안에서만 말하면 스크롤을
-    // 내려야 보인다. 배너는 앱을 켜자마자 눈에 닿는 유일한 자리다.
-    if (!_yearCovered && DateTime.now().month > 1) {
-      cards.insert(0, _backfillReminderCard());
-    }
-
-    // 유형별 도구 카드
-    if (_userType == '직장인') {
-      cards.addAll(_employeeToolCards());
-    } else if (_userType == 'N잡러') {
-      cards.addAll(_sideJobToolCards());
-    } else {
-      cards.addAll(_freelancerToolCards());
-    }
-
-    // 연말정산 시즌(1~2월, 회사 처리 전)에만 — 회사에 알리고 싶지 않은 공제를
-    // 미리 골라 5월 종소세로 직접 신고할 수 있다는 안내.
-    if (_isEmployee && DateTime.now().month <= 2) {
-      cards.add(_yearEndAdjustmentOptOutCard());
-    }
-
-    cards.add(_seasonalToolCard(s));
-
-    // 이달의 절세 팁을 상단 회전 배너에 합친다(별도 카드 제거).
-    cards.addAll(_noticeBannerCards());
-    cards.addAll(_tipBannerCards());
-    return cards;
+    // **1월~지난달이 비어 있으면 그 얘기를 맨 앞에 둔다.** 돈 얘기가 아니라 앱 안내다 —
+    // 이걸 안 채우면 카드 공제도 예상 환급도 계산이 안 나오는데, 2장 안에서만 말하면
+    // 1장에 머무는 사람은 영영 모른다. 닫을 수 없다.
+    return [
+      if (!_yearCovered && DateTime.now().month > 1) _backfillReminderCard(),
+      _seasonalToolCard(s),
+      ..._noticeBannerCards(),
+      ..._tipBannerCards(),
+    ];
   }
+
+  /// 1월~지난달 가계부가 비어 있을 때 맨 앞에 꽂는 백필 유도 카드(닫기 불가).
+  BannerCardData _backfillReminderCard() {
+    final last = DateTime.now().month - 1;
+    return BannerCardData(
+      label: '이전 달',
+      headline: '1~$last월을 채우면\n올해 환급이 보여요',
+      action: '2분이면 끝나요',
+      glyph: '채',
+      onTap: _openBackfill,
+      // 닫으면 연간 계산으로 가는 길이 사라진다.
+      dismissible: false,
+    );
+  }
+
+  /// 내 유형에 맞는 안내 — 1장 `01`에 소식과 함께 실린다.
+  List<BannerCardData> _typeGuideCards() => [
+        if (_userType == '직장인') ..._employeeToolCards(),
+        if (_userType == 'N잡러') ..._sideJobToolCards(),
+        if (_userType == '프리랜서') ..._freelancerToolCards(),
+        // 연말정산 시즌(1~2월, 회사 처리 전)에만 — 회사에 알리고 싶지 않은 공제를
+        // 미리 골라 5월 종소세로 직접 신고할 수 있다는 안내.
+        if (_isEmployee && DateTime.now().month <= 2) _yearEndAdjustmentOptOutCard(),
+      ];
 
   /// 상태 A 카드 — 유형 미파악 신규 사용자에게 유형 파악 유도 1장 + 공지·팁.
   List<BannerCardData> _typeUnidentifiedCards() {
@@ -1408,92 +1423,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       ..._noticeBannerCards(),
       ..._tipBannerCards(),
     ];
-  }
-
-  /// 상태 C 카드 — 직장인·N잡러가 아직 연봉을 설정하지 않았을 때 설정 촉구.
-  BannerCardData _incomeSetupPromptCard() {
-    return BannerCardData(
-      label: '다음 단계',
-      headline: '예상 연봉을 입력하면\n공제 기준이 잡혀요',
-      action: '연봉 설정하기',
-      glyph: '₩',
-      onTap: _openProfile,
-    );
-  }
-
-  /// 상태 D 카드 — 직장인의 신용카드 공제 문턱 진행 카드.
-  BannerCardData _employeeIncomeCard() {
-    final remaining = _grossIncome * 0.25 - _creditCardYtdTotal;
-    return remaining > 0
-        ? BannerCardData(
-            label: '신카 공제',
-            headline: '공제 문턱까지\n${_toWanWon(remaining)} 남았어요',
-            action: '가계부에 기록하기',
-            glyph: '카',
-            onTap: _goToLedger,
-          )
-        : BannerCardData(
-            label: '신카 공제',
-            headline: '공제 문턱 돌파!\n체크카드로 2배 공제예요',
-            action: '가계부에 기록하기',
-            glyph: '↑',
-            onTap: _goToLedger,
-          );
-  }
-
-  /// 상태 D 카드 — N잡러의 한계세율 카드 + 신용카드 공제 문턱 진행 카드.
-  List<BannerCardData> _sideJobIncomeCards() {
-    final cards = <BannerCardData>[];
-    final rate = _marginalRate(_grossIncome);
-    cards.add(BannerCardData(
-      label: 'N잡 세율',
-      headline: '직장 소득 기준\n한계세율 $rate% 구간이에요',
-      action: '합산소득세 확인',
-      glyph: '율',
-      onTap: () => _go(TaxSimulatorScreen(userType: _userType)),
-    ));
-    final remaining = _grossIncome * 0.25 - _creditCardYtdTotal;
-    cards.add(remaining > 0
-        ? BannerCardData(
-            label: '신카 공제',
-            headline: '공제 문턱까지\n${_toWanWon(remaining)} 남았어요',
-            action: '가계부에 기록하기',
-            glyph: '카',
-            onTap: _goToLedger,
-          )
-        : BannerCardData(
-            label: '신카 공제',
-            headline: '공제 문턱 돌파!\n체크카드로 2배 공제예요',
-            action: '가계부에 기록하기',
-            glyph: '↑',
-            onTap: _goToLedger,
-          ));
-    return cards;
-  }
-
-  /// 상태 D 카드 — 프리랜서의 5월 종합소득세 신고 대상 안내 카드.
-  BannerCardData _freelancerIncomeCard() {
-    return BannerCardData(
-      label: '5월 신고',
-      headline: '연 ${_toWanWon(_grossIncome)} 기준\n종합소득세 신고 대상이에요',
-      action: '종합소득세 계산',
-      glyph: '신',
-      onTap: () => _go(TaxSimulatorScreen(userType: _userType)),
-    );
-  }
-
-  /// 1월~지난달 가계부가 비어 있을 때 맨 앞에 꽂는 백필 유도 카드(닫기 불가).
-  BannerCardData _backfillReminderCard() {
-    final last = DateTime.now().month - 1;
-    return BannerCardData(
-      label: '이전 달',
-      headline: '1~$last월을 채우면\n올해 환급이 보여요',
-      action: '2분이면 끝나요',
-      glyph: '채',
-      onTap: _openBackfill,
-      // 닫으면 연간 계산으로 가는 길이 사라진다.
-      dismissible: false,
-    );
   }
 
   /// 유형별 도구 카드 — 직장인: 5월 종합소득세로 놓친 공제 환급 안내.
@@ -1572,7 +1501,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     // 03·04와 같은 몸을 쓴다. 예전엔 여기만 Material ExpansionTile이었는데
     // 그 타일은 최소 높이가 48dp라, 접힌 상태에서 05만 한 뼘 더 두꺼웠다.
     return SectionAccordion(
-      no: '07',
+      no: '08',
       title: '자주 묻는 질문',
       expanded: (_) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1710,62 +1639,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
     if (index == 0) _loadDataFromDB();
-    if (index == 1) _markCustomSeen(); // 혜택 탭 맨 위가 맞춤 혜택이다
   }
-
-  static const _customSeenKey = 'custom_benefits_seen';
 
   /// 맞춤 혜택 — 내 유형·시/도에 맞는 소식 전부. 배너는 마감이 다가온 것만 돌리고
   /// 나머지는 혜택 탭 맨 위에 쌓인다.
   List<Notice> get _customBenefits =>
-      _notices.where((n) => n.matches(_userType, _sido)).toList();
+      _notices.where((n) => !n.isApp && n.matches(_facts)).toList();
 
-  /// 마지막으로 본 뒤에 올라온 것. 한 번도 안 봤으면 최근 14일 치.
-  int get _newCustomCount {
-    final seen = _customSeenAt != null
-        ? DateTime.fromMillisecondsSinceEpoch(_customSeenAt!)
-        : DateTime.now().subtract(const Duration(days: 14));
-    return _customBenefits.where((n) => n.date.isAfter(seen)).length;
-  }
-
-  Future<void> _markCustomSeen() async {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    setState(() => _customSeenAt = now);
-    await dbService.saveBannerHideTime(_customSeenKey, now);
-  }
-
-  /// 배너 바로 밑 한 줄 — 맞춤 혜택으로 가는 입구. 스크롤 안에 있어 고정 영역을 늘리지 않는다.
-  Widget _customBenefitsRow() {
-    final n = _customBenefits.length;
-    if (n == 0 && _sido != null) return const SizedBox.shrink();
-    final fresh = _newCustomCount;
-    final sub = AppTheme.inkSecondary(context);
-    return Semantics(
-      button: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => _onNavTap(1),
-        child: Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: Row(children: [
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${_sido ?? ''}${_sido != null ? ' · ' : ''}$_userType 맞춤 혜택 $n',
-                    style: AppTheme.sans(AppTheme.tsSM, AppTheme.ink(context), weight: FontWeight.w700)),
-                if (_sido == null)
-                  Text('사는 지역을 고르면 지역 혜택도 보여요',
-                      style: AppTheme.sans(AppTheme.tsXS, sub)),
-              ]),
-            ),
-            if (fresh > 0)
-              Text('새 $fresh',
-                  style: AppTheme.sans(AppTheme.tsXS, AppTheme.accentColor(context), weight: FontWeight.w700)),
-            Icon(Icons.chevron_right_rounded, size: 20, color: sub),
-          ]),
-        ),
-      ),
-    );
-  }
+  /// 1장 `01`에는 내 유형·지역·조건에 걸려 뜬 소식만 — 공통 소식은 배너에 있다.
+  List<Notice> get _personalNotices => _customBenefits.where((n) => !n.isCommon).toList();
 
   Widget _buildBottomNavigationBar() {
     return Container(

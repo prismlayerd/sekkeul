@@ -22,7 +22,7 @@ class NoticeDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('맞춤 혜택',
+        title: Text(notice.isApp ? '앱 공지' : '맞춤 혜택',
             style: AppTheme.serif(AppTheme.tsBase, ink,
                 weight: FontWeight.w400, spacing: -0.3)),
       ),

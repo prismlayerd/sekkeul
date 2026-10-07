@@ -2,7 +2,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import '../security/notification_helper.dart';
 import '../data/db_helper.dart';
-import '../data/occupation_data.dart';
 import '../data/recurring_template.dart';
 import '../tax_engine/reserve_estimator.dart';
 import 'system_reminder_catalog.dart';
@@ -41,17 +40,11 @@ class ReminderScheduler {
   static Future<void> scheduleTaxSeason(String userType) async {
     final settings = await dbService.getReminderSettings();
     bool isOn(String key) => settings[key] ?? true; // 행 없으면 ON
-    final profile = await dbService.getProfile();
-    final ownsCar = profile?['owns_car'] ?? true;
-    final ownsHouse = profile?['owns_house'] ?? true;
-    final occupationCode = profile?['occupation_code'] as String?;
-    final isVatExempt = OccupationData.occupations[occupationCode]?.isPersonalService ?? false;
+    final facts = await UserFacts.load();
 
     for (final s in kSystemReminderCatalog) {
       if (s.isEvent) continue; // 이벤트형(문턱)은 발생 시점에 show…로 처리
-      final active = s.appliesTo(userType,
-              ownsCar: ownsCar, ownsHouse: ownsHouse, isVatExempt: isVatExempt) &&
-          isOn(s.key);
+      final active = s.appliesTo(facts) && isOn(s.key);
       if (active) {
         String body = s.body;
         // 프리랜서·N잡러는 "5월 신고 준비" 알림에 예상 세금 대비 현재 적립 현황을 덧붙인다.

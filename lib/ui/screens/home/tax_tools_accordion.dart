@@ -21,7 +21,7 @@ class TaxToolsAccordion extends StatelessWidget {
       children: [
         // 절 머리 하나로 충분하다. 오른쪽에 붙어 있던 '기록 · 신고 준비 ·
         // 경정청구 · 양식' 요약은 바로 아래 보이는 것을 한 번 더 말하는 줄이라 뺐다.
-        AppTheme.sectionHead(context, '06', '세무 도구'),
+        AppTheme.sectionHead(context, '07', '세무 도구'),
         const SizedBox(height: 14),
         TaxToolsMenu(userType: userType),
       ],

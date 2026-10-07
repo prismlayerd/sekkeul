@@ -75,7 +75,7 @@ void main() {
 
     Notice n(String id, String title, {List<String> a = const [], List<String> r = const []}) =>
         Notice(id: id, label: '청년', title: title, summary: '', body: const [],
-            date: DateTime(2026, 9, 20), audience: a, regions: r);
+            date: DateTime(2026, 9, 20), target: Target(audience: a, regions: r));
     final notices = [
       n('a', '전국 공통 소식'),
       n('b', '서울 청년 월세', r: ['서울']),

@@ -102,7 +102,7 @@ class _MissableDeductionSectionState extends State<MissableDeductionSection> {
     final refund = filled ? _refund : 0.0;
 
     return SectionAccordion(
-      no: '04',
+      no: '06',
       title: '공제',
       // **아무것도 안 넣었으면 안내, 넣었으면 숫자.**
       // 빈 상태에 0원을 찍으면 "받을 게 없다"로 읽힌다 — 아직 안 물어봤을 뿐인데.
@@ -195,7 +195,7 @@ class _MissableDeductionSectionState extends State<MissableDeductionSection> {
   Widget _bookkeepingSection(BuildContext context) {
     final tert = AppTheme.inkTertiary(context);
     return SectionAccordion(
-      no: '04',
+      no: '06',
       title: '장부 만들기',
       collapsed: Padding(
         padding: const EdgeInsets.only(top: 8),

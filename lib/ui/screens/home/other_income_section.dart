@@ -119,7 +119,7 @@ class _OtherIncomeSectionState extends State<OtherIncomeSection> {
     final must = mustFileReturn(list);
 
     return SectionAccordion(
-      no: '02',
+      no: '03',
       title: '다른 소득',
       collapsed: Padding(
         padding: const EdgeInsets.only(top: 8),

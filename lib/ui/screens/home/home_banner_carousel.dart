@@ -15,6 +15,9 @@ class BannerCardData {
   /// 보조 문구 — 헤드라인 아래 한 줄(팁=본문, 그 외=액션 안내). 없으면 action 사용.
   final String? sub;
 
+  /// 요점 한 줄 — 마감일·출처처럼 눌러 보기 전에 알아야 할 것. 소식 카드가 쓴다.
+  final String? meta;
+
   /// 오른쪽에 깔 사진. 없으면 카드는 지금까지와 똑같이 글자만으로 그려진다.
   final String? imageUrl;
 
@@ -32,6 +35,7 @@ class BannerCardData {
     required this.glyph,
     required this.onTap,
     this.sub,
+    this.meta,
     this.imageUrl,
     this.dismissible = true,
   });
@@ -183,7 +187,7 @@ class HomeBannerCarousel extends StatelessWidget {
                             style: AppTheme.display(AppTheme.serifSM, ink,
                                 height: 1.3)),
                         const SizedBox(height: 6),
-                        // **보조 문구가 없어도 자리는 비운다.**
+                        // **보조 문구가 없어도 자리(두 줄)는 비운다.**
                         //
                         // 카드마다 이 줄이 있고 없고가 갈리면 카드 높이가 달라지고,
                         // 6초마다 돌 때마다 아래 절취선부터 화면 전체가 들썩인다.
@@ -191,11 +195,21 @@ class HomeBannerCarousel extends StatelessWidget {
                         // 화살표는 없앴다. 카드 전체가 이미 탭 영역이고,
                         // 누르면 기사 화면이 뜬다 — 화살표는 그걸 한 번 더
                         // 말할 뿐이면서, 닫기(×)와 헷갈리는 두 번째 버튼처럼 보였다.
-                        Text(subText ?? '',
-                            maxLines: 1,
+                        // 3장으로 나누며 자리가 생겼다 — 누르지 않아도 요점이
+                        // 읽히게 두 줄. 제목처럼 늘 두 줄이라 카드 높이가 같다.
+                        Text((subText ?? '').keepWords,
+                            maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                             style: AppTheme.sans(AppTheme.tsSM, sub,
                                 height: 1.45)),
+                        if (c.meta != null && c.meta!.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(c.meta!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTheme.sans(AppTheme.tsXS, ink,
+                                  weight: FontWeight.w700)),
+                        ],
                       ],
                     ),
                   ),

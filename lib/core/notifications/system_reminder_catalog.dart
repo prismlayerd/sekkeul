@@ -3,13 +3,16 @@
 /// 켜짐 판정은 "행이 없으면 ON"(getReminderSettings에 키 없으면 켜진 것).
 library;
 
+import '../data/audience_target.dart';
+export '../data/audience_target.dart' show UserFacts, Target, missingFactsLine;
+
 enum SysCategory { deadline, moment } // 기한 · 맞춤(이벤트)
 
 extension SysCategoryX on SysCategory {
   String get label => this == SysCategory.deadline ? '기한' : '맞춤';
 }
 
-/// UI에서 같은 그룹으로 묶어 1행으로 표시하는 그룹별 이름·일정.
+/// 알림 설정 버튼 아래 「나에게 해당」 줄에 쓰는 그룹 이름.
 const kGroupLabels = {
   'year_end':  '연말정산',
   'global_tax': '종합소득세',
@@ -27,25 +30,6 @@ const kGroupLabels = {
   'comprehensive_tax': '종합부동산세',
   'payment_report': '지급명세서',
   'resident_tax': '주민세',
-};
-
-const kGroupSchedules = {
-  'year_end':   '1월 15일 · 3월 5일 · 11월 1일 · 12월 1일',
-  'global_tax': '4월 25일 · 5월 1일 · 5월 25일',
-  'eitc':       '매년 3월 1일 · 5월 1일 · 9월 1일',
-  'vat':        '1월 20일 · 7월 20일',
-  'midprepay':  '매년 11월 25일',
-  'biz_status_report': '매년 2월 5일',
-  'car_tax_prepay': '1월 16일 · 3월 16일 · 6월 16일 · 9월 16일',
-  'car_tax_regular': '6월 16일 · 12월 16일',
-  'energy_voucher': '5월 27일 · 12월 15일',
-  'ev_subsidy': '매년 2월 1일',
-  'startup_academy': '매년 1월 10일',
-  'kmove': '매년 2월 1일 · 8월 1일',
-  'property_tax': '7월 16일 · 9월 16일',
-  'comprehensive_tax': '매년 12월 1일',
-  'payment_report': '매년 3월 12일',
-  'resident_tax': '매년 8월 16일',
 };
 
 /// 큐레이션된 시스템 알림 1건.
@@ -67,6 +51,9 @@ class SystemReminder {
   final bool requiresHouse; // 주택 보유자에게만 해당
   final bool requiresVatLiable; // 부가세 과세 대상만(인적용역 면세 업종은 제외)
   final bool requiresVatExempt; // 부가세 면세 업종만(인적용역 등 — 사업장현황신고 대상)
+  final bool requiresHouseholdHead; // 세대주에게만
+  final List<String>? types; // employee/business로 못 가르는 대상(예: 미취업 → 프리랜서만)
+  final int? ageMax;         // 만 나이 상한
 
   const SystemReminder({
     required this.key,
@@ -86,20 +73,31 @@ class SystemReminder {
     this.requiresHouse = false,
     this.requiresVatLiable = false,
     this.requiresVatExempt = false,
+    this.requiresHouseholdHead = false,
+    this.types,
+    this.ageMax,
   });
 
   bool get isEvent => month == null || day == null;
 
-  bool appliesTo(String userType,
-      {bool ownsCar = true, bool ownsHouse = true, bool isVatExempt = false}) {
-    final isEmp = userType == '직장인' || userType == 'N잡러';
-    final isBiz = userType == '프리랜서' || userType == 'N잡러';
-    if (requiresCar && !ownsCar) return false;
-    if (requiresHouse && !ownsHouse) return false;
-    if (requiresVatLiable && isVatExempt) return false;
-    if (requiresVatExempt && !isVatExempt) return false;
-    return (employee && isEmp) || (business && isBiz);
-  }
+  /// 맞춤 혜택 소식과 같은 판정 — 내 정보에서 모르는 칸에 조건이 걸리면 안 간다.
+  Target get target => Target(
+        audience: types ??
+            {
+              if (employee) ...['직장인', 'N잡러'],
+              if (business) ...['프리랜서', 'N잡러'],
+            }.toList(),
+        requires: [
+          if (requiresCar) 'car',
+          if (requiresHouse) 'house',
+          if (requiresVatLiable) 'vatLiable',
+          if (requiresVatExempt) 'vatExempt',
+          if (requiresHouseholdHead) 'householdHead',
+        ],
+        ageMax: ageMax,
+      );
+
+  bool appliesTo(UserFacts u) => target.matches(u);
 }
 
 /// 전체 카탈로그. ReminderScheduler의 고정 ID·문구와 1:1로 맞춘다.
@@ -227,6 +225,7 @@ const List<SystemReminder> kSystemReminderCatalog = [
     scheduleLabel: '매년 8월 16일',
     month: 8, day: 16,
     employee: true, business: true,
+    requiresHouseholdHead: true,
   ),
 
   // ── 기한 (교통·에너지) ──
@@ -357,6 +356,7 @@ const List<SystemReminder> kSystemReminderCatalog = [
     scheduleLabel: '매년 1월 10일',
     month: 1, day: 10,
     employee: true, business: true,
+    ageMax: 39,
   ),
   SystemReminder(
     key: 'sys_kmove_h1',
@@ -369,6 +369,8 @@ const List<SystemReminder> kSystemReminderCatalog = [
     scheduleLabel: '매년 2월 1일',
     month: 2, day: 1,
     employee: true, business: true,
+    types: ['프리랜서'],
+    ageMax: 34,
   ),
   SystemReminder(
     key: 'sys_kmove_h2',
@@ -381,6 +383,8 @@ const List<SystemReminder> kSystemReminderCatalog = [
     scheduleLabel: '매년 8월 1일',
     month: 8, day: 1,
     employee: true, business: true,
+    types: ['프리랜서'],
+    ageMax: 34,
   ),
 
   // ── 기한 (프리랜서·N잡러) ──
@@ -502,13 +506,9 @@ const List<SystemReminder> kSystemReminderCatalog = [
   ),
 ];
 
-/// 유형에 해당하는 시스템 알림만.
-List<SystemReminder> systemRemindersFor(String userType,
-        {bool ownsCar = true, bool ownsHouse = true, bool isVatExempt = false}) =>
-    kSystemReminderCatalog
-        .where((s) => s.appliesTo(userType,
-            ownsCar: ownsCar, ownsHouse: ownsHouse, isVatExempt: isVatExempt))
-        .toList();
+/// 이 사람에게 가는 시스템 알림만.
+List<SystemReminder> systemRemindersFor(UserFacts u) =>
+    kSystemReminderCatalog.where((s) => s.appliesTo(u)).toList();
 
 SystemReminder? systemReminderByKey(String key) {
   for (final s in kSystemReminderCatalog) {

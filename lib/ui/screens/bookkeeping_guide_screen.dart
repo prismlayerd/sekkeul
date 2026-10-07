@@ -286,6 +286,10 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                 if (r == null || r.isEmpty) ...[
                   Text('가계부에 사업 수입이나 사업경비를 기록하면 여기서 장부를 만들어드려요.'.keepWords,
                       style: AppTheme.sans(AppTheme.tsSM, sub, height: 1.5)),
+                  if (r != null && r.otherIncomeCount > 0) ...[
+                    const SizedBox(height: 8),
+                    _otherIncomeNote(r, tert),
+                  ],
                   const SizedBox(height: 14),
                   GestureDetector(
                     // 기록하고 돌아오면 곧바로 장부가 채워져 있어야 한다 —
@@ -318,6 +322,10 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                     '수입은 원천징수 전(세전) 금액으로, 비용은 “사업경비로 인정”한 지출만 담겼어요.'.keepWords,
                     style: AppTheme.sans(AppTheme.tsXS, tert, height: 1.5),
                   ),
+                  if (r.otherIncomeCount > 0) ...[
+                    const SizedBox(height: 8),
+                    _otherIncomeNote(r, tert),
+                  ],
                   if (_backfill.bizIncome > 0 || _backfill.bizExpense > 0) ...[
                     const SizedBox(height: 8),
                     Text(
@@ -356,7 +364,8 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    '엑셀에서 열어 거래처·부가세 칸을 채운 뒤 보관하세요. '
+                    '엑셀에서 열어 거래처·부가세 칸을 채우세요. 장비처럼 오래 쓰는 물건을 샀다면 '
+                    '경비가 아니라 「사업용자산 증감」 칸에 적어야 할 수 있어요. 그다음 보관하세요. '
                     '홈택스 신고 시 장부 근거가 됩니다.'.keepWords,
                     style: AppTheme.sans(AppTheme.tsXS, tert, height: 1.5),
                   ),
@@ -371,6 +380,13 @@ class _BookkeepingGuideScreenState extends State<BookkeepingGuideScreen> {
       ),
     );
   }
+
+  /// 기타소득은 사업 장부에 안 넣는다 — 빠졌다고 말하지 않으면 "내 수입이 왜 모자라지" 한다.
+  Widget _otherIncomeNote(SimpleLedgerResult r, Color tert) => Text(
+      '기타소득(원고료·강연료 등) ${r.otherIncomeCount}건, 세전 ${comma(r.otherIncomeGross)}원은 '
+              '장부에 넣지 않았어요. 사업소득이 아니라 따로 계산해서 신고해요.'
+          .keepWords,
+      style: AppTheme.sans(AppTheme.tsXS, tert, height: 1.5));
 
   /// 올해와 작년 중 고른다. 5월 신고는 작년 장부다.
   Widget _yearPicker(Color ink, Color sub, Color accent) {

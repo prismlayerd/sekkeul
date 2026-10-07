@@ -199,7 +199,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         // ── 절 머리: `01 · INCOME · 이번 달 수입` + 가계부 열기 ──
         // 명세서는 순서가 있는 문서라 절에 번호가 붙는다.
         Row(children: [
-          Expanded(child: AppTheme.sectionHead(context, '01', '이번 달 수입')),
+          Expanded(child: AppTheme.sectionHead(context, '02', '이번 달 수입')),
           const SizedBox(width: 8),
           GestureDetector(
             onTap: widget.onOpenLedger,
@@ -287,7 +287,7 @@ class _HomeStatusSectionState extends State<HomeStatusSection> {
         _rule(),
 
         // ── 지출 — 명세서의 소계 블록. 결제수단별로 한 줄씩 찍고 실선 위에 합계. ──
-        AppTheme.sectionHead(context, '03', '이번 달 지출'),
+        AppTheme.sectionHead(context, '04', '이번 달 지출'),
         const SizedBox(height: 10),
         if (totalSpent > 0) ...[
           if (widget.creditCardTotal > 0)

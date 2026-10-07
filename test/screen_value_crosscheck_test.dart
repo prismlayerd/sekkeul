@@ -9,6 +9,8 @@ import 'package:secul/core/tax_engine/tax_year.dart';
 import 'package:secul/ui/screens/expense_calendar_screen.dart';
 import 'package:secul/ui/screens/home_screen.dart';
 import 'package:secul/ui/screens/salary_net_screen.dart';
+import 'package:timezone/data/latest_all.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
 
 import 'support/screen_probe.dart';
 import 'support/tax_law_reference.dart';
@@ -64,6 +66,13 @@ void expectShown(WidgetTester t, num value, String what) {
 }
 
 void main() {
+  // 홈이 뜨며 알림을 예약한다(수입 기록 공백 알림 등). 프로덕션처럼 타임존을
+  // 맞춰 두지 않으면 tz.local에서 터져 숫자가 아니라 환경을 보게 된다.
+  setUpAll(() {
+    tzdata.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Asia/Seoul'));
+  });
+
   const year = TaxYear.reference;
   final month = DateTime.now().month;
   // 카드 공제 연 누적은 **오늘까지**의 지출만 센다(미래 예약분을 넣으면 과대).

@@ -48,4 +48,26 @@ void main() {
     expect(saved.enabled, isFalse);
     expect(saved.notifId, isNull, reason: '꺼 둔 것에 번호를 붙였다');
   });
+
+  test('한 번만 울리는 리마인더는 울린 지 일주일이 지나면 지운다', () async {
+    final now = DateTime.now();
+    Future<void> once(String title, int daysAgo) => dbService.insertReminder(Reminder(
+          title: title,
+          frequency: ReminderFrequency.once,
+          notifyDate: now.subtract(Duration(days: daysAgo)),
+          notifyHour: 0,
+          notifyMinute: 0,
+        ).toMap());
+    await once('오래전', 8);
+    await once('엊그제', 3);
+    await dbService.insertReminder(Reminder(
+      title: '매일',
+      frequency: ReminderFrequency.daily,
+      notifyDate: now.subtract(const Duration(days: 30)),
+    ).toMap());
+
+    final left = (await customReminderService.list()).map((r) => r.title).toSet();
+    expect(left, {'엊그제', '매일'}, reason: '반복은 남고, 일주일 넘게 지난 단발만 사라진다');
+    expect((await dbService.getReminders()), hasLength(2), reason: '목록에서만 숨기지 말고 지운다');
+  });
 }

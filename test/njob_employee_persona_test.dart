@@ -339,7 +339,9 @@ void main() {
       );
       final usableIncomes = p.incomes.where((e) => e.$1 <= now.month).toList();
       final usableExpenses = p.expenses.where((e) => e.$1 <= now.month).toList();
-      final salaryRows = usableIncomes.where((e) => e.$3 == '급여').length;
+      // 급여(근로소득)·기타소득은 사업 장부 대상이 아니다.
+      final salaryRows =
+          usableIncomes.where((e) => e.$3 == '급여' || e.$3 == '기타소득').length;
       final bizExpenseRows = usableExpenses.where((e) => e.$4).length;
       // ignore: avoid_print
       print(' [세무도구]   장부 ${ledger.rows.length}줄  수입계=${won(ledger.totalIncome)}'
