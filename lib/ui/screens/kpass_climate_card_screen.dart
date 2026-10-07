@@ -46,7 +46,7 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
     [(45000, 80000), (40000, 75000), (35000, 70000), (30000, 65000)],
   ];
 
-  /// 고유가 한시 기준금액(2026.4.1~9.30). 같은 기간 시차 출퇴근 시간대
+  /// 고유가 한시 기준금액(2026.4.1~9.30, 종료). 시차 환급률 +30%p만 12월까지 연장됐다(국토부 9/28). 같은 기간 시차 출퇴근 시간대
   /// (5:30~6:30, 9~10, 16~17, 19~20시 승차)의 환급률도 따로 올라간다.
   static const _temp = [
     [(30000, 50000), (27000, 47000), (25000, 45000), (22000, 42000)],
@@ -235,11 +235,11 @@ class _KpassClimateCardScreenState extends State<KpassClimateCardScreen> {
               '다자녀·저소득은 앱이나 누리집에서 따로 신청해야 적용된다',
             ], line, sub, ink),
             const SizedBox(height: 12),
-            calcInfoBox('2026.4.1~9.30 한시', const [
+            calcInfoBox('시차 시간대 추가 환급 (12월 이용분까지)', const [
               '시차 시간대(5:30~6:30, 9~10, 16~17, 19~20시 승차)에 타면'
                   ' 기본형 환급률이 30%p 올라간다',
               '일반 50% · 청년·2자녀·어르신 60% · 3자녀 80% · 저소득 83.3%',
-              '정액형 기준금액도 같은 기간 절반 수준으로 내려간다',
+              '정액형 기준금액 반값은 9월 이용분으로 끝났다',
             ], line, sub, ink),
             const SizedBox(height: 12),
             calcInfoBox('기후동행카드는 끝났다', const [
