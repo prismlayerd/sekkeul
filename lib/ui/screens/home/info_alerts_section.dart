@@ -107,7 +107,7 @@ class _InfoAlertsSectionState extends State<InfoAlertsSection> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(children: [
-          Expanded(child: AppTheme.sectionHead(context, '01', '소식 · 알림')),
+          Expanded(child: AppTheme.sectionHead(context, '01', '내 소식 · 알림')),
           GestureDetector(
             onTap: _openSettings,
             child: Text('알림 설정',
@@ -225,6 +225,13 @@ class _InfoAlertsSectionState extends State<InfoAlertsSection> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: AppTheme.sans(AppTheme.tsBase, ink, weight: FontWeight.w700, height: 1.35)),
+          if (g.sub != null) ...[
+            const SizedBox(height: 3),
+            Text(g.sub!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTheme.sans(AppTheme.tsSM, AppTheme.inkSecondary(context), height: 1.45)),
+          ],
           if (g.action.isNotEmpty) ...[
             const SizedBox(height: 3),
             Text('${g.action}  ›',

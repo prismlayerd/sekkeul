@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secul/ui/screens/home/home_banner_carousel.dart';
-import 'package:secul/ui/screens/home/info_alerts_section.dart';
-import 'package:secul/ui/screens/home_screen.dart';
 import 'package:secul/ui/theme/app_theme.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'support/ko_finder.dart';
-import 'support/screen_registry.dart';
 
 /// **배너가 돌아도 아래가 움직이면 안 된다.**
 ///
@@ -29,17 +26,36 @@ void main() {
     addTearDown(t.view.resetPhysicalSize);
     addTearDown(t.view.resetDevicePixelRatio);
 
-    await seedRealisticUser('직장인');
+    // 홈 배너는 이제 공통 소식만이라 평소엔 한 장이거나 비어 있다 — 길이가 다른
+    // 카드 셋을 직접 물려 회전시킨다.
+    var index = 0;
+    BannerCardData card(String headline, {String? sub}) => BannerCardData(
+        label: '소식', headline: headline, action: '자세히 보기', glyph: '새', sub: sub, onTap: () {});
+    final cards = [
+      card('짧은 제목'),
+      card('두 줄로 떨어지는\n제목이에요', sub: '요약 한 줄.'),
+      card('세 번째 카드', sub: '요약이 길어서 두 줄 넘게 흘러가는 경우를 본다. 한 줄 더 이어지는 문장이다.'),
+    ];
+    const below = Key('below');
     await t.pumpWidget(MaterialApp(
       theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+      home: Scaffold(
+        body: StatefulBuilder(
+          builder: (_, setState) => Column(children: [
+            HomeBannerCarousel(
+                cards: cards,
+                activeIndex: index,
+                onTickTap: (i) => setState(() => index = i),
+                onDismiss: (_) {}),
+            const SizedBox(key: below, height: 10),
+          ]),
+        ),
+      ),
     ));
-    for (var i = 0; i < 5; i++) {
-      await t.pump(const Duration(milliseconds: 250));
-    }
+    await t.pump(const Duration(milliseconds: 250));
 
-    // 배너 아래(1장)에 있는 덩어리. 배너가 커지거나 작아지면 이게 따라 움직인다.
-    double belowY() => t.getTopLeft(find.byType(InfoAlertsSection)).dy;
+    // 배너 아래 덩어리. 배너가 커지거나 작아지면 이게 따라 움직인다.
+    double belowY() => t.getTopLeft(find.byKey(below)).dy;
 
     final ticks = find.bySemanticsLabel(RegExp(r'^\d+번째 카드$'));
     final count = ticks.evaluate().length;

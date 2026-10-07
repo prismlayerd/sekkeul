@@ -1042,7 +1042,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             },
             onDismiss: _dismissBanner,
           ),
-          _slipRule(),
+          if (_bannerCards().isNotEmpty) _slipRule(),
           InfoAlertsSection(
             userType: _userType,
             facts: _facts,
@@ -1052,7 +1052,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             allCount: _customBenefits.length,
             onOpenBenefits: () => _onNavTap(1),
           ),
-          _slipFooter(),
         ],
       ),
     );
@@ -1123,7 +1122,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           TaxToolsAccordion(userType: _userType),
           _slipRule(),
           _buildFaqCard(),
-          _slipFooter(),
         ],
       ),
     );
@@ -1197,7 +1195,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             : AppTheme.dashRule(context),
       );
 
-  /// 명세서 끝 — 바코드와 한 줄. 이 앱이 무엇인지 마지막으로 말하는 자리.
+  /// 명세서 끝 — 바코드와 한 줄. 2장(가계부)에만 찍는다 — 1장은 짧고 3장은 잘 안 본다.
   Widget _slipFooter() {
     return Padding(
       padding: const EdgeInsets.only(top: 22),
@@ -1215,36 +1213,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         ],
       ),
     );
-  }
-
-  /// 월 기준 계절 배너 콘텐츠 — 라벨/헤드라인/액션/글리프를 시즌별로 분기.
-  ({String label, String headline, String action, String glyph}) _seasonalBanner() {
-    final m = DateTime.now().month;
-    if (m >= 1 && m <= 3) {
-      // 연초: 연말정산 결과·경정청구
-      return (
-        label: '연말정산 시즌',
-        headline: '올해 연말정산,\n돌려받을 게 더 있을까?',
-        action: '내 절세 유형 찾기',
-        glyph: '결',
-      );
-    } else if (m == 4 || m == 5) {
-      // 종합소득세 신고철
-      return (
-        label: '종합소득세 신고',
-        headline: '5월 종합소득세,\n나도 환급 대상일까?',
-        action: '내 절세 유형 찾기',
-        glyph: '신',
-      );
-    } else {
-      // 평시: 절세 준비
-      return (
-        label: '절세 준비',
-        headline: '미리 챙기는 공제,\n내년 환급을 바꿔요',
-        action: '내 절세 유형 찾기',
-        glyph: 'S',
-      );
-    }
   }
 
   /// 유형 파악 온보딩 진입 — 결과로 user_type + type_identified 저장.
@@ -1332,8 +1300,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       _rawBannerCards().where((c) => !_hiddenBannerIds.contains(c.id)).toList();
 
   List<BannerCardData> _rawBannerCards() {
-    final s = _seasonalBanner();
-
     // ── 상태 A: 유형 미파악 (완전 신규) ──
     if (!_isTypeIdentified) {
       return _typeUnidentifiedCards();
@@ -1350,11 +1316,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     // **1월~지난달이 비어 있으면 그 얘기를 맨 앞에 둔다.** 돈 얘기가 아니라 앱 안내다 —
     // 이걸 안 채우면 카드 공제도 예상 환급도 계산이 안 나오는데, 2장 안에서만 말하면
     // 1장에 머무는 사람은 영영 모른다. 닫을 수 없다.
+    // 유형 팁은 `01`로 내려갔다. 유형을 정한 사람에게 「유형 찾기」 카드도 안 띄운다.
     return [
       if (!_yearCovered && DateTime.now().month > 1) _backfillReminderCard(),
-      _seasonalToolCard(s),
       ..._noticeBannerCards(),
-      ..._tipBannerCards(),
     ];
   }
 
@@ -1380,6 +1345,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         // 연말정산 시즌(1~2월, 회사 처리 전)에만 — 회사에 알리고 싶지 않은 공제를
         // 미리 골라 5월 종소세로 직접 신고할 수 있다는 안내.
         if (_isEmployee && DateTime.now().month <= 2) _yearEndAdjustmentOptOutCard(),
+        // 이달의 절세 팁 — 팁은 전부 유형이 정해져 있어 공통 배너가 아니라 여기다.
+        ..._tipBannerCards(),
       ];
 
   /// 상태 A 카드 — 유형 미파악 신규 사용자에게 유형 파악 유도 1장 + 공지·팁.
@@ -1393,7 +1360,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         onTap: _openOnboarding,
       ),
       ..._noticeBannerCards(),
-      ..._tipBannerCards(),
     ];
   }
 
@@ -1421,7 +1387,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         onTap: () => _go(TaxSimulatorScreen(userType: _userType)),
       ),
       ..._noticeBannerCards(),
-      ..._tipBannerCards(),
     ];
   }
 
@@ -1479,13 +1444,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       action: '빠진 공제 찾기',
       glyph: '뺌',
       onTap: () => _go(MissedDeductionDiagnosisScreen(userType: _userType)),
-    );
-  }
-
-  /// 계절별(연말정산/종소세/평시) 절세 준비 카드.
-  BannerCardData _seasonalToolCard(({String label, String headline, String action, String glyph}) s) {
-    return BannerCardData(
-      label: s.label, headline: s.headline, action: s.action, glyph: s.glyph, onTap: _openOnboarding,
     );
   }
 

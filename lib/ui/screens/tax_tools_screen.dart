@@ -60,7 +60,10 @@ class TaxToolsScreen extends StatelessWidget {
 /// 있어서, 살렸어도 같은 화면을 두 곳에서 여는 것이었다 (2026-08-24 삭제).
 class TaxToolsMenu extends StatefulWidget {
   final String userType;
-  const TaxToolsMenu({super.key, required this.userType});
+
+  /// 홈 3장은 프리랜서에게 06 「장부 만들기」를 바로 위에 둔다 — 같은 문을 두 번 그리지 않는다.
+  final bool showBookkeeping;
+  const TaxToolsMenu({super.key, required this.userType, this.showBookkeeping = true});
 
   @override
   State<TaxToolsMenu> createState() => _TaxToolsMenuState();
@@ -103,7 +106,7 @@ class _TaxToolsMenuState extends State<TaxToolsMenu> {
         AppTheme.hairline(context),
         _checklistRow(context),
         // 장부는 사업소득이 있는 유형만 — 직장인은 기장의무 자체가 없다.
-        if (userType != '직장인') ...[
+        if (userType != '직장인' && widget.showBookkeeping) ...[
           AppTheme.hairline(context),
           _bookkeepingRow(context),
         ],

@@ -23,7 +23,7 @@ class TaxToolsAccordion extends StatelessWidget {
         // 경정청구 · 양식' 요약은 바로 아래 보이는 것을 한 번 더 말하는 줄이라 뺐다.
         AppTheme.sectionHead(context, '07', '세무 도구'),
         const SizedBox(height: 14),
-        TaxToolsMenu(userType: userType),
+        TaxToolsMenu(userType: userType, showBookkeeping: userType != '프리랜서'),
       ],
     );
   }

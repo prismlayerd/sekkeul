@@ -54,6 +54,23 @@ void main() {
         reason: '세무 도구가 아직 1장에 보인다');
   });
 
+  testWidgets('꼬리는 2장에만, 유형을 정한 사람에겐 유형 찾기가 없다', (t) async {
+    await pumpHome(t);
+    const tail = '이 명세서는 기기 안에만 있습니다';
+    expect(findKo(tail).hitTestable(), findsNothing, reason: '1장에 꼬리가 남았다');
+    expect(findKo('내 절세 유형 찾기'), findsNothing,
+        reason: '유형을 이미 정했는데 배너가 유형 찾기를 권한다');
+    expect(findKo('내 소식 · 알림').hitTestable(), findsWidgets);
+
+    await swipe(t, toNext: true);
+    await t.dragUntilVisible(findKo(tail), find.byType(SingleChildScrollView).hitTestable().first,
+        const Offset(0, -200));
+    expect(findKo(tail).hitTestable(), findsOneWidget, reason: '2장에 꼬리가 없다');
+
+    await swipe(t, toNext: true);
+    expect(findKo(tail).hitTestable(), findsNothing, reason: '3장에 꼬리가 남았다');
+  });
+
   testWidgets('좌우로 밀어 세 장을 오간다', (t) async {
     await pumpHome(t);
 
